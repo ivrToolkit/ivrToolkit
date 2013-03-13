@@ -9,7 +9,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Media;
-using Microsoft.DirectX.AudioVideoPlayback;
 using System.IO;
 
 namespace ivrToolkit.SimulatorPlugin
@@ -17,7 +16,6 @@ namespace ivrToolkit.SimulatorPlugin
     public class MediaWavPlayer : IDisposable
     {
         private string fileName;
-        private Microsoft.DirectX.AudioVideoPlayback.Audio soundFile;
         SoundPlayer player = new SoundPlayer();
 
         private event EventHandler onFinished;

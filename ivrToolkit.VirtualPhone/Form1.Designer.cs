@@ -57,9 +57,10 @@
             // 
             // btn1
             // 
-            this.btn1.Location = new System.Drawing.Point(90, 182);
+            this.btn1.Location = new System.Drawing.Point(120, 224);
+            this.btn1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btn1.Name = "btn1";
-            this.btn1.Size = new System.Drawing.Size(25, 23);
+            this.btn1.Size = new System.Drawing.Size(33, 28);
             this.btn1.TabIndex = 0;
             this.btn1.Text = "1";
             this.btn1.UseVisualStyleBackColor = true;
@@ -67,9 +68,10 @@
             // 
             // btn2
             // 
-            this.btn2.Location = new System.Drawing.Point(121, 182);
+            this.btn2.Location = new System.Drawing.Point(161, 224);
+            this.btn2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btn2.Name = "btn2";
-            this.btn2.Size = new System.Drawing.Size(25, 23);
+            this.btn2.Size = new System.Drawing.Size(33, 28);
             this.btn2.TabIndex = 1;
             this.btn2.Text = "2";
             this.btn2.UseVisualStyleBackColor = true;
@@ -77,9 +79,10 @@
             // 
             // btn3
             // 
-            this.btn3.Location = new System.Drawing.Point(152, 182);
+            this.btn3.Location = new System.Drawing.Point(203, 224);
+            this.btn3.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btn3.Name = "btn3";
-            this.btn3.Size = new System.Drawing.Size(25, 23);
+            this.btn3.Size = new System.Drawing.Size(33, 28);
             this.btn3.TabIndex = 2;
             this.btn3.Text = "3";
             this.btn3.UseVisualStyleBackColor = true;
@@ -87,9 +90,10 @@
             // 
             // btn4
             // 
-            this.btn4.Location = new System.Drawing.Point(90, 211);
+            this.btn4.Location = new System.Drawing.Point(120, 260);
+            this.btn4.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btn4.Name = "btn4";
-            this.btn4.Size = new System.Drawing.Size(25, 23);
+            this.btn4.Size = new System.Drawing.Size(33, 28);
             this.btn4.TabIndex = 3;
             this.btn4.Text = "4";
             this.btn4.UseVisualStyleBackColor = true;
@@ -97,9 +101,10 @@
             // 
             // btn5
             // 
-            this.btn5.Location = new System.Drawing.Point(121, 211);
+            this.btn5.Location = new System.Drawing.Point(161, 260);
+            this.btn5.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btn5.Name = "btn5";
-            this.btn5.Size = new System.Drawing.Size(25, 23);
+            this.btn5.Size = new System.Drawing.Size(33, 28);
             this.btn5.TabIndex = 4;
             this.btn5.Text = "5";
             this.btn5.UseVisualStyleBackColor = true;
@@ -107,9 +112,10 @@
             // 
             // btn6
             // 
-            this.btn6.Location = new System.Drawing.Point(152, 211);
+            this.btn6.Location = new System.Drawing.Point(203, 260);
+            this.btn6.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btn6.Name = "btn6";
-            this.btn6.Size = new System.Drawing.Size(25, 23);
+            this.btn6.Size = new System.Drawing.Size(33, 28);
             this.btn6.TabIndex = 5;
             this.btn6.Text = "6";
             this.btn6.UseVisualStyleBackColor = true;
@@ -117,9 +123,10 @@
             // 
             // btn7
             // 
-            this.btn7.Location = new System.Drawing.Point(90, 240);
+            this.btn7.Location = new System.Drawing.Point(120, 295);
+            this.btn7.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btn7.Name = "btn7";
-            this.btn7.Size = new System.Drawing.Size(25, 23);
+            this.btn7.Size = new System.Drawing.Size(33, 28);
             this.btn7.TabIndex = 6;
             this.btn7.Text = "7";
             this.btn7.UseVisualStyleBackColor = true;
@@ -127,9 +134,10 @@
             // 
             // btn8
             // 
-            this.btn8.Location = new System.Drawing.Point(121, 240);
+            this.btn8.Location = new System.Drawing.Point(161, 295);
+            this.btn8.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btn8.Name = "btn8";
-            this.btn8.Size = new System.Drawing.Size(25, 23);
+            this.btn8.Size = new System.Drawing.Size(33, 28);
             this.btn8.TabIndex = 7;
             this.btn8.Text = "8";
             this.btn8.UseVisualStyleBackColor = true;
@@ -137,9 +145,10 @@
             // 
             // btn9
             // 
-            this.btn9.Location = new System.Drawing.Point(152, 240);
+            this.btn9.Location = new System.Drawing.Point(203, 295);
+            this.btn9.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btn9.Name = "btn9";
-            this.btn9.Size = new System.Drawing.Size(25, 23);
+            this.btn9.Size = new System.Drawing.Size(33, 28);
             this.btn9.TabIndex = 8;
             this.btn9.Text = "9";
             this.btn9.UseVisualStyleBackColor = true;
@@ -147,9 +156,10 @@
             // 
             // btnPound
             // 
-            this.btnPound.Location = new System.Drawing.Point(90, 270);
+            this.btnPound.Location = new System.Drawing.Point(120, 332);
+            this.btnPound.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnPound.Name = "btnPound";
-            this.btnPound.Size = new System.Drawing.Size(25, 23);
+            this.btnPound.Size = new System.Drawing.Size(33, 28);
             this.btnPound.TabIndex = 9;
             this.btnPound.Text = "#";
             this.btnPound.UseVisualStyleBackColor = true;
@@ -157,9 +167,10 @@
             // 
             // btn0
             // 
-            this.btn0.Location = new System.Drawing.Point(121, 270);
+            this.btn0.Location = new System.Drawing.Point(161, 332);
+            this.btn0.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btn0.Name = "btn0";
-            this.btn0.Size = new System.Drawing.Size(25, 23);
+            this.btn0.Size = new System.Drawing.Size(33, 28);
             this.btn0.TabIndex = 10;
             this.btn0.Text = "0";
             this.btn0.UseVisualStyleBackColor = true;
@@ -167,9 +178,10 @@
             // 
             // btnStar
             // 
-            this.btnStar.Location = new System.Drawing.Point(152, 270);
+            this.btnStar.Location = new System.Drawing.Point(203, 332);
+            this.btnStar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnStar.Name = "btnStar";
-            this.btnStar.Size = new System.Drawing.Size(25, 23);
+            this.btnStar.Size = new System.Drawing.Size(33, 28);
             this.btnStar.TabIndex = 11;
             this.btnStar.Text = "*";
             this.btnStar.UseVisualStyleBackColor = true;
@@ -178,25 +190,28 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(25, 16);
+            this.label1.Location = new System.Drawing.Point(33, 20);
+            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(49, 13);
+            this.label1.Size = new System.Drawing.Size(64, 17);
             this.label1.TabIndex = 12;
             this.label1.Text = "Virtual #:";
             // 
             // txtVirtualNumber
             // 
-            this.txtVirtualNumber.Location = new System.Drawing.Point(80, 13);
+            this.txtVirtualNumber.Location = new System.Drawing.Point(107, 16);
+            this.txtVirtualNumber.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.txtVirtualNumber.Name = "txtVirtualNumber";
-            this.txtVirtualNumber.Size = new System.Drawing.Size(84, 20);
+            this.txtVirtualNumber.Size = new System.Drawing.Size(111, 22);
             this.txtVirtualNumber.TabIndex = 13;
-            this.txtVirtualNumber.Text = "(250)248-6892";
+            this.txtVirtualNumber.Text = "(000)000-0000";
             // 
             // btnConnect
             // 
-            this.btnConnect.Location = new System.Drawing.Point(170, 11);
+            this.btnConnect.Location = new System.Drawing.Point(227, 14);
+            this.btnConnect.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnConnect.Name = "btnConnect";
-            this.btnConnect.Size = new System.Drawing.Size(75, 23);
+            this.btnConnect.Size = new System.Drawing.Size(100, 28);
             this.btnConnect.TabIndex = 14;
             this.btnConnect.Text = "Connect";
             this.btnConnect.UseVisualStyleBackColor = true;
@@ -205,43 +220,48 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(34, 40);
+            this.label2.Location = new System.Drawing.Point(45, 49);
+            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(40, 13);
+            this.label2.Size = new System.Drawing.Size(52, 17);
             this.label2.TabIndex = 15;
             this.label2.Text = "Status:";
             // 
             // lblRegisterStatus
             // 
             this.lblRegisterStatus.AutoSize = true;
-            this.lblRegisterStatus.Location = new System.Drawing.Point(80, 40);
+            this.lblRegisterStatus.Location = new System.Drawing.Point(107, 49);
+            this.lblRegisterStatus.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblRegisterStatus.Name = "lblRegisterStatus";
-            this.lblRegisterStatus.Size = new System.Drawing.Size(79, 13);
+            this.lblRegisterStatus.Size = new System.Drawing.Size(102, 17);
             this.lblRegisterStatus.TabIndex = 16;
             this.lblRegisterStatus.Text = "Not Connected";
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(12, 101);
+            this.label4.Location = new System.Drawing.Point(16, 124);
+            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(103, 13);
+            this.label4.Size = new System.Drawing.Size(137, 17);
             this.label4.TabIndex = 17;
             this.label4.Text = "Line Number to Dial:";
             // 
             // txtNumberToDial
             // 
-            this.txtNumberToDial.Location = new System.Drawing.Point(121, 98);
+            this.txtNumberToDial.Location = new System.Drawing.Point(161, 121);
+            this.txtNumberToDial.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.txtNumberToDial.Name = "txtNumberToDial";
-            this.txtNumberToDial.Size = new System.Drawing.Size(37, 20);
+            this.txtNumberToDial.Size = new System.Drawing.Size(48, 22);
             this.txtNumberToDial.TabIndex = 18;
             this.txtNumberToDial.Text = "1";
             // 
             // btnDial
             // 
-            this.btnDial.Location = new System.Drawing.Point(170, 96);
+            this.btnDial.Location = new System.Drawing.Point(227, 118);
+            this.btnDial.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnDial.Name = "btnDial";
-            this.btnDial.Size = new System.Drawing.Size(75, 23);
+            this.btnDial.Size = new System.Drawing.Size(100, 28);
             this.btnDial.TabIndex = 19;
             this.btnDial.Text = "Dial";
             this.btnDial.UseVisualStyleBackColor = true;
@@ -250,27 +270,30 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(34, 311);
+            this.label5.Location = new System.Drawing.Point(45, 383);
+            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(40, 13);
+            this.label5.Size = new System.Drawing.Size(52, 17);
             this.label5.TabIndex = 20;
             this.label5.Text = "Status:";
             // 
             // lblStatus
             // 
             this.lblStatus.AutoSize = true;
-            this.lblStatus.Location = new System.Drawing.Point(83, 311);
+            this.lblStatus.Location = new System.Drawing.Point(111, 383);
+            this.lblStatus.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(50, 13);
+            this.lblStatus.Size = new System.Drawing.Size(64, 17);
             this.lblStatus.TabIndex = 21;
             this.lblStatus.Text = "On Hook";
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(30, 157);
+            this.label3.Location = new System.Drawing.Point(40, 193);
+            this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(44, 13);
+            this.label3.Size = new System.Drawing.Size(58, 17);
             this.label3.TabIndex = 22;
             this.label3.Text = "Display:";
             // 
@@ -278,18 +301,20 @@
             // 
             this.lblDisplay.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lblDisplay.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.lblDisplay.Location = new System.Drawing.Point(77, 153);
+            this.lblDisplay.Location = new System.Drawing.Point(103, 188);
+            this.lblDisplay.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblDisplay.Name = "lblDisplay";
-            this.lblDisplay.Padding = new System.Windows.Forms.Padding(2);
-            this.lblDisplay.Size = new System.Drawing.Size(100, 20);
+            this.lblDisplay.Padding = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.lblDisplay.Size = new System.Drawing.Size(133, 24);
             this.lblDisplay.TabIndex = 23;
             this.lblDisplay.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // btnReciever
             // 
-            this.btnReciever.Location = new System.Drawing.Point(170, 67);
+            this.btnReciever.Location = new System.Drawing.Point(227, 82);
+            this.btnReciever.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnReciever.Name = "btnReciever";
-            this.btnReciever.Size = new System.Drawing.Size(75, 23);
+            this.btnReciever.Size = new System.Drawing.Size(100, 28);
             this.btnReciever.TabIndex = 24;
             this.btnReciever.Text = "Lift Reciever";
             this.btnReciever.UseVisualStyleBackColor = true;
@@ -297,9 +322,9 @@
             // 
             // Form1
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(284, 333);
+            this.ClientSize = new System.Drawing.Size(379, 410);
             this.Controls.Add(this.btnReciever);
             this.Controls.Add(this.lblDisplay);
             this.Controls.Add(this.label3);
@@ -326,6 +351,7 @@
             this.Controls.Add(this.btn2);
             this.Controls.Add(this.btn1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.MaximizeBox = false;
             this.Name = "Form1";
             this.Text = "Virtual Phone";

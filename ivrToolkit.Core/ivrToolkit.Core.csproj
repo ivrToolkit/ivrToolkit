@@ -111,12 +111,9 @@
     <Compile Include="Code\Util\Properties.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="voice.properties">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <None Include="app.config" />
     <None Include="packages.config" />
-    <Content Include="ivrToolkit.Engine.nlog">
+    <Content Include="ivrToolkit.Core.nlog">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Include="Properties\Settings.settings">

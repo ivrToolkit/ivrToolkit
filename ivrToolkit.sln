@@ -33,6 +33,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{167487
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimulatorTest", "SimulatorTest\SimulatorTest.csproj", "{3E08C1E3-7D2C-4D13-8168-E08234752DFB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,11 +101,18 @@ Global
 		{8261B4EC-8999-4805-BBB0-EBEF64B4701F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8261B4EC-8999-4805-BBB0-EBEF64B4701F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8261B4EC-8999-4805-BBB0-EBEF64B4701F}.Release|x86.ActiveCfg = Release|Any CPU
+		{3E08C1E3-7D2C-4D13-8168-E08234752DFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E08C1E3-7D2C-4D13-8168-E08234752DFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E08C1E3-7D2C-4D13-8168-E08234752DFB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3E08C1E3-7D2C-4D13-8168-E08234752DFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E08C1E3-7D2C-4D13-8168-E08234752DFB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E08C1E3-7D2C-4D13-8168-E08234752DFB}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{8261B4EC-8999-4805-BBB0-EBEF64B4701F} = {C68DB211-E713-4265-A2F3-F573383C2C84}
+		{3E08C1E3-7D2C-4D13-8168-E08234752DFB} = {C68DB211-E713-4265-A2F3-F573383C2C84}
 	EndGlobalSection
 EndGlobal

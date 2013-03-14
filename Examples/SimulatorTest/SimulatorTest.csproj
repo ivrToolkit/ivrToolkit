@@ -45,11 +45,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ivrToolkit.Core\ivrToolkit.Core.csproj">
+    <ProjectReference Include="..\..\ivrToolkit.Core\ivrToolkit.Core.csproj">
       <Project>{a3db199e-9907-42aa-a5e2-1d5904ab3c4d}</Project>
       <Name>ivrToolkit.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\ivrToolkit.SimulatorPlugin\ivrToolkit.SimulatorPlugin.csproj">
+    <ProjectReference Include="..\..\ivrToolkit.SimulatorPlugin\ivrToolkit.SimulatorPlugin.csproj">
       <Project>{3ac20db2-78eb-4f85-bde8-fa0c58f44e51}</Project>
       <Name>ivrToolkit.SimulatorPlugin</Name>
     </ProjectReference>

@@ -45,7 +45,7 @@ namespace SimulatorTest
 
                 if (result == "1234")
                 {
-                    line.playFile(@"Voice Files\Corect.wav");
+                    line.playFile(@"Voice Files\Correct.wav");
                 }
                 else
                 {

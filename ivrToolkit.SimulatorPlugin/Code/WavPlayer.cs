@@ -60,7 +60,7 @@ namespace ivrToolkit.SimulatorPlugin
             // Auto-play
             audioPlayer.Play();
 
-            while (audioPlayer.State == AudioPlayerState.Playing && audioPlayer.Position < audioPlayer.Duration)
+            while (audioPlayer.State == AudioPlayerState.Playing /* && audioPlayer.Position < audioPlayer.Duration */)
             {
                 Thread.Sleep(100);
             }

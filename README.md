@@ -1,9 +1,22 @@
 ivrToolkit
 ==========
 
-Please note that the intent is to change this license from the GPL to either the MIT license or the LGPL. This should
-happen roughly in a month from now. 
+An IVR toolkit library for dotNet developers wanting to write telephony applications. Plugins include a Dialogic driver and a windows sound card driver.
+http://www.ivrToolkit.com
 
-An IVR toolkit written in c# for use with dialogic cards and others that are written with a plugin interface. Eventually this toolkit will support VoiceXML, CCXML and other telephony standards. 
+License
+-------
+Please note that the intent is to change this license from the GPL to either the MIT license or the LGPL. This should happen roughly in a month from now. 
 
-http://www.ivrtoolkit.com
+Documentation
+-------------
+https://github.com/ivrToolkit/ivrToolkit/wiki
+
+Support Forums
+--------------
+https://groups.google.com/forum/#!forum/ivrtoolkit
+
+Nuget
+-----
+
+https://nuget.org/profiles/ivrToolkit

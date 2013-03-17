@@ -122,6 +122,8 @@ namespace ivrToolkit.Core.Util
         {
             Prompt.ValidationHandler customHandler = delegate(string answer)
             {
+                if (validAnswers == null) return true;
+
                 foreach (string s in validAnswers)
                 {
                     if (answer == s)

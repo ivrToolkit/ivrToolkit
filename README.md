@@ -12,9 +12,9 @@ Documentation
 -------------
 https://github.com/ivrToolkit/ivrToolkit/wiki
 
-Support Forums
---------------
-https://groups.google.com/forum/#!forum/ivrtoolkit
+Support 
+-------
+https://github.com/ivrToolkit/ivrToolkit/issues
 
 Nuget
 -----

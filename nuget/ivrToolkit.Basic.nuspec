@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>ivrToolkit.Basic</id>
+    <version>0.9.1</version>
+    <authors>Troy Makaro</authors>
+    <owners>ivrToolkit</owners>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <description>A toolkit for writing Interactive Voice Response Applications with primary support for Dialogic Cards.</description>
+    <copyright>Copyright 2013 Troy Makaro</copyright>
+      <licenseUrl>http://ivrtoolkit.com/GPL.txt</licenseUrl>
+      <projectUrl>http://www.ivrtoolkit.com</projectUrl>
+      <iconUrl>http://ivrtoolkit.com/ivrToolkit32.jpg</iconUrl>
+      <dependencies>
+	    <dependency id="NAudio"/>
+        <dependency id="NLog"/>
+    </dependencies>
+  </metadata>
+</package>

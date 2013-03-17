@@ -10,38 +10,22 @@ using System.Text;
 using System.Threading;
 using System.Media;
 using System.IO;
-using SharpDX.MediaFoundation;
-using SharpDX.XAudio2;
-using SharpDX.IO;
-using AudioPlayerApp;
+using NAudio.Wave;
 
 namespace ivrToolkit.SimulatorPlugin
 {
     public class WavPlayer : IDisposable
     {
-        private XAudio2 xaudio2;
-        private MasteringVoice masteringVoice;
-        private Stream fileStream;
-        private AudioPlayer audioPlayer;
 
         private string fileName;
+        private static bool stopped;
 
         private event EventHandler onFinished;
 
+        private WaveOut woCall;
+
         public WavPlayer()
         {
-            InitializeXAudio2();
-        }
-
-        private void InitializeXAudio2()
-        {
-            // This is mandatory when using any of SharpDX.MediaFoundation classes
-            MediaManager.Startup();
-
-            // Starts The XAudio2 engine
-            xaudio2 = new XAudio2();
-            xaudio2.StartEngine();
-            masteringVoice = new MasteringVoice(xaudio2);
         }
 
         public void play(string fileName)
@@ -53,30 +37,36 @@ namespace ivrToolkit.SimulatorPlugin
 
         public void run()
         {
-            fileStream = new NativeFileStream(fileName, NativeFileMode.Open, NativeFileAccess.Read);
+            // pcm 8000 hz, 64kb/s 1 channel
+            WaveFormat wfOKI = new WaveFormat(8000, 8, 1);
 
-            audioPlayer = new AudioPlayer(xaudio2, fileStream);
+            WaveStream wsRaw = new WaveFileReader(fileName);
 
-            // Auto-play
-            audioPlayer.Play();
-
-            while (audioPlayer.State == AudioPlayerState.Playing && audioPlayer.Position < audioPlayer.Duration)
+            using (wsRaw = WaveFormatConversionStream.CreatePcmStream(wsRaw))
+            using (WaveStream wsOKI = new RawSourceWaveStream(wsRaw, wfOKI))
+            using (woCall = new WaveOut())
             {
-                Thread.Sleep(100);
-            }
+                woCall.PlaybackStopped += woCall_PlaybackStopped;
+                woCall.Init(wsOKI);
 
-            audioPlayer.Close();
-            audioPlayer = null;
+                stopped = false;
+                woCall.Play();
 
-            if (fileStream != null)
-            {
-                fileStream.Close();
-            }
+                while (!stopped)
+                {
+                    System.Threading.Thread.Sleep(100);
+                }
 
-            if (onFinished != null)
-            {
-                onFinished(this, null);
-            }
+                if (onFinished != null)
+                {
+                    onFinished(this, null);
+                }
+            } // using
+        }
+
+        void woCall_PlaybackStopped(object sender, StoppedEventArgs e)
+        {
+            stopped = true;
         }
         public void Dispose()
         {
@@ -94,7 +84,7 @@ namespace ivrToolkit.SimulatorPlugin
         }
         public void stop()
         {
-            audioPlayer.Stop();
+            woCall.Stop();
         }
     }
 

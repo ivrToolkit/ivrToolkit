@@ -10,7 +10,7 @@ Please note that the intent is to change this license from the GPL to either the
 
 Documentation
 -------------
-https://github.com/ivrToolkit/ivrToolkit/wiki
+http://www.ivrToolkit.com/documentation.html
 
 Support 
 -------

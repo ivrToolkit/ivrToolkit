@@ -19,4 +19,4 @@ https://github.com/ivrToolkit/ivrToolkit/issues
 Nuget
 -----
 
-https://nuget.org/profiles/ivrToolkit
+http://nuget.org/profiles/ivrToolkit

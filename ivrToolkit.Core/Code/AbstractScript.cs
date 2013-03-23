@@ -12,6 +12,9 @@ using System.Threading;
 
 namespace ivrToolkit.Core
 {
+    /// <summary>
+    /// Documentation goes here
+    /// </summary>
     public abstract class AbstractScript : IScript
     {
         private ILine _line;

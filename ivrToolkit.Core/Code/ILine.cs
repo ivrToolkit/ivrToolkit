@@ -11,7 +11,7 @@ using System.Text;
 namespace ivrToolkit.Core
 {
     /// <summary>
-    /// 
+    /// This interface exposes the main methods used to control the selected plugin.
     /// </summary>
     public interface ILine
     {
@@ -24,7 +24,7 @@ namespace ivrToolkit.Core
         }
 
         /// <summary>
-        /// 
+        /// The last terminator key that was pressed
         /// </summary>
         string lastTerminator
         {
@@ -32,7 +32,7 @@ namespace ivrToolkit.Core
         }
 
         /// <summary>
-        /// 
+        /// The attached line number.
         /// </summary>
         int lineNumber
         {
@@ -40,54 +40,54 @@ namespace ivrToolkit.Core
         }
 
         /// <summary>
-        /// 
+        /// Use this within long computational methods to check if the line has hungup or stopped.
         /// </summary>
         void checkStop();
 
         /// <summary>
-        /// 
+        /// Call this to stop the line and release all its resources.
         /// </summary>
         void stop();
  
         /// <summary>
-        /// 
+        /// The number of rings to wait before answering
         /// </summary>
-        /// <param name="rings"></param>
+        /// <param name="rings">The number of rings to wait before answering</param>
         void waitRings(int rings);
 
         /// <summary>
-        /// 
+        /// Forces a hangup on the line.
         /// </summary>
         void hangup();
 
         /// <summary>
-        /// 
+        /// Pick up the line.
         /// </summary>
         void takeOffHook();
 
         /// <summary>
-        /// 
+        /// Dials a phone number using call progress analysis.
         /// </summary>
-        /// <param name="number"></param>
-        /// <param name="answeringMachineLengthInMilliseconds"></param>
-        /// <returns></returns>
+        /// <param name="number">The phone number to call</param>
+        /// <param name="answeringMachineLengthInMilliseconds">A greeting longer than this time indicates a possible answering machine.</param>
+        /// <returns>The Call analysis enumeration</returns>
         CallAnalysis dial(string number, int answeringMachineLengthInMilliseconds);
 
         /// <summary>
-        /// 
+        /// Closes the line and releases the resources.
         /// </summary>
         void close();
 
         /// <summary>
-        /// 
+        /// Plays a wav file which must be in the format of 8000hz 1 channel unsigned 8 bit PCM.
         /// </summary>
-        /// <param name="filename"></param>
+        /// <param name="filename">The wav file to play</param>
         void playFile(string filename);
 
         /// <summary>
-        /// 
+        /// Records a wav file to the disk in the format of 8000hz 1 channel unsigned 8 bit PCM.
         /// </summary>
-        /// <param name="filename"></param>
+        /// <param name="filename">The file name to record to</param>
         void recordToFile(string filename);
 
         /// <summary>

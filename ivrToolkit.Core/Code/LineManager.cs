@@ -31,7 +31,7 @@ namespace ivrToolkit.Core
     }
 
     /// <summary>
-    /// Call analysis description of enum goes here
+    /// Outgoing call analysis.
     /// </summary>
     public enum CallAnalysis
     {

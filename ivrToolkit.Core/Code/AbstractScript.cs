@@ -13,26 +13,27 @@ using System.Threading;
 namespace ivrToolkit.Core
 {
     /// <summary>
-    /// Documentation goes here
+    /// An implementation of the IScript interface that implements the line property to save you some time.
     /// </summary>
     public abstract class AbstractScript : IScript
     {
-        private ILine _line;
+        private ILine line;
 
-        // set by scriptmanager
-        public ILine line
+        /// <inheritdoc/>
+        public ILine Line
         {
             get
-            { return _line; }
-            set { _line = value; }
+            { return line; }
+            set { line = value; }
         }
-
-        public abstract string description
+        /// <inheritdoc/>
+        public abstract string Description
         {
             get;
         }
 
-        public abstract IScript execute();
+        /// <inheritdoc/>
+        public abstract IScript Execute();
 
     } // class
 }

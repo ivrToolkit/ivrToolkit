@@ -143,29 +143,29 @@ namespace ivrToolkit.SimulatorPlugin
                         // line should equal null the first dial
                         if (line == null)
                         {
-                            line = (SimulatorLine)(new Simulator().getLine(lineNumber));
+                            line = (SimulatorLine)(new Simulator().GetLine(lineNumber));
                             line.subscribeToHangup(new HangupDelegate(handleHangup));
                         }
-                        switch (line.status)
+                        switch (line.Status)
                         {
-                            case LineStatusTypes.onHook:
+                            case LineStatusTypes.OnHook:
                                 Send("idle");
                                 line.unsubscribeToHangup(new HangupDelegate(handleHangup));
                                 line = null;
                                 break;
-                            case LineStatusTypes.connected:
+                            case LineStatusTypes.Connected:
                                 Send("busy");
                                 line.unsubscribeToHangup(new HangupDelegate(handleHangup));
                                 line = null;
                                 break;
-                            case LineStatusTypes.acceptingCalls:
+                            case LineStatusTypes.AcceptingCalls:
                                 LineStatusTypes status = line.sendRing();
                                 switch (status)
                                 {
-                                    case LineStatusTypes.acceptingCalls:
+                                    case LineStatusTypes.AcceptingCalls:
                                         Send("ring");
                                         break;
-                                    case LineStatusTypes.connected:
+                                    case LineStatusTypes.Connected:
                                         Send("answered");
                                         break;
                                 }

@@ -13,10 +13,16 @@ using ivrToolkit.Core;
 
 namespace ivrToolkit.Core.Util
 {
+    /// <summary>
+    /// This is the preferred class to use for speaking prompts. The Prompt class is more low level.
+    /// </summary>
     public class PromptFunctions
     {
         private ILine line;
-
+        /// <summary>
+        /// Initiates the class with a voice line
+        /// </summary>
+        /// <param name="line">The voice line to ask the questions on</param>
         public PromptFunctions(ILine line)
         {
             this.line = line;
@@ -24,33 +30,34 @@ namespace ivrToolkit.Core.Util
 
         /// <summary>
         /// Gets the default prompt object suitable for a multi digit press. The attempts are set from 'prompt.attempts' property
-        /// in ads.properties
+        /// in voice.properties
         /// </summary>
-        public virtual Prompt getRegularStylePrompt()
+        public virtual Prompt GetRegularStylePrompt()
         {
             Prompt p = new Prompt(line);
-            p.numberOfDigits = 99;
-            p.terminators = "#";
-            p.attempts = getAttempts();
+            p.NumberOfDigits = 99;
+            p.Terminators = "#";
+            p.Attempts = GetAttempts();
             return p;
         }
-
+        
         /// <summary>
         /// Gets the default prompt object suitable for a single digit press. The attempts are set from 'prompt.attempts' property
-        /// in ads.properties
+        /// in voice.properties
         /// </summary>
-        public virtual Prompt getMenuStylePrompt()
+        /// <returns></returns>
+        public virtual Prompt GetMenuStylePrompt()
         {
             Prompt p = new Prompt(line);
-            p.numberOfDigits = 1;
-            p.terminators = "";
-            p.attempts = getAttempts();
+            p.NumberOfDigits = 1;
+            p.Terminators = "";
+            p.Attempts = GetAttempts();
             return p;
         }
 
-        private int getAttempts()
+        private int GetAttempts()
         {
-            return VoiceProperties.current.promptAttempts;
+            return VoiceProperties.Current.PromptAttempts;
         }
 
         /// <summary>
@@ -60,11 +67,11 @@ namespace ivrToolkit.Core.Util
         /// <param name="promptMessage">The name of the file or the phrase string to speak out</param>
         /// <param name="allowed">This list of digits that are acceptable</param>
         /// <returns>The digit pressed that is within the allowed string.</returns>
-        public string singleDigitPrompt(string promptMessage, string allowed)
+        public string SingleDigitPrompt(string promptMessage, string allowed)
         {
-            Prompt p = getMenuStylePrompt();
-            p.promptMessage = promptMessage;
-            p.onValidation += delegate(string answer)
+            Prompt p = GetMenuStylePrompt();
+            p.PromptMessage = promptMessage;
+            p.OnValidation += delegate(string answer)
             {
                 if (allowed.IndexOf(answer) != -1)
                 {
@@ -75,29 +82,7 @@ namespace ivrToolkit.Core.Util
                     return false;
                 }
             };
-            return p.ask();
-        }
-
-        public string singleDigitPrompt(string promptMessage, string allowed, int attemptsOverride, int timeoutOverride, bool catchTooManyAttempts)
-        {
-            Prompt p = getMenuStylePrompt();            
-            p.promptMessage = promptMessage;
-            p.onValidation += delegate(string answer)
-            {
-                if (allowed.IndexOf(answer) != -1)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            };
-
-            p.attempts = 1;
-            p.catchTooManyAttempts = false;
-
-            return p.ask();
+            return p.Ask();
         }
 
         /// <summary>
@@ -106,9 +91,9 @@ namespace ivrToolkit.Core.Util
         /// </summary>
         /// <param name="promptMessage">The name of the file or the phrase string to speak out</param>
         /// <returns>A response of any size including empty</returns>
-        public string regularPrompt(string promptMessage)
+        public string RegularPrompt(string promptMessage)
         {
-            return regularPrompt(promptMessage, null);
+            return RegularPrompt(promptMessage, null);
         }
 
         /// <summary>
@@ -118,7 +103,7 @@ namespace ivrToolkit.Core.Util
         /// <param name="promptMessage">The name of the file or the phrase string to speak out</param>
         /// <param name="validAnswers">A string array of valid answers.</param>
         /// <returns>A response matching on of the validAnswers[] string</returns>
-        public string regularPrompt(string promptMessage, string[] validAnswers)
+        public string RegularPrompt(string promptMessage, string[] validAnswers)
         {
             Prompt.ValidationHandler customHandler = delegate(string answer)
             {
@@ -133,7 +118,7 @@ namespace ivrToolkit.Core.Util
                 }
                 return false;
             };
-            return customValidationPrompt(promptMessage, customHandler);
+            return CustomValidationPrompt(promptMessage, customHandler);
         }
 
         /// <summary>
@@ -143,12 +128,12 @@ namespace ivrToolkit.Core.Util
         /// <param name="promptMessage">The name of the file or the phrase string to speak out</param>
         /// <param name="customHandler">Prompt.ValidationHandler custom answer validator</param>
         /// <returns></returns>
-        public string customValidationPrompt(string promptMessage, Prompt.ValidationHandler customHandler)
+        public string CustomValidationPrompt(string promptMessage, Prompt.ValidationHandler customHandler)
         {
-            Prompt p = getRegularStylePrompt();
-            p.promptMessage = promptMessage;
-            p.onValidation += customHandler;
-            return p.ask();
+            Prompt p = GetRegularStylePrompt();
+            p.PromptMessage = promptMessage;
+            p.OnValidation += customHandler;
+            return p.Ask();
         }
     } // class
 }

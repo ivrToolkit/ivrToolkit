@@ -15,7 +15,7 @@ namespace ivrToolkit.SimulatorPlugin
     {
         private static Dictionary<string, SimulatorLine> lines = new Dictionary<string, SimulatorLine>();
 
-        public ILine getLine(int lineNumber)
+        public ILine GetLine(int lineNumber)
         {
             // make sure the simulator thread is started and listening for a connection
             SimulatorListener.singleton.start();

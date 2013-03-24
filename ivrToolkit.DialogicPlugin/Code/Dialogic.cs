@@ -28,12 +28,19 @@ namespace ivrToolkit.DialogicPlugin
         {
         }
 
+        public ILine GetLine(int lineNumber)
+        {
+            // TODO fix this
+            int devh = Dialogic.openDevice("dxxxB1C" + lineNumber.ToString());
+            return new DialogicLine(devh, lineNumber);
+        }
+
         /// <summary>
         /// Opens the board line.
         /// </summary>
         /// <param name="devname">Name of the board line. For example: dxxxB1C1</param>
         /// <returns>The device handle</returns>
-        public static int openDevice(string devname)
+        private static int openDevice(string devname)
         {
             int devh = -1;
 
@@ -46,7 +53,7 @@ namespace ivrToolkit.DialogicPlugin
             return devh;
         }
 
-        public static void waitRings(int devh, int rings)
+        internal static void waitRings(int devh, int rings)
         {
             if (dx_wtring(devh, rings, (int)HookState.OFF_HOOK, -1) == -1)
             {
@@ -55,7 +62,7 @@ namespace ivrToolkit.DialogicPlugin
             }
         }
 
-        public static void stop(int devh)
+        internal static void stop(int devh)
         {
             if (dx_stopch(devh, EV_SYNC) == -1)
             {
@@ -68,7 +75,7 @@ namespace ivrToolkit.DialogicPlugin
         /// Puts the line on hook.
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
-        public static void hangup(int devh)
+        internal static void hangup(int devh)
         {
             dx_stopch(devh, EV_SYNC);
 
@@ -84,7 +91,7 @@ namespace ivrToolkit.DialogicPlugin
         /// Takes the line off hook.
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
-        public static void takeOffHook(int devh)
+        internal static void takeOffHook(int devh)
         {
             int result = dx_sethook(devh, (int)HookState.OFF_HOOK, EV_SYNC);
             if (result <= -1)
@@ -100,12 +107,12 @@ namespace ivrToolkit.DialogicPlugin
         /// <param name="devh">The handle for the Dialogic line.</param>
         /// <param name="number">The phone number to dial.</param>
         /// <returns>CallAnalysis Enum</returns>
-        public static ivrToolkit.Core.CallAnalysis dialWithCPA(int devh, string number, int answeringMachineLengthInMilliseconds)
+        internal static ivrToolkit.Core.CallAnalysis dialWithCPA(int devh, string number, int answeringMachineLengthInMilliseconds)
         {
 
             DX_CAP cap = Dialogic.getCap(devh);
 
-            String fullNumber = VoiceProperties.current.dialToneType + number;
+            String fullNumber = VoiceProperties.Current.DialToneType + number;
             int result = dx_dial(devh, fullNumber, ref cap, DX_CALLP | EV_SYNC);
             if (result <= -1)
             {
@@ -188,9 +195,9 @@ namespace ivrToolkit.DialogicPlugin
             }
         }
 
-        public static void initCallProgress(int devh)
+        internal static void initCallProgress(int devh)
         {
-            string[] toneParams = VoiceProperties.current.getPrefixMatch("cpa.tone.");
+            string[] toneParams = VoiceProperties.Current.GetPrefixMatch("cpa.tone.");
 
             foreach (String tone in toneParams)
             {
@@ -263,7 +270,7 @@ namespace ivrToolkit.DialogicPlugin
 
             object boxed = cap;
 
-            string[] caps = VoiceProperties.current.getKeyPrefixMatch("cap.");
+            string[] caps = VoiceProperties.Current.GetKeyPrefixMatch("cap.");
             foreach (string capName in caps)
             {
                 FieldInfo info = capType.GetField(capName);
@@ -276,12 +283,12 @@ namespace ivrToolkit.DialogicPlugin
                     object obj = info.GetValue(cap);
                     if (obj is ushort)
                     {
-                        ushort value = ushort.Parse(VoiceProperties.current.getProperty("cap."+capName));
+                        ushort value = ushort.Parse(VoiceProperties.Current.GetProperty("cap."+capName));
                         info.SetValue(boxed, value);
                     }
                     else if (obj is byte)
                     {
-                        byte value = byte.Parse(VoiceProperties.current.getProperty("cap."+capName));
+                        byte value = byte.Parse(VoiceProperties.Current.GetProperty("cap."+capName));
                         info.SetValue(boxed, value);
                     }
                 }
@@ -290,7 +297,7 @@ namespace ivrToolkit.DialogicPlugin
             return (DX_CAP)boxed;
         }
 
-        public static void deleteTones(int devh)
+        internal static void deleteTones(int devh)
         {
             if (dx_deltones(devh) == -1)
             {
@@ -304,7 +311,8 @@ namespace ivrToolkit.DialogicPlugin
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
         /// <returns>The greeting time in milliseconds.</returns>
-        private static int getSalutationLength(int devh) {
+        private static int getSalutationLength(int devh)
+        {
             int result = ATDX_ANSRSIZ(devh);
             if (result <= -1)
             {
@@ -318,7 +326,7 @@ namespace ivrToolkit.DialogicPlugin
         /// Closes the board line.
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
-        public static void close(int devh)
+        internal static void close(int devh)
         {
             int result = dx_close(devh, 0);
             if (result <= -1)
@@ -333,12 +341,12 @@ namespace ivrToolkit.DialogicPlugin
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
         /// <returns>All the digits in the buffer including terminators</returns>
-        public static string flushDigitBuffer(int devh)
+        internal static string flushDigitBuffer(int devh)
         {
             string all = "";
             try
             {
-                // add "T" so that I can get all the characters. There must be a better way.
+                // add "T" so that I can get all the characters.
                 all = getDigits(devh, 99, "T", 100);
                 // strip off timeout terminator if there is once
                 if (all.EndsWith("T"))
@@ -358,13 +366,13 @@ namespace ivrToolkit.DialogicPlugin
         /// <param name="devh">The handle for the Dialogic line.</param>
         /// <param name="numberOfDigits">Maximum number of digits allowed in the buffer.</param>
         /// <returns>Returns the digits pressed not including the terminator if there was one</returns>
-        public static string getDigits(int devh, int numberOfDigits, string terminators)
+        internal static string getDigits(int devh, int numberOfDigits, string terminators)
         {
-            int timeout = VoiceProperties.current.digitsTimeoutInMilli;
+            int timeout = VoiceProperties.Current.DigitsTimeoutInMilli;
             return getDigits(devh, numberOfDigits, terminators, timeout);
         }
 
-        public static string getDigits(int devh, int numberOfDigits, string terminators, int timeout)
+        internal static string getDigits(int devh, int numberOfDigits, string terminators, int timeout)
         {
 
             DV_TPT[] tpt = getTerminationConditions(numberOfDigits, terminators, timeout);
@@ -556,7 +564,7 @@ namespace ivrToolkit.DialogicPlugin
         /// <param name="devh">The handle for the Dialogic line.</param>
         /// <param name="filename">The name of the file to play.</param>
         /// <param name="xpb">The format of the vox or wav file.</param>
-        public static void playFile(int devh, string filename, string terminators, DX_XPB xpb)
+        internal static void playFile(int devh, string filename, string terminators, DX_XPB xpb)
         {
 
             /* set up DV_TPT */
@@ -663,7 +671,7 @@ namespace ivrToolkit.DialogicPlugin
 
 
 
-        public static void addDualTone(int devh, int tid, int freq1, int fq1dev, int freq2, int fq2dev,
+        internal static void addDualTone(int devh, int tid, int freq1, int fq1dev, int freq2, int fq2dev,
             ToneDetection mode)
         {
             uint dialogicMode;
@@ -689,7 +697,7 @@ namespace ivrToolkit.DialogicPlugin
         //T5=480,30,620,40,25,5,25,5,2 fast busy
         //T6=350,20,440,20,L dial tone
 
-        public static void addDualToneWithCadence(int devh, int tid, int freq1, int fq1dev, int freq2, int fq2dev,
+        internal static void addDualToneWithCadence(int devh, int tid, int freq1, int fq1dev, int freq2, int fq2dev,
             int ontime, int ontdev, int offtime, int offtdev, int repcnt)
         {
             if (dx_blddtcad((uint)tid, (uint)freq1, (uint)fq1dev, (uint)freq2, (uint)fq2dev, (uint)ontime, (uint)ontdev, (uint)offtime, (uint)offtdev, (uint)repcnt) == -1)
@@ -703,7 +711,7 @@ namespace ivrToolkit.DialogicPlugin
             }
         }
 
-        public static void disableTone(int devh, int tid)
+        internal static void disableTone(int devh, int tid)
         {
             if (dx_distone(devh, tid, DM_TONEON | DM_TONEOFF) == -1)
             {
@@ -712,7 +720,7 @@ namespace ivrToolkit.DialogicPlugin
             }
         }
 
-        public static void enableTone(int devh, int tid)
+        internal static void enableTone(int devh, int tid)
         {
             if (dx_enbtone(devh, tid, DM_TONEON | DM_TONEOFF) == -1)
             {
@@ -721,7 +729,7 @@ namespace ivrToolkit.DialogicPlugin
             }
         }
 
-        public static int listenForCustomTones(int devh, int timeoutSeconds)
+        internal static int listenForCustomTones(int devh, int timeoutSeconds)
         {
             DX_EBLK eblk = new DX_EBLK();
             if (dx_getevt(devh, ref eblk, timeoutSeconds) == -1)
@@ -746,7 +754,7 @@ namespace ivrToolkit.DialogicPlugin
         /// <param name="devh">The handle for the Dialogic line.</param>
         /// <param name="filename">The name of the file to play.</param>
         /// <param name="xpb">The format of the vox or wav file.</param>
-        public static void recordToFile(int devh, string filename, string terminators, DX_XPB xpb)
+        internal static void recordToFile(int devh, string filename, string terminators, DX_XPB xpb)
         {
 
             flushDigitBuffer(devh);
@@ -885,11 +893,5 @@ namespace ivrToolkit.DialogicPlugin
 
         }
 
-        public ILine getLine(int lineNumber)
-        {
-            // TODO fix this
-            int devh = Dialogic.openDevice("dxxxB1C" + lineNumber.ToString());
-            return new DialogicLine(devh,lineNumber);
-        }
     } // class
 } // namespace

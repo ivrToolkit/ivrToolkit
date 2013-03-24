@@ -27,20 +27,20 @@ namespace ivrToolkit.SimulatorPlugin
         private static ManualResetEvent allDone = new ManualResetEvent(false);
 
 
-        private LineStatusTypes _status = LineStatusTypes.onHook;
+        private LineStatusTypes _status = LineStatusTypes.OnHook;
 
-        public LineStatusTypes status
+        public LineStatusTypes Status
         {
             get { return _status; }
         }
-        public string lastTerminator
+        public string LastTerminator
         {
             get { return _lastTerminator; }
         }
 
         private int _lineNumber;
 
-        public int lineNumber
+        public int LineNumber
         {
             get { return _lineNumber; }
         }
@@ -54,18 +54,18 @@ namespace ivrToolkit.SimulatorPlugin
         } 
 
         // tell listeners that the software has manually hung up the phone
-        public void hangup()
+        public void Hangup()
         {
-            _status = LineStatusTypes.onHook;
+            _status = LineStatusTypes.OnHook;
             dispatchHangupEvent(); // tell virtual phone that the program performed a hangup
         }
 
-        public void takeOffHook()
+        public void TakeOffHook()
         {
-            _status = LineStatusTypes.offHook;
+            _status = LineStatusTypes.OffHook;
         }
 
-        public CallAnalysis dial(string number, int answeringMachineLengthInMilliseconds)
+        public CallAnalysis Dial(string number, int answeringMachineLengthInMilliseconds)
         {
             if (stopped) resetAndThrowStop();
             if (hungup) resetAndThrowHangup();
@@ -78,23 +78,23 @@ namespace ivrToolkit.SimulatorPlugin
             CallAnalysis result = phone.dial(this);
             if (result == CallAnalysis.answeringMachine || result == CallAnalysis.connected)
             {
-                _status = LineStatusTypes.connected;
+                _status = LineStatusTypes.Connected;
             }
             return result;
         }
 
-        public void close()
+        public void Close()
         {
-            if (_status != LineStatusTypes.onHook)
+            if (_status != LineStatusTypes.OnHook)
             {
-                hangup();
+                Hangup();
             }
         }
 
-        public void waitRings(int rings)
+        public void WaitRings(int rings)
         {
 
-            _status = LineStatusTypes.acceptingCalls;
+            _status = LineStatusTypes.AcceptingCalls;
             ringsGot = 0;
 
             lock (lockObject)
@@ -106,11 +106,11 @@ namespace ivrToolkit.SimulatorPlugin
                     {
                         ringsGot = 0;
                         reset();
-                        _status = LineStatusTypes.acceptingCalls;
+                        _status = LineStatusTypes.AcceptingCalls;
                     }
                     if (ringsGot >= rings)
                     {
-                        _status = LineStatusTypes.connected;
+                        _status = LineStatusTypes.Connected;
                         // tell the thread that called sendRing method that it is ok to continue
                         allDone.Set();
                         return;
@@ -137,7 +137,7 @@ namespace ivrToolkit.SimulatorPlugin
 
         private bool isPlayFinished;
 
-        public void playFile(string filename)
+        public void PlayFile(string filename)
         {
             lock (lockObject)
             {
@@ -183,7 +183,7 @@ namespace ivrToolkit.SimulatorPlugin
             } // lock
         }
 
-        public void recordToFile(string filename)
+        public void RecordToFile(string filename)
         {
             if (stopped) resetAndThrowStop();
             if (hungup) resetAndThrowHangup();
@@ -206,12 +206,12 @@ namespace ivrToolkit.SimulatorPlugin
             hungup = false;
             stopped = false;
             digits = new List<char>();
-            _status = LineStatusTypes.onHook;
+            _status = LineStatusTypes.OnHook;
         }
 
-        public string getDigits(int numberOfDigits, string terminators)
+        public string GetDigits(int numberOfDigits, string terminators)
         {
-            int timeout = VoiceProperties.current.digitsTimeoutInMilli;
+            int timeout = VoiceProperties.Current.DigitsTimeoutInMilli;
             lock (lockObject)
             {
                 _lastTerminator = "";
@@ -230,7 +230,7 @@ namespace ivrToolkit.SimulatorPlugin
                         else
                         {
                             // there may be digits in the buffer that aren't terminators so flush them.
-                            flushDigitBuffer();
+                            FlushDigitBuffer();
                             throw new GetDigitsTimeoutException();
                         }
                     }
@@ -238,7 +238,7 @@ namespace ivrToolkit.SimulatorPlugin
             } // lock
         }
 
-        public string flushDigitBuffer()
+        public string FlushDigitBuffer()
         {
             if (stopped) resetAndThrowStop();
             if (hungup) resetAndThrowHangup();
@@ -248,15 +248,15 @@ namespace ivrToolkit.SimulatorPlugin
             return myDigits;
         }
 
-        public void checkStop()
+        public void CheckStop()
         {
             if (stopped) resetAndThrowStop();
             if (hungup) resetAndThrowHangup();
         }
 
-        public void stop()
+        public void Stop()
         {
-            if (LineManager.getLineCount() == 0)
+            if (LineManager.GetLineCount() == 0)
             {
                 SimulatorListener.singleton.stop();
             }

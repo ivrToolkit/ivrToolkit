@@ -21,12 +21,12 @@ namespace OutTest
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            line = LineManager.getLine(1);
+            line = LineManager.GetLine(1);
         }
 
         private void btnDial_Click(object sender, EventArgs e)
         {
-            CallAnalysis result = line.dial(txtPhoneNumber.Text, 3500);
+            CallAnalysis result = line.Dial(txtPhoneNumber.Text, 3500);
             Console.WriteLine(result);
         }
     }

@@ -24,39 +24,39 @@ namespace SimulatorTest
         public void go()
         {
             // pick the line number you want
-            line = LineManager.getLine(1);
+            line = LineManager.GetLine(1);
 
             // A utility class to define some common prompt definitions
             PromptFunctions functions = new PromptFunctions(line);
 
             // wait for an incomming call
-            line.waitRings(2);
+            line.WaitRings(2);
 
             // say Thank You
-            line.playFile(@"Voice Files\ThankYou.wav");
+            line.PlayFile(@"Voice Files\ThankYou.wav");
 
             while (true)
             {
-                string result = functions.regularPrompt(@"Voice Files\Press1234.wav");
+                string result = functions.RegularPrompt(@"Voice Files\Press1234.wav");
 
-                line.playFile(@"Voice Files\YouPressed.wav");
+                line.PlayFile(@"Voice Files\YouPressed.wav");
 
-                line.playCharacters(result);
+                line.PlayCharacters(result);
 
                 if (result == "1234")
                 {
-                    line.playFile(@"Voice Files\Correct.wav");
+                    line.PlayFile(@"Voice Files\Correct.wav");
                 }
                 else
                 {
-                    line.playFile(@"Voice Files\Incorrect.wav");
+                    line.PlayFile(@"Voice Files\Incorrect.wav");
                 }
 
-                result = functions.singleDigitPrompt(@"Voice Files\TryAgain.wav", "12");
+                result = functions.SingleDigitPrompt(@"Voice Files\TryAgain.wav", "12");
                 if (result == "2") break;
             }
-            line.playFile(@"Voice Files\Goodbye.wav");
-            line.hangup();
+            line.PlayFile(@"Voice Files\Goodbye.wav");
+            line.Hangup();
         }
     } // class
 }

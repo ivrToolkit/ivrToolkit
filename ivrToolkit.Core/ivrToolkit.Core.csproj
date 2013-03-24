@@ -96,7 +96,6 @@
     <Compile Include="Code\IScript.cs" />
     <Compile Include="Code\IVoice.cs" />
     <Compile Include="Code\LineStatusTypes.cs" />
-    <Compile Include="Code\Exceptions\DisconnectedException.cs" />
     <Compile Include="Code\ILine.cs" />
     <Compile Include="Code\ScriptManager.cs" />
     <Compile Include="Code\Util\LineExtensions.cs" />

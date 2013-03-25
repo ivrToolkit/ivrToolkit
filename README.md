@@ -20,3 +20,11 @@ Nuget
 -----
 
 http://nuget.org/profiles/ivrToolkit
+
+Source Code
+-----------
+https://github.com/ivrToolkit/ivrToolkit
+
+Example Source Code
+-------------------
+https://github.com/ivrToolkit/ivrToolkit/tree/master/Examples

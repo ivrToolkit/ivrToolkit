@@ -18,13 +18,29 @@ namespace ivrToolkit.Core
     public abstract class AbstractScript : IScript
     {
         private ILine line;
+        private PromptFunctions promptFunctions;
+
+        /// <summary>
+        /// Used within your script block to handle prompts
+        /// </summary>
+        protected PromptFunctions PromptFunctions
+        {
+            get
+            {
+                return promptFunctions;
+            }
+        }
 
         /// <inheritdoc/>
         public ILine Line
         {
             get
             { return line; }
-            set { line = value; }
+            set
+            {
+                line = value;
+                promptFunctions = new PromptFunctions(line);
+            }
         }
         /// <inheritdoc/>
         public abstract string Description

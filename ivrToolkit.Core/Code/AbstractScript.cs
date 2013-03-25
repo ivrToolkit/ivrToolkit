@@ -12,24 +12,44 @@ using System.Threading;
 
 namespace ivrToolkit.Core
 {
+    /// <summary>
+    /// An implementation of the IScript interface that implements the line property to save you some time.
+    /// </summary>
     public abstract class AbstractScript : IScript
     {
-        private ILine _line;
+        private ILine line;
+        private PromptFunctions promptFunctions;
 
-        // set by scriptmanager
-        public ILine line
+        /// <summary>
+        /// Used within your script block to handle prompts
+        /// </summary>
+        protected PromptFunctions PromptFunctions
         {
             get
-            { return _line; }
-            set { _line = value; }
+            {
+                return promptFunctions;
+            }
         }
 
-        public abstract string description
+        /// <inheritdoc/>
+        public ILine Line
+        {
+            get
+            { return line; }
+            set
+            {
+                line = value;
+                promptFunctions = new PromptFunctions(line);
+            }
+        }
+        /// <inheritdoc/>
+        public abstract string Description
         {
             get;
         }
 
-        public abstract IScript execute();
+        /// <inheritdoc/>
+        public abstract IScript Execute();
 
     } // class
 }

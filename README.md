@@ -10,7 +10,7 @@ Please note that the intent is to change this license from the GPL to either the
 
 Documentation
 -------------
-https://github.com/ivrToolkit/ivrToolkit/wiki
+http://www.ivrToolkit.com/documentation.html
 
 Support 
 -------
@@ -19,4 +19,12 @@ https://github.com/ivrToolkit/ivrToolkit/issues
 Nuget
 -----
 
-https://nuget.org/profiles/ivrToolkit
+http://nuget.org/profiles/ivrToolkit
+
+Source Code
+-----------
+https://github.com/ivrToolkit/ivrToolkit
+
+Example Source Code
+-------------------
+https://github.com/ivrToolkit/ivrToolkit/tree/master/Examples

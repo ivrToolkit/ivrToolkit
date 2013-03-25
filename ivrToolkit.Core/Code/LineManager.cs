@@ -15,65 +15,82 @@ using NLog;
 
 namespace ivrToolkit.Core
 {
+    /// <summary>
+    /// Detects tones using either leading edge or trailing edge
+    /// </summary>
     public enum ToneDetection
     {
+        /// <summary>
+        /// use leading edge
+        /// </summary>
         leading,
+        /// <summary>
+        /// use trailing edge
+        /// </summary>
         trailing
     }
+
     /// <summary>
-    /// Call analysis description of enum goes here
+    /// Outgoing call analysis.
     /// </summary>
     public enum CallAnalysis
     {
         /// <summary>
-        /// The line is currently busy
+        /// The line is currently busy.
         /// </summary>
         busy,
         /// <summary>
-        /// no answer
+        /// no answer.
         /// </summary>
         noAnswer,
         /// <summary>
-        /// 
+        /// No ringback (not sure what this is).
         /// </summary>
         noRingback,
         /// <summary>
-        /// 
+        /// Call is connected.
         /// </summary>
         connected,
         /// <summary>
-        /// 
+        /// Operator Intercept(not used. This would come across as an answering machine instead).
         /// </summary>
         operatorIntercept,
         /// <summary>
-        /// 
+        /// line has been stopped.
         /// </summary>
         stopped,
         /// <summary>
-        /// 
+        /// No dial tone on the line.
         /// </summary>
         noDialTone,
         /// <summary>
-        /// 
+        /// Fax Tone.
         /// </summary>
         faxTone,
         /// <summary>
-        /// 
+        /// An error happened on the voice card.
         /// </summary>
         error,
         /// <summary>
-        /// 
+        /// An answering machine has been detected. based on salutation length. See voice.properties
         /// </summary>
         answeringMachine,
         /// <summary>
-        /// 
+        /// No free line available. This is characterized by a fast busy signal. It happens if all the switchboard lines are used up. For example you dial 9 to get an out line
+        /// and there are none available.
         /// </summary>
         noFreeLine
     }
 
     /// <summary>
-    /// Line Manager class description goes here.
+    /// The line manager is the main class that loads the plugin and execute getLine to get a line object.
     /// </summary>
+    /// <example>
+    /// <code>
+    ///        // pick the line number you want
+    ///        line = LineManager.getLine(1);
+    /// </code>
+    /// </example>
     public class LineManager
     {
         private static Logger logger = MyLogManager.Instance.GetCurrentClassLogger();
@@ -89,12 +106,12 @@ namespace ivrToolkit.Core
         /// 
         /// <param name="lineNumber">The line number to connect to</param>
         /// <returns>A class that represents the phone line</returns>
-        public static ILine getLine(int lineNumber)
+        public static ILine GetLine(int lineNumber)
         {
             logger.Debug("Getting line number: "+lineNumber);
 
-            string className = VoiceProperties.current.className;
-            string assemblyName = VoiceProperties.current.assemblyName;
+            string className = VoiceProperties.Current.ClassName;
+            string assemblyName = VoiceProperties.Current.AssemblyName;
             
             // create an instance of the class from the assembly
             Assembly assembly = Assembly.LoadFrom(assemblyName);
@@ -105,31 +122,30 @@ namespace ivrToolkit.Core
                 throw new VoiceException("class must implement the IVoice interface");
             }
             IVoice voiceDriver = (IVoice)o;
-            ILine line = voiceDriver.getLine(lineNumber);
+            ILine line = voiceDriver.GetLine(lineNumber);
             lines[lineNumber] = line;
             return line;
         }
 
         /// <summary>
-        /// 
+        /// Gets the count of lines retrieved by using the getLine method.
         /// </summary>
-        /// <returns></returns>
-        public static int getLineCount()
+        public static int GetLineCount()
         {
             return lines.Count;
         }
 
         /// <summary>
-        /// 
+        /// Releases a voice line and removes it from the list of used lines.
         /// </summary>
-        /// <param name="lineNumber"></param>
-        public static void releaseLine(int lineNumber)
+        /// <param name="lineNumber">The line number to release</param>
+        public static void ReleaseLine(int lineNumber)
         {
             try
             {
                 ILine line = lines[lineNumber];
                 lines.Remove(lineNumber);
-                line.stop();
+                line.Stop();
             }
             catch (KeyNotFoundException)
             {
@@ -137,17 +153,17 @@ namespace ivrToolkit.Core
         }
 
         /// <summary>
-        /// 
+        /// Releases all the voice lines.
         /// </summary>
-        public static void releaseAll()
+        public static void ReleaseAll()
         {
             List<KeyValuePair<int,ILine>> linesList = lines.ToList();
             foreach (KeyValuePair<int,ILine> keyValue in linesList)
             {
                 ILine line = keyValue.Value;
-                releaseLine(line.lineNumber);
+                ReleaseLine(line.LineNumber);
             }
         }
 
-    }
+    } // class
 }

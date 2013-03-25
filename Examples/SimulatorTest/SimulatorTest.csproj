@@ -43,11 +43,18 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ScriptBlocks\GoodbyeScript.cs" />
+    <Compile Include="ScriptBlocks\MainScript.cs" />
+    <Compile Include="ScriptBlocks\WelcomeScript.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\ivrToolkit.Core\ivrToolkit.Core.csproj">
       <Project>{a3db199e-9907-42aa-a5e2-1d5904ab3c4d}</Project>
       <Name>ivrToolkit.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\ivrToolkit.DialogicPlugin\ivrToolkit.DialogicPlugin.csproj">
+      <Project>{fcb3d215-6016-4e0c-ba8b-f0f812c5446a}</Project>
+      <Name>ivrToolkit.DialogicPlugin</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\ivrToolkit.SimulatorPlugin\ivrToolkit.SimulatorPlugin.csproj">
       <Project>{3ac20db2-78eb-4f85-bde8-fa0c58f44e51}</Project>

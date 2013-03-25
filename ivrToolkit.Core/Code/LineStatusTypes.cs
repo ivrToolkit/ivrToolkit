@@ -10,12 +10,30 @@ using System.Text;
 
 namespace ivrToolkit.Core
 {
+/// <summary>
+/// The state of the device line.
+/// </summary>
     public enum LineStatusTypes
     {
-        closed,
-        connected,
-        onHook,
-        acceptingCalls,
-        offHook
+        /// <summary>
+        /// Closed and no longer available. It has been recycled.
+        /// </summary>
+        Closed,
+        /// <summary>
+        /// Connected to a remote caller.
+        /// </summary>
+        Connected,
+        /// <summary>
+        /// Line handset is set down.
+        /// </summary>
+        OnHook,
+        /// <summary>
+        /// Listening for an incomming call.
+        /// </summary>
+        AcceptingCalls,
+        /// <summary>
+        /// Line handset has been picked up.
+        /// </summary>
+        OffHook
     }
 }

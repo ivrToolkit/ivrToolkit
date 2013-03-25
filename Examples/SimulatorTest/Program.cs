@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using ivrToolkit.Core;
 using ivrToolkit.Core.Util;
+using SimulatorTest.ScriptBlocks;
 
 namespace SimulatorTest
 {
@@ -26,36 +27,18 @@ namespace SimulatorTest
             // pick the line number you want
             line = LineManager.GetLine(1);
 
-            // A utility class to define some common prompt definitions
-            PromptFunctions functions = new PromptFunctions(line);
 
             // wait for an incomming call
             line.WaitRings(2);
 
-            // say Thank You
-            line.PlayFile(@"Voice Files\ThankYou.wav");
+            ScriptManager manager = new ScriptManager(line, new WelcomeScript());
 
-            while (true)
+            while (manager.HasNext())
             {
-                string result = functions.RegularPrompt(@"Voice Files\Press1234.wav");
-
-                line.PlayFile(@"Voice Files\YouPressed.wav");
-
-                line.PlayCharacters(result);
-
-                if (result == "1234")
-                {
-                    line.PlayFile(@"Voice Files\Correct.wav");
-                }
-                else
-                {
-                    line.PlayFile(@"Voice Files\Incorrect.wav");
-                }
-
-                result = functions.SingleDigitPrompt(@"Voice Files\TryAgain.wav", "12");
-                if (result == "2") break;
+                // execute the next script
+                manager.Execute(); 
             }
-            line.PlayFile(@"Voice Files\Goodbye.wav");
+
             line.Hangup();
         }
     } // class

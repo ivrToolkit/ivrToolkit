@@ -37,6 +37,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{167487
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimulatorTest", "Examples\SimulatorTest\SimulatorTest.csproj", "{3E08C1E3-7D2C-4D13-8168-E08234752DFB}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nuget", "Nuget", "{EF3FFF59-28C8-4FC1-AC00-C7B67131A3CC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Base", "Base", "{3B4E2B61-D897-4A96-B6BD-DDD29B90500C}"
+	ProjectSection(SolutionItems) = preProject
+		nuget\Base\build.cmd = nuget\Base\build.cmd
+		nuget\Base\ivrToolkit.Base.nuspec = nuget\Base\ivrToolkit.Base.nuspec
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -114,7 +122,9 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{EF3FFF59-28C8-4FC1-AC00-C7B67131A3CC} = {C69C987F-E124-47F5-8609-E49D47EE2788}
 		{8261B4EC-8999-4805-BBB0-EBEF64B4701F} = {C68DB211-E713-4265-A2F3-F573383C2C84}
 		{3E08C1E3-7D2C-4D13-8168-E08234752DFB} = {C68DB211-E713-4265-A2F3-F573383C2C84}
+		{3B4E2B61-D897-4A96-B6BD-DDD29B90500C} = {EF3FFF59-28C8-4FC1-AC00-C7B67131A3CC}
 	EndGlobalSection
 EndGlobal

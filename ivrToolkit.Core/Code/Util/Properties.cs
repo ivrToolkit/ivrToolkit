@@ -43,7 +43,7 @@ namespace ivrToolkit.Core.Util
         /// </summary>
         /// <param name="key">The key name to search for</param>
         /// <returns>The value store for the key</returns>
-        public string getProperty(string key)
+        public string GetProperty(string key)
         {
             try {
                 return stuff[key.ToLower()];
@@ -52,7 +52,13 @@ namespace ivrToolkit.Core.Util
             }
         }
 
-        public string getProperty(string key, string def)
+        /// <summary>
+        /// Gets the string value of a property. Case insensitive.
+        /// </summary>
+        /// <param name="key">The key name to search for. Case insensitve.</param>
+        /// <param name="def">The default to be returned if the key was not found.</param>
+        /// <returns>The value of the property or the default if the property was not found.</returns>
+        public string GetProperty(string key, string def)
         {
             try
             {
@@ -63,19 +69,27 @@ namespace ivrToolkit.Core.Util
                 return def;
             }
         }
-
-        public string[] getPrefixMatch(string prefix)
-        {
-            return (from a in stuff
-                    where a.Key.StartsWith(prefix)
-                    select a.Value).ToArray();
-        }
-
-        internal string[] getKeyPrefixMatch(string prefix)
+        /// <summary>
+        /// Gets a list of property names that matches the prefix.
+        /// </summary>
+        /// <param name="prefix">The string to match on.</param>
+        /// <returns>A string array of parameter names where the property name begins with the prefix</returns>
+        public string[] GetKeyPrefixMatch(string prefix)
         {
             return (from a in stuff
                     where a.Key.StartsWith(prefix)
                     select a.Key.Substring(prefix.Length).Trim()).ToArray();
+        }
+        /// <summary>
+        /// Gets a list of property values where the property name matches the prefix.
+        /// </summary>
+        /// <param name="prefix">The string to match on.</param>
+        /// <returns>A string array of values where the property name begins with the prefix</returns>
+        public string[] GetPrefixMatch(string prefix)
+        {
+            return (from a in stuff
+                    where a.Key.StartsWith(prefix)
+                    select a.Value).ToArray();
         }
     }
 }

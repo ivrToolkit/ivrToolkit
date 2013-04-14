@@ -3,37 +3,35 @@
  *
  * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
  */
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Globalization;
 using ivrToolkit.Core;
 
 namespace ivrToolkit.SimulatorPlugin
 {
     public class Simulator : IVoice
     {
-        private static Dictionary<string, SimulatorLine> lines = new Dictionary<string, SimulatorLine>();
+        private static readonly Dictionary<string, SimulatorLine> Lines = new Dictionary<string, SimulatorLine>();
 
         public ILine GetLine(int lineNumber)
         {
             // make sure the simulator thread is started and listening for a connection
-            SimulatorListener.singleton.start();
+            SimulatorListener.Singleton.Start();
 
             try
             {
-                return lines[lineNumber.ToString()];
+                return Lines[lineNumber.ToString(CultureInfo.InvariantCulture)];
             }
             catch (KeyNotFoundException)
             {
-                SimulatorLine line = new SimulatorLine(lineNumber);
-                lines.Add(lineNumber.ToString(), line);
+                var line = new SimulatorLine(lineNumber);
+                Lines.Add(lineNumber.ToString(CultureInfo.InvariantCulture), line);
                 return line;
             }
         }
-        public static void releaseLine(int lineNumber)
+        public static void ReleaseLine(int lineNumber)
         {
-            lines.Remove(lineNumber.ToString());
+            Lines.Remove(lineNumber.ToString(CultureInfo.InvariantCulture));
         }
     }
 }

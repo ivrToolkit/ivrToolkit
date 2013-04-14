@@ -1,14 +1,15 @@
-﻿/*
+/*
  * Copyright 2013 Troy Makaro
  *
  * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Globalization;
+using System.Linq;
+using System.Threading;
+
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace ivrToolkit.Core.Util
 {
@@ -17,18 +18,14 @@ namespace ivrToolkit.Core.Util
     /// </summary>
     public static class LineExtensions
     {
-        private static string[] months = new string[]{ "January","February","March","April","May","June","July","August","September","October",
+        private static readonly string[] Months = new[]{ "January","February","March","April","May","June","July","August","September","October",
             "November","December"};
 
-        private const string ROOT = "System Recordings\\";
+        private const string Root = "System Recordings\\";
 
-        private static bool is24Hour(string mask) {
-            string[] parts = mask.Split(new char[] { ' ',':', '-' });
-            foreach (string part in parts)
-            {
-                if (part == "a/p") return false;
-            }
-            return true;
+        private static bool Is24Hour(string mask) {
+            var parts = mask.Split(new[] { ' ',':', '-' });
+            return parts.All(part => part != "a/p");
         }
 
         /// <summary>
@@ -69,14 +66,14 @@ namespace ivrToolkit.Core.Util
         public static void PlayDate(this ILine line, DateTime dateTime, string mask)
         {
             mask = mask.ToLower();
-            string[] parts = mask.Split(new char[] { ' ',':', '-' });
+            string[] parts = mask.Split(new[] { ' ',':', '-' });
             foreach (string part in parts)
             {
                 if (part == "m" || part == "mm" || part == "mmm" || part == "mmm")
                 {
                     int m = dateTime.Month;
                     if (m > 0 && m < 13) {
-                        string month = months[m-1];
+                        string month = Months[m-1];
                         PlayF(line,month);
                     }
                 }
@@ -93,7 +90,7 @@ namespace ivrToolkit.Core.Util
                 }
                 else if (part == "yyy" || part == "yyyy")
                 {
-                    string year = dateTime.Year.ToString();
+                    string year = dateTime.Year.ToString(CultureInfo.InvariantCulture);
 
                     // speak years 2010 to 2099 with the word thousand
                     SpeakYearThousands(line,year);
@@ -106,7 +103,7 @@ namespace ivrToolkit.Core.Util
                 else if (part == "h" || part == "hh")
                 {
                     int h = dateTime.Hour;
-                    if (is24Hour(mask))
+                    if (Is24Hour(mask))
                     {
                         if (h < 10)
                         {
@@ -145,7 +142,7 @@ namespace ivrToolkit.Core.Util
                     if (m > 0 && m < 10)
                     {
                         PlayF(line,"o");
-                        PlayF(line,m.ToString());
+                        PlayF(line,m.ToString(CultureInfo.InvariantCulture));
                     }
                     else if (m >= 10)
                     {
@@ -154,15 +151,8 @@ namespace ivrToolkit.Core.Util
                 }
                 else if (part == "a/p")
                 {
-                    int h = dateTime.Hour;
-                    if (h < 12)
-                    {
-                        PlayF(line,"am");
-                    }
-                    else
-                    {
-                        PlayF(line,"pm");
-                    }
+                    var h = dateTime.Hour;
+                    PlayF(line, h < 12 ? "am" : "pm");
                 }
             }
         }
@@ -196,7 +186,7 @@ namespace ivrToolkit.Core.Util
                 else if (y2Int < 10)
                 {
                     PlayF(line,"o");
-                    PlayF(line,y2Int.ToString());
+                    PlayF(line,y2Int.ToString(CultureInfo.InvariantCulture));
                 }
                 else
                 {
@@ -206,41 +196,6 @@ namespace ivrToolkit.Core.Util
         }
 
         // speak years 2010 to 2099 without the word thousand in it.
-        private static void SpeakYearBrokenUp(ILine line, string year)
-        {
-            string y1 = year.Substring(0, 2);
-            string y2 = year.Substring(2, 2);
-            int y1Int = int.Parse(y1);
-            int y2Int = int.Parse(y2);
-
-            if (year.Substring(1, 2) == "00")
-            {
-                PlayF(line, y1.Substring(0, 1));
-                PlayF(line,"Thousand");
-                if (y2Int > 0)
-                {
-                    line.PlayInteger(y2Int);
-                }
-            }
-            else
-            {
-                line.PlayInteger(y1Int);
-                if (y2Int == 0)
-                {
-                    PlayF(line,"o");
-                    PlayF(line,"o");
-                }
-                else if (y2Int < 10)
-                {
-                    PlayF(line,"o");
-                    PlayF(line,y2Int.ToString());
-                }
-                else
-                {
-                    line.PlayInteger(y2Int);
-                }
-            }
-        }
         /// <summary>
         /// Speaks a number in money format. For example 5.23 would be spoken as 'five dollars and twenty three cents'
         /// </summary>
@@ -249,8 +204,8 @@ namespace ivrToolkit.Core.Util
         public static void PlayMoney(this ILine line, double number)
         {
             string n = number.ToString("F"); // two decimal places
-            int index = n.IndexOf(".");
-            string w = "";
+            int index = n.IndexOf(".", StringComparison.Ordinal);
+            string w;
             string f = "";
             if (index == -1)
             {
@@ -263,24 +218,13 @@ namespace ivrToolkit.Core.Util
             }
             long whole = long.Parse(w);
             line.PlayInteger(whole);
-            if (whole == 1) {
-                PlayF(line,"dollar");
-            } else {
-                PlayF(line,"dollars");
-            }
+            PlayF(line, whole == 1 ? "dollar" : "dollars");
             if (f != "")
             {
                 PlayF(line,"and");
                 long cents = long.Parse(f);
                 line.PlayInteger(cents);
-                if (cents == 1)
-                {
-                    PlayF(line,"cent");
-                }
-                else
-                {
-                    PlayF(line,"cents");
-                }
+                PlayF(line, cents == 1 ? "cent" : "cents");
             }
         }
         /// <summary>
@@ -307,7 +251,7 @@ namespace ivrToolkit.Core.Util
                 }
                 else
                 {
-                    PlayF(line,c.ToString());
+                    PlayF(line,c.ToString(CultureInfo.InvariantCulture));
                 }
             }
         }
@@ -318,10 +262,10 @@ namespace ivrToolkit.Core.Util
         /// <param name="number">The number to speak out</param>
         public static void PlayNumber(this ILine line, double number)
         {
-            string n =number.ToString("G");
-            int index = n.IndexOf(".");
-            string w = "";
-            string f = "";
+            var n =number.ToString("G");
+            var index = n.IndexOf(".", StringComparison.Ordinal);
+            string w;
+            var f = "";
             if (index == -1)
             {
                 w = n;
@@ -338,7 +282,7 @@ namespace ivrToolkit.Core.Util
                 char[] chars = f.ToCharArray();
                 foreach (char c in chars)
                 {
-                    PlayF(line,c.ToString());
+                    PlayF(line,c.ToString(CultureInfo.InvariantCulture));
                 }
             }
         }
@@ -359,29 +303,28 @@ namespace ivrToolkit.Core.Util
                 PlayF(line,"0");
                 return;
             }
-            const long BILLION = 1000000000;
-            const long MILLION = 1000000;
-            const long THOUSAND = 1000;
-            const long HUNDRED = 100;
+            const long billion = 1000000000;
+            const long million = 1000000;
+            const long thousand = 1000;
 
-            long billions = number / BILLION;
-            long rest = number % BILLION;
+            long billions = number / billion;
+            long rest = number % billion;
             if (billions > 0)
             {
                 SpeakUpTo999(line, billions);
                 PlayF(line,"Billion");
             }
 
-            long millions = rest / MILLION;
-            rest = rest % MILLION;
+            long millions = rest / million;
+            rest = rest % million;
             if (millions > 0)
             {
                 SpeakUpTo999(line, millions);
                 PlayF(line,"Million");
             }
 
-            long thousands = rest / THOUSAND;
-            rest = rest % THOUSAND;
+            long thousands = rest / thousand;
+            rest = rest % thousand;
             if (thousands > 0)
             {
                 SpeakUpTo999(line, thousands);
@@ -398,6 +341,7 @@ namespace ivrToolkit.Core.Util
         /// <param name="line">The voice line object</param>
         /// <param name="number">A number between 1 and 31</param>
         public static void PlayOrdinal(this ILine line, int number)
+
         {
             PlayF(line,"ord" + number);
         }
@@ -420,10 +364,10 @@ namespace ivrToolkit.Core.Util
         /// <param name="str">The string to interpret in the format of 'data|code,data|code,data|code'...</param>
         public static void PlayString(this ILine line, string str)
         {
-            string[] parts = str.Split(new char[]{','});
+            string[] parts = str.Split(new[]{','});
             foreach (string part in parts)
             {
-                string[] sections = part.Split(new char[] { '|' });
+                string[] sections = part.Split(new[] { '|' });
                 string mask = null;
                 string data = sections[0];
                 string command = sections[1];
@@ -463,9 +407,9 @@ namespace ivrToolkit.Core.Util
 
         private static void SpeakUpTo999(ILine line, long number)
         {
-            const long HUNDRED = 100;
-            long hundreds = number / HUNDRED;
-            long rest = number % 100;
+            const long hundred = 100;
+            var hundreds = number / hundred;
+            var rest = number % 100;
             if (hundreds > 0)
             {
                 PlayF(line,hundreds + "00");
@@ -473,10 +417,10 @@ namespace ivrToolkit.Core.Util
             if (rest == 0) return;
             if (rest < 20)
             {
-                PlayF(line,rest.ToString());
+                PlayF(line,rest.ToString(CultureInfo.InvariantCulture));
                 return;
             }
-            string n = rest.ToString();
+            var n = rest.ToString(CultureInfo.InvariantCulture);
             PlayF(line,n.Substring(0, 1) + "0");
             if (n.Substring(1, 1) != "0")
             {
@@ -486,7 +430,7 @@ namespace ivrToolkit.Core.Util
 
         private static void PlayF(ILine line, string filename)
         {
-            line.PlayFile(ROOT + filename + ".wav");
+            line.PlayFile(Root + filename + ".wav");
         }
     }
 }

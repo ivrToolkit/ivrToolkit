@@ -1,31 +1,27 @@
-﻿/*
+/*
  * Copyright 2013 Troy Makaro
  *
  * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
  */
+
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using ivrToolkit.Core.Properties;
-using ivrToolkit.Core;
 
 namespace ivrToolkit.Core.Util
 {
     /// <summary>
     /// This is the preferred class to use for speaking prompts. The Prompt class is more low level.
     /// </summary>
-    public class PromptFunctions
+    public class PromptFunctions : IPromptFunctions
     {
-        private ILine line;
+        private readonly ILine _line;
         /// <summary>
         /// Initiates the class with a voice line
         /// </summary>
         /// <param name="line">The voice line to ask the questions on</param>
         public PromptFunctions(ILine line)
         {
-            this.line = line;
+            _line = line;
         }
 
         /// <summary>
@@ -34,10 +30,7 @@ namespace ivrToolkit.Core.Util
         /// </summary>
         public virtual Prompt GetRegularStylePrompt()
         {
-            Prompt p = new Prompt(line);
-            p.NumberOfDigits = 99;
-            p.Terminators = "#";
-            p.Attempts = GetAttempts();
+            var p = new Prompt(_line) {NumberOfDigits = 99, Terminators = "#", Attempts = GetAttempts()};
             return p;
         }
         
@@ -48,14 +41,15 @@ namespace ivrToolkit.Core.Util
         /// <returns></returns>
         public virtual Prompt GetMenuStylePrompt()
         {
-            Prompt p = new Prompt(line);
-            p.NumberOfDigits = 1;
-            p.Terminators = "";
-            p.Attempts = GetAttempts();
+            var p = new Prompt(_line) {NumberOfDigits = 1, Terminators = "", Attempts = GetAttempts()};
             return p;
         }
 
-        private int GetAttempts()
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public int GetAttempts()
         {
             return VoiceProperties.Current.PromptAttempts;
         }
@@ -69,19 +63,12 @@ namespace ivrToolkit.Core.Util
         /// <returns>The digit pressed that is within the allowed string.</returns>
         public string SingleDigitPrompt(string promptMessage, string allowed)
         {
-            Prompt p = GetMenuStylePrompt();
+            var p = GetMenuStylePrompt();
             p.PromptMessage = promptMessage;
             p.OnValidation += delegate(string answer)
-            {
-                if (allowed.IndexOf(answer) != -1)
                 {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            };
+                    return allowed.IndexOf(answer, StringComparison.Ordinal) != -1;
+                };
             return p.Ask();
         }
 
@@ -109,14 +96,7 @@ namespace ivrToolkit.Core.Util
             {
                 if (validAnswers == null) return true;
 
-                foreach (string s in validAnswers)
-                {
-                    if (answer == s)
-                    {
-                        return true;
-                    }
-                }
-                return false;
+                return validAnswers.Any(s => answer == s);
             };
             return CustomValidationPrompt(promptMessage, customHandler);
         }

@@ -4,9 +4,6 @@
  * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
  */
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace ivrToolkit.Core.Exceptions
 {
@@ -18,7 +15,6 @@ namespace ivrToolkit.Core.Exceptions
     {
         /// <inheritdoc/>
         public GetDigitsTimeoutException()
-            : base()
         {
         }
         /// <inheritdoc/>

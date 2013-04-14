@@ -3,12 +3,6 @@
  *
  * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using ivrToolkit.Core.Util;
-
 namespace ivrToolkit.Core
 {
     /// <summary>
@@ -40,16 +34,16 @@ namespace ivrToolkit.Core
     /// </example>
     public class ScriptManager
     {
-        private ILine line;
-        private IScript nextScript;
+        private readonly ILine _line;
+        private IScript _nextScript;
 
         /// <summary>
         /// The next script block to be executed.
         /// </summary>
         public IScript NextScript
         {
-            get { return nextScript; }
-            set { nextScript = value; }
+            get { return _nextScript; }
+            set { _nextScript = value; }
         }
         /// <summary>
         /// Initializes the script manager with the current voice line and a starting script.
@@ -58,8 +52,8 @@ namespace ivrToolkit.Core
         /// <param name="startingScript">The first script</param>
         public ScriptManager(ILine line, IScript startingScript)
         {
-            this.NextScript = startingScript;
-            this.line = line;
+            NextScript = startingScript;
+            _line = line;
         }
 
         /// <summary>
@@ -67,8 +61,8 @@ namespace ivrToolkit.Core
         /// </summary>
         public void Execute()
         {
-            nextScript.Line = line;
-            nextScript = nextScript.Execute();
+            _nextScript.Line = _line;
+            _nextScript = _nextScript.Execute();
         }
 
         /// <summary>
@@ -77,14 +71,7 @@ namespace ivrToolkit.Core
         /// <returns>Returns the next script block to execute or null if there are no more.</returns>
         public bool HasNext()
         {
-            if (nextScript != null)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return _nextScript != null;
         }
     } // class
 }

@@ -1,13 +1,13 @@
-﻿/*
+/*
  * Copyright 2013 Troy Makaro
  *
  * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
  */
+
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
+using System.Linq;
 
 namespace ivrToolkit.Core.Util
 {
@@ -17,7 +17,7 @@ namespace ivrToolkit.Core.Util
     /// </summary>
     public class Properties
     {
-        Dictionary<string, string> stuff = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> _stuff = new Dictionary<string, string>();
 
         /// <summary>
         /// Opens up a java style property file.
@@ -25,14 +25,14 @@ namespace ivrToolkit.Core.Util
         /// <param name="fileName">The name of the file to open.</param>
         public Properties(string fileName)
         {
-            string[] lines = File.ReadAllLines(fileName);
+            var lines = File.ReadAllLines(fileName);
             foreach (string line in lines) {
                 if (!line.Trim().StartsWith("#")) {
-                    int index = line.IndexOf("=");
+                    var index = line.IndexOf("=", StringComparison.Ordinal);
                     if (index != -1) {
-                        string key = line.Substring(0, index).Trim().ToLower();
-                        string value = line.Substring(index + 1).Trim();
-                        stuff.Add(key, value);
+                        var key = line.Substring(0, index).Trim().ToLower();
+                        var value = line.Substring(index + 1).Trim();
+                        _stuff.Add(key, value);
                     }
                 }
             }
@@ -46,7 +46,7 @@ namespace ivrToolkit.Core.Util
         public string GetProperty(string key)
         {
             try {
-                return stuff[key.ToLower()];
+                return _stuff[key.ToLower()];
             } catch (KeyNotFoundException) {
                 return null;
             }
@@ -62,7 +62,7 @@ namespace ivrToolkit.Core.Util
         {
             try
             {
-                return stuff[key.ToLower()];
+                return _stuff[key.ToLower()];
             }
             catch (KeyNotFoundException)
             {
@@ -76,7 +76,7 @@ namespace ivrToolkit.Core.Util
         /// <returns>A string array of parameter names where the property name begins with the prefix</returns>
         public string[] GetKeyPrefixMatch(string prefix)
         {
-            return (from a in stuff
+            return (from a in _stuff
                     where a.Key.StartsWith(prefix)
                     select a.Key.Substring(prefix.Length).Trim()).ToArray();
         }
@@ -87,7 +87,7 @@ namespace ivrToolkit.Core.Util
         /// <returns>A string array of values where the property name begins with the prefix</returns>
         public string[] GetPrefixMatch(string prefix)
         {
-            return (from a in stuff
+            return (from a in _stuff
                     where a.Key.StartsWith(prefix)
                     select a.Value).ToArray();
         }

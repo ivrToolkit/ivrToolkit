@@ -4,29 +4,25 @@
  * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
  */
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace ivrToolkit.Core.Exceptions
 {
     /// <summary>
-    /// Thrown if There have been too many attempts at a prompt. The default is '5' attempts.
+    /// Thrown for any unknown ivrToolKit exception. See InnerException for the underlying cause.
     /// </summary>
-    public class TooManyAttempts : VoiceException
+    public class VoiceException : Exception
     {
         /// <inheritdoc/>
-        public TooManyAttempts()
-            : base()
+        public VoiceException()
         {
         }
         /// <inheritdoc/>
-        public TooManyAttempts(string message)
+        public VoiceException(string message)
             : base(message)
         {
         }
         /// <inheritdoc/>
-        public TooManyAttempts(string message, Exception innerException)
+        public VoiceException(string message, Exception innerException)
             : base(message, innerException)
         {
         }

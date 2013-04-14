@@ -3,6 +3,8 @@ param($installPath, $toolsPath, $package, $project)
 $folder = $project.ProjectItems.Item("System Recordings")
 
 foreach($myitem in $folder.ProjectItems) {
-    $copyToOutput1 = $myitem.Properties.Item("CopyToOutputDirectory")
-    $copyToOutput1.Value = 2
+    $myitem.Properties.Item("CopyToOutputDirectory").Value = 1
 }
+
+$project.ProjectItems.Item("voice.properties").Properties.Item("CopyToOutputDirectory").Value = 1
+$project.ProjectItems.Item("ivrToolkit.Core.nlog").Properties.Item("CopyToOutputDirectory").Value = 1

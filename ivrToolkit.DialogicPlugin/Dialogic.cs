@@ -594,7 +594,8 @@ namespace ivrToolkit.DialogicPlugin
                         break;
                 }
 
-                dx_fileclose(iott.io_fhandle);
+                //I don't think this is needed when we get an error opening a file
+                //dx_fileclose(iott.io_fhandle);
 
                 throw new VoiceException(err);
             }

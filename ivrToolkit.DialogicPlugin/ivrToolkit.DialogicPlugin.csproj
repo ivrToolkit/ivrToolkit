@@ -76,9 +76,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Code\Dialogic.cs" />
-    <Compile Include="Code\DialogicDef.cs" />
-    <Compile Include="Code\DialogicLine.cs" />
+    <Compile Include="Dialogic.cs" />
+    <Compile Include="DialogicDef.cs" />
+    <Compile Include="DialogicLine.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -3,10 +3,8 @@
  *
  * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Util;
 using System.Threading;
@@ -16,57 +14,47 @@ namespace ivrToolkit.DialogicPlugin
 {
     public class DialogicLine : ILine
     {
-        private int devh;
-        private bool hungup = false;
-        private bool stopped = false;
-        private string _lastTerminator;
+        private readonly int _devh;
+        private bool _hungup;
+        private bool _stopped;
 
         internal DialogicLine(int devh, int lineNumber)
         {
             // can only instantiate this class from IVoice
-            this.devh = devh;
-            this._lineNumber = lineNumber;
-            setDefaultFileType();
-            deleteCustomTones(); // uses dx_deltones() so I have to readd call progress tones. I also readd special tones
+            _devh = devh;
+            LineNumber = lineNumber;
+            SetDefaultFileType();
+            DeleteCustomTones(); // uses dx_deltones() so I have to readd call progress tones. I also readd special tones
         }
 
-        public string LastTerminator
-        {
-            get { return _lastTerminator; }
-        }
-        private int _lineNumber;
-        public int LineNumber
-        {
-            get
-            {
-                return _lineNumber;
-            }
-        }
+        public string LastTerminator { get; private set; }
 
-        private Dialogic.DX_XPB currentXPB;
+        public int LineNumber { get; private set; }
+
+        private Dialogic.DX_XPB _currentXpb;
 
         public void WaitRings(int rings)
         {
-            if (stopped) resetAndThrowStop();
+            if (_stopped) ResetAndThrowStop();
             _status = LineStatusTypes.AcceptingCalls;
-            Dialogic.waitRings(devh, rings);
-            if (stopped) resetAndThrowStop();
+            Dialogic.WaitRings(_devh, rings);
+            if (_stopped) ResetAndThrowStop();
         }
 
         public void Hangup()
         {
             _status = LineStatusTypes.OnHook;
-            Dialogic.hangup(devh);
+            Dialogic.Hangup(_devh);
         }
         public void TakeOffHook()
         {
             _status = LineStatusTypes.OffHook;
-            Dialogic.takeOffHook(devh);
+            Dialogic.TakeOffHook(_devh);
         }
 
         public CallAnalysis Dial(string number, int answeringMachineLengthInMilliseconds)
         {
-            if (stopped) resetAndThrowStop();
+            if (_stopped) ResetAndThrowStop();
 
             Hangup();
             Thread.Sleep(2000);
@@ -80,50 +68,49 @@ namespace ivrToolkit.DialogicPlugin
             if (VoiceProperties.Current.PreTestDialTone)
             {
                 dialToneEnabled = true;
-                Dialogic.enableTone(devh, dialToneTid);
-                int tid = Dialogic.listenForCustomTones(devh, 2);
+                Dialogic.EnableTone(_devh, dialToneTid);
+                int tid = Dialogic.ListenForCustomTones(_devh, 2);
 
                 if (tid == 0)
                 {
-                    Dialogic.disableTone(devh, dialToneTid);
+                    Dialogic.DisableTone(_devh, dialToneTid);
                     Hangup();
-                    return CallAnalysis.noDialTone;
+                    return CallAnalysis.NoDialTone;
                 }
             }
             int index = number.IndexOf(',');
             if (VoiceProperties.Current.CustomOutboundEnabled && index != -1)
             {
-                string prefix = number.Substring(0, index);
                 number = number.Substring(index+1).Replace(",",""); // there may be more than one comma
 
-                if (!dialToneEnabled) Dialogic.enableTone(devh, dialToneTid);
-                Dialogic.enableTone(devh, noFreeLineTid);
+                if (!dialToneEnabled) Dialogic.EnableTone(_devh, dialToneTid);
+                Dialogic.EnableTone(_devh, noFreeLineTid);
 
                 // TODO send prefix
 
                 // listen for tones
-                int tid = Dialogic.listenForCustomTones(devh, 2);
+                var tid = Dialogic.ListenForCustomTones(_devh, 2);
 
-                Dialogic.disableTone(devh, dialToneTid);
-                Dialogic.disableTone(devh, noFreeLineTid);
+                Dialogic.DisableTone(_devh, dialToneTid);
+                Dialogic.DisableTone(_devh, noFreeLineTid);
 
 
                 if (tid == 0)
                 {
                     Hangup();
-                    return CallAnalysis.noDialTone;
+                    return CallAnalysis.NoDialTone;
                 }
                 if (tid == noFreeLineTid)
                 {
                     Hangup();
-                    return CallAnalysis.noFreeLine;
+                    return CallAnalysis.NoFreeLine;
                 }
             }
 
-            CallAnalysis result = Dialogic.dialWithCPA(devh, number, answeringMachineLengthInMilliseconds);
-            if (result == CallAnalysis.stopped) resetAndThrowStop();
+            var result = Dialogic.DialWithCpa(_devh, number, answeringMachineLengthInMilliseconds);
+            if (result == CallAnalysis.Stopped) ResetAndThrowStop();
 
-            if (result == CallAnalysis.answeringMachine || result == CallAnalysis.connected)
+            if (result == CallAnalysis.AnsweringMachine || result == CallAnalysis.Connected)
             {
                 _status = LineStatusTypes.Connected;
             }
@@ -139,47 +126,49 @@ namespace ivrToolkit.DialogicPlugin
             {
                 Hangup();
             }
-            Dialogic.close(devh);
+            Dialogic.Close(_devh);
         }
 
-        private void setDefaultFileType() {
-            currentXPB = new Dialogic.DX_XPB();
-            currentXPB.wFileFormat = Dialogic.FILE_FORMAT_WAVE;
-            currentXPB.wDataFormat = Dialogic.DATA_FORMAT_PCM;
-            currentXPB.nSamplesPerSec = Dialogic.DRT_8KHZ;
-            currentXPB.wBitsPerSample = 8;
+        private void SetDefaultFileType() {
+            _currentXpb = new Dialogic.DX_XPB
+                {
+                    wFileFormat = Dialogic.FILE_FORMAT_WAVE,
+                    wDataFormat = Dialogic.DATA_FORMAT_PCM,
+                    nSamplesPerSec = Dialogic.DRT_8KHZ,
+                    wBitsPerSample = 8
+                };
         }
 
         public void PlayFile(string filename)
         {
-            if (stopped) resetAndThrowStop();
+            if (_stopped) ResetAndThrowStop();
             try
             {
-                Dialogic.playFile(devh, filename, "0123456789#*abcd", currentXPB);
+                Dialogic.PlayFile(_devh, filename, "0123456789#*abcd", _currentXpb);
             }
             catch (StopException)
             {
-                resetAndThrowStop();
+                ResetAndThrowStop();
             }
             catch (HangupException)
             {
-                resetAndThrowHangup();
+                ResetAndThrowHangup();
             }
         }
 
         public void RecordToFile(string filename)
         {
-            if (stopped) resetAndThrowStop();
+            if (_stopped) ResetAndThrowStop();
             try {
-                Dialogic.recordToFile(devh, filename, "0123456789#*abcd", currentXPB);
+                Dialogic.RecordToFile(_devh, filename, "0123456789#*abcd", _currentXpb);
             }
             catch (StopException)
             {
-                resetAndThrowStop();
+                ResetAndThrowStop();
             }
             catch (HangupException)
             {
-                resetAndThrowHangup();
+                ResetAndThrowHangup();
             }
         }
 
@@ -187,21 +176,22 @@ namespace ivrToolkit.DialogicPlugin
         /// Keep prompting for digits until number of digits is pressed or a terminator digit is pressed.
         /// </summary>
         /// <param name="numberOfDigits">Maximum number of digits allowed in the buffer.</param>
+        /// <param name="terminators">Terminators</param>
         /// <returns>Returns the digits pressed not including the terminator if there was one</returns>
         public string GetDigits(int numberOfDigits, string terminators)
         {
-            if (stopped) resetAndThrowStop();
+            if (_stopped) ResetAndThrowStop();
             try {
-                string answer = Dialogic.getDigits(devh, numberOfDigits, terminators);
-                return stripOffTerminator(answer, terminators);
+                string answer = Dialogic.GetDigits(_devh, numberOfDigits, terminators);
+                return StripOffTerminator(answer, terminators);
             }
             catch (StopException)
             {
-                resetAndThrowStop();
+                ResetAndThrowStop();
             }
             catch (HangupException)
             {
-                resetAndThrowHangup();
+                ResetAndThrowHangup();
             }
             return null; // will never get here
         }
@@ -212,21 +202,21 @@ namespace ivrToolkit.DialogicPlugin
         /// <returns>All the digits in the buffer including terminators</returns>
         public string FlushDigitBuffer()
         {
-            if (stopped) resetAndThrowStop();
-            return Dialogic.flushDigitBuffer(devh);
+            if (_stopped) ResetAndThrowStop();
+            return Dialogic.FlushDigitBuffer(_devh);
         }
 
-        private string stripOffTerminator(string answer, string terminators)
+        private string StripOffTerminator(string answer, string terminators)
         {
-            _lastTerminator = "";
+            LastTerminator = "";
             if (answer.Length >= 1)
             {
                 string lastDigit = answer.Substring(answer.Length - 1, 1);
                 if (terminators != null & terminators != "")
                 {
-                    if (terminators.IndexOf(lastDigit) != -1)
+                    if (terminators.IndexOf(lastDigit, StringComparison.Ordinal) != -1)
                     {
-                        _lastTerminator = lastDigit;
+                        LastTerminator = lastDigit;
                         answer = answer.Substring(0, answer.Length - 1);
                     }
                 }
@@ -241,50 +231,50 @@ namespace ivrToolkit.DialogicPlugin
 
         public void CheckStop()
         {
-            if (stopped) resetAndThrowStop();
-            if (hungup) resetAndThrowHangup();
+            if (_stopped) ResetAndThrowStop();
+            if (_hungup) ResetAndThrowHangup();
         }
         public void Stop()
         {
-            stopped = true;
-            Dialogic.stop(devh);
+            _stopped = true;
+            Dialogic.Stop(_devh);
         }
 
-        private void resetAndThrowStop()
+        private void ResetAndThrowStop()
         {
-            reset();
+            Reset();
             throw new StopException();
         }
-        private void resetAndThrowHangup()
+        private void ResetAndThrowHangup()
         {
-            reset();
+            Reset();
             throw new HangupException();
         }
-        private void reset()
+        private void Reset()
         {
-            hungup = false;
-            stopped = false;
+            _hungup = false;
+            _stopped = false;
             _status = LineStatusTypes.OnHook;
         }
 
-        public void deleteCustomTones()
+        public void DeleteCustomTones()
         {
-            Dialogic.deleteTones(devh);
-            Dialogic.initCallProgress(devh);
-            addSpecialCustomTones();
+            Dialogic.DeleteTones(_devh);
+            Dialogic.InitCallProgress(_devh);
+            AddSpecialCustomTones();
         }
 
-        private void addSpecialCustomTones()
+        private void AddSpecialCustomTones()
         {
-            addCustomTone(VoiceProperties.Current.DialTone);
+            AddCustomTone(VoiceProperties.Current.DialTone);
             if (VoiceProperties.Current.CustomOutboundEnabled)
             {
-                addCustomTone(VoiceProperties.Current.NoFreeLineTone);
+                AddCustomTone(VoiceProperties.Current.NoFreeLineTone);
             }
         }
 
 
-        public void addCustomTone(CustomTone tone)
+        public void AddCustomTone(CustomTone tone)
         {
             if (tone.ToneType == CustomToneType.Single)
             {
@@ -292,24 +282,24 @@ namespace ivrToolkit.DialogicPlugin
             }
             else if (tone.ToneType == CustomToneType.Dual)
             {
-                Dialogic.addDualTone(devh, tone.Tid, tone.Freq1, tone.Frq1dev, tone.Freq2, tone.Frq2dev, tone.Mode);
+                Dialogic.AddDualTone(_devh, tone.Tid, tone.Freq1, tone.Frq1Dev, tone.Freq2, tone.Frq2Dev, tone.Mode);
             }
             else if (tone.ToneType == CustomToneType.DualWithCadence)
             {
-                Dialogic.addDualToneWithCadence(devh, tone.Tid, tone.Freq1, tone.Frq1dev, tone.Freq2, tone.Frq2dev, tone.Ontime, tone.Ontdev, tone.Offtime,
+                Dialogic.AddDualToneWithCadence(_devh, tone.Tid, tone.Freq1, tone.Frq1Dev, tone.Freq2, tone.Frq2Dev, tone.Ontime, tone.Ontdev, tone.Offtime,
                     tone.Offtdev, tone.Repcnt);
             }
-            Dialogic.disableTone(devh, tone.Tid);
+            Dialogic.DisableTone(_devh, tone.Tid);
         }
 
-        public void disableTone(int tid)
+        public void DisableTone(int tid)
         {
-            Dialogic.disableTone(devh, tid);
+            Dialogic.DisableTone(_devh, tid);
         }
 
-        public void enableTone(int tid)
+        public void EnableTone(int tid)
         {
-            Dialogic.enableTone(devh, tid);
+            Dialogic.EnableTone(_devh, tid);
         }
 
     } // class

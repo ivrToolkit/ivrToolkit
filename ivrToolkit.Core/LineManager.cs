@@ -3,11 +3,8 @@
  *
  * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
  */
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using ivrToolkit.Core.Properties;
 using System.Reflection;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Util;
@@ -23,11 +20,11 @@ namespace ivrToolkit.Core
         /// <summary>
         /// use leading edge
         /// </summary>
-        leading,
+        Leading,
         /// <summary>
         /// use trailing edge
         /// </summary>
-        trailing
+        Trailing
     }
 
     /// <summary>
@@ -38,48 +35,48 @@ namespace ivrToolkit.Core
         /// <summary>
         /// The line is currently busy.
         /// </summary>
-        busy,
+        Busy,
         /// <summary>
         /// no answer.
         /// </summary>
-        noAnswer,
+        NoAnswer,
         /// <summary>
         /// No ringback (not sure what this is).
         /// </summary>
-        noRingback,
+        NoRingback,
         /// <summary>
         /// Call is connected.
         /// </summary>
-        connected,
+        Connected,
         /// <summary>
         /// Operator Intercept(not used. This would come across as an answering machine instead).
         /// </summary>
-        operatorIntercept,
+        OperatorIntercept,
         /// <summary>
         /// line has been stopped.
         /// </summary>
-        stopped,
+        Stopped,
         /// <summary>
         /// No dial tone on the line.
         /// </summary>
-        noDialTone,
+        NoDialTone,
         /// <summary>
         /// Fax Tone.
         /// </summary>
-        faxTone,
+        FaxTone,
         /// <summary>
         /// An error happened on the voice card.
         /// </summary>
-        error,
+        Error,
         /// <summary>
         /// An answering machine has been detected. based on salutation length. See voice.properties
         /// </summary>
-        answeringMachine,
+        AnsweringMachine,
         /// <summary>
         /// No free line available. This is characterized by a fast busy signal. It happens if all the switchboard lines are used up. For example you dial 9 to get an out line
         /// and there are none available.
         /// </summary>
-        noFreeLine
+        NoFreeLine
     }
 
     /// <summary>
@@ -93,9 +90,9 @@ namespace ivrToolkit.Core
     /// </example>
     public class LineManager
     {
-        private static Logger logger = MyLogManager.Instance.GetCurrentClassLogger();
+        private static readonly Logger Logger = MyLogManager.Instance.GetCurrentClassLogger();
 
-        private static Dictionary<int,ILine> lines = new Dictionary<int,ILine>();
+        private static readonly Dictionary<int,ILine> Lines = new Dictionary<int,ILine>();
 
         /// <summary>
         /// Gets the line class that will do the line manipulation. This method relies on the following entries in voice.properties:
@@ -108,7 +105,7 @@ namespace ivrToolkit.Core
         /// <returns>A class that represents the phone line</returns>
         public static ILine GetLine(int lineNumber)
         {
-            logger.Debug("Getting line number: "+lineNumber);
+            Logger.Debug("Getting line number: "+lineNumber);
 
             string className = VoiceProperties.Current.ClassName;
             string assemblyName = VoiceProperties.Current.AssemblyName;
@@ -121,9 +118,9 @@ namespace ivrToolkit.Core
             if (!(o is IVoice)) {
                 throw new VoiceException("class must implement the IVoice interface");
             }
-            IVoice voiceDriver = (IVoice)o;
-            ILine line = voiceDriver.GetLine(lineNumber);
-            lines[lineNumber] = line;
+            var voiceDriver = (IVoice)o;
+            var line = voiceDriver.GetLine(lineNumber);
+            Lines[lineNumber] = line;
             return line;
         }
 
@@ -132,7 +129,7 @@ namespace ivrToolkit.Core
         /// </summary>
         public static int GetLineCount()
         {
-            return lines.Count;
+            return Lines.Count;
         }
 
         /// <summary>
@@ -143,8 +140,8 @@ namespace ivrToolkit.Core
         {
             try
             {
-                ILine line = lines[lineNumber];
-                lines.Remove(lineNumber);
+                ILine line = Lines[lineNumber];
+                Lines.Remove(lineNumber);
                 line.Stop();
             }
             catch (KeyNotFoundException)
@@ -157,7 +154,7 @@ namespace ivrToolkit.Core
         /// </summary>
         public static void ReleaseAll()
         {
-            List<KeyValuePair<int,ILine>> linesList = lines.ToList();
+            List<KeyValuePair<int,ILine>> linesList = Lines.ToList();
             foreach (KeyValuePair<int,ILine> keyValue in linesList)
             {
                 ILine line = keyValue.Value;

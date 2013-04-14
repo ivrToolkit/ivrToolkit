@@ -1,13 +1,10 @@
-﻿/*
+/*
  * Copyright 2013 Troy Makaro
  *
  * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using ivrToolkit.Core;
 using ivrToolkit.Core.Exceptions;
 
 namespace ivrToolkit.Core.Util
@@ -17,9 +14,9 @@ namespace ivrToolkit.Core.Util
     /// </summary>
     public class Prompt
     {
-        private ILine line;
+        private readonly ILine _line;
 
-        private bool allowEmpty = true;
+        private bool _allowEmpty = true;
 
         /// <summary>
         /// Instatiate the class with the line out want to ask questions on.
@@ -27,7 +24,7 @@ namespace ivrToolkit.Core.Util
         /// <param name="line">The voice line to use</param>
         public Prompt(ILine line)
         {
-            this.line = line;
+            _line = line;
         }
 
         /// <summary>
@@ -36,57 +33,57 @@ namespace ivrToolkit.Core.Util
         /// </summary>
         public bool AllowEmpty
         {
-            get { return allowEmpty; }
-            set { allowEmpty = value; }
+            get { return _allowEmpty; }
+            set { _allowEmpty = value; }
         }
 
-        private string specialTerminator;
+        private string _specialTerminator;
         /// <summary>
         /// You can define special terminator digits that will fire the OnSpecialTerminator event. For example a '*' could take you to a special option to control volume.
         /// </summary>
         public string SpecialTerminator
         {
-            get { return specialTerminator; }
-            set { specialTerminator = value; }
+            get { return _specialTerminator; }
+            set { _specialTerminator = value; }
         }
 
-        private string tooManyAttemptsMessage;
+        private string _tooManyAttemptsMessage;
         /// <summary>
         /// A message to be played before throwing the TooManyAttemptsException. If null then no message will be played.
         /// </summary>
         public string TooManyAttemptsMessage
         {
-            get { return tooManyAttemptsMessage; }
-            set { tooManyAttemptsMessage = value; }
+            get { return _tooManyAttemptsMessage; }
+            set { _tooManyAttemptsMessage = value; }
         }
-        private string invalidAnswerMessage;
+        private string _invalidAnswerMessage;
         /// <summary>
         /// A message to be played if the answer is inccorrect. If null then no message will be played.
         /// </summary>
         public string InvalidAnswerMessage
         {
-            get { return invalidAnswerMessage; }
-            set { invalidAnswerMessage = value; }
+            get { return _invalidAnswerMessage; }
+            set { _invalidAnswerMessage = value; }
         }
 
-        private string promptMessage;
+        private string _promptMessage;
         /// <summary>
         /// The prompt message to play before calling the GetDigits method
         /// </summary>
         public string PromptMessage
         {
-            get { return promptMessage; }
-            set { promptMessage = value; }
+            get { return _promptMessage; }
+            set { _promptMessage = value; }
         }
 
-        private bool catchTooManyAttempts = true;
+        private bool _catchTooManyAttempts = true;
         /// <summary>
         /// Set to false and the prompt will return a value of "". Set to true and TooManyAttemptsException will be thrown.
         /// </summary>
         public bool CatchTooManyAttempts
         {
-            get { return catchTooManyAttempts; }
-            set { catchTooManyAttempts = value; }
+            get { return _catchTooManyAttempts; }
+            set { _catchTooManyAttempts = value; }
         }
         /// <summary>
         /// Method signature for use with the OnValidation event
@@ -126,42 +123,42 @@ namespace ivrToolkit.Core.Util
         /// </summary>
         public event PrePlayHandler OnPrePlay;
 
-        private int attempts = VoiceProperties.Current.PromptAttempts;
+        private int _attempts = VoiceProperties.Current.PromptAttempts;
         /// <summary>
         /// The number of attempts before throwing the TooManyAttemptsException
         /// </summary>
         public int Attempts
         {
-            get { return attempts; }
-            set { attempts = value; }
+            get { return _attempts; }
+            set { _attempts = value; }
         }
 
-        private int numberOfDigits = 99;
+        private int _numberOfDigits = 99;
         /// <summary>
         /// The number of digits the prompt can ask for before automatically terminating. The default is 99 so every prompt requires a pound key for termination. Set to 1 for menu prompts.
         /// </summary>
         public int NumberOfDigits
         {
-            get { return numberOfDigits; }
-            set { numberOfDigits = value; }
+            get { return _numberOfDigits; }
+            set { _numberOfDigits = value; }
         }
-        private string terminators = "#";
+        private string _terminators = "#";
         /// <summary>
         /// List of one or more valid termination digits. The default is '#'. You can also use 'T' which will allow a timeout to be a valid termination key
         /// </summary>
         public string Terminators
         {
-            get { return terminators; }
-            set { terminators = value; }
+            get { return _terminators; }
+            set { _terminators = value; }
         }
-        private string answer;
+        private string _answer;
         /// <summary>
         /// Calling Ask() returns the answer anyways but if you want you can also retrieve the keypresses with this property.
         /// </summary>
         public string Answer
         {
-            get { return answer; }
-            set { answer = value; }
+            get { return _answer; }
+            set { _answer = value; }
         }
         /// <summary>
         /// Asks the question and returns an answer.
@@ -169,27 +166,27 @@ namespace ivrToolkit.Core.Util
         public string Ask()
         {
             int count = 0;
-            string myTerminators = terminators + (specialTerminator == null ? "" : specialTerminator);
-            while (count < attempts)
+            string myTerminators = _terminators + (_specialTerminator ?? "");
+            while (count < _attempts)
             {
                 try
                 {
                     if (OnPrePlay != null)
                     {
-                        OnPrePlay(promptMessage);
+                        OnPrePlay(_promptMessage);
                     }
-                    PlayFileOrPhrase(promptMessage);
-                    answer = line.GetDigits(numberOfDigits, myTerminators+"t");
+                    PlayFileOrPhrase(_promptMessage);
+                    _answer = _line.GetDigits(_numberOfDigits, myTerminators+"t");
                     if (OnKeysEntered != null)
                     {
-                        string term = line.LastTerminator;
-                        OnKeysEntered(answer, term);
+                        string term = _line.LastTerminator;
+                        OnKeysEntered(_answer, term);
                     }
-                    if (line.LastTerminator == "t")
+                    if (_line.LastTerminator == "t")
                     {
                         throw new GetDigitsTimeoutException();
                     }
-                    if (specialTerminator != null && line.LastTerminator == specialTerminator)
+                    if (_specialTerminator != null && _line.LastTerminator == _specialTerminator)
                     {
                         if (OnSpecialTerminator != null)
                         {
@@ -201,27 +198,24 @@ namespace ivrToolkit.Core.Util
                     {
                         if (OnValidation != null)
                         {
-                            if (OnValidation(answer))
+                            if (OnValidation(_answer))
                             {
-                                return answer;
+                                return _answer;
                             }
-                            else
+                            if (_invalidAnswerMessage != null)
                             {
-                                if (invalidAnswerMessage != null)
-                                {
-                                    PlayFileOrPhrase(invalidAnswerMessage);
-                                }
+                                PlayFileOrPhrase(_invalidAnswerMessage);
                             }
                         }
                         else
                         {
-                            if (answer == "" && allowEmpty == false)
+                            if (_answer == "" && _allowEmpty == false)
                             {
-                                PlayFileOrPhrase(invalidAnswerMessage);
+                                PlayFileOrPhrase(_invalidAnswerMessage);
                             }
                             else
                             {
-                                return answer;
+                                return _answer;
                             }
                         }
                     }
@@ -233,25 +227,25 @@ namespace ivrToolkit.Core.Util
             } // while
 
             // too many attempts
-            if (!catchTooManyAttempts)
+            if (!_catchTooManyAttempts)
             {
                 return "";
             }
-            if  (tooManyAttemptsMessage != null) {
-                PlayFileOrPhrase(tooManyAttemptsMessage);
+            if  (_tooManyAttemptsMessage != null) {
+                PlayFileOrPhrase(_tooManyAttemptsMessage);
             }
             throw new TooManyAttempts();
         }
 
         private void PlayFileOrPhrase(string fileNameOrPhrase)
         {
-            if (fileNameOrPhrase.IndexOf("|") != -1)
+            if (fileNameOrPhrase.IndexOf("|", StringComparison.Ordinal) != -1)
             {
-                line.PlayString(fileNameOrPhrase);
+                _line.PlayString(fileNameOrPhrase);
             }
             else
             {
-                line.PlayFile(fileNameOrPhrase);
+                _line.PlayFile(fileNameOrPhrase);
             }
         }
 

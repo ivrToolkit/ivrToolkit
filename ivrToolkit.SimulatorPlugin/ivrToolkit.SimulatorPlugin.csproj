@@ -75,12 +75,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Code\MediaWavPlayer.cs" />
-    <Compile Include="Code\Phone.cs" />
-    <Compile Include="Code\Simulator.cs" />
-    <Compile Include="Code\SimulatorLine.cs" />
-    <Compile Include="Code\SimulatorListener.cs" />
-    <Compile Include="Code\WavPlayer.cs" />
+    <Compile Include="MediaWavPlayer.cs" />
+    <Compile Include="Phone.cs" />
+    <Compile Include="Simulator.cs" />
+    <Compile Include="SimulatorLine.cs" />
+    <Compile Include="SimulatorListener.cs" />
+    <Compile Include="WavPlayer.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">

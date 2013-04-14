@@ -1,14 +1,10 @@
-﻿/*
+/*
  * Copyright 2013 Troy Makaro
  *
  * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+
 using ivrToolkit.Core.Util;
-using System.Threading;
 
 namespace ivrToolkit.Core
 {
@@ -17,17 +13,17 @@ namespace ivrToolkit.Core
     /// </summary>
     public abstract class AbstractScript : IScript
     {
-        private ILine line;
-        private PromptFunctions promptFunctions;
+        private ILine _line;
+        private IPromptFunctions _promptFunctions;
 
         /// <summary>
         /// Used within your script block to handle prompts
         /// </summary>
-        protected PromptFunctions PromptFunctions
+        protected IPromptFunctions PromptFunctions
         {
             get
             {
-                return promptFunctions;
+                return _promptFunctions;
             }
         }
 
@@ -35,11 +31,11 @@ namespace ivrToolkit.Core
         public ILine Line
         {
             get
-            { return line; }
+            { return _line; }
             set
             {
-                line = value;
-                promptFunctions = new PromptFunctions(line);
+                _line = value;
+                _promptFunctions = new PromptFunctions(_line);
             }
         }
         /// <inheritdoc/>

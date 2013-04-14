@@ -3,11 +3,6 @@
  *
  * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace ivrToolkit.Core
 {
     /// <summary>
@@ -94,6 +89,7 @@ namespace ivrToolkit.Core
         /// Keep prompting for digits until number of digits is pressed or a terminator digit is pressed.
         /// </summary>
         /// <param name="numberOfDigits">Maximum number of digits allowed in the buffer.</param>
+        /// <param name="terminators">The terminator keys</param>
         /// <returns>Returns the digits pressed not including the terminator if there was one</returns>
         string GetDigits(int numberOfDigits, string terminators);
 

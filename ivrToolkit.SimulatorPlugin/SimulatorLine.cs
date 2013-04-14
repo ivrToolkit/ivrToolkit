@@ -5,8 +5,8 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using System.Media;
 using System.Threading;
 using ivrToolkit.Core;
 using ivrToolkit.Core.Exceptions;
@@ -18,13 +18,12 @@ namespace ivrToolkit.SimulatorPlugin
 
     public class SimulatorLine : ILine
     {
-        private int ringsGot = 0;
-        private bool hungup = false;
-        private bool stopped = false;
-        private string _lastTerminator;
+        private int _ringsGot;
+        private bool _hungup;
+        private bool _stopped;
 
         //Thread signal.
-        private static ManualResetEvent allDone = new ManualResetEvent(false);
+        private static readonly ManualResetEvent AllDone = new ManualResetEvent(false);
 
 
         private LineStatusTypes _status = LineStatusTypes.OnHook;
@@ -33,31 +32,29 @@ namespace ivrToolkit.SimulatorPlugin
         {
             get { return _status; }
         }
-        public string LastTerminator
-        {
-            get { return _lastTerminator; }
-        }
 
-        private int _lineNumber;
+        public string LastTerminator { get; private set; }
+
+        private readonly int _lineNumber;
 
         public int LineNumber
         {
             get { return _lineNumber; }
         }
 
-        List<char> digits = new List<char>();
+        List<char> _digits = new List<char>();
 
-        private object lockObject = new object();
+        private readonly object _lockObject = new object();
 
         public SimulatorLine(int lineNumber) {
-            this._lineNumber = lineNumber;
+            _lineNumber = lineNumber;
         } 
 
         // tell listeners that the software has manually hung up the phone
         public void Hangup()
         {
             _status = LineStatusTypes.OnHook;
-            dispatchHangupEvent(); // tell virtual phone that the program performed a hangup
+            DispatchHangupEvent(); // tell virtual phone that the program performed a hangup
         }
 
         public void TakeOffHook()
@@ -67,16 +64,16 @@ namespace ivrToolkit.SimulatorPlugin
 
         public CallAnalysis Dial(string number, int answeringMachineLengthInMilliseconds)
         {
-            if (stopped) resetAndThrowStop();
-            if (hungup) resetAndThrowHangup();
+            if (_stopped) ResetAndThrowStop();
+            if (_hungup) ResetAndThrowHangup();
 
-            Phone phone = Phone.getPhone(number);
+            var phone = Phone.GetPhone(number);
             if (phone == null)
             {
-                return CallAnalysis.noAnswer;
+                return CallAnalysis.NoAnswer;
             }
-            CallAnalysis result = phone.dial(this);
-            if (result == CallAnalysis.answeringMachine || result == CallAnalysis.connected)
+            var result = phone.Dial(this);
+            if (result == CallAnalysis.AnsweringMachine || result == CallAnalysis.Connected)
             {
                 _status = LineStatusTypes.Connected;
             }
@@ -95,89 +92,89 @@ namespace ivrToolkit.SimulatorPlugin
         {
 
             _status = LineStatusTypes.AcceptingCalls;
-            ringsGot = 0;
+            _ringsGot = 0;
 
-            lock (lockObject)
+            lock (_lockObject)
             {
                 while (true)
                 {
-                    if (stopped) resetAndThrowStop();
-                    if (hungup)
+                    if (_stopped) ResetAndThrowStop();
+                    if (_hungup)
                     {
-                        ringsGot = 0;
-                        reset();
+                        _ringsGot = 0;
+                        Reset();
                         _status = LineStatusTypes.AcceptingCalls;
                     }
-                    if (ringsGot >= rings)
+                    if (_ringsGot >= rings)
                     {
                         _status = LineStatusTypes.Connected;
                         // tell the thread that called sendRing method that it is ok to continue
-                        allDone.Set();
+                        AllDone.Set();
                         return;
                     }
 
                     // tell the thread that called sendRing method that it is ok to continue
-                    allDone.Set();
+                    AllDone.Set();
 
-                    Monitor.Wait(lockObject); // wait indefinetly
+                    Monitor.Wait(_lockObject); // wait indefinetly
                 }
             }
         }
-        private void playFinished(object sender, EventArgs args)
+        private void PlayFinished(object sender, EventArgs args)
         {
             //object obj = DateTime.Now - test;
-            lock (lockObject)
+            lock (_lockObject)
             {
                 //Console.WriteLine(obj);
-                isPlayFinished = true;
-                Monitor.Pulse(lockObject);
+                _isPlayFinished = true;
+                Monitor.Pulse(_lockObject);
             }
         }
         //private DateTime test;
 
-        private bool isPlayFinished;
+        private bool _isPlayFinished;
 
         public void PlayFile(string filename)
         {
-            lock (lockObject)
+            lock (_lockObject)
             {
-                if (stopped) resetAndThrowStop();
-                if (hungup) resetAndThrowHangup();
-                if (digits.Count != 0) return;
+                if (_stopped) ResetAndThrowStop();
+                if (_hungup) ResetAndThrowHangup();
+                if (_digits.Count != 0) return;
 
-                isPlayFinished = false;
-                using (WavPlayer player = new WavPlayer())
+                _isPlayFinished = false;
+                using (var player = new WavPlayer())
                 {
-                    player.subscribeFinished(new EventHandler(playFinished));
+                    player.SubscribeFinished(PlayFinished);
                     //test = DateTime.Now;
                     //Console.WriteLine(test + "|" + filename);
-                    player.play(filename);
+                    player.Play(filename);
 
                     while (true)
                     {
-                        if (stopped)
+                        if (_stopped)
                         {
-                            player.stop();
-                            resetAndThrowStop();
+                            player.Stop();
+                            ResetAndThrowStop();
                         }
-                        if (hungup)
+                        if (_hungup)
                         {
-                            player.stop();
-                            resetAndThrowHangup();
+                            player.Stop();
+                            ResetAndThrowHangup();
                         }
-                        if (isPlayFinished)
+                        if (_isPlayFinished)
                         {
                             //Console.WriteLine("finished");
                             return;
                         }
-                        if (digits.Count != 0)
+                        if (_digits.Count != 0)
                         {
                             //Console.WriteLine("stopped");
-                            player.stop();
+                            player.Stop();
                             return;
                         }
 
-                        Monitor.Wait(lockObject);
+                        Monitor.Wait(_lockObject);
                     } // loop
                 }
             } // lock
@@ -185,47 +182,47 @@ namespace ivrToolkit.SimulatorPlugin
 
         public void RecordToFile(string filename)
         {
-            if (stopped) resetAndThrowStop();
-            if (hungup) resetAndThrowHangup();
+            if (_stopped) ResetAndThrowStop();
+            if (_hungup) ResetAndThrowHangup();
 
             throw new NotImplementedException();
         }
 
-        private void resetAndThrowStop()
+        private void ResetAndThrowStop()
         {
-            reset();
+            Reset();
             throw new StopException();
         }
-        private void resetAndThrowHangup()
+        private void ResetAndThrowHangup()
         {
-            reset();
+            Reset();
             throw new HangupException();
         }
-        private void reset()
+        private void Reset()
         {
-            hungup = false;
-            stopped = false;
-            digits = new List<char>();
+            _hungup = false;
+            _stopped = false;
+            _digits = new List<char>();
             _status = LineStatusTypes.OnHook;
         }
 
         public string GetDigits(int numberOfDigits, string terminators)
         {
-            int timeout = VoiceProperties.Current.DigitsTimeoutInMilli;
-            lock (lockObject)
+            var timeout = VoiceProperties.Current.DigitsTimeoutInMilli;
+            lock (_lockObject)
             {
-                _lastTerminator = "";
+                LastTerminator = "";
                 while (true)
                 {
-                    if (stopped) resetAndThrowStop();
-                    if (hungup) resetAndThrowHangup();
-                    if (haveResult(numberOfDigits, terminators)) return theDigits(numberOfDigits, terminators);
+                    if (_stopped) ResetAndThrowStop();
+                    if (_hungup) ResetAndThrowHangup();
+                    if (HaveResult(numberOfDigits, terminators)) return TheDigits(numberOfDigits, terminators);
 
-                    if (!Monitor.Wait(lockObject, timeout))
+                    if (!Monitor.Wait(_lockObject, timeout))
                     { // handle the timeout
-                        if (terminators.IndexOf("T") != -1 && digits.Count != 0)
+                        if (terminators.IndexOf("T", StringComparison.Ordinal) != -1 && _digits.Count != 0)
                         {
-                            digits.Add('T'); // handle special timeout terminator
+                            _digits.Add('T'); // handle special timeout terminator
                         }
                         else
                         {
@@ -240,149 +237,140 @@ namespace ivrToolkit.SimulatorPlugin
 
         public string FlushDigitBuffer()
         {
-            if (stopped) resetAndThrowStop();
-            if (hungup) resetAndThrowHangup();
+            if (_stopped) ResetAndThrowStop();
+            if (_hungup) ResetAndThrowHangup();
 
-            string myDigits = theDigits();
-            digits = new List<char>();
+            var myDigits = TheDigits();
+            _digits = new List<char>();
             return myDigits;
         }
 
         public void CheckStop()
         {
-            if (stopped) resetAndThrowStop();
-            if (hungup) resetAndThrowHangup();
+            if (_stopped) ResetAndThrowStop();
+            if (_hungup) ResetAndThrowHangup();
         }
 
         public void Stop()
         {
             if (LineManager.GetLineCount() == 0)
             {
-                SimulatorListener.singleton.stop();
+                SimulatorListener.Singleton.Stop();
             }
-            sendStop();
+            SendStop();
         }
 
         //=========================================================
 
-        private bool haveResult(int numberOfDigits, string terminators)
+        private bool HaveResult(int numberOfDigits, string terminators)
         {
-            if (digits.Count == numberOfDigits) return true;
-            foreach (char c in digits)
-            {
-                if (terminators.IndexOf(c) != -1) return true; 
-            }
-            return false;
+            if (_digits.Count == numberOfDigits) return true;
+            return _digits.Any(c => terminators.IndexOf(c) != -1);
         }
 
-        private void pullOff(int count)
+        private void PullOff(int count)
         {
             for (int intT = 0; intT < count; intT++)
             {
-                digits.RemoveAt(0);
+                _digits.RemoveAt(0);
             }
         }
-        private string theDigits(int numberOfDigits, string terminators)
+        private string TheDigits(int numberOfDigits, string terminators)
         {
-            string result = "";
-            int index = 0;
-            foreach (char c in digits)
+            var result = "";
+            var index = 0;
+            foreach (char c in _digits)
             {
                 index++;
                 if (terminators.IndexOf(c) != -1)
                 {
-                    _lastTerminator = c.ToString();
-                    pullOff(index);
+                    LastTerminator = c.ToString(CultureInfo.InvariantCulture);
+                    PullOff(index);
                     return result;
                 }
-                result += c.ToString();
+                result += c.ToString(CultureInfo.InvariantCulture);
                 if (index == numberOfDigits)
                 {
-                    pullOff(index);
+                    PullOff(index);
                     return result;
                 }
             }
             return result;
         }
 
-        private string theDigits()
+        private string TheDigits()
         {
-            string result = "";
-            foreach (char c in digits)
-            {
-                result += c.ToString();
-            }
-            digits.Clear();
+            var result = _digits.Aggregate("", (current, c) => current + c.ToString(CultureInfo.InvariantCulture));
+            _digits.Clear();
             return result;
         }
 
         // used by the simulator client Phone.cs to send a digit to to the software monitoring the line
-        public LineStatusTypes sendRing()
+        public LineStatusTypes SendRing()
         {
-            lock (lockObject)
+            lock (_lockObject)
             {
                 // Set the event to nonsignaled state.
-                allDone.Reset();
+                AllDone.Reset();
 
-                ringsGot++;
-                Monitor.Pulse(lockObject); // wake up thread
+                _ringsGot++;
+                Monitor.Pulse(_lockObject); // wake up thread
 
             }
-            allDone.WaitOne(); // wait for the waitRings method to tell us it is ok to continue
+            AllDone.WaitOne(); // wait for the waitRings method to tell us it is ok to continue
             return _status;
         }
 
         // used by the simulator client Phone.cs to send a digit to to the software monitoring the line
-        public void sendDigit(char digit)
+        public void SendDigit(char digit)
         {
-            lock (lockObject)
+            lock (_lockObject)
             {
-                digits.Add(digit);
-                Monitor.Pulse(lockObject);
+                _digits.Add(digit);
+                Monitor.Pulse(_lockObject);
             }
         }
 
         // used by the simulator client Phone.cs to send a digit to to the software monitoring the line
-        public void sendHangup()
+        public void SendHangup()
         {
-            lock (lockObject)
+            lock (_lockObject)
             {
-                hungup = true;
-                Monitor.Pulse(lockObject);
+                _hungup = true;
+                Monitor.Pulse(_lockObject);
             }
         }
 
         // used by the simulator client Phone.cs to send a digit to to the software monitoring the line
-        public void sendStop()
+        public void SendStop()
         {
-            lock (lockObject)
+            lock (_lockObject)
             {
-                stopped = true;
-                Monitor.Pulse(lockObject);
+                _stopped = true;
+                Monitor.Pulse(_lockObject);
             }
         }
 
-        #region handle hangup event
-        private event HangupDelegate onHangup;
 
-        public void subscribeToHangup(HangupDelegate eventHandler)
+        private event HangupDelegate OnHangup;
+
+        public void SubscribeToHangup(HangupDelegate eventHandler)
         {
-            onHangup += eventHandler;
+            OnHangup += eventHandler;
         }
-        public void unsubscribeToHangup(HangupDelegate eventHandler)
+        public void UnsubscribeToHangup(HangupDelegate eventHandler)
         {
-            onHangup -= eventHandler;
+            OnHangup -= eventHandler;
         }
-        private void dispatchHangupEvent()
+        private void DispatchHangupEvent()
         {
             // make sure the are some delegates in the invocation list 
-            if (onHangup != null)
+            if (OnHangup != null)
             {
-                onHangup(this, null);
+                OnHangup(this, null);
             }
         }
  
-	    #endregion
 
     } // class
 }

@@ -1,12 +1,10 @@
-﻿/*
+/*
  * Copyright 2013 Troy Makaro
  *
  * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
  */
+
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using ivrToolkit.Core.Exceptions;
 
 namespace ivrToolkit.Core.Util
@@ -16,34 +14,24 @@ namespace ivrToolkit.Core.Util
     /// </summary>
     public class VoiceProperties
     {
-        private Properties p;
+        private readonly Properties _p;
 
         [ThreadStatic]
-        private static VoiceProperties current;
+        private static VoiceProperties _current;
 
         /// <summary>
         /// The voice properties singleton object.
         /// </summary>
         public static VoiceProperties Current
         {
-            get
-            {
-                if (current == null)
-                {
-                    current = new VoiceProperties();
-                }
-                return current;
-            }
+            get { return _current ?? (_current = new VoiceProperties()); }
         }
 
         private VoiceProperties()
         {
-            p = new Properties("voice.properties");
+            _p = new Properties("voice.properties");
         }
-        private void reset()
-        {
-            p = new Properties("voice.properties");
-        }
+
         /// <summary>
         /// converts value to boolean
         /// </summary>
@@ -55,39 +43,37 @@ namespace ivrToolkit.Core.Util
             {
                 return true;
             }
-            else
-            {
-                return false;
-            }
+            return false;
         }
+
         /// <summary>
         /// The class name of the plugin to instantiate. Default is 'ivrToolkit.SimulatorPlugin.Simulator'.
         /// </summary>
-        public string ClassName { get { return p.GetProperty("voice.className", "ivrToolkit.SimulatorPlugin.Simulator"); } }
+        public string ClassName { get { return _p.GetProperty("voice.className", "ivrToolkit.SimulatorPlugin.Simulator"); } }
         /// <summary>
         /// The assembly name of the plugin. Default is 'ivrToolkit.SimulatorPlugin.dll'.ies
         /// </summary>
-        public string AssemblyName { get { return p.GetProperty("voice.assemblyName", "ivrToolkit.SimulatorPlugin.dll"); } }
+        public string AssemblyName { get { return _p.GetProperty("voice.assemblyName", "ivrToolkit.SimulatorPlugin.dll"); } }
         /// <summary>
         /// Dial tone detection.  Default is 'L' for Leading.
         /// </summary>
-        public string DialToneType { get { return p.GetProperty("dial.cpa.dialTone.type", "L"); } }
+        public string DialToneType { get { return _p.GetProperty("dial.cpa.dialTone.type", "L"); } }
         /// <summary>
         /// Number of attempts to try at a prompt before 'TooManyAttemptsException' is thrown. Default is '5'.
         /// </summary>
-        public int PromptAttempts { get { return int.Parse(p.GetProperty("prompt.attempts", "5")); } }
+        public int PromptAttempts { get { return int.Parse(_p.GetProperty("prompt.attempts", "5")); } }
         /// <summary>
         /// Number of milliseconds between keypress before it considers it to be a prompt attempt. Default is '5000'.
         /// </summary>
-        public int DigitsTimeoutInMilli { get { return int.Parse(p.GetProperty("getDigits.timeoutInMilliseconds", "5000")); } }
+        public int DigitsTimeoutInMilli { get { return int.Parse(_p.GetProperty("getDigits.timeoutInMilliseconds", "5000")); } }
         /// <summary>
         /// if true then the noFreeLine tone will be enabled
         /// </summary>
-        public bool CustomOutboundEnabled { get { return ToBool(p.GetProperty("dial.customOutbound.enabled", "true")); } }
+        public bool CustomOutboundEnabled { get { return ToBool(_p.GetProperty("dial.customOutbound.enabled", "true")); } }
         /// <summary>
         /// if true then the dial method will check for dial tone after picking up the receiver/dialing the number.
         /// </summary>
-        public bool PreTestDialTone { get { return ToBool(p.GetProperty("dial.preTestDialTone", "true")); } }
+        public bool PreTestDialTone { get { return ToBool(_p.GetProperty("dial.preTestDialTone", "true")); } }
         /// <summary>
         /// The definition of dial tone. Default is '350,20,440,20,L'. The default Tone Id is '306'.
         /// </summary>
@@ -95,9 +81,9 @@ namespace ivrToolkit.Core.Util
         {
             get
             {
-                CustomTone tone = new CustomTone(p.GetProperty("customTone.dialTone","350,20,440,20,L"))
+                var tone = new CustomTone(_p.GetProperty("customTone.dialTone","350,20,440,20,L"))
                 {
-                    Tid = int.Parse(p.GetProperty("customTone.dialTone.tid","306"))
+                    Tid = int.Parse(_p.GetProperty("customTone.dialTone.tid","306"))
                 };
                 return tone;
             }
@@ -109,9 +95,9 @@ namespace ivrToolkit.Core.Util
         {
             get
             {
-                CustomTone tone = new CustomTone(p.GetProperty("dial.customOutbound.noFreeLineTone","480,30,620,40,25,5,25,5,2"))
+                var tone = new CustomTone(_p.GetProperty("dial.customOutbound.noFreeLineTone","480,30,620,40,25,5,25,5,2"))
                 {
-                    Tid = int.Parse(p.GetProperty("dial.customOutbound.noFreeLineTone.tid","305"))
+                    Tid = int.Parse(_p.GetProperty("dial.customOutbound.noFreeLineTone.tid","305"))
                 };
                 return tone;
             }
@@ -123,7 +109,7 @@ namespace ivrToolkit.Core.Util
         /// <returns>The value of the property.</returns>
         public string GetProperty(string name)
         {
-            return p.GetProperty(name);
+            return _p.GetProperty(name);
         }
         /// <summary>
         /// Gets a property given the name parameter. Only use this method if there is no VoiceProperties helper method.
@@ -133,7 +119,7 @@ namespace ivrToolkit.Core.Util
         /// <returns>The value of the property.</returns>
         public string GetProperty(string name, string def)
         {
-            return p.GetProperty(name, def);
+            return _p.GetProperty(name, def);
         }
         /// <summary>
         /// Gets a list of property names that matches the prefix.
@@ -142,7 +128,7 @@ namespace ivrToolkit.Core.Util
         /// <returns>A string array of parameter names where the property name begins with the prefix</returns>
         public string[] GetKeyPrefixMatch(string prefix)
         {
-            return p.GetKeyPrefixMatch(prefix);
+            return _p.GetKeyPrefixMatch(prefix);
         }
         /// <summary>
         /// Gets a list of property values where the property name matches the prefix.
@@ -151,7 +137,7 @@ namespace ivrToolkit.Core.Util
         /// <returns>A string array of values where the property name begins with the prefix</returns>
         public string[] GetPrefixMatch(string prefix)
         {
-            return p.GetPrefixMatch(prefix);
+            return _p.GetPrefixMatch(prefix);
         }
 
 
@@ -196,7 +182,7 @@ namespace ivrToolkit.Core.Util
         /// <summary>
         /// First frequency deviation value.
         /// </summary>
-        public int Frq1dev;
+        public int Frq1Dev;
         /// <summary>
         /// Second frequency value.
         /// </summary>
@@ -204,7 +190,7 @@ namespace ivrToolkit.Core.Util
         /// <summary>
         /// Second frequency deviation value.
         /// </summary>
-        public int Frq2dev;
+        public int Frq2Dev;
         /// <summary>
         /// Cadence on time value.
         /// </summary>
@@ -241,9 +227,9 @@ namespace ivrToolkit.Core.Util
             {
                 ToneType = CustomToneType.DualWithCadence;
                 Freq1 = int.Parse(parts[0]);
-                Frq1dev = int.Parse(parts[1]);
+                Frq1Dev = int.Parse(parts[1]);
                 Freq2 = int.Parse(parts[2]);
-                Frq2dev = int.Parse(parts[3]);
+                Frq2Dev = int.Parse(parts[3]);
                 Ontime = int.Parse(parts[4]);
                 Ontdev = int.Parse(parts[5]);
                 Offtime = int.Parse(parts[6]);
@@ -254,16 +240,16 @@ namespace ivrToolkit.Core.Util
             {
                 ToneType = CustomToneType.Dual;
                 Freq1 = int.Parse(parts[0]);
-                Frq1dev = int.Parse(parts[1]);
+                Frq1Dev = int.Parse(parts[1]);
                 Freq2 = int.Parse(parts[2]);
-                Frq2dev = int.Parse(parts[3]);
+                Frq2Dev = int.Parse(parts[3]);
                 if (parts[4] == "L")
                 {
-                    Mode = ToneDetection.leading;
+                    Mode = ToneDetection.Leading;
                 }
                 else if (parts[4] == "T")
                 {
-                    Mode = ToneDetection.trailing;
+                    Mode = ToneDetection.Trailing;
                 }
                 else
                 {
@@ -274,14 +260,14 @@ namespace ivrToolkit.Core.Util
             {
                 ToneType = CustomToneType.Single;
                 Freq1 = int.Parse(parts[0]);
-                Frq1dev = int.Parse(parts[1]);
+                Frq1Dev = int.Parse(parts[1]);
                 if (parts[2] == "L")
                 {
-                    Mode = ToneDetection.leading;
+                    Mode = ToneDetection.Leading;
                 }
                 else if (parts[2] == "T")
                 {
-                    Mode = ToneDetection.trailing;
+                    Mode = ToneDetection.Trailing;
                 }
                 else
                 {

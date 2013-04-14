@@ -5,10 +5,7 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Runtime.InteropServices;
-using System.Threading;
+using System.Globalization;
 using ivrToolkit.Core;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Util;
@@ -24,14 +21,16 @@ namespace ivrToolkit.DialogicPlugin
         /// <summary>
         /// Defines the api required to access Dialogic Springware boards
         /// </summary>
+// ReSharper disable EmptyConstructor
         public Dialogic()
+// ReSharper restore EmptyConstructor
         {
         }
 
         public ILine GetLine(int lineNumber)
         {
             // TODO fix this
-            int devh = Dialogic.openDevice("dxxxB1C" + lineNumber.ToString());
+            var devh = OpenDevice("dxxxB1C" + lineNumber.ToString(CultureInfo.InvariantCulture));
             return new DialogicLine(devh, lineNumber);
         }
 
@@ -40,20 +39,18 @@ namespace ivrToolkit.DialogicPlugin
         /// </summary>
         /// <param name="devname">Name of the board line. For example: dxxxB1C1</param>
         /// <returns>The device handle</returns>
-        private static int openDevice(string devname)
+        private static int OpenDevice(string devname)
         {
-            int devh = -1;
-
-            devh = dx_open(devname, 0);
+            var devh = dx_open(devname, 0);
             if (devh <= -1)
             {
-                string err = string.Format("Could not get device handle for device {0}", devname);
+                var err = string.Format("Could not get device handle for device {0}", devname);
                 throw new VoiceException(err);
             }
             return devh;
         }
 
-        internal static void waitRings(int devh, int rings)
+        internal static void WaitRings(int devh, int rings)
         {
             if (dx_wtring(devh, rings, (int)HookState.OFF_HOOK, -1) == -1)
             {
@@ -62,11 +59,11 @@ namespace ivrToolkit.DialogicPlugin
             }
         }
 
-        internal static void stop(int devh)
+        internal static void Stop(int devh)
         {
             if (dx_stopch(devh, EV_SYNC) == -1)
             {
-                string err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
             }
         }
@@ -75,7 +72,7 @@ namespace ivrToolkit.DialogicPlugin
         /// Puts the line on hook.
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
-        internal static void hangup(int devh)
+        internal static void Hangup(int devh)
         {
             dx_stopch(devh, EV_SYNC);
 
@@ -91,7 +88,7 @@ namespace ivrToolkit.DialogicPlugin
         /// Takes the line off hook.
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
-        internal static void takeOffHook(int devh)
+        internal static void TakeOffHook(int devh)
         {
             int result = dx_sethook(devh, (int)HookState.OFF_HOOK, EV_SYNC);
             if (result <= -1)
@@ -106,26 +103,27 @@ namespace ivrToolkit.DialogicPlugin
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
         /// <param name="number">The phone number to dial.</param>
+        /// <param name="answeringMachineLengthInMilliseconds">Answering machine length in milliseconds</param>
         /// <returns>CallAnalysis Enum</returns>
-        internal static ivrToolkit.Core.CallAnalysis dialWithCPA(int devh, string number, int answeringMachineLengthInMilliseconds)
+        internal static Core.CallAnalysis DialWithCpa(int devh, string number, int answeringMachineLengthInMilliseconds)
         {
 
-            DX_CAP cap = Dialogic.getCap(devh);
+            var cap = GetCap(devh);
 
-            String fullNumber = VoiceProperties.Current.DialToneType + number;
+            var fullNumber = VoiceProperties.Current.DialToneType + number;
             int result = dx_dial(devh, fullNumber, ref cap, DX_CALLP | EV_SYNC);
             if (result <= -1)
             {
                 string error = ATDV_ERRMSGP(devh);
                 throw new VoiceException(error);
             }
-            CallAnalysis c = (CallAnalysis)result;
+            var c = (CallAnalysis)result;
             switch (c)
             {
                 case CallAnalysis.CR_BUSY:
-                    return ivrToolkit.Core.CallAnalysis.busy;
+                    return Core.CallAnalysis.Busy;
                 case CallAnalysis.CR_CEPT:
-                    return ivrToolkit.Core.CallAnalysis.operatorIntercept;
+                    return Core.CallAnalysis.OperatorIntercept;
                 case CallAnalysis.CR_CNCT:
                     int connType = ATDX_CONNTYPE(devh);
                     switch (connType)
@@ -146,82 +144,76 @@ namespace ivrToolkit.DialogicPlugin
                             Console.WriteLine("Connection due to Positive Voice Detection");
                             break;
                     }
-                    int len = getSalutationLength(devh);
+                    int len = GetSalutationLength(devh);
                     if (len > answeringMachineLengthInMilliseconds)
                     {
-                        return ivrToolkit.Core.CallAnalysis.answeringMachine;
+                        return Core.CallAnalysis.AnsweringMachine;
                     }
-                    else
-                    {
-                        return ivrToolkit.Core.CallAnalysis.connected;
-                    }
+                    return Core.CallAnalysis.Connected;
                 case CallAnalysis.CR_ERROR:
-                    return ivrToolkit.Core.CallAnalysis.error;
+                    return Core.CallAnalysis.Error;
                 case CallAnalysis.CR_FAXTONE:
-                    return ivrToolkit.Core.CallAnalysis.faxTone;
+                    return Core.CallAnalysis.FaxTone;
                 case CallAnalysis.CR_NOANS:
-                    return ivrToolkit.Core.CallAnalysis.noAnswer;
+                    return Core.CallAnalysis.NoAnswer;
                 case CallAnalysis.CR_NODIALTONE:
-                    return ivrToolkit.Core.CallAnalysis.noDialTone;
+                    return Core.CallAnalysis.NoDialTone;
                 case CallAnalysis.CR_NORB:
-                    return ivrToolkit.Core.CallAnalysis.noRingback;
+                    return Core.CallAnalysis.NoRingback;
                 case CallAnalysis.CR_STOPD:
                     // calling method will check and throw the stopException
-                    return ivrToolkit.Core.CallAnalysis.stopped;
+                    return Core.CallAnalysis.Stopped;
             }
             throw new VoiceException("Unknown dail response: "+result);
         }
 
-        private static int getTid(string tidName)
+        private static int GetTid(string tidName)
         {
-            int value = 0;
+            int value;
             if (int.TryParse(tidName, out value))
             {
                 return value;
             }
-            else
-            {
-                FieldInfo fi =
+            var fi =
                 typeof(Dialogic).GetField(tidName, BindingFlags.Static | BindingFlags.NonPublic);
-                if (fi != null)
+            if (fi != null)
+            {
+                var obj = fi.GetValue(null);
+                if (obj is Int32)
                 {
-                    object obj = fi.GetValue(null);
-                    if (obj is Int32)
-                    {
-                        return (int)obj;
-                    }
+                    return (int)obj;
                 }
-                throw new Exception("tid name is not found: "+tidName);
             }
+            throw new Exception("tid name is not found: "+tidName);
         }
 
-        internal static void initCallProgress(int devh)
+        internal static void InitCallProgress(int devh)
         {
             string[] toneParams = VoiceProperties.Current.GetPrefixMatch("cpa.tone.");
 
-            foreach (String tone in toneParams)
+            foreach (var tone in toneParams)
             {
                 string[] part = tone.Split(',');
-                Tone_T t = new Tone_T()
+                var t = new Tone_T
                 {
                     str = part[0].Trim(),
-                    tid = getTid(part[1].Trim()),
-                    freq1 = new Freq_T()
+                    tid = GetTid(part[1].Trim()),
+                    freq1 = new Freq_T
                     {
                         freq = int.Parse(part[2].Trim()),
                         deviation = int.Parse(part[3].Trim())
                     },
-                    freq2 = new Freq_T()
-                    {
+                    freq2 = new Freq_T
+                        {
                         freq = int.Parse(part[4].Trim()),
                         deviation = int.Parse(part[5].Trim())
                     },
-                    on = new State_T()
+                    on = new State_T
                     {
                         time = int.Parse(part[6].Trim()),
                         deviation = int.Parse(part[7].Trim())
                     },
-                    off = new State_T()
+                    off = new State_T
                     {
                         time = int.Parse(part[8].Trim()),
                         deviation = int.Parse(part[9].Trim())
@@ -254,54 +246,50 @@ namespace ivrToolkit.DialogicPlugin
             }
         }
 
-        private static DX_CAP getCap(int devh)
+        private static DX_CAP GetCap(int devh)
         {
-            string err = null;
-            DX_CAP cap = new DX_CAP();
+            var cap = new DX_CAP();
 
-            int result = dx_clrcap(ref cap);
+            var result = dx_clrcap(ref cap);
             if (result <= -1)
             {
-                err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
             }
 
-            Type capType = typeof(DX_CAP);
+            var capType = typeof(DX_CAP);
 
             object boxed = cap;
 
-            string[] caps = VoiceProperties.Current.GetKeyPrefixMatch("cap.");
-            foreach (string capName in caps)
+            var caps = VoiceProperties.Current.GetKeyPrefixMatch("cap.");
+            foreach (var capName in caps)
             {
-                FieldInfo info = capType.GetField(capName);
+                var info = capType.GetField(capName);
                 if (info == null)
                 {
                     throw new Exception("Could not find dx_cap."+capName);
                 }
-                else
+                var obj = info.GetValue(cap);
+                if (obj is ushort)
                 {
-                    object obj = info.GetValue(cap);
-                    if (obj is ushort)
-                    {
-                        ushort value = ushort.Parse(VoiceProperties.Current.GetProperty("cap."+capName));
-                        info.SetValue(boxed, value);
-                    }
-                    else if (obj is byte)
-                    {
-                        byte value = byte.Parse(VoiceProperties.Current.GetProperty("cap."+capName));
-                        info.SetValue(boxed, value);
-                    }
+                    var value = ushort.Parse(VoiceProperties.Current.GetProperty("cap."+capName));
+                    info.SetValue(boxed, value);
+                }
+                else if (obj is byte)
+                {
+                    byte value = byte.Parse(VoiceProperties.Current.GetProperty("cap."+capName));
+                    info.SetValue(boxed, value);
                 }
             }
 
             return (DX_CAP)boxed;
         }
 
-        internal static void deleteTones(int devh)
+        internal static void DeleteTones(int devh)
         {
             if (dx_deltones(devh) == -1)
             {
-                string err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
             }
         }
@@ -311,12 +299,12 @@ namespace ivrToolkit.DialogicPlugin
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
         /// <returns>The greeting time in milliseconds.</returns>
-        private static int getSalutationLength(int devh)
+        private static int GetSalutationLength(int devh)
         {
-            int result = ATDX_ANSRSIZ(devh);
+            var result = ATDX_ANSRSIZ(devh);
             if (result <= -1)
             {
-                string err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
             }
             return result * 10;
@@ -326,12 +314,12 @@ namespace ivrToolkit.DialogicPlugin
         /// Closes the board line.
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
-        internal static void close(int devh)
+        internal static void Close(int devh)
         {
-            int result = dx_close(devh, 0);
+            var result = dx_close(devh, 0);
             if (result <= -1)
             {
-                string err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
             }
         }
@@ -341,13 +329,13 @@ namespace ivrToolkit.DialogicPlugin
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
         /// <returns>All the digits in the buffer including terminators</returns>
-        internal static string flushDigitBuffer(int devh)
+        internal static string FlushDigitBuffer(int devh)
         {
-            string all = "";
+            var all = "";
             try
             {
                 // add "T" so that I can get all the characters.
-                all = getDigits(devh, 99, "T", 100);
+                all = GetDigits(devh, 99, "T", 100);
                 // strip off timeout terminator if there is once
                 if (all.EndsWith("T"))
                 {
@@ -365,30 +353,31 @@ namespace ivrToolkit.DialogicPlugin
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
         /// <param name="numberOfDigits">Maximum number of digits allowed in the buffer.</param>
+        /// <param name="terminators">Terminator keys</param>
         /// <returns>Returns the digits pressed not including the terminator if there was one</returns>
-        internal static string getDigits(int devh, int numberOfDigits, string terminators)
+        internal static string GetDigits(int devh, int numberOfDigits, string terminators)
         {
-            int timeout = VoiceProperties.Current.DigitsTimeoutInMilli;
-            return getDigits(devh, numberOfDigits, terminators, timeout);
+            var timeout = VoiceProperties.Current.DigitsTimeoutInMilli;
+            return GetDigits(devh, numberOfDigits, terminators, timeout);
         }
 
-        internal static string getDigits(int devh, int numberOfDigits, string terminators, int timeout)
+        internal static string GetDigits(int devh, int numberOfDigits, string terminators, int timeout)
         {
 
-            DV_TPT[] tpt = getTerminationConditions(numberOfDigits, terminators, timeout);
+            var tpt = GetTerminationConditions(numberOfDigits, terminators, timeout);
 
-            DV_DIGIT digit = new DV_DIGIT();
+            DV_DIGIT digit;
 
             // Note: async does not work becaues digit is marshalled out immediately after dx_getdig is complete
             // not when event is found. Would have to use DV_DIGIT* and unsafe code. or another way?
-            int result = dx_getdig(devh, ref tpt[0], out digit, EV_SYNC);
+            var result = dx_getdig(devh, ref tpt[0], out digit, EV_SYNC);
             if (result == -1)
             {
-                string err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
             }
 
-            int reason = ATDX_TERMMSK(devh);
+            var reason = ATDX_TERMMSK(devh);
             if ((reason & TM_ERROR) == TM_ERROR)
             {
                 throw new VoiceException("TM_ERROR");
@@ -413,18 +402,18 @@ namespace ivrToolkit.DialogicPlugin
             if ((reason & TM_TONE) == TM_TONE) Console.WriteLine("TM_TONE");
 
 
-            string answer = digit.dg_value;
-            clearDigits(devh); // not sure if this is necessary and perhaps only needed for getDigitsTimeoutException?
+            var answer = digit.dg_value;
+            ClearDigits(devh); // not sure if this is necessary and perhaps only needed for getDigitsTimeoutException?
             if ((reason & TM_IDDTIME) == TM_IDDTIME)
             {
-                if (terminators.IndexOf("T") != -1 && answer.Length != 0)
+                if (terminators.IndexOf("T", StringComparison.Ordinal) != -1 && answer.Length != 0)
                 {
                     // terminator is allowed as long as there is at least one key pressed
                     answer += 'T';
                 }
                 else
                 {
-                    if (terminators.IndexOf("t") != -1)
+                    if (terminators.IndexOf("t", StringComparison.Ordinal) != -1)
                     {
                         answer += 't';
                     }
@@ -437,7 +426,7 @@ namespace ivrToolkit.DialogicPlugin
             return answer;
         }
 
-        private static void clearDigits(int devh)
+        private static void ClearDigits(int devh)
         {
             if (dx_clrdigbuf(devh) == -1)
             {
@@ -446,62 +435,69 @@ namespace ivrToolkit.DialogicPlugin
             }
         }
 
-        private static DV_TPT[] getTerminationConditions(int numberOfDigits, string terminators, int timeoutInMilliseconds)
+        private static DV_TPT[] GetTerminationConditions(int numberOfDigits, string terminators, int timeoutInMilliseconds)
         {
-            List<DV_TPT> tpts = new List<DV_TPT>();
+            var tpts = new List<DV_TPT>();
 
-            DV_TPT tpt = new DV_TPT();
-            tpt.tp_type = IO_CONT;
-            tpt.tp_termno = DX_MAXDTMF; // Maximum digits
-            tpt.tp_length = (ushort)numberOfDigits; // terminate on max digit
-            tpt.tp_flags = TF_MAXDTMF;
-            tpt.tp_nextp = IntPtr.Zero;
+            var tpt = new DV_TPT
+                {
+                    tp_type = IO_CONT,
+                    tp_termno = DX_MAXDTMF,
+                    tp_length = (ushort) numberOfDigits,
+                    tp_flags = TF_MAXDTMF,
+                    tp_nextp = IntPtr.Zero
+                };
             tpts.Add(tpt);
 
-            int bitMask = defineDigits(terminators);
+            int bitMask = DefineDigits(terminators);
             if (bitMask != 0)
             {
-                tpt = new DV_TPT();
-                tpt.tp_type = IO_CONT;
-                tpt.tp_termno = DX_DIGMASK; // digit mask termination
-                tpt.tp_length = (ushort)bitMask;
-                tpt.tp_flags = TF_DIGMASK;
-                tpt.tp_nextp = IntPtr.Zero;
+                tpt = new DV_TPT
+                    {
+                        tp_type = IO_CONT,
+                        tp_termno = DX_DIGMASK,
+                        tp_length = (ushort) bitMask,
+                        tp_flags = TF_DIGMASK,
+                        tp_nextp = IntPtr.Zero
+                    };
                 tpts.Add(tpt);
             }
             if (timeoutInMilliseconds != 0)
             {
-                tpt = new DV_TPT();
-                tpt.tp_type = IO_CONT;
-                tpt.tp_termno = DX_IDDTIME; // Function out
-                tpt.tp_length = (ushort)(timeoutInMilliseconds/100) ; // x millseconds (100 ms resolution * timer)
-                tpt.tp_flags = TF_IDDTIME; // edge triggered
-                tpt.tp_nextp = IntPtr.Zero;
+                tpt = new DV_TPT
+                    {
+                        tp_type = IO_CONT,
+                        tp_termno = DX_IDDTIME,
+                        tp_length = (ushort) (timeoutInMilliseconds/100),
+                        tp_flags = TF_IDDTIME,
+                        tp_nextp = IntPtr.Zero
+                    };
                 tpts.Add(tpt);
             }
 
-            tpt = new DV_TPT();
-            tpt.tp_type = IO_EOT;
-            tpt.tp_termno = DX_LCOFF; // Loop current off
-            tpt.tp_length = 3; // Use 30 ms (10 ms resolution * timer)
-            tpt.tp_flags = TF_LCOFF | TF_10MS;
-            tpt.tp_nextp = IntPtr.Zero;
+            tpt = new DV_TPT
+                {
+                    tp_type = IO_EOT,
+                    tp_termno = DX_LCOFF,
+                    tp_length = 3,
+                    tp_flags = TF_LCOFF | TF_10MS,
+                    tp_nextp = IntPtr.Zero
+                };
             tpts.Add(tpt);
 
             return tpts.ToArray();
         }
 
-        private static int defineDigits(string digits)
+        private static int DefineDigits(string digits)
         {
             int result = 0;
 
             if (digits == null) digits = "";
 
-            string all = digits.Trim().ToLower();
+            var all = digits.Trim().ToLower();
             char[] chars = all.ToCharArray();
-            for (int index = 0; index < chars.Length; index++)
+            foreach (char c in chars)
             {
-                char c = chars[index];
                 switch (c)
                 {
                     case '0':
@@ -563,40 +559,37 @@ namespace ivrToolkit.DialogicPlugin
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
         /// <param name="filename">The name of the file to play.</param>
+        /// <param name="terminators">Terminator keys</param>
         /// <param name="xpb">The format of the vox or wav file.</param>
-        internal static void playFile(int devh, string filename, string terminators, DX_XPB xpb)
+        internal static void PlayFile(int devh, string filename, string terminators, DX_XPB xpb)
         {
 
             /* set up DV_TPT */
-            DV_TPT[] tpt = getTerminationConditions(10, terminators,0);
+            var tpt = GetTerminationConditions(10, terminators,0);
 
-            DX_IOTT iott = new DX_IOTT();
+            var iott = new DX_IOTT {io_type = IO_DEV | IO_EOT, io_bufp = null, io_offset = 0, io_length = -1};
             /* set up DX_IOTT */
-            iott.io_type = IO_DEV | IO_EOT;
-            iott.io_bufp = null;
-            iott.io_offset = 0;
-            iott.io_length = -1; /* play till end of file */
             if ((iott.io_fhandle = dx_fileopen(filename, _O_RDONLY | _O_BINARY)) == -1)
             {
-                int fileErr = dx_fileerrno();
+                var fileErr = dx_fileerrno();
 
-                string err = "";
+                var err = "";
 
                 switch (fileErr)
                 {
-                    case Dialogic.EACCES:
+                    case EACCES:
                         err = "Tried to open read-only file for writing, file's sharing mode does not allow specified operations, or given path is directory.";
                         break;
-                    case Dialogic.EEXIST:
+                    case EEXIST:
                         err = "_O_CREAT and _O_EXCL flags specified, but filename already exists.";
                         break;
-                    case Dialogic.EINVAL:
+                    case EINVAL:
                         err = "Invalid oflag or pmode argument.";
                         break;
-                    case Dialogic.EMFILE:
+                    case EMFILE:
                         err = "No more file descriptors available (too many open files).";
                         break;
-                    case Dialogic.ENOENT:
+                    case ENOENT:
                         err = "File or path not found.";
                         break;
                 }
@@ -609,31 +602,31 @@ namespace ivrToolkit.DialogicPlugin
             /* Now play the file */
             if (dx_playiottdata(devh, ref iott, ref tpt[0], ref xpb, EV_ASYNC) == -1)
             {
-                string err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 dx_fileclose(iott.io_fhandle);
                 throw new VoiceException(err);
             }
 
-            int handler = 0;
+            var handler = 0;
 
             while (true)
             {
                 if (sr_waitevtEx(ref devh, 1, -1, ref handler) == -1)
                 {
-                    string err = ATDV_ERRMSGP(devh);
+                    var err = ATDV_ERRMSGP(devh);
                     dx_fileclose(iott.io_fhandle);
                     throw new VoiceException(err);
                 }
                 // make sure the file is closed
                 if (dx_fileclose(iott.io_fhandle) == -1)
                 {
-                    string err = ATDV_ERRMSGP(devh);
+                    var err = ATDV_ERRMSGP(devh);
                     throw new VoiceException(err);
                 }
-                int type = sr_getevttype((uint)handler);
+                var type = sr_getevttype((uint)handler);
                 if (type == TDX_PLAY)
                 {
-                    int reason = ATDX_TERMMSK(devh);
+                    var reason = ATDX_TERMMSK(devh);
                     if ((reason & TM_ERROR) == TM_ERROR)
                     {
                         throw new VoiceException("TM_ERROR");
@@ -671,20 +664,12 @@ namespace ivrToolkit.DialogicPlugin
 
 
 
-        internal static void addDualTone(int devh, int tid, int freq1, int fq1dev, int freq2, int fq2dev,
+        internal static void AddDualTone(int devh, int tid, int freq1, int fq1Dev, int freq2, int fq2Dev,
             ToneDetection mode)
         {
-            uint dialogicMode;
-            if (mode == ToneDetection.leading)
-            {
-                dialogicMode = TN_LEADING;
-            }
-            else
-            {
-                dialogicMode = TN_TRAILING;
-            }
+            var dialogicMode = mode == ToneDetection.Leading ? TN_LEADING : TN_TRAILING;
 
-            if (dx_blddt((uint)tid, (uint)freq1, (uint)fq1dev, (uint)freq2, (uint)fq2dev, dialogicMode) == -1)
+            if (dx_blddt((uint)tid, (uint)freq1, (uint)fq1Dev, (uint)freq2, (uint)fq2Dev, dialogicMode) == -1)
             {
                 throw new VoiceException("unable to build dual tone");
             }
@@ -697,41 +682,41 @@ namespace ivrToolkit.DialogicPlugin
         //T5=480,30,620,40,25,5,25,5,2 fast busy
         //T6=350,20,440,20,L dial tone
 
-        internal static void addDualToneWithCadence(int devh, int tid, int freq1, int fq1dev, int freq2, int fq2dev,
+        internal static void AddDualToneWithCadence(int devh, int tid, int freq1, int fq1Dev, int freq2, int fq2Dev,
             int ontime, int ontdev, int offtime, int offtdev, int repcnt)
         {
-            if (dx_blddtcad((uint)tid, (uint)freq1, (uint)fq1dev, (uint)freq2, (uint)fq2dev, (uint)ontime, (uint)ontdev, (uint)offtime, (uint)offtdev, (uint)repcnt) == -1)
+            if (dx_blddtcad((uint)tid, (uint)freq1, (uint)fq1Dev, (uint)freq2, (uint)fq2Dev, (uint)ontime, (uint)ontdev, (uint)offtime, (uint)offtdev, (uint)repcnt) == -1)
             {
                 throw new VoiceException("unable to build dual tone cadence");
             }
             if (dx_addtone(devh, 0, 0) == -1)
             {
-                string err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
             }
         }
 
-        internal static void disableTone(int devh, int tid)
+        internal static void DisableTone(int devh, int tid)
         {
             if (dx_distone(devh, tid, DM_TONEON | DM_TONEOFF) == -1)
             {
-                string err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
             }
         }
 
-        internal static void enableTone(int devh, int tid)
+        internal static void EnableTone(int devh, int tid)
         {
             if (dx_enbtone(devh, tid, DM_TONEON | DM_TONEOFF) == -1)
             {
-                string err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
             }
         }
 
-        internal static int listenForCustomTones(int devh, int timeoutSeconds)
+        internal static int ListenForCustomTones(int devh, int timeoutSeconds)
         {
-            DX_EBLK eblk = new DX_EBLK();
+            var eblk = new DX_EBLK();
             if (dx_getevt(devh, ref eblk, timeoutSeconds) == -1)
             {
                 if (ATDV_LASTERR(devh) == EDX_TIMEOUT)
@@ -753,42 +738,39 @@ namespace ivrToolkit.DialogicPlugin
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
         /// <param name="filename">The name of the file to play.</param>
+        /// <param name="terminators">Terminator keys</param>
         /// <param name="xpb">The format of the vox or wav file.</param>
-        internal static void recordToFile(int devh, string filename, string terminators, DX_XPB xpb)
+        internal static void RecordToFile(int devh, string filename, string terminators, DX_XPB xpb)
         {
 
-            flushDigitBuffer(devh);
+            FlushDigitBuffer(devh);
 
             /* set up DV_TPT */
-            DV_TPT[] tpt = getTerminationConditions(1, terminators,0);
+            var tpt = GetTerminationConditions(1, terminators,0);
 
-            DX_IOTT iott = new DX_IOTT();
+            var iott = new DX_IOTT {io_type = IO_DEV | IO_EOT, io_bufp = null, io_offset = 0, io_length = -1};
             /* set up DX_IOTT */
-            iott.io_type = IO_DEV | IO_EOT;
-            iott.io_bufp = null;
-            iott.io_offset = 0;
-            iott.io_length = -1;
             if ((iott.io_fhandle = dx_fileopen(filename, _O_CREAT | _O_BINARY | _O_RDWR, _S_IWRITE)) == -1)
             {
                 int fileErr = dx_fileerrno();
 
-                string err = "";
+                var err = "";
 
                 switch (fileErr)
                 {
-                    case Dialogic.EACCES:
+                    case EACCES:
                         err = "Tried to open read-only file for writing, file's sharing mode does not allow specified operations, or given path is directory.";
                         break;
-                    case Dialogic.EEXIST:
+                    case EEXIST:
                         err = "_O_CREAT and _O_EXCL flags specified, but filename already exists.";
                         break;
-                    case Dialogic.EINVAL:
+                    case EINVAL:
                         err = "Invalid oflag or pmode argument.";
                         break;
-                    case Dialogic.EMFILE:
+                    case EMFILE:
                         err = "No more file descriptors available (too many open files).";
                         break;
-                    case Dialogic.ENOENT:
+                    case ENOENT:
                         err = "File or path not found.";
                         break;
                 }
@@ -856,42 +838,10 @@ namespace ivrToolkit.DialogicPlugin
                 {
                     Console.WriteLine("got here: " + type);
                 }
-                flushDigitBuffer(devh);
+                FlushDigitBuffer(devh);
                 return;
             }
 
         }
-
-
-
-        private static void display(string name, object obj) {
-            byte[] bytes = StructureToByteArray(obj);
-            System.Diagnostics.Debug.Write(name+" length = "+ bytes.Length + ", bytes = ");
-            for (int index = 0; index < bytes.Length; index++)
-            {
-                System.Diagnostics.Debug.Write(bytes[index] + "|");
-            }
-            System.Diagnostics.Debug.WriteLine("");
-        }
-
-        private static byte[] StructureToByteArray(object obj)
-        {
-
-            int len = Marshal.SizeOf(obj);
-
-            byte[] arr = new byte[len];
-
-            IntPtr ptr = Marshal.AllocHGlobal(len);
-
-            Marshal.StructureToPtr(obj, ptr, true);
-
-            Marshal.Copy(ptr, arr, 0, len);
-
-            Marshal.FreeHGlobal(ptr);
-
-            return arr;
-
-        }
-
     } // class
 } // namespace

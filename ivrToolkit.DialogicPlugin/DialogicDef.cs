@@ -4,13 +4,18 @@
  * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
  */
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Runtime.InteropServices;
 
 namespace ivrToolkit.DialogicPlugin
 {
+    // ReSharper disable InconsistentNaming
+    // ReSharper disable UnusedMember.Local
+    // ReSharper disable NotAccessedField.Local
+    // ReSharper disable FieldCanBeMadeReadOnly.Local
+    // ReSharper disable MemberCanBePrivate.Local
+    #pragma warning disable 169
+    #pragma warning disable 649
+
     public partial class Dialogic
     {
         public const int CON_CAD = 1;
@@ -178,6 +183,7 @@ namespace ivrToolkit.DialogicPlugin
         private struct Tone_T
         {
             public string str;        // informational string
+
             public int tid;        // tone id
             public Freq_T freq1;      // frequency 1
             public Freq_T freq2;      // frequency 2
@@ -228,8 +234,9 @@ namespace ivrToolkit.DialogicPlugin
             public ushort tp_data; /* Optional Additional Data */
             public ushort rfu; /* Reserved */
 
+
             /// DV_TPT*
-            public System.IntPtr tp_nextp; /* Ptr to next DV_TPT if IO_LINK set */
+            public IntPtr tp_nextp; /* Ptr to next DV_TPT if IO_LINK set */
             //public DV_TPT* tp_nextp;
         }
 
@@ -248,10 +255,10 @@ namespace ivrToolkit.DialogicPlugin
             public int io_length; /* Length of data */
 
             /// DX_IOTT*
-            public System.IntPtr io_nextp; /* Pointer to next DX_IOTT if IO_LINK */
+            public IntPtr io_nextp; /* Pointer to next DX_IOTT if IO_LINK */
 
             /// DX_IOTT*
-            public System.IntPtr io_prevp; /* (optional) Pointer to previous DX_IOTT */
+            public IntPtr io_prevp; /* (optional) Pointer to previous DX_IOTT */
         }
         [StructLayoutAttribute(LayoutKind.Sequential)]
         private struct DX_CAP
@@ -334,6 +341,7 @@ namespace ivrToolkit.DialogicPlugin
         private const int TID_SIT_NC = 260;
         private const int TID_SIT_IC = 261;
         private const int TID_SIT_VC = 262;
+
         private const int TID_SIT_RO = 263;
         private const int TID_SIT_ANY = 264;
 
@@ -605,6 +613,7 @@ namespace ivrToolkit.DialogicPlugin
         private struct DX_EBLK
         {
             public ushort ev_event; /* Event that occured */
+
             public ushort ev_data; /* Event-specific data */
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
@@ -637,6 +646,7 @@ namespace ivrToolkit.DialogicPlugin
 
         [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         private static extern int sr_getevtdev(uint evt_handle);
+
 
         [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         private static extern int sr_getevttype(uint evt_handle);
@@ -703,9 +713,9 @@ namespace ivrToolkit.DialogicPlugin
         private static extern int dx_clrdigbuf(int chdev);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_fileopen([InAttribute()] [MarshalAs(UnmanagedType.LPStr)] string filep, int flags, int pmode);
+        private static extern int dx_fileopen([InAttribute] [MarshalAs(UnmanagedType.LPStr)] string filep, int flags, int pmode);
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_fileopen([InAttribute()] [MarshalAs(UnmanagedType.LPStr)] string filep, int flags);
+        private static extern int dx_fileopen([InAttribute] [MarshalAs(UnmanagedType.LPStr)] string filep, int flags);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         private static extern int dx_fileclose(int handle);
@@ -765,10 +775,10 @@ namespace ivrToolkit.DialogicPlugin
         //----------------------------
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern System.IntPtr ATDX_BDNAMEP(int SrlDevice);
+        public static extern IntPtr ATDX_BDNAMEP(int SrlDevice);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern System.IntPtr ATDX_CHNAMES(int SrlDevice);
+        public static extern IntPtr ATDX_CHNAMES(int SrlDevice);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int ATDX_BDTYPE(int SrlDevice);

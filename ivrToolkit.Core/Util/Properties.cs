@@ -26,7 +26,7 @@ namespace ivrToolkit.Core.Util
         public Properties(string fileName)
         {
             var lines = File.ReadAllLines(fileName);
-            foreach (string line in lines) {
+            foreach (var line in lines) {
                 if (!line.Trim().StartsWith("#")) {
                     var index = line.IndexOf("=", StringComparison.Ordinal);
                     if (index != -1) {

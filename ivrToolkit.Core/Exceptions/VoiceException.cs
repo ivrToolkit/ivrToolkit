@@ -5,6 +5,7 @@
  */
 using System;
 
+// ReSharper disable MemberCanBeProtected.Global
 namespace ivrToolkit.Core.Exceptions
 {
     /// <summary>

@@ -27,7 +27,7 @@ namespace ivrToolkit.Core.Util
         {
             // Use name of current assembly to construct NLog config filename 
 
-            Assembly thisAssembly = Assembly.GetExecutingAssembly();
+            var thisAssembly = Assembly.GetExecutingAssembly();
 
             return Path.ChangeExtension(thisAssembly.Location, ".nlog");
         }

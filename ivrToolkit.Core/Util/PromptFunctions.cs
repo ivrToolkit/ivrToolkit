@@ -110,10 +110,10 @@ namespace ivrToolkit.Core.Util
         /// <returns></returns>
         public string CustomValidationPrompt(string promptMessage, Prompt.ValidationHandler customHandler)
         {
-            Prompt p = GetRegularStylePrompt();
-            p.PromptMessage = promptMessage;
-            p.OnValidation += customHandler;
-            return p.Ask();
+            var prompt = GetRegularStylePrompt();
+            prompt.PromptMessage = promptMessage;
+            prompt.OnValidation += customHandler;
+            return prompt.Ask();
         }
     } // class
 }

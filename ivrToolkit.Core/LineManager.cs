@@ -90,7 +90,7 @@ namespace ivrToolkit.Core
     /// </example>
     public class LineManager
     {
-        private static readonly Logger Logger = MyLogManager.Instance.GetCurrentClassLogger();
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
         private static readonly Dictionary<int,ILine> Lines = new Dictionary<int,ILine>();
 

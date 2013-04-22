@@ -104,7 +104,6 @@
     <Compile Include="Exceptions\VoiceException.cs" />
     <Compile Include="Util\IPromptFunctions.cs" />
     <Compile Include="Util\LineExtensions.cs" />
-    <Compile Include="Util\MyLogManager.cs" />
     <Compile Include="Util\Prompt.cs" />
     <Compile Include="Util\PromptFunctions.cs" />
     <Compile Include="Util\Properties.cs" />
@@ -113,9 +112,6 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
-    <Content Include="ivrToolkit.Core.nlog">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

@@ -1,9 +1,9 @@
-/*
- * Copyright 2013 Troy Makaro
- *
- * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
- */
-
+// 
+// Copyright 2013 Troy Makaro
+// 
+// This file is part of ivrToolkit, distributed under the LESSER GNU GPL. For full terms see the included COPYING file and the COPYING.LESSER file.
+// 
+// 
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,7 +26,7 @@ namespace ivrToolkit.Core.Util
         public Properties(string fileName)
         {
             var lines = File.ReadAllLines(fileName);
-            foreach (string line in lines) {
+            foreach (var line in lines) {
                 if (!line.Trim().StartsWith("#")) {
                     var index = line.IndexOf("=", StringComparison.Ordinal);
                     if (index != -1) {

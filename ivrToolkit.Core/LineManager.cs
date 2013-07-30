@@ -1,8 +1,9 @@
-﻿/*
- * Copyright 2013 Troy Makaro
- *
- * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
- */
+﻿// 
+// Copyright 2013 Troy Makaro
+// 
+// This file is part of ivrToolkit, distributed under the LESSER GNU GPL. For full terms see the included COPYING file and the COPYING.LESSER file.
+// 
+// 
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -90,7 +91,7 @@ namespace ivrToolkit.Core
     /// </example>
     public class LineManager
     {
-        private static readonly Logger Logger = MyLogManager.Instance.GetCurrentClassLogger();
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
         private static readonly Dictionary<int,ILine> Lines = new Dictionary<int,ILine>();
 
@@ -107,12 +108,12 @@ namespace ivrToolkit.Core
         {
             Logger.Debug("Getting line number: "+lineNumber);
 
-            string className = VoiceProperties.Current.ClassName;
-            string assemblyName = VoiceProperties.Current.AssemblyName;
+            var className = VoiceProperties.Current.ClassName;
+            var assemblyName = VoiceProperties.Current.AssemblyName;
             
             // create an instance of the class from the assembly
-            Assembly assembly = Assembly.LoadFrom(assemblyName);
-            object o = assembly.CreateInstance(className);
+            var assembly = Assembly.LoadFrom(assemblyName);
+            var o = assembly.CreateInstance(className);
 
             // check if this class implements IVoice interface
             if (!(o is IVoice)) {
@@ -140,7 +141,7 @@ namespace ivrToolkit.Core
         {
             try
             {
-                ILine line = Lines[lineNumber];
+                var line = Lines[lineNumber];
                 Lines.Remove(lineNumber);
                 line.Stop();
             }
@@ -154,10 +155,10 @@ namespace ivrToolkit.Core
         /// </summary>
         public static void ReleaseAll()
         {
-            List<KeyValuePair<int,ILine>> linesList = Lines.ToList();
-            foreach (KeyValuePair<int,ILine> keyValue in linesList)
+            var linesList = Lines.ToList();
+            foreach (var keyValue in linesList)
             {
-                ILine line = keyValue.Value;
+                var line = keyValue.Value;
                 ReleaseLine(line.LineNumber);
             }
         }

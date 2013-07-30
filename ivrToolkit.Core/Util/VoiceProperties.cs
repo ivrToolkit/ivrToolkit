@@ -1,9 +1,9 @@
-/*
- * Copyright 2013 Troy Makaro
- *
- * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
- */
-
+// 
+// Copyright 2013 Troy Makaro
+// 
+// This file is part of ivrToolkit, distributed under the LESSER GNU GPL. For full terms see the included COPYING file and the COPYING.LESSER file.
+// 
+// 
 using System;
 using ivrToolkit.Core.Exceptions;
 
@@ -222,7 +222,7 @@ namespace ivrToolkit.Core.Util
         /// <param name="definition">The definition of the tone to split up. Example: '480,30,620,40,25,5,25,5,2'</param>
         public CustomTone(string definition)
         {
-            string[] parts = definition.Split(',');
+            var parts = definition.Split(',');
             if (parts.Length == 9)
             {
                 ToneType = CustomToneType.DualWithCadence;

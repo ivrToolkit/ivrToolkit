@@ -1,9 +1,9 @@
-/*
- * Copyright 2013 Troy Makaro
- *
- * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
- */
-
+// 
+// Copyright 2013 Troy Makaro
+// 
+// This file is part of ivrToolkit, distributed under the LESSER GNU GPL. For full terms see the included COPYING file and the COPYING.LESSER file.
+// 
+// 
 using System;
 using System.Globalization;
 using System.Linq;
@@ -66,14 +66,14 @@ namespace ivrToolkit.Core.Util
         public static void PlayDate(this ILine line, DateTime dateTime, string mask)
         {
             mask = mask.ToLower();
-            string[] parts = mask.Split(new[] { ' ',':', '-' });
-            foreach (string part in parts)
+            var parts = mask.Split(new[] { ' ',':', '-' });
+            foreach (var part in parts)
             {
                 if (part == "m" || part == "mm" || part == "mmm" || part == "mmm")
                 {
-                    int m = dateTime.Month;
+                    var m = dateTime.Month;
                     if (m > 0 && m < 13) {
-                        string month = Months[m-1];
+                        var month = Months[m-1];
                         PlayF(line,month);
                     }
                 }
@@ -83,14 +83,14 @@ namespace ivrToolkit.Core.Util
                 }
                 else if (part == "ddd" || part == "dddd")
                 {
-                    DayOfWeek dow = dateTime.DayOfWeek;
+                    var dow = dateTime.DayOfWeek;
                     
-                    string day = Enum.Format(typeof(DayOfWeek),dow,"G");
+                    var day = Enum.Format(typeof(DayOfWeek),dow,"G");
                     PlayF(line,day);
                 }
                 else if (part == "yyy" || part == "yyyy")
                 {
-                    string year = dateTime.Year.ToString(CultureInfo.InvariantCulture);
+                    var year = dateTime.Year.ToString(CultureInfo.InvariantCulture);
 
                     // speak years 2010 to 2099 with the word thousand
                     SpeakYearThousands(line,year);
@@ -102,7 +102,7 @@ namespace ivrToolkit.Core.Util
                 }
                 else if (part == "h" || part == "hh")
                 {
-                    int h = dateTime.Hour;
+                    var h = dateTime.Hour;
                     if (Is24Hour(mask))
                     {
                         if (h < 10)
@@ -113,7 +113,7 @@ namespace ivrToolkit.Core.Util
                         {
                             line.PlayInteger(h);
                         }
-                        int m = dateTime.Minute;
+                        var m = dateTime.Minute;
                         if (m == 0 || h == 0)
                         {
                             PlayF(line,"00 hours");
@@ -138,7 +138,7 @@ namespace ivrToolkit.Core.Util
                 }
                 else if (part == "n" || part == "nn")
                 {
-                    int m = dateTime.Minute;
+                    var m = dateTime.Minute;
                     if (m > 0 && m < 10)
                     {
                         PlayF(line,"o");
@@ -161,10 +161,10 @@ namespace ivrToolkit.Core.Util
         ///
         private static void SpeakYearThousands(ILine line, string year)
         {
-            string y1 = year.Substring(0, 2);
-            string y2 = year.Substring(2, 2);
-            int y1Int = int.Parse(y1);
-            int y2Int = int.Parse(y2);
+            var y1 = year.Substring(0, 2);
+            var y2 = year.Substring(2, 2);
+            var y1Int = int.Parse(y1);
+            var y2Int = int.Parse(y2);
 
             if (y1.EndsWith("0"))
             {
@@ -203,10 +203,10 @@ namespace ivrToolkit.Core.Util
         /// <param name="number">The number you want to speak</param>
         public static void PlayMoney(this ILine line, double number)
         {
-            string n = number.ToString("F"); // two decimal places
-            int index = n.IndexOf(".", StringComparison.Ordinal);
+            var n = number.ToString("F"); // two decimal places
+            var index = n.IndexOf(".", StringComparison.Ordinal);
             string w;
-            string f = "";
+            var f = "";
             if (index == -1)
             {
                 w = n;
@@ -216,13 +216,13 @@ namespace ivrToolkit.Core.Util
                 w = n.Substring(0, index);
                 f = n.Substring(index + 1);
             }
-            long whole = long.Parse(w);
+            var whole = long.Parse(w);
             line.PlayInteger(whole);
             PlayF(line, whole == 1 ? "dollar" : "dollars");
             if (f != "")
             {
                 PlayF(line,"and");
-                long cents = long.Parse(f);
+                var cents = long.Parse(f);
                 line.PlayInteger(cents);
                 PlayF(line, cents == 1 ? "cent" : "cents");
             }
@@ -234,8 +234,8 @@ namespace ivrToolkit.Core.Util
         /// <param name="characters">0-9, a-z, # and *</param>
         public static void PlayCharacters(this ILine line, string characters)
         {
-            char[] chars = characters.ToCharArray();
-            foreach (char c in chars)
+            var chars = characters.ToCharArray();
+            foreach (var c in chars)
             {
                 if (c == ' ')
                 {
@@ -279,8 +279,8 @@ namespace ivrToolkit.Core.Util
             if (f != "")
             {
                 PlayF(line,"point");
-                char[] chars = f.ToCharArray();
-                foreach (char c in chars)
+                var chars = f.ToCharArray();
+                foreach (var c in chars)
                 {
                     PlayF(line,c.ToString(CultureInfo.InvariantCulture));
                 }
@@ -307,15 +307,15 @@ namespace ivrToolkit.Core.Util
             const long million = 1000000;
             const long thousand = 1000;
 
-            long billions = number / billion;
-            long rest = number % billion;
+            var billions = number / billion;
+            var rest = number % billion;
             if (billions > 0)
             {
                 SpeakUpTo999(line, billions);
                 PlayF(line,"Billion");
             }
 
-            long millions = rest / million;
+            var millions = rest / million;
             rest = rest % million;
             if (millions > 0)
             {
@@ -323,7 +323,7 @@ namespace ivrToolkit.Core.Util
                 PlayF(line,"Million");
             }
 
-            long thousands = rest / thousand;
+            var thousands = rest / thousand;
             rest = rest % thousand;
             if (thousands > 0)
             {
@@ -364,13 +364,13 @@ namespace ivrToolkit.Core.Util
         /// <param name="str">The string to interpret in the format of 'data|code,data|code,data|code'...</param>
         public static void PlayString(this ILine line, string str)
         {
-            string[] parts = str.Split(new[]{','});
-            foreach (string part in parts)
+            var parts = str.Split(new[]{','});
+            foreach (var part in parts)
             {
-                string[] sections = part.Split(new[] { '|' });
+                var sections = part.Split(new[] { '|' });
                 string mask = null;
-                string data = sections[0];
-                string command = sections[1];
+                var data = sections[0];
+                var command = sections[1];
                 if (sections.Length > 2)
                 {
                     mask = sections[2];
@@ -382,7 +382,7 @@ namespace ivrToolkit.Core.Util
                 else if (command == "D") // date
                 {
                     // US english culture does month/day/year instead of day/month/year
-                    DateTime dt = DateTime.Parse(data, new CultureInfo("en-US"));
+                    var dt = DateTime.Parse(data, new CultureInfo("en-US"));
                     line.PlayDate(dt, mask);
                 }
                 else if (command == "F") // file

@@ -1,9 +1,9 @@
-/*
- * Copyright 2013 Troy Makaro
- *
- * This file is part of ivrToolkit, distributed under the GNU GPL. For full terms see the included COPYING file.
- */
-
+// 
+// Copyright 2013 Troy Makaro
+// 
+// This file is part of ivrToolkit, distributed under the LESSER GNU GPL. For full terms see the included COPYING file and the COPYING.LESSER file.
+// 
+// 
 using System;
 using ivrToolkit.Core.Exceptions;
 
@@ -165,8 +165,8 @@ namespace ivrToolkit.Core.Util
         /// </summary>
         public string Ask()
         {
-            int count = 0;
-            string myTerminators = _terminators + (_specialTerminator ?? "");
+            var count = 0;
+            var myTerminators = _terminators + (_specialTerminator ?? "");
             while (count < _attempts)
             {
                 try
@@ -179,7 +179,7 @@ namespace ivrToolkit.Core.Util
                     _answer = _line.GetDigits(_numberOfDigits, myTerminators+"t");
                     if (OnKeysEntered != null)
                     {
-                        string term = _line.LastTerminator;
+                        var term = _line.LastTerminator;
                         OnKeysEntered(_answer, term);
                     }
                     if (_line.LastTerminator == "t")

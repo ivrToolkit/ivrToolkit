@@ -4,9 +4,9 @@ mkdir content
 
 xcopy /E/Y "..\..\ivrToolkit.Core\System Recordings\*.*" "content\System Recordings\"
 copy ..\..\examples\SimulatorTest\Voice.Properties content
+copy ..\..\examples\SimulatorTest\NLog.config content
 copy ..\..\README.md content
 copy ..\..\ReleaseNotes.md content
-copy ..\..\ivrToolkit.Core\ivrToolKit.Core.nlog content
 copy ..\..\ivrToolkit.Core\install.ps1 tools\net40
 
 copy ..\..\ivrToolkit.Core\bin\debug\ivrToolkit.core.* lib\net40\

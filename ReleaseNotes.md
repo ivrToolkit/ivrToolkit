@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+V0.9.4 update
+-------------
+> #### Bug fixes and enhancements:
+
+* Change the licensing from GPL to LGPL.
+* Modified prompt.attempts from 2 to 5 in voice.properties. However, I think this will be changed to prompt.noResponseAttempts instead since the intent was to stop endless looping of a prompt if the user hung up and the system did not detect the hangup.
+
 V0.9.3 update
 -------------
 

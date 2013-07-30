@@ -6,7 +6,7 @@ http://www.ivrToolkit.com
 
 License
 -------
-Please note that the intent is to change this license from the GPL to either the MIT license or the LGPL. This should happen roughly in a month from now. 
+The IVR toolkit has been released under the LGPL. Please take a look at COPYING and COPYING.LESSER for more information.
 
 Documentation
 -------------

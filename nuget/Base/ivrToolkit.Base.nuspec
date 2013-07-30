@@ -11,7 +11,7 @@
             Examples can be found at https://github.com/ivrToolkit/ivrToolkit/tree/v0.9.4/Examples
         </description>
         <copyright>Copyright 2013 Troy Makaro</copyright>
-        <licenseUrl>http://ivrtoolkit.com/GPL.txt</licenseUrl>
+        <licenseUrl>http://ivrtoolkit.com/LGPL.txt</licenseUrl>
         <projectUrl>http://www.ivrtoolkit.com</projectUrl>
         <iconUrl>http://ivrtoolkit.com/ivrToolkit32.jpg</iconUrl>
         <dependencies>

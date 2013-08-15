@@ -8,7 +8,7 @@
         <requireLicenseAcceptance>true</requireLicenseAcceptance>
         <description>
             A toolkit for writing Interactive Voice Response Applications with primary support for Dialogic Cards.
-            Examples can be found at https://github.com/ivrToolkit/ivrToolkit/tree/v0.9.4/Examples
+            Examples can be found at https://github.com/ivrToolkit/ivrToolkit/tree/release-0.9.4/Examples
         </description>
         <copyright>Copyright 2013 Troy Makaro</copyright>
         <licenseUrl>http://ivrtoolkit.com/LGPL.txt</licenseUrl>

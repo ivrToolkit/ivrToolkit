@@ -19,14 +19,6 @@ namespace ivrToolkit.DialogicPlugin
     /// </summary>
     public partial class Dialogic : IVoice
     {
-        /// <summary>
-        /// Defines the api required to access Dialogic Springware boards
-        /// </summary>
-// ReSharper disable EmptyConstructor
-        public Dialogic()
-// ReSharper restore EmptyConstructor
-        {
-        }
 
         public ILine GetLine(int lineNumber)
         {
@@ -55,7 +47,7 @@ namespace ivrToolkit.DialogicPlugin
         {
             if (dx_wtring(devh, rings, (int)HookState.OFF_HOOK, -1) == -1)
             {
-                string err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
             }
         }
@@ -77,10 +69,10 @@ namespace ivrToolkit.DialogicPlugin
         {
             dx_stopch(devh, EV_SYNC);
 
-            int result = dx_sethook(devh, (int)HookState.ON_HOOK, EV_SYNC);
+            var result = dx_sethook(devh, (int)HookState.ON_HOOK, EV_SYNC);
             if (result <= -1)
             {
-                string err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
             }
         }
@@ -91,11 +83,29 @@ namespace ivrToolkit.DialogicPlugin
         /// <param name="devh">The handle for the Dialogic line.</param>
         internal static void TakeOffHook(int devh)
         {
-            int result = dx_sethook(devh, (int)HookState.OFF_HOOK, EV_SYNC);
+            var result = dx_sethook(devh, (int)HookState.OFF_HOOK, EV_SYNC);
             if (result <= -1)
             {
-                string err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
+            }
+        }
+
+        /// <summary>
+        /// Dials a phone number using call progress analysis.
+        /// </summary>
+        /// <param name="devh">The handle for the Dialogic line.</param>
+        /// <param name="number">The phone number to dial.</param>
+        internal static void Dial(int devh, string number)
+        {
+
+            var cap = GetCap(devh);
+
+            var result = dx_dial(devh, number, ref cap, EV_SYNC);
+            if (result <= -1)
+            {
+                var error = ATDV_ERRMSGP(devh);
+                throw new VoiceException(error);
             }
         }
 
@@ -112,10 +122,10 @@ namespace ivrToolkit.DialogicPlugin
             var cap = GetCap(devh);
 
             var fullNumber = VoiceProperties.Current.DialToneType + number;
-            int result = dx_dial(devh, fullNumber, ref cap, DX_CALLP | EV_SYNC);
+            var result = dx_dial(devh, fullNumber, ref cap, DX_CALLP | EV_SYNC);
             if (result <= -1)
             {
-                string error = ATDV_ERRMSGP(devh);
+                var error = ATDV_ERRMSGP(devh);
                 throw new VoiceException(error);
             }
             var c = (CallAnalysis)result;
@@ -126,7 +136,7 @@ namespace ivrToolkit.DialogicPlugin
                 case CallAnalysis.CR_CEPT:
                     return Core.CallAnalysis.OperatorIntercept;
                 case CallAnalysis.CR_CNCT:
-                    int connType = ATDX_CONNTYPE(devh);
+                    var connType = ATDX_CONNTYPE(devh);
                     switch (connType)
                     {
                         case CON_CAD:
@@ -145,7 +155,7 @@ namespace ivrToolkit.DialogicPlugin
                             Console.WriteLine("Connection due to Positive Voice Detection");
                             break;
                     }
-                    int len = GetSalutationLength(devh);
+                    var len = GetSalutationLength(devh);
                     if (len > answeringMachineLengthInMilliseconds)
                     {
                         return Core.CallAnalysis.AnsweringMachine;
@@ -190,11 +200,11 @@ namespace ivrToolkit.DialogicPlugin
 
         internal static void InitCallProgress(int devh)
         {
-            string[] toneParams = VoiceProperties.Current.GetPrefixMatch("cpa.tone.");
+            var toneParams = VoiceProperties.Current.GetPrefixMatch("cpa.tone.");
 
             foreach (var tone in toneParams)
             {
-                string[] part = tone.Split(',');
+                var part = tone.Split(',');
                 var t = new Tone_T
                 {
                     str = part[0].Trim(),
@@ -239,10 +249,10 @@ namespace ivrToolkit.DialogicPlugin
             } // foreach
 
             // initialize
-            int result = dx_initcallp(devh);
+            var result = dx_initcallp(devh);
             if (result <= -1)
             {
-                string err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
             }
         }
@@ -278,7 +288,7 @@ namespace ivrToolkit.DialogicPlugin
                 }
                 else if (obj is byte)
                 {
-                    byte value = byte.Parse(VoiceProperties.Current.GetProperty("cap."+capName));
+                    var value = byte.Parse(VoiceProperties.Current.GetProperty("cap."+capName));
                     info.SetValue(boxed, value);
                 }
             }
@@ -431,7 +441,7 @@ namespace ivrToolkit.DialogicPlugin
         {
             if (dx_clrdigbuf(devh) == -1)
             {
-                string err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
             }
         }
@@ -450,7 +460,7 @@ namespace ivrToolkit.DialogicPlugin
                 };
             tpts.Add(tpt);
 
-            int bitMask = DefineDigits(terminators);
+            var bitMask = DefineDigits(terminators);
             if (bitMask != 0)
             {
                 tpt = new DV_TPT
@@ -491,13 +501,13 @@ namespace ivrToolkit.DialogicPlugin
 
         private static int DefineDigits(string digits)
         {
-            int result = 0;
+            var result = 0;
 
             if (digits == null) digits = "";
 
             var all = digits.Trim().ToLower();
-            char[] chars = all.ToCharArray();
-            foreach (char c in chars)
+            var chars = all.ToCharArray();
+            foreach (var c in chars)
             {
                 switch (c)
                 {
@@ -677,7 +687,7 @@ namespace ivrToolkit.DialogicPlugin
             }
             if (dx_addtone(devh, 0, 0) == -1)
             {
-                string err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
             }
         }
@@ -725,7 +735,7 @@ namespace ivrToolkit.DialogicPlugin
                 {
                     return 0;
                 }
-                string err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
             }
             if (eblk.ev_event == DE_TONEON || eblk.ev_event == DE_TONEOFF)
@@ -754,7 +764,7 @@ namespace ivrToolkit.DialogicPlugin
             /* set up DX_IOTT */
             if ((iott.io_fhandle = dx_fileopen(filename, _O_CREAT | _O_BINARY | _O_RDWR, _S_IWRITE)) == -1)
             {
-                int fileErr = dx_fileerrno();
+                var fileErr = dx_fileerrno();
 
                 var err = "";
 
@@ -785,31 +795,31 @@ namespace ivrToolkit.DialogicPlugin
             /* Now record the file */
             if (dx_reciottdata(devh, ref iott, ref tpt[0], ref xpb, RM_TONE | EV_ASYNC) == -1)
             {
-                string err = ATDV_ERRMSGP(devh);
+                var err = ATDV_ERRMSGP(devh);
                 dx_fileclose(iott.io_fhandle);
                 throw new VoiceException(err);
             }
 
-            int handler = 0;
+            var handler = 0;
 
             while (true)
             {
                 if (sr_waitevtEx(ref devh, 1, -1, ref handler) == -1)
                 {
-                    string err = ATDV_ERRMSGP(devh);
+                    var err = ATDV_ERRMSGP(devh);
                     dx_fileclose(iott.io_fhandle);
                     throw new VoiceException(err);
                 }
                 if (dx_fileclose(iott.io_fhandle) == -1)
                 {
-                    string err = ATDV_ERRMSGP(devh);
+                    var err = ATDV_ERRMSGP(devh);
                     throw new VoiceException(err);
                 }
 
-                int type = sr_getevttype((uint)handler);
+                var type = sr_getevttype((uint)handler);
                 if (type == TDX_RECORD)
                 {
-                    int reason = ATDX_TERMMSK(devh);
+                    var reason = ATDX_TERMMSK(devh);
                     if ((reason & TM_ERROR) == TM_ERROR)
                     {
                         throw new VoiceException("TM_ERROR");

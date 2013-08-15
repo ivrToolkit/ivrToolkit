@@ -38,6 +38,7 @@ namespace ivrToolkit.DialogicPlugin
             if (_stopped) ResetAndThrowStop();
             _status = LineStatusTypes.AcceptingCalls;
             Dialogic.WaitRings(_devh, rings);
+            _status = LineStatusTypes.Connected;
             if (_stopped) ResetAndThrowStop();
         }
 
@@ -60,16 +61,16 @@ namespace ivrToolkit.DialogicPlugin
             Thread.Sleep(2000);
             TakeOffHook();
 
-            int dialToneTid = VoiceProperties.Current.DialTone.Tid;
-            int noFreeLineTid = VoiceProperties.Current.NoFreeLineTone.Tid;
+            var dialToneTid = VoiceProperties.Current.DialTone.Tid;
+            var noFreeLineTid = VoiceProperties.Current.NoFreeLineTone.Tid;
 
-            bool dialToneEnabled = false;
+            var dialToneEnabled = false;
 
             if (VoiceProperties.Current.PreTestDialTone)
             {
                 dialToneEnabled = true;
                 Dialogic.EnableTone(_devh, dialToneTid);
-                int tid = Dialogic.ListenForCustomTones(_devh, 2);
+                var tid = Dialogic.ListenForCustomTones(_devh, 2);
 
                 if (tid == 0)
                 {
@@ -78,15 +79,18 @@ namespace ivrToolkit.DialogicPlugin
                     return CallAnalysis.NoDialTone;
                 }
             }
-            int index = number.IndexOf(',');
+            var index = number.IndexOf(',');
             if (VoiceProperties.Current.CustomOutboundEnabled && index != -1)
             {
+                var prefix = number.Substring(0, index);
+
                 number = number.Substring(index+1).Replace(",",""); // there may be more than one comma
 
                 if (!dialToneEnabled) Dialogic.EnableTone(_devh, dialToneTid);
                 Dialogic.EnableTone(_devh, noFreeLineTid);
 
-                // TODO send prefix
+                // send prefix (usually a 9)
+                Dialogic.Dial(_devh,prefix);
 
                 // listen for tones
                 var tid = Dialogic.ListenForCustomTones(_devh, 2);
@@ -182,7 +186,7 @@ namespace ivrToolkit.DialogicPlugin
         {
             if (_stopped) ResetAndThrowStop();
             try {
-                string answer = Dialogic.GetDigits(_devh, numberOfDigits, terminators);
+                var answer = Dialogic.GetDigits(_devh, numberOfDigits, terminators);
                 return StripOffTerminator(answer, terminators);
             }
             catch (StopException)
@@ -211,7 +215,7 @@ namespace ivrToolkit.DialogicPlugin
             LastTerminator = "";
             if (answer.Length >= 1)
             {
-                string lastDigit = answer.Substring(answer.Length - 1, 1);
+                var lastDigit = answer.Substring(answer.Length - 1, 1);
                 if (terminators != null & terminators != "")
                 {
                     if (terminators.IndexOf(lastDigit, StringComparison.Ordinal) != -1)

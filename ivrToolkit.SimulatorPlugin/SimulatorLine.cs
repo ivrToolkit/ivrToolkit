@@ -271,7 +271,7 @@ namespace ivrToolkit.SimulatorPlugin
 
         private void PullOff(int count)
         {
-            for (int intT = 0; intT < count; intT++)
+            for (var intT = 0; intT < count; intT++)
             {
                 _digits.RemoveAt(0);
             }
@@ -280,7 +280,7 @@ namespace ivrToolkit.SimulatorPlugin
         {
             var result = "";
             var index = 0;
-            foreach (char c in _digits)
+            foreach (var c in _digits)
             {
                 index++;
                 if (terminators.IndexOf(c) != -1)

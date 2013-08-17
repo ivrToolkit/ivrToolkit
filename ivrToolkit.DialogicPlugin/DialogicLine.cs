@@ -252,13 +252,13 @@ namespace ivrToolkit.DialogicPlugin
         private void ResetAndThrowHangup()
         {
             Reset();
+            _status = LineStatusTypes.OnHook;
             throw new HangupException();
         }
         private void Reset()
         {
             _hungup = false;
             _stopped = false;
-            _status = LineStatusTypes.OnHook;
         }
 
         public void DeleteCustomTones()

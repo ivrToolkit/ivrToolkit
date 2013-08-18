@@ -124,6 +124,9 @@ namespace ivrToolkit.Core.Util
         public event PrePlayHandler OnPrePlay;
 
         private int _attempts = VoiceProperties.Current.PromptAttempts;
+
+        private int _blankAttempts = VoiceProperties.Current.PromptBlankAttempts;
+
         /// <summary>
         /// The number of attempts before throwing the TooManyAttemptsException
         /// </summary>
@@ -131,6 +134,15 @@ namespace ivrToolkit.Core.Util
         {
             get { return _attempts; }
             set { _attempts = value; }
+        }
+
+        /// <summary>
+        /// The number of blank attempts before throwing the TooManyAttemptsException
+        /// </summary>
+        public int BlankAttempts
+        {
+            get { return _blankAttempts; }
+            set { _blankAttempts = value; }
         }
 
         private int _numberOfDigits = 99;
@@ -166,9 +178,14 @@ namespace ivrToolkit.Core.Util
         public string Ask()
         {
             var count = 0;
+            var blankCount = 0;
             var myTerminators = _terminators + (_specialTerminator ?? "");
             while (count < _attempts)
             {
+                if (blankCount >= _blankAttempts)
+                {
+                    break;
+                }
                 try
                 {
                     if (OnPrePlay != null)
@@ -223,7 +240,12 @@ namespace ivrToolkit.Core.Util
                 catch (GetDigitsTimeoutException)
                 {
                 }
+
+                // increment counters
+                blankCount++;
+                if (!string.IsNullOrEmpty(_answer)) blankCount = 0;
                 count++;
+
             } // while
 
             // too many attempts

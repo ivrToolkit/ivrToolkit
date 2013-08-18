@@ -30,7 +30,7 @@ namespace ivrToolkit.Core.Util
         /// </summary>
         public virtual Prompt GetRegularStylePrompt()
         {
-            var p = new Prompt(_line) {NumberOfDigits = 99, Terminators = "#", Attempts = GetAttempts()};
+            var p = new Prompt(_line) {NumberOfDigits = 99, Terminators = "#", Attempts = GetAttempts(), BlankAttempts = GetBlankAttempts()};
             return p;
         }
         
@@ -41,7 +41,7 @@ namespace ivrToolkit.Core.Util
         /// <returns></returns>
         public virtual Prompt GetMenuStylePrompt()
         {
-            var p = new Prompt(_line) {NumberOfDigits = 1, Terminators = "", Attempts = GetAttempts()};
+            var p = new Prompt(_line) { NumberOfDigits = 1, Terminators = "", Attempts = GetAttempts(), BlankAttempts = GetBlankAttempts() };
             return p;
         }
 
@@ -52,6 +52,14 @@ namespace ivrToolkit.Core.Util
         public int GetAttempts()
         {
             return VoiceProperties.Current.PromptAttempts;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public int GetBlankAttempts()
+        {
+            return VoiceProperties.Current.PromptBlankAttempts;
         }
 
         /// <summary>

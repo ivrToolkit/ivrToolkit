@@ -2,7 +2,7 @@
 <package >
     <metadata>
         <id>ivrToolkit.Base</id>
-        <version>0.9.6-beta1</version>
+        <version>0.9.6-beta2</version>
         <authors>Troy Makaro</authors>
         <owners>ivrToolkit</owners>
         <requireLicenseAcceptance>true</requireLicenseAcceptance>

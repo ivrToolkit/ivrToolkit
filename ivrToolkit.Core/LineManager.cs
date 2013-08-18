@@ -95,6 +95,8 @@ namespace ivrToolkit.Core
 
         private static readonly Dictionary<int,ILine> Lines = new Dictionary<int,ILine>();
 
+        private static object LockObject = new object();
+
         /// <summary>
         /// Gets the line class that will do the line manipulation. This method relies on the following entries in voice.properties:
         /// 
@@ -106,23 +108,27 @@ namespace ivrToolkit.Core
         /// <returns>A class that represents the phone line</returns>
         public static ILine GetLine(int lineNumber)
         {
-            Logger.Debug("Getting line number: "+lineNumber);
+            lock (LockObject)
+            {
+                Logger.Debug("Getting line number: " + lineNumber);
 
-            var className = VoiceProperties.Current.ClassName;
-            var assemblyName = VoiceProperties.Current.AssemblyName;
-            
-            // create an instance of the class from the assembly
-            var assembly = Assembly.LoadFrom(assemblyName);
-            var o = assembly.CreateInstance(className);
+                var className = VoiceProperties.Current.ClassName;
+                var assemblyName = VoiceProperties.Current.AssemblyName;
 
-            // check if this class implements IVoice interface
-            if (!(o is IVoice)) {
-                throw new VoiceException("class must implement the IVoice interface");
-            }
-            var voiceDriver = (IVoice)o;
-            var line = voiceDriver.GetLine(lineNumber);
-            Lines[lineNumber] = line;
-            return line;
+                // create an instance of the class from the assembly
+                var assembly = Assembly.LoadFrom(assemblyName);
+                var o = assembly.CreateInstance(className);
+
+                // check if this class implements IVoice interface
+                if (!(o is IVoice))
+                {
+                    throw new VoiceException("class must implement the IVoice interface");
+                }
+                var voiceDriver = (IVoice) o;
+                var line = voiceDriver.GetLine(lineNumber);
+                Lines[lineNumber] = line;
+                return line;
+            } // lock
         }
 
         /// <summary>

@@ -7,13 +7,15 @@
 using System;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Util;
-using System.Threading;
 using ivrToolkit.Core;
+using NLog;
 
 namespace ivrToolkit.DialogicPlugin
 {
     public class DialogicLine : ILine
     {
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
         private readonly int _devh;
         private bool _hungup;
         private bool _stopped;
@@ -57,9 +59,8 @@ namespace ivrToolkit.DialogicPlugin
         {
             if (_stopped) ResetAndThrowStop();
 
-            Hangup();
-            Thread.Sleep(2000);
             TakeOffHook();
+            Logger.Debug("Line is now off hook");
 
             var dialToneTid = VoiceProperties.Current.DialTone.Tid;
             var noFreeLineTid = VoiceProperties.Current.NoFreeLineTone.Tid;
@@ -68,12 +69,14 @@ namespace ivrToolkit.DialogicPlugin
 
             if (VoiceProperties.Current.PreTestDialTone)
             {
+                Logger.Debug("We are pre-testing the dial tone");
                 dialToneEnabled = true;
                 Dialogic.EnableTone(_devh, dialToneTid);
                 var tid = Dialogic.ListenForCustomTones(_devh, 2);
 
                 if (tid == 0)
                 {
+                    Logger.Debug("No tone was detected");
                     Dialogic.DisableTone(_devh, dialToneTid);
                     Hangup();
                     return CallAnalysis.NoDialTone;
@@ -82,15 +85,16 @@ namespace ivrToolkit.DialogicPlugin
             var index = number.IndexOf(',');
             if (VoiceProperties.Current.CustomOutboundEnabled && index != -1)
             {
+                Logger.Debug("Custom dial-9 logic");
                 var prefix = number.Substring(0, index);
 
-                number = number.Substring(index+1).Replace(",",""); // there may be more than one comma
+                number = number.Substring(index + 1).Replace(",", ""); // there may be more than one comma
 
                 if (!dialToneEnabled) Dialogic.EnableTone(_devh, dialToneTid);
                 Dialogic.EnableTone(_devh, noFreeLineTid);
 
                 // send prefix (usually a 9)
-                Dialogic.Dial(_devh,prefix);
+                Dialogic.Dial(_devh, prefix);
 
                 // listen for tones
                 var tid = Dialogic.ListenForCustomTones(_devh, 2);
@@ -110,8 +114,14 @@ namespace ivrToolkit.DialogicPlugin
                     return CallAnalysis.NoFreeLine;
                 }
             }
+            else
+            {
+                if (dialToneEnabled) Dialogic.DisableTone(_devh, dialToneTid);
+            }
 
+            Logger.Debug("about to dial: {0}",number);
             var result = Dialogic.DialWithCpa(_devh, number, answeringMachineLengthInMilliseconds);
+            Logger.Debug("CallAnalysis is: {0}",result.ToString());
             if (result == CallAnalysis.Stopped) ResetAndThrowStop();
 
             if (result == CallAnalysis.AnsweringMachine || result == CallAnalysis.Connected)

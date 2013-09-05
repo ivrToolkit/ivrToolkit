@@ -7,10 +7,12 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.InteropServices.ComTypes;
 using ivrToolkit.Core;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Util;
 using System.Reflection;
+using NLog;
 
 namespace ivrToolkit.DialogicPlugin
 {
@@ -19,6 +21,7 @@ namespace ivrToolkit.DialogicPlugin
     /// </summary>
     public partial class Dialogic : IVoice
     {
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
         public ILine GetLine(int lineNumber)
         {
@@ -140,19 +143,19 @@ namespace ivrToolkit.DialogicPlugin
                     switch (connType)
                     {
                         case CON_CAD:
-                            Console.WriteLine("Connection due to cadence break ");
+                            Logger.Debug("Connection due to cadence break ");
                             break;
                         case CON_DIGITAL:
-                            Console.WriteLine("con_digital");
+                            Logger.Debug("con_digital");
                             break;
                         case CON_LPC:
-                            Console.WriteLine("Connection due to loop current");
+                            Logger.Debug("Connection due to loop current");
                             break;
                         case CON_PAMD:
-                            Console.WriteLine("Connection due to Positive Answering Machine Detection");
+                            Logger.Debug("Connection due to Positive Answering Machine Detection");
                             break;
                         case CON_PVD:
-                            Console.WriteLine("Connection due to Positive Voice Detection");
+                            Logger.Debug("Connection due to Positive Voice Detection");
                             break;
                     }
                     var len = GetSalutationLength(devh);
@@ -611,10 +614,15 @@ namespace ivrToolkit.DialogicPlugin
                 throw new VoiceException(err);
             }
 
+
+            var state = ATDX_STATE(devh);
+            Logger.Debug("About to play: {0} state: {1}",filename,state);
+
             /* Now play the file */
             if (dx_playiottdata(devh, ref iott, ref tpt[0], ref xpb, EV_ASYNC) == -1)
             {
                 var err = ATDV_ERRMSGP(devh);
+                Logger.Debug(err);
                 dx_fileclose(iott.io_fhandle);
                 throw new VoiceException(err);
             }
@@ -667,10 +675,10 @@ namespace ivrToolkit.DialogicPlugin
                 }
                 else
                 {
-                    Console.WriteLine("got here: " + type);
+                    Logger.Error("got here: {0}",type);
                 }
                 return;
-            }
+            } // while
 
         }
 

@@ -201,7 +201,14 @@ namespace ivrToolkit.Core.Util
                     }
                     if (_line.LastTerminator == "t")
                     {
-                        throw new GetDigitsTimeoutException();
+                        if (myTerminators.IndexOf("t", StringComparison.Ordinal) == -1)
+                        {
+                            throw new GetDigitsTimeoutException();
+                        }
+                        if (!_allowEmpty && _answer == "")
+                        {
+                            throw new GetDigitsTimeoutException();                                
+                        }
                     }
                     if (_specialTerminator != null && _line.LastTerminator == _specialTerminator)
                     {
@@ -219,21 +226,14 @@ namespace ivrToolkit.Core.Util
                             {
                                 return _answer;
                             }
-                            if (_invalidAnswerMessage != null)
-                            {
-                                PlayFileOrPhrase(_invalidAnswerMessage);
-                            }
                         }
                         else
                         {
-                            if (_answer == "" && _allowEmpty == false)
-                            {
-                                PlayFileOrPhrase(_invalidAnswerMessage);
-                            }
-                            else
-                            {
-                                return _answer;
-                            }
+                            if (_answer != "" || _allowEmpty) return _answer;
+                        }
+                        if (_invalidAnswerMessage != null)
+                        {
+                            PlayFileOrPhrase(_invalidAnswerMessage);
                         }
                     }
                 }

@@ -19,6 +19,7 @@ namespace ivrToolkit.DialogicPlugin
         private readonly int _devh;
         private bool _hungup;
         private bool _stopped;
+        private int _volume;
 
         internal DialogicLine(int devh, int lineNumber)
         {
@@ -218,6 +219,19 @@ namespace ivrToolkit.DialogicPlugin
         {
             if (_stopped) ResetAndThrowStop();
             return Dialogic.FlushDigitBuffer(_devh);
+        }
+
+        public int Volume
+        {
+            get
+            {
+                return _volume;
+            }
+            set
+            {
+                Dialogic.SetVolume(_devh,value);
+                _volume = value;
+            }
         }
 
         private string StripOffTerminator(string answer, string terminators)

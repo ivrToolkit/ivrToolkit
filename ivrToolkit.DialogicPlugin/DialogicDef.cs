@@ -217,6 +217,22 @@ namespace ivrToolkit.DialogicPlugin
             SC_HALFDUP = 0x01
         }
 
+        private const ushort SV_SPEEDTBL = 0x01;    /* Modify Speed */
+        private const ushort SV_VOLUMETBL = 0x02;   /* Modify Volume */
+
+        private const ushort SV_ABSPOS = 0x00;      /* Absolute Position */
+        private const ushort SV_RELCURPOS = 0x10;   /* Relative to Current Position */
+        private const ushort SV_TOGGLE = 0x20;      /* Toggle */
+
+        private const ushort SV_WRAPMOD = 0x0010;
+        private const ushort SV_SETDEFAULT = 0x0020;
+        private const ushort SV_LEVEL = 0x0100;
+        private const ushort SV_BEGINPLAY = 0x0200;
+
+        private const ushort SV_TOGORIGIN = 0x00;    /* Toggle Between Origin and Last Modified Position */
+        private const ushort SV_CURORIGIN = 0x01;    /* Reset Current Position to Origin */
+        private const ushort SV_CURLASTMOD = 0x02;   /* Reset Current Position to Last Modified Position */
+        private const ushort SV_RESETORIG = 0x03;    /* Reset Current Position and Last Modified State to Origin */
 
         [StructLayoutAttribute(LayoutKind.Sequential)]
         public struct DX_CST
@@ -697,6 +713,10 @@ namespace ivrToolkit.DialogicPlugin
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         private static extern int dx_distone(int chdev, int toneid, int evt_mask);
+
+        [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        private static extern int dx_adjsv( int chdev, ushort tabletype, ushort action, ushort adjsize );
+
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         private static extern int dx_enbtone(int chdev, int toneid, int evt_mask);

@@ -59,9 +59,13 @@ namespace ivrToolkit.Core.Util
         /// </summary>
         public string DialToneType { get { return _p.GetProperty("dial.cpa.dialTone.type", "L"); } }
         /// <summary>
-        /// Number of attempts to try at a prompt before 'TooManyAttemptsException' is thrown. Default is '5'.
+        /// Total number of attempts to try at a prompt before 'TooManyAttemptsException' is thrown. Default is '99'.
         /// </summary>
-        public int PromptAttempts { get { return int.Parse(_p.GetProperty("prompt.attempts", "5")); } }
+        public int PromptAttempts { get { return int.Parse(_p.GetProperty("prompt.attempts", "99")); } }
+        /// <summary>
+        /// Number of blank entry attempts to try at a prompt before 'TooManyAttemptsException' is thrown. Default is '5'.
+        /// </summary>
+        public int PromptBlankAttempts { get { return int.Parse(_p.GetProperty("prompt.blankAttempts", "5")); } }
         /// <summary>
         /// Number of milliseconds between keypress before it considers it to be a prompt attempt. Default is '5000'.
         /// </summary>

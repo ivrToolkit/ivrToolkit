@@ -124,6 +124,9 @@ namespace ivrToolkit.Core.Util
         public event PrePlayHandler OnPrePlay;
 
         private int _attempts = VoiceProperties.Current.PromptAttempts;
+
+        private int _blankAttempts = VoiceProperties.Current.PromptBlankAttempts;
+
         /// <summary>
         /// The number of attempts before throwing the TooManyAttemptsException
         /// </summary>
@@ -131,6 +134,15 @@ namespace ivrToolkit.Core.Util
         {
             get { return _attempts; }
             set { _attempts = value; }
+        }
+
+        /// <summary>
+        /// The number of blank attempts before throwing the TooManyAttemptsException
+        /// </summary>
+        public int BlankAttempts
+        {
+            get { return _blankAttempts; }
+            set { _blankAttempts = value; }
         }
 
         private int _numberOfDigits = 99;
@@ -166,9 +178,14 @@ namespace ivrToolkit.Core.Util
         public string Ask()
         {
             var count = 0;
+            var blankCount = 0;
             var myTerminators = _terminators + (_specialTerminator ?? "");
             while (count < _attempts)
             {
+                if (blankCount >= _blankAttempts)
+                {
+                    break;
+                }
                 try
                 {
                     if (OnPrePlay != null)
@@ -184,7 +201,14 @@ namespace ivrToolkit.Core.Util
                     }
                     if (_line.LastTerminator == "t")
                     {
-                        throw new GetDigitsTimeoutException();
+                        if (myTerminators.IndexOf("t", StringComparison.Ordinal) == -1)
+                        {
+                            throw new GetDigitsTimeoutException();
+                        }
+                        if (!_allowEmpty && _answer == "")
+                        {
+                            throw new GetDigitsTimeoutException();                                
+                        }
                     }
                     if (_specialTerminator != null && _line.LastTerminator == _specialTerminator)
                     {
@@ -202,28 +226,26 @@ namespace ivrToolkit.Core.Util
                             {
                                 return _answer;
                             }
-                            if (_invalidAnswerMessage != null)
-                            {
-                                PlayFileOrPhrase(_invalidAnswerMessage);
-                            }
                         }
                         else
                         {
-                            if (_answer == "" && _allowEmpty == false)
-                            {
-                                PlayFileOrPhrase(_invalidAnswerMessage);
-                            }
-                            else
-                            {
-                                return _answer;
-                            }
+                            if (_answer != "" || _allowEmpty) return _answer;
+                        }
+                        if (_invalidAnswerMessage != null)
+                        {
+                            PlayFileOrPhrase(_invalidAnswerMessage);
                         }
                     }
                 }
                 catch (GetDigitsTimeoutException)
                 {
                 }
+
+                // increment counters
+                blankCount++;
+                if (!string.IsNullOrEmpty(_answer)) blankCount = 0;
                 count++;
+
             } // while
 
             // too many attempts

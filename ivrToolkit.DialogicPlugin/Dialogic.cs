@@ -94,6 +94,21 @@ namespace ivrToolkit.DialogicPlugin
             }
         }
 
+        internal static void SetVolume(int devh, int size)
+        {
+            if (size < -10 || size > 10)
+            {
+                throw new VoiceException("size must be between -10 to 10");
+            }
+            var adjsize = (ushort)size;
+            var result = dx_adjsv(devh, SV_VOLUMETBL, SV_ABSPOS, adjsize);
+            if (result <= -1)
+            {
+                var error = ATDV_ERRMSGP(devh);
+                throw new VoiceException(error);
+            }
+        }
+
         /// <summary>
         /// Dials a phone number using call progress analysis.
         /// </summary>
@@ -101,7 +116,6 @@ namespace ivrToolkit.DialogicPlugin
         /// <param name="number">The phone number to dial.</param>
         internal static void Dial(int devh, string number)
         {
-
             var cap = GetCap(devh);
 
             var result = dx_dial(devh, number, ref cap, EV_SYNC);
@@ -111,6 +125,7 @@ namespace ivrToolkit.DialogicPlugin
                 throw new VoiceException(error);
             }
         }
+
 
         /// <summary>
         /// Dials a phone number using call progress analysis.
@@ -420,21 +435,13 @@ namespace ivrToolkit.DialogicPlugin
             ClearDigits(devh); // not sure if this is necessary and perhaps only needed for getDigitsTimeoutException?
             if ((reason & TM_IDDTIME) == TM_IDDTIME)
             {
-                if (terminators.IndexOf("T", StringComparison.Ordinal) != -1 && answer.Length != 0)
+                if (terminators.IndexOf("t", StringComparison.Ordinal) != -1)
                 {
-                    // terminator is allowed as long as there is at least one key pressed
-                    answer += 'T';
+                    answer += 't';
                 }
                 else
                 {
-                    if (terminators.IndexOf("t", StringComparison.Ordinal) != -1)
-                    {
-                        answer += 't';
-                    }
-                    else
-                    {
-                        throw new GetDigitsTimeoutException();
-                    }
+                    throw new GetDigitsTimeoutException();
                 }
             }
             return answer;
@@ -607,6 +614,7 @@ namespace ivrToolkit.DialogicPlugin
                         err = "File or path not found.";
                         break;
                 }
+                err += " File: |"+filename+"|";
 
                 //I don't think this is needed when we get an error opening a file
                 //dx_fileclose(iott.io_fhandle);
@@ -621,8 +629,9 @@ namespace ivrToolkit.DialogicPlugin
             /* Now play the file */
             if (dx_playiottdata(devh, ref iott, ref tpt[0], ref xpb, EV_ASYNC) == -1)
             {
+                Logger.Error("Tried to play: {0} state: {1}", filename, state);
+
                 var err = ATDV_ERRMSGP(devh);
-                Logger.Debug(err);
                 dx_fileclose(iott.io_fhandle);
                 throw new VoiceException(err);
             }
@@ -659,19 +668,19 @@ namespace ivrToolkit.DialogicPlugin
                     {
                         throw new HangupException();
                     }
-                    if ((reason & TM_MAXTIME) == TM_MAXTIME) Console.WriteLine("TM_MAXTIME");
+                    if ((reason & TM_MAXTIME) == TM_MAXTIME) Logger.Debug("TM_MAXTIME");
 
-                    if ((reason & TM_BARGEIN) == TM_BARGEIN) Console.WriteLine("TM_BARGEIN");
-//                    if ((reason & TM_DIGIT) == TM_DIGIT) Console.WriteLine("TM_DIGIT");
-//                    if ((reason & TM_EOD) == TM_EOD) Console.WriteLine("TM_EOD"); // This is how I know they listend to full message
-                    if ((reason & TM_IDDTIME) == TM_IDDTIME) Console.WriteLine("TM_IDDTIME");
-                    if ((reason & TM_MAXDATA) == TM_MAXDATA) Console.WriteLine("TM_MAXDATA");
-//                    if ((reason & TM_MAXDTMF) == TM_MAXDTMF) Console.WriteLine("TM_MAXDTMF");
-                    if ((reason & TM_MAXNOSIL) == TM_MAXNOSIL) Console.WriteLine("TM_MTAXNOSIL");
-                    if ((reason & TM_MAXSIL) == TM_MAXSIL) Console.WriteLine("TM_MAXSIL");
-//                    if ((reason & TM_NORMTERM) == TM_NORMTERM) Console.WriteLine("TM_NORMTERM");
-                    if ((reason & TM_PATTERN) == TM_PATTERN) Console.WriteLine("TM_PATTERN");
-                    if ((reason & TM_TONE) == TM_TONE) Console.WriteLine("TM_TONE");
+                    if ((reason & TM_BARGEIN) == TM_BARGEIN) Logger.Debug("TM_BARGEIN");
+                    //                    if ((reason & TM_DIGIT) == TM_DIGIT) Logger.Debug("TM_DIGIT");
+                    //                    if ((reason & TM_EOD) == TM_EOD) Logger.Debug("TM_EOD"); // This is how I know they listend to full message
+                    if ((reason & TM_IDDTIME) == TM_IDDTIME) Logger.Debug("TM_IDDTIME");
+                    if ((reason & TM_MAXDATA) == TM_MAXDATA) Logger.Debug("TM_MAXDATA");
+                    //                    if ((reason & TM_MAXDTMF) == TM_MAXDTMF) Logger.Debug("TM_MAXDTMF");
+                    if ((reason & TM_MAXNOSIL) == TM_MAXNOSIL) Logger.Debug("TM_MTAXNOSIL");
+                    if ((reason & TM_MAXSIL) == TM_MAXSIL) Logger.Debug("TM_MAXSIL");
+                    //                    if ((reason & TM_NORMTERM) == TM_NORMTERM) Logger.Debug("TM_NORMTERM");
+                    if ((reason & TM_PATTERN) == TM_PATTERN) Logger.Debug("TM_PATTERN");
+                    if ((reason & TM_TONE) == TM_TONE) Logger.Debug("TM_TONE");
                 }
                 else
                 {

@@ -371,7 +371,7 @@ namespace ivrToolkit.SimulatorPlugin
                 OnHangup(this, null);
             }
         }
- 
 
+        public int Volume { get; set; }
     } // class
 }

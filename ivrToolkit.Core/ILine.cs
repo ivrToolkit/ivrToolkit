@@ -100,5 +100,10 @@ namespace ivrToolkit.Core
         /// <returns>All the digits in the buffer including terminators</returns>
         string FlushDigitBuffer();
 
+        /// <summary>
+        /// Gets or sets the Volume. Value can be in the range of -10 to 10. Zero being the regular volume.
+        /// </summary>
+        int Volume { get; set; }
+
     }
 }

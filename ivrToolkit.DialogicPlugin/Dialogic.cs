@@ -6,8 +6,6 @@
 // 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Runtime.InteropServices.ComTypes;
 using ivrToolkit.Core;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Util;
@@ -25,8 +23,12 @@ namespace ivrToolkit.DialogicPlugin
 
         public ILine GetLine(int lineNumber)
         {
-            // TODO fix this
-            var devh = OpenDevice("dxxxB1C" + lineNumber.ToString(CultureInfo.InvariantCulture));
+            var board = ((lineNumber - 1) / 4) + 1;
+            var channel = (lineNumber - (board - 1) * 4);
+
+            var deviceName = string.Format("dxxxB{0}C{1}", board, channel);
+
+            var devh = OpenDevice(deviceName);
             return new DialogicLine(devh, lineNumber);
         }
 
@@ -37,10 +39,13 @@ namespace ivrToolkit.DialogicPlugin
         /// <returns>The device handle</returns>
         private static int OpenDevice(string devname)
         {
+            Logger.Debug("OpenDevice({0})",devname);
             var devh = dx_open(devname, 0);
             if (devh <= -1)
             {
-                var err = string.Format("Could not get device handle for device {0}", devname);
+                //var err = string.Format("Could not get device handle for device {0}", devname);
+                var err = ATDV_ERRMSGP(devh);
+                Logger.Debug("Error is: {0}",err);
                 throw new VoiceException(err);
             }
             return devh;
@@ -769,13 +774,14 @@ namespace ivrToolkit.DialogicPlugin
         /// <param name="filename">The name of the file to play.</param>
         /// <param name="terminators">Terminator keys</param>
         /// <param name="xpb">The format of the vox or wav file.</param>
-        internal static void RecordToFile(int devh, string filename, string terminators, DX_XPB xpb)
+        /// <param name="timeoutMilli">Number of milliseconds before timeout</param>
+        internal static void RecordToFile(int devh, string filename, string terminators, DX_XPB xpb, int timeoutMilli)
         {
 
             FlushDigitBuffer(devh);
 
             /* set up DV_TPT */
-            var tpt = GetTerminationConditions(1, terminators,0);
+            var tpt = GetTerminationConditions(1, terminators, timeoutMilli);
 
             var iott = new DX_IOTT {io_type = IO_DEV | IO_EOT, io_bufp = null, io_offset = 0, io_length = -1};
             /* set up DX_IOTT */

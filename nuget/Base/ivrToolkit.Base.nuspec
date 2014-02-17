@@ -2,13 +2,13 @@
 <package >
     <metadata>
         <id>ivrToolkit.Base</id>
-        <version>0.9.6</version>
+        <version>0.9.7</version>
         <authors>Troy Makaro</authors>
         <owners>ivrToolkit</owners>
         <requireLicenseAcceptance>true</requireLicenseAcceptance>
         <description>
             A toolkit for writing Interactive Voice Response Applications with primary support for Dialogic Cards.
-            Examples can be found at https://github.com/ivrToolkit/ivrToolkit/tree/release-0.9.6/Examples
+            Examples can be found at https://github.com/ivrToolkit/ivrToolkit/tree/release-0.9.7/Examples
         </description>
         <copyright>Copyright 2013 Troy Makaro</copyright>
         <licenseUrl>http://ivrtoolkit.com/LGPL.txt</licenseUrl>

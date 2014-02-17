@@ -189,6 +189,14 @@ namespace ivrToolkit.SimulatorPlugin
             throw new NotImplementedException();
         }
 
+        public void RecordToFile(string filename, int timeoutMilliseconds)
+        {
+            if (_stopped) ResetAndThrowStop();
+            if (_hungup) ResetAndThrowHangup();
+
+            throw new NotImplementedException();
+        }
+
         private void ResetAndThrowStop()
         {
             Reset();

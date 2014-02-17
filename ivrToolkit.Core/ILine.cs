@@ -81,10 +81,17 @@ namespace ivrToolkit.Core
         void PlayFile(string filename);
 
         /// <summary>
-        /// Records a wav file to the disk in the format of 8000hz 1 channel unsigned 8 bit PCM.
+        /// Records a wav file to the disk in the format of 8000hz 1 channel unsigned 8 bit PCM. Has a default timeout of 5 minutes.
         /// </summary>
         /// <param name="filename">The file name to record to</param>
         void RecordToFile(string filename);
+
+        /// <summary>
+        /// Records a wav file to the disk in the format of 8000hz 1 channel unsigned 8 bit PCM.
+        /// </summary>
+        /// <param name="filename">The file name to record to</param>
+        /// <param name="timeoutMillisconds">Maximum time to record in milliseconds</param>
+        void RecordToFile(string filename, int timeoutMillisconds);
 
         /// <summary>
         /// Keep prompting for digits until number of digits is pressed or a terminator digit is pressed.

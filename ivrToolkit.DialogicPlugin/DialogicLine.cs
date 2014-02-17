@@ -173,9 +173,14 @@ namespace ivrToolkit.DialogicPlugin
 
         public void RecordToFile(string filename)
         {
+            RecordToFile(filename,60000*5); // default timeout of 5 minutes
+        }
+
+        public void RecordToFile(string filename, int timeoutMilliseconds)
+        {
             if (_stopped) ResetAndThrowStop();
             try {
-                Dialogic.RecordToFile(_devh, filename, "0123456789#*abcd", _currentXpb);
+                Dialogic.RecordToFile(_devh, filename, "0123456789#*abcd", _currentXpb, timeoutMilliseconds);
             }
             catch (StopException)
             {

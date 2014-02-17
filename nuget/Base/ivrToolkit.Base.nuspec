@@ -2,21 +2,21 @@
 <package >
     <metadata>
         <id>ivrToolkit.Base</id>
-        <version>0.9.7</version>
+        <version>1.0</version>
         <authors>Troy Makaro</authors>
         <owners>ivrToolkit</owners>
         <requireLicenseAcceptance>true</requireLicenseAcceptance>
         <description>
             A toolkit for writing Interactive Voice Response Applications with primary support for Dialogic Cards.
-            Examples can be found at https://github.com/ivrToolkit/ivrToolkit/tree/release-0.9.7/Examples
+            Examples can be found at https://github.com/ivrToolkit/ivrToolkit/tree/release-1.0/Examples
         </description>
         <copyright>Copyright 2013 Troy Makaro</copyright>
         <licenseUrl>http://ivrtoolkit.com/LGPL.txt</licenseUrl>
         <projectUrl>http://www.ivrtoolkit.com</projectUrl>
         <iconUrl>http://ivrtoolkit.com/ivrToolkit32.jpg</iconUrl>
         <dependencies>
-            <dependency id="NAudio"/>
-            <dependency id="NLog"/>
+            <dependency id="NAudio" version="1.7" />
+            <dependency id="NLog" version="2.0" />
         </dependencies>
     </metadata>
 </package>

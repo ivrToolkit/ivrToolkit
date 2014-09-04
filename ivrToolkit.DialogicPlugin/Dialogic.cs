@@ -6,6 +6,7 @@
 // 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using ivrToolkit.Core;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Util;
@@ -21,15 +22,78 @@ namespace ivrToolkit.DialogicPlugin
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
-        public ILine GetLine(int lineNumber)
+        private static readonly object LockObject = new object();
+        private static bool _initialized;
+
+        private static void Init()
         {
+            var result = GcLibDef.gc_Start(null);
+            Logger.Debug("gc_start: " + result);
+            if (result != 0)
+            {
+                ThrowError("Init().gc_start");
+            }
+            _initialized = true;
+
+            var cclibStates = new GcLibDef.GC_CCLIB_STATUSALL();
+            result = GcLibDef.gc_CCLibStatusEx("GC_ALL_LIB", ref cclibStates);
+            Logger.Debug("gc_CCLibStatusEx: " + result);
+
+            foreach (var cclibState in cclibStates.cclib_state)
+            {
+                Logger.Debug(cclibState.name + "|" + cclibState.state);
+            }
+            
+        }
+
+        private static void ThrowError(string from)
+        {
+            var info = new GcLibDef.GC_INFO();
+            Logger.Debug("About to find error for: {0}", from);
+            var status = GcLibDef.gc_ErrorInfo(ref info);
+            if (status != 0) throw new VoiceException("Unknown error from "+from); // should not happen
+
+            var message = string.Format("{0}|{1}\r\n{2}|{3}\r\n{4}|{5}", info.gcValue, info.gcMsg, info.ccValue, info.ccMsg, info.ccLibId, info.ccLibName);
+            Logger.Error(message);
+            throw new VoiceException(message);
+            
+        }
+
+        public ILine GetLine(int lineNumber, object data = null)
+        {
+            lock (LockObject)
+            {
+                if (!_initialized)
+                {
+                    Init();
+                }
+            }
+
+            var deviceName = GetDeviceName(lineNumber);
+
+            var handles = OpenDevice(deviceName);
+            return new DialogicLine(handles.Devh, handles.Voiceh, lineNumber);
+        }
+
+
+        public virtual string GetDeviceName(int lineNumber)
+        {
+            var pattern = VoiceProperties.Current.DeviceNamePattern;
+
             var board = ((lineNumber - 1) / 4) + 1;
             var channel = (lineNumber - (board - 1) * 4);
 
-            var deviceName = string.Format("dxxxB{0}C{1}", board, channel);
+            pattern = pattern.Replace("{board}", board.ToString(CultureInfo.InvariantCulture))
+                .Replace("{channel}", channel.ToString(CultureInfo.InvariantCulture))
+                .Replace("{line}",lineNumber.ToString(CultureInfo.InvariantCulture));
 
-            var devh = OpenDevice(deviceName);
-            return new DialogicLine(devh, lineNumber);
+            return pattern;
+        }
+
+        private class Handles
+        {
+            public int Devh;
+            public int Voiceh;
         }
 
         /// <summary>
@@ -37,18 +101,32 @@ namespace ivrToolkit.DialogicPlugin
         /// </summary>
         /// <param name="devname">Name of the board line. For example: dxxxB1C1</param>
         /// <returns>The device handle</returns>
-        private static int OpenDevice(string devname)
+        private static Handles OpenDevice(string devname)
         {
-            Logger.Debug("OpenDevice({0})",devname);
-            var devh = dx_open(devname, 0);
-            if (devh <= -1)
+            Logger.Debug("OpenDevice({0})", devname);
+            var linebag = new LINEBAG();
+            var devh = 0;
+            var result = GcLibDef.gc_OpenEx(ref devh, devname, EV_SYNC, linebag);
+
+            if (result != 0)
             {
-                //var err = string.Format("Could not get device handle for device {0}", devname);
-                var err = ATDV_ERRMSGP(devh);
-                Logger.Debug("Error is: {0}",err);
-                throw new VoiceException(err);
+                ThrowError("OpenDevice().gc_OpenEx");
             }
-            return devh;
+
+
+            var voiceh = 0;
+            result = GcLibDef.gc_GetResourceH(devh, ref voiceh, GcLibDef.GC_VOICEDEVICE);
+
+            if (result != 0)
+            {
+                ThrowError("gOpenDevice().gc_GetResourceH");
+            }
+
+            return new Handles
+            {
+                Devh = devh,
+                Voiceh = voiceh
+            };
         }
 
         internal static void WaitRings(int devh, int rings)
@@ -321,6 +399,7 @@ namespace ivrToolkit.DialogicPlugin
 
         internal static void DeleteTones(int devh)
         {
+            Logger.Debug("in delete tones");
             if (dx_deltones(devh) == -1)
             {
                 var err = ATDV_ERRMSGP(devh);
@@ -348,13 +427,19 @@ namespace ivrToolkit.DialogicPlugin
         /// Closes the board line.
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
-        internal static void Close(int devh)
+        /// <param name="voiceh">The handle for the Dialogic Voice line.</param>
+        internal static void Close(int devh, int voiceh)
         {
-            var result = dx_close(devh, 0);
+            var result = dx_close(voiceh, 0);
             if (result <= -1)
             {
                 var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
+            }
+            result = GcLibDef.gc_Close(devh);
+            if (result != 0)
+            {
+                ThrowError("Close().gc_Close");
             }
         }
 

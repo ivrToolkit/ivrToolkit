@@ -46,6 +46,15 @@ namespace ivrToolkit.Core.Util
             return false;
         }
 
+
+
+        /// <summary>
+        /// The device name pattern. Default is ':P_pdk_na_an_io:V_dxxxB{board}C{channel}'.
+        /// </summary>
+        public string DeviceNamePattern { get { return _p.GetProperty("voice.deviceNamePattern", ":P_pdk_na_an_io:V_dxxxB{board}C{channel}"); } }
+        
+        
+        
         /// <summary>
         /// The class name of the plugin to instantiate. Default is 'ivrToolkit.SimulatorPlugin.Simulator'.
         /// </summary>

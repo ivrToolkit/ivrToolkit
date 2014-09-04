@@ -95,7 +95,7 @@ namespace ivrToolkit.Core
 
         private static readonly Dictionary<int,ILine> Lines = new Dictionary<int,ILine>();
 
-        private static object LockObject = new object();
+        private static readonly object LockObject = new object();
 
         /// <summary>
         /// Gets the line class that will do the line manipulation. This method relies on the following entries in voice.properties:
@@ -104,9 +104,10 @@ namespace ivrToolkit.Core
         /// voice.assemblyName = The assembly name that contains the above class
         /// </summary>
         /// 
-        /// <param name="lineNumber">The line number to connect to</param>
+        /// <param name="lineNumber">The line number to connect to starting at 1</param>
+        /// <param name="data">Optional parameter to pass in data. The dialogic driver can take a string that represents the device name.</param>
         /// <returns>A class that represents the phone line</returns>
-        public static ILine GetLine(int lineNumber)
+        public static ILine GetLine(int lineNumber, object data = null)
         {
             lock (LockObject)
             {
@@ -125,7 +126,9 @@ namespace ivrToolkit.Core
                     throw new VoiceException("class must implement the IVoice interface");
                 }
                 var voiceDriver = (IVoice) o;
-                var line = voiceDriver.GetLine(lineNumber);
+
+
+                var line = voiceDriver.GetLine(lineNumber, data);
                 Lines[lineNumber] = line;
                 return line;
             } // lock

@@ -14,7 +14,7 @@ namespace ivrToolkit.SimulatorPlugin
     {
         private static readonly Dictionary<string, SimulatorLine> Lines = new Dictionary<string, SimulatorLine>();
 
-        public ILine GetLine(int lineNumber)
+        public ILine GetLine(int lineNumber, object data = null)
         {
             // make sure the simulator thread is started and listening for a connection
             SimulatorListener.Singleton.Start();
@@ -30,6 +30,7 @@ namespace ivrToolkit.SimulatorPlugin
                 return line;
             }
         }
+
         public static void ReleaseLine(int lineNumber)
         {
             Lines.Remove(lineNumber.ToString(CultureInfo.InvariantCulture));

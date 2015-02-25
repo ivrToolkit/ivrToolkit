@@ -25,7 +25,12 @@ namespace ivrToolkit.DialogicPlugin
         private static readonly object LockObject = new object();
         private static bool _initialized;
 
-        private static void Init()
+        private static void InitForDx()
+        {
+            _initialized = true;
+        }
+
+        private static void InitForGc()
         {
             var result = GcLibDef.gc_Start(null);
             Logger.Debug("gc_start: " + result);
@@ -65,13 +70,20 @@ namespace ivrToolkit.DialogicPlugin
             {
                 if (!_initialized)
                 {
-                    Init();
+                    if (VoiceProperties.Current.UseGc)
+                    {
+                        InitForGc();
+                    }
+                    else
+                    {
+                        InitForDx();
+                    }
                 }
             }
 
             var deviceName = GetDeviceName(lineNumber);
 
-            var handles = OpenDevice(deviceName);
+            var handles = VoiceProperties.Current.UseGc ? OpenDeviceWithGc(deviceName): OpenDeviceWithDx(deviceName);
             return new DialogicLine(handles.Devh, handles.Voiceh, lineNumber);
         }
 
@@ -101,9 +113,27 @@ namespace ivrToolkit.DialogicPlugin
         /// </summary>
         /// <param name="devname">Name of the board line. For example: dxxxB1C1</param>
         /// <returns>The device handle</returns>
-        private static Handles OpenDevice(string devname)
+        private static Handles OpenDeviceWithDx(string devname)
         {
-            Logger.Debug("OpenDevice({0})", devname);
+            Logger.Debug("OpenDeviceWithDx({0})", devname);
+            var devh = dx_open(devname, 0);
+            if (devh <= -1)
+            {
+                //var err = string.Format("Could not get device handle for device {0}", devname);
+                var err = ATDV_ERRMSGP(devh);
+                Logger.Debug("Error is: {0}", err);
+                throw new VoiceException(err);
+            }
+            return new Handles
+            {
+                Devh = devh,
+                Voiceh = devh
+            };
+        }
+
+        private static Handles OpenDeviceWithGc(string devname)
+        {
+            Logger.Debug("OpenDeviceWithGc({0})", devname);
             var linebag = new LINEBAG();
             var devh = 0;
             var result = GcLibDef.gc_OpenEx(ref devh, devname, EV_SYNC, linebag);
@@ -436,10 +466,13 @@ namespace ivrToolkit.DialogicPlugin
                 var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
             }
-            result = GcLibDef.gc_Close(devh);
-            if (result != 0)
+            if (VoiceProperties.Current.UseGc)
             {
-                ThrowError("Close().gc_Close");
+                result = GcLibDef.gc_Close(devh);
+                if (result != 0)
+                {
+                    ThrowError("Close().gc_Close");
+                }                
             }
         }
 

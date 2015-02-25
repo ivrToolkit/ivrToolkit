@@ -8,6 +8,7 @@ using System;
 using System.Threading;
 using System.Windows.Forms;
 using ivrToolkit.Core;
+using ivrToolkit.Core.Exceptions;
 using SimulatorTest.ScriptBlocks;
 
 namespace OutTest
@@ -27,27 +28,36 @@ namespace OutTest
 
         private void btnDial_Click(object sender, EventArgs e)
         {
-            _line = LineManager.GetLine(int.Parse(txtLine.Text));
-            Thread.Sleep(2000);
-            var result = _line.Dial(txtPhoneNumber.Text, 3500);
-
-            if (result == CallAnalysis.Connected)
+            try
             {
-                var manager = new ScriptManager(_line, new WelcomeScript());
+                _line = LineManager.GetLine(int.Parse(txtLine.Text));
+                _line.Hangup();
+                Thread.Sleep(2000);
+                var result = _line.Dial(txtPhoneNumber.Text, 3500);
 
-                while (manager.HasNext())
+                if (result == CallAnalysis.Connected)
                 {
-                    // execute the next script
-                    manager.Execute();
+                    var manager = new ScriptManager(_line, new WelcomeScript());
+
+                    while (manager.HasNext())
+                    {
+                        // execute the next script
+                        manager.Execute();
+                    }
+
                 }
+                else
+                {
+                    MessageBox.Show(result.ToString());
+                }
+                _line.Hangup();
+                LineManager.ReleaseAll();
 
             }
-            else
+            catch (HangupException)
             {
-                MessageBox.Show(result.ToString());
+                MessageBox.Show(@"hungup");                
             }
-            _line.Hangup();
-            LineManager.ReleaseAll();
         }
     }
 }

@@ -49,11 +49,19 @@ namespace ivrToolkit.Core.Util
 
 
         /// <summary>
-        /// The device name pattern. Default is ':P_pdk_na_an_io:V_dxxxB{board}C{channel}'.
+        /// The device name pattern. Default is ':P_pdk_na_an_io:V_dxxxB{board}C{channel}' for gx and 'dxxxB{board}C{channel}' for dx.
         /// </summary>
-        public string DeviceNamePattern { get { return _p.GetProperty("voice.deviceNamePattern", ":P_pdk_na_an_io:V_dxxxB{board}C{channel}"); } }
-        
-        
+        public string DeviceNamePattern {
+            get
+            {
+                return _p.GetProperty("voice.deviceNamePattern", UseGc ? ":P_pdk_na_an_io:V_dxxxB{board}C{channel}" : "dxxxB{board}C{channel}");
+            }
+        }
+
+        /// <summary>
+        /// True to use GC_OpenEx instead of DX_OPEN
+        /// </summary>
+        public bool UseGc { get { return ToBool(_p.GetProperty("voice.useGC", "false")); } }
         
         /// <summary>
         /// The class name of the plugin to instantiate. Default is 'ivrToolkit.SimulatorPlugin.Simulator'.

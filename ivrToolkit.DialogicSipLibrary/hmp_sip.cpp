@@ -54,6 +54,7 @@
 * If holding an instance of channel in an array the index of 
 * the array and the channel number will always be off by 1.
 */
+//void authentication(const char* proxy_ip, const char* alias, const char* password, const char* realm);
 
 class CHANNEL{
 public:
@@ -292,6 +293,7 @@ public:
 		const char *realm = "";
 		authentication(proxy_ip, alias, password, realm);
 		*/
+
 		strcpy(gc_mk_blk.gclib->origination.address, ani);
 		gc_mk_blk.gclib->origination.address_type = GCADDRTYPE_TRANSPARENT;
 
@@ -301,7 +303,7 @@ public:
 		sprintf(sip_header, "User-Agent: %s", USER_AGENT); //proprietary header
 		gc_util_insert_parm_ref_ex(&gc_parm_blkp, IPSET_SIP_MSGINFO, IPPARM_SIP_HDR, (unsigned long)(strlen(sip_header) + 1), sip_header);
 
-		sprintf(sip_header, "From: %s<sip:%s>", USER_DISPLAY, dnis); //From header
+		sprintf(sip_header, "From: %s<sip:%s>", USER_DISPLAY, ani); //From header
 		gc_util_insert_parm_ref_ex(&gc_parm_blkp, IPSET_SIP_MSGINFO, IPPARM_SIP_HDR, (unsigned long)(strlen(sip_header) + 1), sip_header);
 
 		sprintf(sip_header, "Contact: %s<sip:%s:%d>", USER_DISPLAY, ani, HMP_SIP_PORT); //Contact header
@@ -1687,7 +1689,7 @@ int DialogicFunctions::DialogicMakeCallSync(int channel_index, const char* ani, 
 
 	// TODO: There is no point waiting forrever if a timeout occurs I can drop the call as this is an error.
 	// I can fix this later.
-	if (WaitForEventSync(GCEV_ALERTING, SYNC_WAIT_INFINITE) == SYNC_WAIT_SUCCESS){
+	if (WaitForEventSync(GCEV_ALERTING, 1000) == SYNC_WAIT_SUCCESS){
 		//printf("GCEV_ALERTING\n");
 		//return channls[channel_index]->start_call_progress_analysis();
 		return 1;

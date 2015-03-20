@@ -22,7 +22,8 @@ namespace DialogicWrapperSync {
 		!DialogicSIPSync();
 
 		//wrapper methods
-
+		void WStartLibraries();
+		void WStopLibraries();
 		void WOpen(int channel_index);
 		void WClose();
 		void WStop();

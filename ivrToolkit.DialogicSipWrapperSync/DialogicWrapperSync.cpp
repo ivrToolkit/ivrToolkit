@@ -23,6 +23,13 @@ DialogicWrapperSync::DialogicSIPSync::!DialogicSIPSync(){
 	delete dialogicFunctions;
 }
 
+void DialogicWrapperSync::DialogicSIPSync::WStartLibraries(){
+	dialogicFunctions->DialogicStartSync();
+}
+void DialogicWrapperSync::DialogicSIPSync::WStopLibraries(){
+	dialogicFunctions->DialogicStopSync();
+}
+
 void DialogicWrapperSync::DialogicSIPSync::WOpen(int num_channel_index){
 	channel_index = num_channel_index;
 	dialogicFunctions->DialogicOpenSync(channel_index);
@@ -50,13 +57,13 @@ void DialogicWrapperSync::DialogicSIPSync::WRegister(String^ proxy_ip, String^ l
 	p = Marshal::StringToHGlobalAnsi(realm);
 	char* char_realm = static_cast<char*>(p.ToPointer());
 
-	dialogicFunctions->DialogicRegisterSync(char_proxy_ip,char_local_ip,char_alias,char_password,char_realm);
+	dialogicFunctions->DialogicRegisterSync(channel_index, char_proxy_ip, char_local_ip, char_alias, char_password, char_realm);
 }
 void DialogicWrapperSync::DialogicSIPSync::WUnregister(){
-	dialogicFunctions->DialogicUnregisterSync();
+	dialogicFunctions->DialogicUnregisterSync(channel_index);
 }
 void DialogicWrapperSync::DialogicSIPSync::WStatus(){
-	printf("WStatus\n");
+	printf("WStatus %i \n", channel_index);
 	printf("WFeature not yet implemented\n");
 	//dialogicFunctions->DialogicStatus();
 }

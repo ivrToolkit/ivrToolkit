@@ -83,14 +83,16 @@ public:
 	*/
 	void open() {
 		print("open()...");
+		int board_id = ((id - 1) / 4) + 1;
+		int channel_id = (id - ((board_id - 1) * 4));
 		long request_id = 0;
 		GC_PARM_BLKP gc_parm_blkp = NULL;
 		char dev_name[64] = "";
-		sprintf(dev_name, "dxxxB1C%d", id);
+		sprintf(dev_name, "dxxxB%dC%d",board_id, channel_id);
 		vox_dev = dx_open(dev_name, NULL);
 		dx_setevtmsk(vox_dev, DM_RINGS | DM_DIGITS | DM_LCOF);
-		sprintf(dev_name, "dxxxB2C%d", id);
-		sprintf(dev_name, ":N_iptB1T%d:P_SIP:M_ipmB1C%d", id, id);
+		//sprintf(dev_name, "dxxxB2C%d", id);
+		sprintf(dev_name, ":N_iptB%dT%d:P_SIP:M_ipmB%dC%d", board_id, channel_id, board_id, channel_id);
 		sprintf(device_name, dev_name);
 		print(dev_name);
 		print_gc_error_info("gc_OpenEx",gc_OpenEx(&gc_dev, dev_name, EV_ASYNC, (void*)this));

@@ -18,25 +18,42 @@ namespace ConsoleIvr
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Start Line 1");
+
+            //Starting a bunch of lines.
+
+            
 
             //Thread waitThread = new Thread(new ThreadStart(WaitCall));
-            Thread waitThread = new Thread(WaitCall);
+            int LineNumber = 1;
+            Console.WriteLine("Start Line {0}", LineNumber);
+            Thread waitThread = new Thread(() => WaitCall(LineNumber));
             waitThread.Start();
             while (!waitThread.IsAlive) ;
             Thread.Sleep(10000);
 
-            Console.WriteLine("Start Line 2");
+            LineNumber = 2;
+            Console.WriteLine("Start Line {0}", LineNumber);
             //Thread makeCallThread = new Thread(new ThreadStart(MakeCall));
-            Thread makeCallThread = new Thread(MakeCall);
+            Thread makeCallThread = new Thread(() => MakeCall(LineNumber));
             makeCallThread.Start();
             while (!makeCallThread.IsAlive) ;
             Thread.Sleep(1);
+
+            LineNumber = 10;
+            Console.WriteLine("Start Line {0}", LineNumber);
+            Thread waitThreadNine = new Thread(() => WaitCall(LineNumber));
+            waitThreadNine.Start();
+            while (!waitThreadNine.IsAlive) ;
+            Thread.Sleep(1);
+
 
             Console.WriteLine("All threads should be alive.");
             Console.ReadLine();
             exit = true;
             Thread.Sleep(1);
+
+            waitThreadNine.Abort();
+            waitThreadNine.Join();
 
             waitThread.Abort();
             waitThread.Join();
@@ -48,12 +65,14 @@ namespace ConsoleIvr
             //TestLineManager();
         }
 
-        static void MakeCall()
+
+
+        static void MakeCall(int LineNumber)
         {
-            
-            Console.WriteLine("MakeCall: Line 2: Get Line");
-            ILine line2 = LineManager.GetLine(2);
-            Console.WriteLine("################################MakeCall: Line 2: Got Line");
+
+            Console.WriteLine("MakeCall: Line {0}: Get Line", LineNumber);
+            ILine line2 = LineManager.GetLine(LineNumber);
+            Console.WriteLine("################################MakeCall: Line {0}: Got Line", LineNumber);
             while (!exit)
             {
                 Thread.Sleep(30000);
@@ -62,9 +81,9 @@ namespace ConsoleIvr
                 {
                     // good idea to make sure the Line was hung up properly
                     line2.Hangup();
-                    Console.WriteLine("MakeCall: Line 2: Hang Up");
+                    Console.WriteLine("MakeCall: Line {0}: Hang Up", LineNumber);
                     Thread.Sleep(1000);
-                    Console.WriteLine("MakeCall: Line 2: Dial");
+                    Console.WriteLine("MakeCall: Line {0}: Dial", LineNumber);
                     CallAnalysis result = line2.Dial("7782320255", 3500);
                     line2.PlayFile("System Recordings\\Thursday.wav");
 
@@ -78,9 +97,9 @@ namespace ConsoleIvr
 
                 }
             }
-            Console.WriteLine("MakeCall: Line 2: End of Make Call");
+            Console.WriteLine("MakeCall: Line {0}: End of Make Call", LineNumber);
             line2.Close();
-            Console.WriteLine("MakeCall: Line 2: End of Make Call Line Closed");
+            Console.WriteLine("MakeCall: Line {0}: End of Make Call Line Closed", LineNumber);
         }
         /*
         static void TestLineManager() {
@@ -101,17 +120,17 @@ namespace ConsoleIvr
             LineManager.ReleaseAll();
         }
         */
-        static void WaitCall()
+        static void WaitCall(int LineNumber)
         {
-            Console.WriteLine("WaitCall: Line 1: Get Line");
-           ILine line = LineManager.GetLine(1);
-           Console.WriteLine("################################WaitCall: Line 1: Got Line");
+            Console.WriteLine("WaitCall: Line {0}: Get Line", LineNumber);
+            ILine line = LineManager.GetLine(LineNumber);
+            Console.WriteLine("################################WaitCall: Line {0}: Got Line", LineNumber);
             while (!exit)
             {
-                Console.WriteLine("WaitCall: Line 1: Hang Up");
+                Console.WriteLine("WaitCall: Line {0}: Hang Up", LineNumber);
                 line.Hangup();
                 Thread.Sleep(1000);
-                Console.WriteLine("WaitCall: Line 1: Wait Rings");
+                Console.WriteLine("WaitCall: Line {0}: Wait Rings", LineNumber);
                 line.WaitRings(2);
 
                 try
@@ -135,9 +154,9 @@ namespace ConsoleIvr
                 }
 
             }
-            Console.WriteLine("WaitCall: Line 1: End of Wait Call");
+            Console.WriteLine("WaitCall: Line {0}: End of Wait Call", LineNumber);
             line.Close();
-            Console.WriteLine("WaitCall: Line 1: End of Wait Call Line Closed");
+            Console.WriteLine("WaitCall: Line {0}: End of Wait Call Line Closed", LineNumber);
         }
     }
 }

@@ -91,8 +91,7 @@ public:
 		sprintf(dev_name, "dxxxB%dC%d",board_id, channel_id);
 		vox_dev = dx_open(dev_name, NULL);
 		dx_setevtmsk(vox_dev, DM_RINGS | DM_DIGITS | DM_LCOF);
-		//sprintf(dev_name, "dxxxB2C%d", id);
-		sprintf(dev_name, ":N_iptB%dT%d:P_SIP:M_ipmB%dC%d", board_id, channel_id, board_id, channel_id);
+		sprintf(dev_name, ":P_SIP:N_iptB1T%d:M_ipmB1C%d:V_dxxxB%dC%d", id, id, board_id, channel_id);
 		sprintf(device_name, dev_name);
 		print(dev_name);
 		print_gc_error_info("gc_OpenEx",gc_OpenEx(&gc_dev, dev_name, EV_ASYNC, (void*)this));
@@ -1113,6 +1112,7 @@ void global_call_start()
 	}
 	//print_gc_error_info_cox("gc_Start", gc_Start(NULL));
 	//print_all_cclibs_status();
+	enum_dev_information();
 	
 }
 

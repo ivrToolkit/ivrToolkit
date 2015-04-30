@@ -25,7 +25,7 @@ namespace ivrToolkit.DialogicSipPluginSync
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
         private static readonly object LockObject = new object();
-        private static bool _initialized;
+        private static bool isLibaryStarted;
         //private static int LineNumber;
 
 
@@ -35,10 +35,26 @@ namespace ivrToolkit.DialogicSipPluginSync
 
             lock (LockObject)
             {
-                if (!_initialized)
+                int lineCount = LineManager.GetLineCount();
+                //Console.WriteLine("Before Starting library check isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
+                /*
+                 * The if statment below checks if the lineCount is 0 
+                 * because the line is not added to the lineCount
+                 * until after this GetLine method is invoked.
+                 */
+                if (!isLibaryStarted && lineCount == 0)
                 {
-                    sip.WOpen(lineNumber);
+                    var assemblyName = VoiceProperties.Current.AssemblyName;
+                    // create an instance of the class from the assembly
+                    var assembly = Assembly.LoadFrom(assemblyName);
+                    var library = (ILibrary)assembly.CreateInstance("ivrToolkit.DialogicSipPluginSync.DialogicLibrary");
+                    //Console.WriteLine("Starting the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
+                    Logger.Info("Starting the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
+                    library.StartLibraries();
+                    isLibaryStarted = true;
                 }
+
+                sip.WOpen(lineNumber);
             }
 
             string proxy = VoiceProperties.Current.GetProperty("sip.proxy_ip");
@@ -95,6 +111,31 @@ namespace ivrToolkit.DialogicSipPluginSync
             {
                 var err = ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);
+            }
+
+            //Get Line Manager Count 
+            //If Line Manager Count is less then or equal to 0
+            //Then Stop the Dialogic Libraries
+            lock (LockObject)
+            {
+                int lineCount = LineManager.GetLineCount();
+                //Console.WriteLine("Before Stopping library check isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
+                /*
+                 * The if statment below checks if the lineCount is 0 
+                 * because the line is removed from the lineCount
+                 * before this stop method is invoked.
+                 */
+                if (isLibaryStarted && lineCount == 0)
+                {
+                    var assemblyName = VoiceProperties.Current.AssemblyName;
+                    // create an instance of the class from the assembly
+                    var assembly = Assembly.LoadFrom(assemblyName);
+                    var library = (ILibrary)assembly.CreateInstance("ivrToolkit.DialogicSipPluginSync.DialogicLibrary");
+                    //Console.WriteLine("Stopping the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
+                    Logger.Info("Stopping the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
+                    library.StopLibraries();
+                    isLibaryStarted = false;
+                }
             }
         }
 
@@ -753,7 +794,7 @@ namespace ivrToolkit.DialogicSipPluginSync
             /*
              * This might have been the fix for the digits problem.
              */
-            ClearDigits(devh);
+            //ClearDigits(devh);
 
             var state = ATDX_STATE(devh);
             Console.WriteLine("About to play: {0} state: {1}", filename, state);
@@ -781,7 +822,7 @@ namespace ivrToolkit.DialogicSipPluginSync
              * I am unsure if I need to do this after I play a file or if doing it (Clear Digits Buffer 1) before play file is sufficent.
              * Further testing tomorrow will resolve this question.
              */
-            ClearDigits(devh);
+            //ClearDigits(devh);
 
             var handler = 0;
 

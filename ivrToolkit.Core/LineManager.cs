@@ -93,11 +93,9 @@ namespace ivrToolkit.Core
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
-        private static readonly Dictionary<int,ILine> Lines = new Dictionary<int,ILine>();
+        private static readonly Dictionary<int, ILine> Lines = new Dictionary<int, ILine>();
 
         private static readonly object LockObject = new object();
-
-        private static bool isStarted = false;
 
         /// <summary>
         /// Gets the line class that will do the line manipulation. This method relies on the following entries in voice.properties:
@@ -127,19 +125,10 @@ namespace ivrToolkit.Core
                 {
                     throw new VoiceException("class must implement the IVoice interface");
                 }
-                var voiceDriver = (IVoice) o;
+                var voiceDriver = (IVoice)o;
 
-                Logger.Info("Checking isStarted {0}", isStarted);
-                if (className == "ivrToolkit.DialogicSipPluginSync.Dialogic" && !isStarted)
-                {
-                    var library = (ILibrary)assembly.CreateInstance("ivrToolkit.DialogicSipPluginSync.DialogicLibrary");
-                    Logger.Info("Initalizing the Dialogic Libraries isStarted {0}", isStarted);
-                    library.StartLibraries();
-                    isStarted = true;
-                }
 
                 var line = voiceDriver.GetLine(lineNumber, data);
-
                 Lines[lineNumber] = line;
                 return line;
             } // lock
@@ -181,26 +170,7 @@ namespace ivrToolkit.Core
                 var line = keyValue.Value;
                 ReleaseLine(line.LineNumber);
             }
-
-            //Make sure to stop the Libraries if they are no longer needed.
-
-            var className = VoiceProperties.Current.ClassName;
-
-            Logger.Info("Checking isStarted={0}", isStarted);
-            if (className == "ivrToolkit.DialogicSipPluginSync.Dialogic" && isStarted)
-            {
-
-                var assemblyName = VoiceProperties.Current.AssemblyName;
-                var libraryName = "ivrToolkit.DialogicSipPluginSync.DialogicLibrary";
-
-                // create an instance of the class from the assembly
-                var assembly = Assembly.LoadFrom(assemblyName);
-                var library = (ILibrary)assembly.CreateInstance(libraryName);
-
-                Logger.Info("Closing the Dialogic Libraries isStarted={0}", isStarted);
-                library.StopLibraries();
-                isStarted = false;
-            }
         }
+
     } // class
 }

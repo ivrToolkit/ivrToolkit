@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ivrToolkit.Core;
 using NLog;
 //Please note that the dll must exist in order for this using to work correctly.
 using DialogicWrapperSync;

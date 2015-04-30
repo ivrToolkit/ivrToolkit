@@ -86,6 +86,7 @@
     <Compile Include="DialogicDef.cs" />
     <Compile Include="DialogicLibrary.cs" />
     <Compile Include="DialogicLine.cs" />
+    <Compile Include="ILibrary.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

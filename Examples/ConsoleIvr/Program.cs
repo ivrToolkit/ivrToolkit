@@ -39,12 +39,12 @@ namespace ConsoleIvr
             while (!makeCallThread.IsAlive) ;
             Thread.Sleep(1);
 
-            LineNumber = 10;
-            Console.WriteLine("Start Line {0}", LineNumber);
-            Thread waitThreadNine = new Thread(() => WaitCall(LineNumber));
-            waitThreadNine.Start();
-            while (!waitThreadNine.IsAlive) ;
-            Thread.Sleep(1);
+            //LineNumber = 10;
+            //Console.WriteLine("Start Line {0}", LineNumber);
+            //Thread waitThreadNine = new Thread(() => WaitCall(LineNumber));
+            //waitThreadNine.Start();
+            //while (!waitThreadNine.IsAlive) ;
+            //Thread.Sleep(1);
 
 
             Console.WriteLine("All threads should be alive.");
@@ -52,14 +52,17 @@ namespace ConsoleIvr
             exit = true;
             Thread.Sleep(1);
 
-            waitThreadNine.Abort();
-            waitThreadNine.Join();
+            //waitThreadNine.Abort();
+            //waitThreadNine.Join();
 
             waitThread.Abort();
             waitThread.Join();
 
             makeCallThread.Abort();
             makeCallThread.Join();
+
+            Console.WriteLine("Before Line Manager Release All");
+            LineManager.ReleaseAll();
 
             Console.WriteLine("Threads should now be dead.");
             //TestLineManager();
@@ -75,7 +78,7 @@ namespace ConsoleIvr
             Console.WriteLine("################################MakeCall: Line {0}: Got Line", LineNumber);
             while (!exit)
             {
-                Thread.Sleep(30000);
+                Thread.Sleep(300000);
 
                 try
                 {

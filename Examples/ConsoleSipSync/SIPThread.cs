@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using DialogicWrapperSync;
-using System.Threading;
 
 namespace ConsoleSipSync
 {
-    class Program
+    class SIPThread
     {
 
-        /*
+         /*
          * Commands
          */
         public const string CLI_HELP_MSG = "HMP SIP Please enter the command: \n" +
@@ -77,26 +76,14 @@ namespace ConsoleSipSync
         private const string USER_DISPLAY = "Michael Cox";
         private const string USER_AGENT = "SRB_SIP_CLIENT";
         private const int HMP_SIP_PORT = 5060;
-        private static DialogicSIPSync sip;
+        private static DialogicSIPSync sip = new DialogicSIPSync();
 
-        static void Main(string[] args)
+        public void CommandLineInput()
         {
 
             sip = new DialogicSIPSync();
-            sip.WStartLibraries();
+            //sip.WStartLibraries();
 
-            SIPThread sipThreadOne = new SIPThread();
-
-            sipThreadOne.CLIOpenChannel();
-
-
-            SIPThread sipThreadTwo = new SIPThread();
-
-            sipThreadTwo.CLIOpenChannel();
-
-
-
-            Console.WriteLine("Main Program");
 
 
             CLIPrintHelp();
@@ -156,7 +143,7 @@ namespace ConsoleSipSync
             Console.WriteLine(PRINT_CLI_HELP_MSG);
         }
 
-        static void CLIOpenChannel()
+        public void CLIOpenChannel()
         {
             int ChannelIndex = 0;
             // Get the channel to use for the make call.
@@ -334,4 +321,3 @@ namespace ConsoleSipSync
         }
     }
 }
-

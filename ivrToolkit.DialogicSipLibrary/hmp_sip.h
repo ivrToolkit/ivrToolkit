@@ -23,12 +23,15 @@ public:
 	* together as this could result in race conditions.
 	* 
 	*/
+	/*Start Functions*/
+	void DialogicStartSync();
+	void DialogicStopSync();
 	/*Channel Functions*/
 	void DialogicOpenSync(int channel_index);
 	void DialogicCloseSync(int channel_index);
 	/*Registration Functions*/
-	void DialogicRegisterSync(const char* proxy_ip, const char* local_ip, const char* alias, const char* password, const char* realm);
-	void DialogicUnregisterSync();
+	void DialogicRegisterSync(int channel_index, const char* proxy_ip, const char* local_ip, const char* alias, const char* password, const char* realm);
+	void DialogicUnregisterSync(int channel_index);
 	/*Call Functions*/
 	void DialogicStopSync(int channel_index);
 	int DialogicMakeCallSync(int channel_index, const char* ani, const char* dnis);

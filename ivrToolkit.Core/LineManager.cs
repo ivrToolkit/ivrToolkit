@@ -93,7 +93,7 @@ namespace ivrToolkit.Core
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
-        private static readonly Dictionary<int,ILine> Lines = new Dictionary<int,ILine>();
+        private static readonly Dictionary<int, ILine> Lines = new Dictionary<int, ILine>();
 
         private static readonly object LockObject = new object();
 
@@ -125,7 +125,7 @@ namespace ivrToolkit.Core
                 {
                     throw new VoiceException("class must implement the IVoice interface");
                 }
-                var voiceDriver = (IVoice) o;
+                var voiceDriver = (IVoice)o;
 
 
                 var line = voiceDriver.GetLine(lineNumber, data);

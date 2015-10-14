@@ -83,21 +83,24 @@ public:
 	*/
 	void open() {
 		print("open()...");
+		int board_id = ((id - 1) / 4) + 1;
+		int channel_id = (id - ((board_id - 1) * 4));
 		long request_id = 0;
 		GC_PARM_BLKP gc_parm_blkp = NULL;
 		char dev_name[64] = "";
-		sprintf(dev_name, "dxxxB1C%d", id);
+		sprintf(dev_name, "dxxxB%dC%d",board_id, channel_id);
 		vox_dev = dx_open(dev_name, NULL);
 		dx_setevtmsk(vox_dev, DM_RINGS | DM_DIGITS | DM_LCOF);
-		sprintf(dev_name, "dxxxB2C%d", id);
-		sprintf(dev_name, ":N_iptB1T%d:P_SIP:M_ipmB1C%d", id, id);
+		sprintf(dev_name, ":P_SIP:N_iptB1T%d:M_ipmB1C%d:V_dxxxB%dC%d", id, id, board_id, channel_id);
 		sprintf(device_name, dev_name);
-		gc_OpenEx(&gc_dev, dev_name, EV_ASYNC, (void*)this);
+		print(dev_name);
+		print_gc_error_info("gc_OpenEx",gc_OpenEx(&gc_dev, dev_name, EV_ASYNC, (void*)this));
 
 		//Enabling GCEV_INVOKE_XFER_ACCEPTED Events
 		gc_util_insert_parm_val(&gc_parm_blkp, GCSET_CALLEVENT_MSK, GCACT_ADDMSK, sizeof(long), GCMSK_INVOKEXFER_ACCEPTED);
 		gc_SetConfigData(GCTGT_GCLIB_CHAN, gc_dev, gc_parm_blkp, 0, GCUPDATE_IMMEDIATE, &request_id, EV_SYNC);
 		gc_util_delete_parm_blk(gc_parm_blkp);
+		print("end of open()...");
 	}
 	/**
 	* Get the global call device name, no checks are made if the device has been opened.
@@ -776,6 +779,30 @@ BOOL registered = FALSE; //Registered with PBX
 CHANNEL* channls[MAX_CHANNELS] = { 0 };  //A channel array 
 bool exitFlag = false;				// Process SRL events until ExitFlag = TRUE
 HANDLE hThread; //The thread that is used to process events asyncronously.
+BOOL started = FALSE;
+
+/*Authentication variables*/
+const char* auth_proxy_ip;
+const char* auth_alias;
+const char* auth_password;
+const char* auth_realm;
+
+/**
+* Print error informaiton.  This information is commonly used for
+* debugging an error when an API function returns does not return
+* as SUCCESS (1).
+*/
+void print_gc_error_info(const char *func_name, int func_return) {
+	GC_INFO gc_error_info;
+	if (GC_ERROR == func_return) {
+		gc_ErrorInfo(&gc_error_info);
+		printf("%s return %d, GC ErrorValue:0x%hx-%s,\n  CCLibID:%i-%s, CC ErrorValue:0x%lx-%s,\n  Additional Info:%s",
+			func_name, func_return, gc_error_info.gcValue, gc_error_info.gcMsg,
+			gc_error_info.ccLibId, gc_error_info.ccLibName,
+			gc_error_info.ccValue, gc_error_info.ccMsg,
+			gc_error_info.additionalInfo);
+	}
+}
 
 /**
 * Enumerate the HMP Device
@@ -985,6 +1012,63 @@ void print_sys_status()
 	}
 	printf("  %sregistered.\n", TRUE == registered ? "" : "NOT ");
 }
+
+int print_all_cclibs_status(void)
+{
+	int i;
+	char str[100], str1[100];
+	GC_CCLIB_STATUSALL cclib_status_all;
+	GC_CCLIB_STATUS cclib_status;
+	GC_INFO gc_error_info; /* GlobalCall error information data */
+	//if (gc_CCLibStatusEx("GC_ALL_LIB", &cclib_status_all) != GC_SUCCESS) {
+	if (gc_CCLibStatusEx("GC_DM3CC_LIB", &cclib_status) != GC_SUCCESS) {
+		/* error handling */
+		gc_ErrorInfo(&gc_error_info);
+		printf("Error: gc_CCLibStatusEx(), lib_name: %s, GC ErrorValue: 0x%hx - %s, CCLibID: %i - %s, CC ErrorValue : 0x % lx - %s\n",
+				 "GC_ALL_LIB", gc_error_info.gcValue, gc_error_info.gcMsg,
+				 gc_error_info.ccLibId, gc_error_info.ccLibName,
+				 gc_error_info.ccValue, gc_error_info.ccMsg);
+		return (gc_error_info.gcValue);
+	}
+	strcpy(str, " Call Control Library Status:\n");
+	int avalible = cclib_status.num_avllibraries;
+	int configured = cclib_status.num_configuredlibraries;
+	int fail = cclib_status.num_failedlibraries;
+
+	printf("Avalible %i \n", avalible);
+	printf("Configured %i \n", configured);
+	printf("Fail %i \n", fail);
+	char ** avalible_libs = cclib_status.avllibraries;
+	for (i = 0; i < avalible; i++) {
+		//printf(avalible_libs[i]);
+		
+	}
+	/*
+	for (i = 0; i < GC_TOTAL_CCLIBS; i++) {
+		switch (cclib_status_all.cclib_state[i].state) {
+		case GC_CCLIB_CONFIGURED:
+			sprintf(str1, "%s - configured\n", cclib_status_all.cclib_state[i].name);
+			break;
+		case GC_CCLIB_AVAILABLE:
+			sprintf(str1, "%s - available\n", cclib_status_all.cclib_state[i].name);
+			break;
+		case GC_CCLIB_FAILED:
+			sprintf(str1, "%s - is not available for use\n",
+				cclib_status_all.cclib_state[i].name);
+			break;
+		default:
+			sprintf(str1, "%s - unknown CCLIB status\n",
+				cclib_status_all.cclib_state[i].name);
+			break;
+		}
+		strcat(str, str1);
+	}
+	*/
+
+	printf(str);
+	return (0);
+}
+
 /**
 * Start the Dialogic Global Call API and initalize the libraries.
 */
@@ -993,6 +1077,8 @@ void global_call_start()
 	GC_START_STRUCT	gclib_start;
 	IPCCLIB_START_DATA cclib_start_data;
 	IP_VIRTBOARD virt_boards[1];
+
+	print_all_cclibs_status();
 
 	printf("global_call_start()...\n");
 
@@ -1016,8 +1102,21 @@ void global_call_start()
 	CCLIB_START_STRUCT cclib_start[] = { { "GC_DM3CC_LIB", NULL }, { "GC_H3R_LIB", &cclib_start_data }, { "GC_IPM_LIB", NULL } };
 	gclib_start.num_cclibs = 3;
 	gclib_start.cclib_list = cclib_start;
-	gc_Start(&gclib_start);
+	if (gc_Start(&gclib_start) != -1){
+		started = TRUE;
+		printf("global_call_start() done.\n");
+	}
+	else{
+		printf("Error Global Call Libraries could not be started. \n");
+		print_gc_error_info("gc_Start", -1);
+	}
+	//print_gc_error_info_cox("gc_Start", gc_Start(NULL));
+	//print_all_cclibs_status();
+	enum_dev_information();
+	
 }
+
+
 /**
 * Open All Channels to MAX_CHANNELS
 */
@@ -1061,32 +1160,33 @@ void open_channels()
 void open_channel(int channel)
 {
 
-	printf("open_channel.  \n");
+	if (started){
+		printf("open_channel.  \n");
 
-	long request_id = 0;
-	GC_PARM_BLKP gc_parm_blk_p = NULL;
+		long request_id = 0;
+		GC_PARM_BLKP gc_parm_blk_p = NULL;
 
-	global_call_start();
-	printf("global_call_start() done.\n");
 
-	//enum_dev_information();
+		//enum_dev_information();
 
-	gc_OpenEx(&board_dev, ":N_iptB1:P_IP", EV_SYNC, NULL);
+		gc_OpenEx(&board_dev, ":N_iptB1:P_IP", EV_SYNC, NULL);
 
-	//setting T.38 fax server operating mode: IP MANUAL mode
-	gc_util_insert_parm_val(&gc_parm_blk_p, IPSET_CONFIG, IPPARM_OPERATING_MODE, sizeof(long), IP_MANUAL_MODE);
+		//setting T.38 fax server operating mode: IP MANUAL mode
+		gc_util_insert_parm_val(&gc_parm_blk_p, IPSET_CONFIG, IPPARM_OPERATING_MODE, sizeof(long), IP_MANUAL_MODE);
 
-	//Enabling and Disabling Unsolicited Notification Events
-	gc_util_insert_parm_val(&gc_parm_blk_p, IPSET_EXTENSIONEVT_MSK, GCACT_ADDMSK, sizeof(long),
-		EXTENSIONEVT_DTMF_ALPHANUMERIC | EXTENSIONEVT_SIGNALING_STATUS | EXTENSIONEVT_STREAMING_STATUS | EXTENSIONEVT_T38_STATUS);
-	gc_SetConfigData(GCTGT_CCLIB_NETIF, board_dev, gc_parm_blk_p, 0, GCUPDATE_IMMEDIATE, &request_id, EV_ASYNC);
-	gc_util_delete_parm_blk(gc_parm_blk_p);
+		//Enabling and Disabling Unsolicited Notification Events
+		gc_util_insert_parm_val(&gc_parm_blk_p, IPSET_EXTENSIONEVT_MSK, GCACT_ADDMSK, sizeof(long),
+			EXTENSIONEVT_DTMF_ALPHANUMERIC | EXTENSIONEVT_SIGNALING_STATUS | EXTENSIONEVT_STREAMING_STATUS | EXTENSIONEVT_T38_STATUS);
+		gc_SetConfigData(GCTGT_CCLIB_NETIF, board_dev, gc_parm_blk_p, 0, GCUPDATE_IMMEDIATE, &request_id, EV_ASYNC);
+		gc_util_delete_parm_blk(gc_parm_blk_p);
 
-	GC_PARM_BLKP pParmBlock = 0;
-	int frc = GC_SUCCESS;
+		GC_PARM_BLKP pParmBlock = 0;
+		int frc = GC_SUCCESS;
 
-	channls[channel] = new CHANNEL(channel);
-	channls[channel]->open();
+		channls[channel] = new CHANNEL(channel);
+		channls[channel]->open();
+	}
+
 
 }
 /**
@@ -1107,11 +1207,11 @@ void close_channels()
 * This is part of the sycnronous wrapper for Dialogic ASYNC mode.
 * @param wait_event The Dialogic event that this process is waiting for.
 */
-int ProcessEventSync(int wait_event)
+int ProcessEventSync(int wait_event, long event_handle, int channel)
 {
-
+	printf("ProcessEventSync \n");
 	int timeout = 0;
-	long event_handle = 0;
+	//long event_handle = 0;
 	int evt_dev = 0;
 	int evt_code = 0;
 	int evt_len = 0;
@@ -1140,12 +1240,16 @@ int ProcessEventSync(int wait_event)
 	} while (timeout == SR_TMOUT);
 	*/
 
-	evt_dev = (int)sr_getevtdev(event_handle);
-	evt_code = (int)sr_getevttype(event_handle);
-	evt_len = (int)sr_getevtlen(event_handle);
-	evt_datap = (void*)sr_getevtdatap(event_handle);
+	//evt_dev = (int)sr_getevtdev(event_handle);
+	//evt_code = (int)sr_getevttype(event_handle);
+	//evt_len = (int)sr_getevtlen(event_handle);
+	//evt_datap = (void*)sr_getevtdatap(event_handle);
 
 	gc_GetMetaEventEx(&meta_evt, event_handle);
+	//gc_GetMetaEvent(&meta_evt);
+
+	evt_code = (int)meta_evt.evttype;
+	evt_dev = (int)meta_evt.evtdev;
 
 
 	if (meta_evt.flags & GCME_GC_EVENT) {
@@ -1200,7 +1304,7 @@ int ProcessEventSync(int wait_event)
 
 
 
-		pch->print("got GC event : %s", GCEV_MSG(evt_code));
+		pch->print("CHECK CHANNEL %i got GC event : %s", channel, GCEV_MSG(evt_code));
 		gc_GetCRN(&pch->crn, &meta_evt);
 
 		switch (evt_code)
@@ -1262,11 +1366,15 @@ int ProcessEventSync(int wait_event)
 		}
 	}
 	else {
-
-		for (int i = 0; i<MAX_CHANNELS; i++) {
-			if (channls[i]->vox_dev == evt_dev)
-				pch = channls[i];
-		}
+		/*
+		Please note that if I want to use syncronous calls to process
+		these events in the future I will need to uncomment the code below and
+		pass in the channel that I want to check the event against.
+		*/
+		//for (int i = 0; i<MAX_CHANNELS; i++) {
+		//	if (channls[i]->vox_dev == evt_dev)
+		//		pch = channls[i];
+		//}
 		if (NULL == pch)
 			return -1;
 		//continue;
@@ -1357,18 +1465,30 @@ bool loopAgain(int event_thrown, int wait_for_event, int count, int wait_time){
 * @param wait_for_event The event that we are waiting to occur.
 * @param wait_time The number of times to allow a Dialogic wait event to loop
 */
-int WaitForEventSync(int wait_for_event, int wait_time){
+int WaitForEventSync(int channel, int wait_for_event, int wait_time){
 
 	int event_thrown = -1;
 	int count = 0;
+	long event_handle = 0;
+
+	/*
+	* Do SRL event processing
+	*/
+	long hdlcnt = 1;
+	long hdls[1];
+	long dev_handle = channls[channel]->get_device_handle();
+	hdls[0] = dev_handle;
+	//hdls[1] = channls[channel]->get_voice_handle();
+	//printf(" dev_handle = %d \n", dev_handle);
 
 	do
 	{
 		//	Wait one tenth of a second for an event
-		if (sr_waitevt(100) != -1)
+		if (sr_waitevtEx(hdls, hdlcnt,100,&event_handle) != -1)
+		//if (sr_waitevt(100) != -1)
 		{
 			// If the event is valid, process it
-			event_thrown = ProcessEventSync(wait_for_event);
+			event_thrown = ProcessEventSync(wait_for_event, event_handle, channel);
 			if (event_thrown == wait_for_event) break;
 
 		}
@@ -1604,6 +1724,24 @@ void WaitEvent(void* parm)
 */
 
 /**
+* Starts Dialogic Libraries syncronously
+*/
+void DialogicFunctions::DialogicStartSync(){
+	if (!started){
+		global_call_start();
+	}
+
+}
+/**
+* Stops Dialogic Libraries syncronously
+*/
+void DialogicFunctions::DialogicStopSync(){
+	if (started){
+		gc_Stop();
+	}
+}
+
+/**
 * Open a channel syncronously
 * @param channel_index The channel to open.
 */
@@ -1617,30 +1755,44 @@ void DialogicFunctions::DialogicOpenSync(int channel_index){
 	* more logic in this and return an ERROR or SUCCESS in the future.
 	*/
 
-	if (WaitForEventSync(GCEV_UNBLOCKED, SYNC_WAIT_INFINITE) == SYNC_WAIT_SUCCESS){
+	if (WaitForEventSync(channel_index, GCEV_UNBLOCKED, SYNC_WAIT_INFINITE) == SYNC_WAIT_SUCCESS){
 		//printf("GCEV_UNBLOCKED\n");
 	}
+
+	//channel_index++;
+
+
+	//open_channel(channel_index);
+	//if (WaitForEventSync(channel_index, GCEV_UNBLOCKED, SYNC_WAIT_INFINITE) == SYNC_WAIT_SUCCESS){
+		//printf("GCEV_UNBLOCKED\n");
+	//}
+
+
 }
 /**
 * Close a channel syncronously
 * @param channel_index The channel to close.
 */
 void DialogicFunctions::DialogicCloseSync(int channel_index){
-
+	printf("DialogicCloseSync %i \n", channel_index);
+	/*
+	Due to the threading of this applicaiton never unregester until then.  Otherwise this could
+	prevent calls from getting through.
 	if (registered) {
 		unregistration();
-		/*
-		* I wait or timeout as even if I cannot close the device I still want to close
-		* the code.
-		*/
+		
+		// I wait or timeout as even if I cannot close the device I still want to close
+		// the code.
+		
 
-		if (WaitForEventSync(IP_REG_CONFIRMED, 100) == SYNC_WAIT_SUCCESS){
+		if (WaitForEventSync(channel_index, IP_REG_CONFIRMED, 100) == SYNC_WAIT_SUCCESS){
 			//printf("Unregistered\n");
 		}
 	}
+	*/
 	gc_Close(board_dev);
 	channls[channel_index]->close();
-	gc_Stop();
+
 }
 /**
 * Register the sip client syncronously
@@ -1651,20 +1803,28 @@ void DialogicFunctions::DialogicCloseSync(int channel_index){
 * @param password The password for the alias to connect to the PBX with.
 * @param realm The realm for the alias to connect to the PBX with.
 */
-void DialogicFunctions::DialogicRegisterSync(const char* proxy_ip, const char* local_ip, const char* alias, const char* password, const char* realm){
-	//printf("DialogicRegisterSync\n");
-	registration(proxy_ip, local_ip, alias, password, realm);
-	if (WaitForEventSync(IP_REG_CONFIRMED, 1000) == SYNC_WAIT_SUCCESS){
-		//printf("Registered\n");
+void DialogicFunctions::DialogicRegisterSync(int channel_index, const char* proxy_ip, const char* local_ip, const char* alias, const char* password, const char* realm){
+	//printf("DialogicRegisterSync %i\n", channel_index);
+
+	auth_proxy_ip = proxy_ip;
+	auth_alias = alias;
+	auth_password = password;
+	auth_realm = realm;
+
+	if (!registered) {
+		registration(proxy_ip, local_ip, alias, password, realm);
+		if (WaitForEventSync(channel_index, IP_REG_CONFIRMED, 100) == SYNC_WAIT_SUCCESS){
+			//printf("Registered\n");
+		}
 	}
 }
 /**
 * Unregister the sip client syncronously.
 */
-void DialogicFunctions::DialogicUnregisterSync(){
-	//printf("DialogicUnregisterSync\n");
+void DialogicFunctions::DialogicUnregisterSync(int channel_index){
+	//printf("DialogicUnregisterSync %i\n", channel_index);
 	unregistration();
-	if (WaitForEventSync(IP_REG_CONFIRMED, 1000) == SYNC_WAIT_SUCCESS){
+	if (WaitForEventSync(channel_index, IP_REG_CONFIRMED, 100) == SYNC_WAIT_SUCCESS){
 		//printf("IP_REG_CONFIRMED\n");
 	}
 }
@@ -1685,12 +1845,13 @@ void DialogicFunctions::DialogicStopSync(int channel_index){
 */
 int DialogicFunctions::DialogicMakeCallSync(int channel_index, const char* ani, const char* dnis){
 	//printf("DialogicMakeCallSync\n");
+	authentication(auth_proxy_ip, auth_alias, auth_password, auth_realm);
 	channls[channel_index]->make_call(ani, dnis);
 
 	// TODO: There is no point waiting forrever if a timeout occurs I can drop the call as this is an error.
 	// I can fix this later.
-	if (WaitForEventSync(GCEV_ALERTING, 1000) == SYNC_WAIT_SUCCESS){
-		//printf("GCEV_ALERTING\n");
+	if (WaitForEventSync(channel_index, GCEV_ALERTING, 2000) == SYNC_WAIT_SUCCESS){
+		//printf("###################GCEV_ALERTING\n");
 		//return channls[channel_index]->start_call_progress_analysis();
 		return 1;
 	}
@@ -1705,9 +1866,24 @@ int DialogicFunctions::DialogicMakeCallSync(int channel_index, const char* ani, 
 int DialogicFunctions::DialogicDropCallSync(int channel_index){
 	//printf("DialogicDropCallSync\n");
 
+	/*
+	* If the channel is IDLE there is no call to drop.
+	*/
+	if (0 == channls[channel_index]->crn){
+		printf("Channel %d status IDLE.\n", channel_index);
+		return 1;
+	}
+
+	/*
+	* The channel is not IDLE so drop the call and wait for the event
+	* so that the call can be released.
+	* After the call has been released the channel is IDLE
+	* and a new call can begin.
+	*/
+
 	channls[channel_index]->drop_call();
 
-	int result = WaitForEventSync(GCEV_RELEASECALL, 100);
+	int result = WaitForEventSync(channel_index, GCEV_RELEASECALL, 100);
 
 	/*
 	* If a timeout event occurs for drop call I can assume that
@@ -1728,7 +1904,7 @@ int DialogicFunctions::DialogicWaitCallSync(int channel_index){
 	//printf("DialogicWaitCallSync\n");
 
 	channls[channel_index]->wait_call();
-	if (WaitForEventSync(GCEV_ANSWERED, SYNC_WAIT_INFINITE) == SYNC_WAIT_SUCCESS){
+	if (WaitForEventSync(channel_index, GCEV_ANSWERED, SYNC_WAIT_INFINITE) == SYNC_WAIT_SUCCESS){
 		return 1;
 	}
 

@@ -22,12 +22,15 @@ namespace ivrToolkit.DialogicSipPluginSync
         private bool _hungup;
         private bool _stopped;
         private int _volume;
+        private Dialogic dialogic = new Dialogic();
+        private DialogicSIPSync _sip;
 
-        internal DialogicLine(int devh, int lineNumber)
+        internal DialogicLine(int devh, int lineNumber, DialogicSIPSync sip)
         {
             // can only instantiate this class from IVoice
             _devh = devh;
             LineNumber = lineNumber;
+            _sip = sip;
             SetDefaultFileType();
             DeleteCustomTones(); // uses dx_deltones() so I have to readd call progress tones. I also readd special tones
         }
@@ -43,7 +46,7 @@ namespace ivrToolkit.DialogicSipPluginSync
 
             if (_stopped) ResetAndThrowStop();
             _status = LineStatusTypes.AcceptingCalls;
-            Dialogic.WaitRings(_devh, rings);
+            Dialogic.WaitRings(_devh, rings,_sip);
             _status = LineStatusTypes.Connected;
             if (_stopped) ResetAndThrowStop();
         }
@@ -52,7 +55,7 @@ namespace ivrToolkit.DialogicSipPluginSync
         public void Hangup()
         {
             _status = LineStatusTypes.OnHook;
-            Dialogic.Hangup(_devh);
+            Dialogic.Hangup(_devh,_sip);
         }
         public void TakeOffHook()
         {
@@ -102,7 +105,7 @@ namespace ivrToolkit.DialogicSipPluginSync
                 Dialogic.EnableTone(_devh, noFreeLineTid);
 
                 // send prefix (usually a 9)
-                Dialogic.Dial(_devh, prefix);
+                Dialogic.Dial(_devh, prefix,_sip);
 
                 // listen for tones
                 var tid = Dialogic.ListenForCustomTones(_devh, 2);
@@ -128,7 +131,7 @@ namespace ivrToolkit.DialogicSipPluginSync
             }
 
             Logger.Debug("about to dial: {0}",number);
-            var result = Dialogic.DialWithCpa(_devh, number, answeringMachineLengthInMilliseconds);
+            var result = Dialogic.DialWithCpa(_devh, number, answeringMachineLengthInMilliseconds,_sip);
             Logger.Debug("CallAnalysis is: {0}",result.ToString());
             if (result == CallAnalysis.Stopped) ResetAndThrowStop();
 
@@ -148,7 +151,7 @@ namespace ivrToolkit.DialogicSipPluginSync
             {
                 Hangup();
             }
-            Dialogic.Close(_devh);
+            Dialogic.Close(_devh,_sip);
         }
 
         private void SetDefaultFileType() {
@@ -166,7 +169,7 @@ namespace ivrToolkit.DialogicSipPluginSync
             if (_stopped) ResetAndThrowStop();
             try
             {
-                Dialogic.PlayFile(_devh, filename, "0123456789#*abcd", _currentXpb);
+                Dialogic.PlayFile(_devh, filename, "0123456789#*abcd", _currentXpb,_sip);
             }
             catch (StopException)
             {
@@ -187,7 +190,7 @@ namespace ivrToolkit.DialogicSipPluginSync
         {
             if (_stopped) ResetAndThrowStop();
             try {
-                Dialogic.RecordToFile(_devh, filename, "0123456789#*abcd", _currentXpb, timeoutMilliseconds);
+                Dialogic.RecordToFile(_devh, filename, "0123456789#*abcd", _currentXpb, timeoutMilliseconds,_sip);
             }
             catch (StopException)
             {
@@ -209,7 +212,7 @@ namespace ivrToolkit.DialogicSipPluginSync
         {
             if (_stopped) ResetAndThrowStop();
             try {
-                var answer = Dialogic.GetDigits(_devh, numberOfDigits, terminators);
+                var answer = Dialogic.GetDigits(_devh, numberOfDigits, terminators, _sip);
                 return StripOffTerminator(answer, terminators);
             }
             catch (StopException)
@@ -230,7 +233,7 @@ namespace ivrToolkit.DialogicSipPluginSync
         public string FlushDigitBuffer()
         {
             if (_stopped) ResetAndThrowStop();
-            return Dialogic.FlushDigitBuffer(_devh);
+            return Dialogic.FlushDigitBuffer(_devh, _sip);
         }
 
         public int Volume

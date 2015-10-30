@@ -10,10 +10,10 @@ namespace ivrToolkit.DialogicSipPluginSync
 {
     class DialogicLibrary : ILibrary
     {
-        public void StartLibraries()
+        public void StartLibraries(int h323_signaling_port, int sip_signaling_port)
         {
             DialogicSIPSync sip = new DialogicSIPSync();
-            sip.WStartLibraries();
+            sip.WStartLibraries(h323_signaling_port, sip_signaling_port);
         }
         public void StopLibraries()
         {

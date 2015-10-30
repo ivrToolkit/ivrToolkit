@@ -5,6 +5,7 @@
 
 #define USER_DISPLAY					"SRB-Education"
 #define USER_AGENT	"SRB_SIP_CLIENT"
+#define H323_SIP_PORT					1720
 #define HMP_SIP_PORT					5060
 #define SYNC_WAIT_INFINITE -1
 #define SYNC_WAIT_EXPIRED -2
@@ -24,7 +25,7 @@ public:
 	* 
 	*/
 	/*Start Functions*/
-	void DialogicStartSync();
+	void DialogicStartSync(int h323_signaling_port, int sip_signaling_port);
 	void DialogicStopSync();
 	/*Channel Functions*/
 	void DialogicOpenSync(int channel_index);

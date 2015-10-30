@@ -83,7 +83,7 @@ namespace ConsoleSipSync
         {
 
             sip = new DialogicSIPSync();
-            sip.WStartLibraries();
+            sip.WStartLibraries(1720,5060);
 
             SIPThread sipThreadOne = new SIPThread();
 
@@ -120,7 +120,7 @@ namespace ConsoleSipSync
                         break;
                     case CLI_QUIT:
                         sip.WClose();
-                        sip.WStartLibraries();
+                        sip.WStartLibraries(1720,5060);
                         exitLoop = true;
                         break;
                     case CLI_MAKECALL:

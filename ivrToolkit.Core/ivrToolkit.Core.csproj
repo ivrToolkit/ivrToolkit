@@ -108,6 +108,7 @@
     <Compile Include="Util\Prompt.cs" />
     <Compile Include="Util\PromptFunctions.cs" />
     <Compile Include="Util\Properties.cs" />
+    <Compile Include="Util\TenantSingleton.cs" />
     <Compile Include="Util\VoiceProperties.cs" />
   </ItemGroup>
   <ItemGroup>

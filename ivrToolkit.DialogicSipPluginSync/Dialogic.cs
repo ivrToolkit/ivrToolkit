@@ -26,12 +26,14 @@ namespace ivrToolkit.DialogicSipPluginSync
 
         private static readonly object LockObject = new object();
         private static bool isLibaryStarted;
-        //private static int LineNumber;
-
 
         public ILine GetLine(int lineNumber, object data = null)
         {
             DialogicSIPSync sip = new DialogicSIPSync();
+
+            int offset = VoiceProperties.Current.SipChannelOffset;
+
+            int channel = lineNumber + offset;
 
             lock (LockObject)
             {
@@ -48,28 +50,42 @@ namespace ivrToolkit.DialogicSipPluginSync
                     // create an instance of the class from the assembly
                     var assembly = Assembly.LoadFrom(assemblyName);
                     var library = (ILibrary)assembly.CreateInstance("ivrToolkit.DialogicSipPluginSync.DialogicLibrary");
+
+                    int H323SignalingPort = VoiceProperties.Current.SipH323SignalingPort;
+                    int SipSignalingPort = VoiceProperties.Current.SipSignalingPort;
+
                     //Console.WriteLine("Starting the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
                     Logger.Info("Starting the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
-                    library.StartLibraries();
+                    library.StartLibraries(H323SignalingPort, SipSignalingPort);
                     isLibaryStarted = true;
                 }
-
-                sip.WOpen(lineNumber);
+                
+                sip.WOpen(channel);
             }
 
-            string proxy = VoiceProperties.Current.GetProperty("sip.proxy_ip");
-            string local = VoiceProperties.Current.GetProperty("sip.local_ip");
-            string alias = VoiceProperties.Current.GetProperty("sip.alias");
-            string password = VoiceProperties.Current.GetProperty("sip.password");
-            string realm = VoiceProperties.Current.GetProperty("sip.realm");
+            string proxy = VoiceProperties.Current.SipProxyIp;
+            string local = VoiceProperties.Current.SipLocalIp;
+            string alias = VoiceProperties.Current.SipAlias;
+            string password = VoiceProperties.Current.SipPassword;
+            string realm = VoiceProperties.Current.SipRealm;
             /*
              * Please note that if the SIP Client is already registered
              * it will take 10 seconds to return
              */
             sip.WRegister(proxy, local, alias, password, realm);
-            Logger.Debug("Registration Complete {0}",lineNumber);
+            Logger.Debug("Registration Complete Channel {0}, Line {1}", channel, lineNumber);
 
             int devh = sip.WGetVoiceHandle();
+            /*
+             * This returns the line number not the channel.
+             * There is no place for channel in the DialogicLine class.
+             * This is irrelevant so long as the correct channel is opened above
+             * using the sip.WOpen method.
+             * 
+             * This means that while the program will report line 1 it will in fact
+             * correspond to the line + the offset for the channel.
+             * 
+             */
             return new DialogicLine(devh, lineNumber, sip);
         }
 
@@ -196,8 +212,8 @@ namespace ivrToolkit.DialogicSipPluginSync
         /// <param name="number">The phone number to dial.</param>
         internal static void Dial(int devh, string number, DialogicSIPSync sip)
         {
-            string proxy = VoiceProperties.Current.GetProperty("sip.proxy_ip");
-            string alias = VoiceProperties.Current.GetProperty("sip.alias");
+            string proxy = VoiceProperties.Current.SipProxyIp;
+            string alias = VoiceProperties.Current.SipAlias;
             string ani = alias+"@"+proxy;
             string dnis = number + "@" + proxy;
 
@@ -222,8 +238,8 @@ namespace ivrToolkit.DialogicSipPluginSync
 
             var cap = GetCap(devh);
 
-            string proxy = VoiceProperties.Current.GetProperty("sip.proxy_ip");
-            string alias = VoiceProperties.Current.GetProperty("sip.alias");
+            string proxy = VoiceProperties.Current.SipProxyIp;
+            string alias = VoiceProperties.Current.SipAlias;
             string ani = alias + "@" + proxy;
             string dnis = number + "@" + proxy;
 

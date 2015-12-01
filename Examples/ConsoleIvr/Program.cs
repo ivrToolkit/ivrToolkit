@@ -16,22 +16,21 @@ namespace ConsoleIvr
         //private static ILine line2;
         private static bool exit = false;
 
+
         static void Main(string[] args)
         {
 
-            //Starting a bunch of lines.
-
-            
+            int offset = Int32.Parse(VoiceProperties.Current.GetProperty("sip.channel_offset"));
 
             //Thread waitThread = new Thread(new ThreadStart(WaitCall));
-            int LineNumber = 1;
+            int LineNumber = 1 + offset;
             Console.WriteLine("Start Line {0}", LineNumber);
             Thread waitThread = new Thread(() => WaitCall(LineNumber));
             waitThread.Start();
             while (!waitThread.IsAlive) ;
             Thread.Sleep(10000);
 
-            LineNumber = 2;
+            LineNumber = 2 + offset;
             Console.WriteLine("Start Line {0}", LineNumber);
             //Thread makeCallThread = new Thread(new ThreadStart(MakeCall));
             Thread makeCallThread = new Thread(() => MakeCall(LineNumber));
@@ -78,7 +77,7 @@ namespace ConsoleIvr
             Console.WriteLine("################################MakeCall: Line {0}: Got Line", LineNumber);
             while (!exit)
             {
-                Thread.Sleep(300000);
+               
 
                 try
                 {
@@ -88,10 +87,17 @@ namespace ConsoleIvr
                     Thread.Sleep(1000);
                     Console.WriteLine("MakeCall: Line {0}: Dial", LineNumber);
                     CallAnalysis result = line2.Dial("7782320255", 3500);
-                    line2.PlayFile("System Recordings\\Thursday.wav");
+                    if (LineNumber >= 4) {
+                        line2.PlayFile("System Recordings\\Monday.wav");
+                    }
+                    else
+                    {
+                        line2.PlayFile("System Recordings\\Thursday.wav");
+                    }
 
                     //line2.RecordToFile("C:\\ads\\data\\database\\E15226.wav");
                     line2.Hangup();
+                    Thread.Sleep(60000);
 
                 }
                 catch (ivrToolkit.Core.Exceptions.HangupException)
@@ -99,6 +105,7 @@ namespace ConsoleIvr
                     line2.Hangup();
 
                 }
+                Thread.Sleep(300000);
             }
             Console.WriteLine("MakeCall: Line {0}: End of Make Call", LineNumber);
             line2.Close();

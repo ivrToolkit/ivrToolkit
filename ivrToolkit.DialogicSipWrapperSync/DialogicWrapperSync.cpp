@@ -23,8 +23,8 @@ DialogicWrapperSync::DialogicSIPSync::!DialogicSIPSync(){
 	delete dialogicFunctions;
 }
 
-void DialogicWrapperSync::DialogicSIPSync::WStartLibraries(){
-	dialogicFunctions->DialogicStartSync();
+void DialogicWrapperSync::DialogicSIPSync::WStartLibraries(int h323_signaling_port, int sip_signaling_port){
+	dialogicFunctions->DialogicStartSync(h323_signaling_port, sip_signaling_port);
 }
 void DialogicWrapperSync::DialogicSIPSync::WStopLibraries(){
 	dialogicFunctions->DialogicStopSync();

@@ -22,7 +22,7 @@ namespace DialogicWrapperSync {
 		!DialogicSIPSync();
 
 		//wrapper methods
-		void WStartLibraries();
+		void WStartLibraries(int h323_signaling_port, int sip_signaling_port);
 		void WStopLibraries();
 		void WOpen(int channel_index);
 		void WClose();

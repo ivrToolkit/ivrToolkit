@@ -1072,7 +1072,7 @@ int print_all_cclibs_status(void)
 /**
 * Start the Dialogic Global Call API and initalize the libraries.
 */
-void global_call_start()
+void global_call_start(int h323_signaling_port, int sip_signaling_port)
 {
 	GC_START_STRUCT	gclib_start;
 	IPCCLIB_START_DATA cclib_start_data;
@@ -1093,8 +1093,10 @@ void global_call_start()
 
 	virt_boards[0].localIP.ip_ver = IPVER4;					// must be set to IPVER4
 	virt_boards[0].localIP.u_ipaddr.ipv4 = IP_CFG_DEFAULT;	// or specify host NIC IP address
-	virt_boards[0].h323_signaling_port = IP_CFG_DEFAULT;	// or application defined port for H.323 
-	virt_boards[0].sip_signaling_port = IP_CFG_DEFAULT;		// or application defined port for SIP
+	//virt_boards[0].h323_signaling_port = IP_CFG_DEFAULT;	// or application defined port for H.323 
+	//virt_boards[0].sip_signaling_port = IP_CFG_DEFAULT;		// or application defined port for SIP
+	virt_boards[0].h323_signaling_port = h323_signaling_port;	// or application defined port for H.323 
+	virt_boards[0].sip_signaling_port = sip_signaling_port;		// or application defined port for SIP
 	virt_boards[0].sup_serv_mask = IP_SUP_SERV_CALL_XFER;	// Enable SIP Transfer Feature
 	virt_boards[0].sip_msginfo_mask = IP_SIP_MSGINFO_ENABLE;// Enable SIP header
 	virt_boards[0].reserved = NULL;							// must be set to NULL
@@ -1128,7 +1130,7 @@ void open_channels()
 	long request_id = 0;
 	GC_PARM_BLKP gc_parm_blk_p = NULL;
 
-	global_call_start();
+	global_call_start(H323_SIP_PORT, HMP_SIP_PORT);
 	printf("global_call_start() done.\n");
 
 	//enum_dev_information();
@@ -1726,9 +1728,9 @@ void WaitEvent(void* parm)
 /**
 * Starts Dialogic Libraries syncronously
 */
-void DialogicFunctions::DialogicStartSync(){
+void DialogicFunctions::DialogicStartSync(int h323_signaling_port, int sip_signaling_port){
 	if (!started){
-		global_call_start();
+		global_call_start(h323_signaling_port, sip_signaling_port);
 	}
 
 }

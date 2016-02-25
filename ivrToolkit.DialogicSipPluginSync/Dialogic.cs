@@ -628,10 +628,10 @@ namespace ivrToolkit.DialogicSipPluginSync
         private static void CheckCallState(DialogicSIPSync sip)
         {
                     int call_state = sip.WGetCallState();
-                    Console.WriteLine("Call State {0}", call_state);
+                    Logger.Info("CheckCallState : Call State {0}", call_state);
                     if (call_state != 4)
                     {
-                        Console.WriteLine("The call has been hang up.");
+                        Logger.Info("CheckCallState : The call has been hang up.");
                         throw new HangupException();
 
                     }
@@ -854,7 +854,16 @@ namespace ivrToolkit.DialogicSipPluginSync
                 //}
 
                 //Check if the call is still connected
-                CheckCallState(sip);
+                try
+                {
+                    CheckCallState(sip);
+                }
+                catch (HangupException)
+                {
+                    dx_fileclose(iott.io_fhandle);
+                    Logger.Info("Hangup Exception : The file handle has been closed because the call has been hung up.");
+                    throw new HangupException("Hangup Exception call has been hungup.");
+                }
 
                 var type = sr_getevttype((uint)handler);
                 //Ignore events (including timeout events) that are not of they type we want.

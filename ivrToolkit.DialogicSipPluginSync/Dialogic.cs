@@ -605,7 +605,7 @@ namespace ivrToolkit.DialogicSipPluginSync
                 if (sr_waitevtEx(ref devh, 1, 50, ref handler) == -1)
                 {
                     loop_timeout = true;
-                    Logger.Error("ClearEventBuffer: Timeout");
+                    Logger.Debug("ClearEventBuffer: Timeout");
                 }
                 else
                 {
@@ -614,7 +614,7 @@ namespace ivrToolkit.DialogicSipPluginSync
                      */
                     var type = sr_getevttype((uint)handler);
                     var reason = ATDX_TERMMSK(devh);
-                    Logger.Error("ClearEventBuffer: Type = {0} Reason = {1} ", type, reason);
+                    Logger.Debug("ClearEventBuffer: Type = {0} Reason = {1} ", type, reason);
                 }
             } while (!loop_timeout);
         }
@@ -628,10 +628,10 @@ namespace ivrToolkit.DialogicSipPluginSync
         private static void CheckCallState(DialogicSIPSync sip)
         {
                     int call_state = sip.WGetCallState();
-                    Logger.Info("CheckCallState : Call State {0}", call_state);
+                    Logger.Debug("CheckCallState : Call State {0}", call_state);
                     if (call_state != 4)
                     {
-                        Logger.Info("CheckCallState : The call has been hang up.");
+                        Logger.Debug("CheckCallState : The call has been hang up.");
                         throw new HangupException();
 
                     }
@@ -861,7 +861,7 @@ namespace ivrToolkit.DialogicSipPluginSync
                 catch (HangupException)
                 {
                     dx_fileclose(iott.io_fhandle);
-                    Logger.Info("Hangup Exception : The file handle has been closed because the call has been hung up.");
+                    Logger.Debug("Hangup Exception : The file handle has been closed because the call has been hung up.");
                     throw new HangupException("Hangup Exception call has been hungup.");
                 }
 

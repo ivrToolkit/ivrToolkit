@@ -135,6 +135,20 @@ namespace ivrToolkit.DialogicPlugin
 
 
 
+
+        [StructLayoutAttribute(LayoutKind.Sequential)]
+        public struct LINEBAG
+        {
+            public int ldev; /* GlobalCall API line device handle */
+            public int crn; /* GlobalCall API call handle */
+            public int blocked; /* channel blocked/unblocked */
+            public int networkh; /* network handle */
+            public int voiceh; /* voice handle */
+        }
+
+
+
+
         [StructLayoutAttribute(LayoutKind.Sequential)]
         public struct DX_XPB
         {
@@ -532,16 +546,6 @@ namespace ivrToolkit.DialogicPlugin
         private const int EVFL_SENDOTHERS = 0x02; /* Send event to other processes */
         private const int EVFL_SENDALL = 0x03; /* Send event to all processes */
 
-
-
-        
-
-
-
-
-
-
-
         /*
          * Defines for TPT Termination Flags
          */
@@ -689,9 +693,6 @@ namespace ivrToolkit.DialogicPlugin
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         private static extern int dx_dial(int chdev, string dialstring, ref DX_CAP dx_cap, int flag);
 
-
-
-
         private const uint TN_LEADING = 0x02;
         private const uint TN_TRAILING = 0x04;
 
@@ -742,11 +743,10 @@ namespace ivrToolkit.DialogicPlugin
         private static extern int dx_fileclose(int handle);
 
 
-        [DllImport("libgc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int gc_ResetLineDev(int linedev, int flag);
 
-        [DllImport("libgc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int gc_Close(int chdev);
+
+
+
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         private static extern int dx_sethook(int chdev, int hookstate, int flag);

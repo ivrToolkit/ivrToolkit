@@ -6,6 +6,7 @@
 // 
 namespace ivrToolkit.Core
 {
+    delegate void TestDelegate<T>(T s);
     /// <summary>
     /// All Plugins for the ivrTool.Core engine must implement this Interface.
     /// </summary>
@@ -21,6 +22,7 @@ namespace ivrToolkit.Core
         /// Gets the ILine object for the requested line number.
         /// </summary>
         /// <param name="lineNumber">The line number you want to use</param>
+        /// <param name="data">Optional parameter for passing in extra data. The dialogic plugin can take a string that represents the device name</param>
         /// <returns>The ILine object representing the requested line number.</returns>
         /// <example>
         /// <code language="C#">
@@ -28,6 +30,7 @@ namespace ivrToolkit.Core
         ///    ILine line = LineManager.getLine(1);
         /// </code>
         /// </example>
-        ILine GetLine(int lineNumber);
+        ILine GetLine(int lineNumber, object data = null);
+
     }
 }

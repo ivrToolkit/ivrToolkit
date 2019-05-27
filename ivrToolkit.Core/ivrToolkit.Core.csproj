@@ -66,8 +66,9 @@
     <OutputPath>bin\x86\Release\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="NLog">
-      <HintPath>..\packages\NLog.2.0.0.2000\lib\net40\NLog.dll</HintPath>
+    <Reference Include="NLog, Version=2.0.1.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\NLog.2.0.1.2\lib\net40\NLog.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
@@ -107,6 +108,7 @@
     <Compile Include="Util\Prompt.cs" />
     <Compile Include="Util\PromptFunctions.cs" />
     <Compile Include="Util\Properties.cs" />
+    <Compile Include="Util\TenantSingleton.cs" />
     <Compile Include="Util\VoiceProperties.cs" />
   </ItemGroup>
   <ItemGroup>

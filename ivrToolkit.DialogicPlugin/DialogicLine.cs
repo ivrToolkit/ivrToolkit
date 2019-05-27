@@ -16,18 +16,20 @@ namespace ivrToolkit.DialogicPlugin
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
+        private readonly int _voiceh;
         private readonly int _devh;
         private bool _hungup;
         private bool _stopped;
         private int _volume;
 
-        internal DialogicLine(int devh, int lineNumber)
+        internal DialogicLine(int devh, int voiceh, int lineNumber)
         {
             // can only instantiate this class from IVoice
             _devh = devh;
+            _voiceh = voiceh;
             LineNumber = lineNumber;
             SetDefaultFileType();
-            DeleteCustomTones(); // uses dx_deltones() so I have to readd call progress tones. I also readd special tones
+            DeleteCustomTones(); // uses dx_deltones() so I have to re-add call progress tones. I also re-add special tones
         }
 
         public string LastTerminator { get; private set; }
@@ -40,7 +42,7 @@ namespace ivrToolkit.DialogicPlugin
         {
             if (_stopped) ResetAndThrowStop();
             _status = LineStatusTypes.AcceptingCalls;
-            Dialogic.WaitRings(_devh, rings);
+            Dialogic.WaitRings(_voiceh, rings);
             _status = LineStatusTypes.Connected;
             if (_stopped) ResetAndThrowStop();
         }
@@ -48,12 +50,12 @@ namespace ivrToolkit.DialogicPlugin
         public void Hangup()
         {
             _status = LineStatusTypes.OnHook;
-            Dialogic.Hangup(_devh);
+            Dialogic.Hangup(_voiceh);
         }
         public void TakeOffHook()
         {
             _status = LineStatusTypes.OffHook;
-            Dialogic.TakeOffHook(_devh);
+            Dialogic.TakeOffHook(_voiceh);
         }
 
         public CallAnalysis Dial(string number, int answeringMachineLengthInMilliseconds)
@@ -72,13 +74,13 @@ namespace ivrToolkit.DialogicPlugin
             {
                 Logger.Debug("We are pre-testing the dial tone");
                 dialToneEnabled = true;
-                Dialogic.EnableTone(_devh, dialToneTid);
-                var tid = Dialogic.ListenForCustomTones(_devh, 2);
+                Dialogic.EnableTone(_voiceh, dialToneTid);
+                var tid = Dialogic.ListenForCustomTones(_voiceh, 2);
 
                 if (tid == 0)
                 {
                     Logger.Debug("No tone was detected");
-                    Dialogic.DisableTone(_devh, dialToneTid);
+                    Dialogic.DisableTone(_voiceh, dialToneTid);
                     Hangup();
                     return CallAnalysis.NoDialTone;
                 }
@@ -91,17 +93,17 @@ namespace ivrToolkit.DialogicPlugin
 
                 number = number.Substring(index + 1).Replace(",", ""); // there may be more than one comma
 
-                if (!dialToneEnabled) Dialogic.EnableTone(_devh, dialToneTid);
-                Dialogic.EnableTone(_devh, noFreeLineTid);
+                if (!dialToneEnabled) Dialogic.EnableTone(_voiceh, dialToneTid);
+                Dialogic.EnableTone(_voiceh, noFreeLineTid);
 
                 // send prefix (usually a 9)
-                Dialogic.Dial(_devh, prefix);
+                Dialogic.Dial(_voiceh, prefix);
 
                 // listen for tones
-                var tid = Dialogic.ListenForCustomTones(_devh, 2);
+                var tid = Dialogic.ListenForCustomTones(_voiceh, 2);
 
-                Dialogic.DisableTone(_devh, dialToneTid);
-                Dialogic.DisableTone(_devh, noFreeLineTid);
+                Dialogic.DisableTone(_voiceh, dialToneTid);
+                Dialogic.DisableTone(_voiceh, noFreeLineTid);
 
 
                 if (tid == 0)
@@ -117,11 +119,11 @@ namespace ivrToolkit.DialogicPlugin
             }
             else
             {
-                if (dialToneEnabled) Dialogic.DisableTone(_devh, dialToneTid);
+                if (dialToneEnabled) Dialogic.DisableTone(_voiceh, dialToneTid);
             }
 
             Logger.Debug("about to dial: {0}",number);
-            var result = Dialogic.DialWithCpa(_devh, number, answeringMachineLengthInMilliseconds);
+            var result = Dialogic.DialWithCpa(_voiceh, number, answeringMachineLengthInMilliseconds);
             Logger.Debug("CallAnalysis is: {0}",result.ToString());
             if (result == CallAnalysis.Stopped) ResetAndThrowStop();
 
@@ -141,7 +143,7 @@ namespace ivrToolkit.DialogicPlugin
             {
                 Hangup();
             }
-            Dialogic.Close(_devh);
+            Dialogic.Close(_devh, _voiceh);
         }
 
         private void SetDefaultFileType() {
@@ -159,7 +161,7 @@ namespace ivrToolkit.DialogicPlugin
             if (_stopped) ResetAndThrowStop();
             try
             {
-                Dialogic.PlayFile(_devh, filename, "0123456789#*abcd", _currentXpb);
+                Dialogic.PlayFile(_voiceh, filename, "0123456789#*abcd", _currentXpb);
             }
             catch (StopException)
             {
@@ -180,7 +182,7 @@ namespace ivrToolkit.DialogicPlugin
         {
             if (_stopped) ResetAndThrowStop();
             try {
-                Dialogic.RecordToFile(_devh, filename, "0123456789#*abcd", _currentXpb, timeoutMilliseconds);
+                Dialogic.RecordToFile(_voiceh, filename, "0123456789#*abcd", _currentXpb, timeoutMilliseconds);
             }
             catch (StopException)
             {
@@ -202,7 +204,7 @@ namespace ivrToolkit.DialogicPlugin
         {
             if (_stopped) ResetAndThrowStop();
             try {
-                var answer = Dialogic.GetDigits(_devh, numberOfDigits, terminators);
+                var answer = Dialogic.GetDigits(_voiceh, numberOfDigits, terminators);
                 return StripOffTerminator(answer, terminators);
             }
             catch (StopException)
@@ -223,7 +225,7 @@ namespace ivrToolkit.DialogicPlugin
         public string FlushDigitBuffer()
         {
             if (_stopped) ResetAndThrowStop();
-            return Dialogic.FlushDigitBuffer(_devh);
+            return Dialogic.FlushDigitBuffer(_voiceh);
         }
 
         public int Volume
@@ -234,7 +236,7 @@ namespace ivrToolkit.DialogicPlugin
             }
             set
             {
-                Dialogic.SetVolume(_devh,value);
+                Dialogic.SetVolume(_voiceh,value);
                 _volume = value;
             }
         }
@@ -270,7 +272,7 @@ namespace ivrToolkit.DialogicPlugin
         public void Stop()
         {
             _stopped = true;
-            Dialogic.Stop(_devh);
+            Dialogic.Stop(_voiceh);
         }
 
         private void ResetAndThrowStop()
@@ -292,8 +294,8 @@ namespace ivrToolkit.DialogicPlugin
 
         public void DeleteCustomTones()
         {
-            Dialogic.DeleteTones(_devh);
-            Dialogic.InitCallProgress(_devh);
+            Dialogic.DeleteTones(_voiceh);
+            Dialogic.InitCallProgress(_voiceh);
             AddSpecialCustomTones();
         }
 
@@ -315,24 +317,24 @@ namespace ivrToolkit.DialogicPlugin
             }
             else if (tone.ToneType == CustomToneType.Dual)
             {
-                Dialogic.AddDualTone(_devh, tone.Tid, tone.Freq1, tone.Frq1Dev, tone.Freq2, tone.Frq2Dev, tone.Mode);
+                Dialogic.AddDualTone(_voiceh, tone.Tid, tone.Freq1, tone.Frq1Dev, tone.Freq2, tone.Frq2Dev, tone.Mode);
             }
             else if (tone.ToneType == CustomToneType.DualWithCadence)
             {
-                Dialogic.AddDualToneWithCadence(_devh, tone.Tid, tone.Freq1, tone.Frq1Dev, tone.Freq2, tone.Frq2Dev, tone.Ontime, tone.Ontdev, tone.Offtime,
+                Dialogic.AddDualToneWithCadence(_voiceh, tone.Tid, tone.Freq1, tone.Frq1Dev, tone.Freq2, tone.Frq2Dev, tone.Ontime, tone.Ontdev, tone.Offtime,
                     tone.Offtdev, tone.Repcnt);
             }
-            Dialogic.DisableTone(_devh, tone.Tid);
+            Dialogic.DisableTone(_voiceh, tone.Tid);
         }
 
         public void DisableTone(int tid)
         {
-            Dialogic.DisableTone(_devh, tid);
+            Dialogic.DisableTone(_voiceh, tid);
         }
 
         public void EnableTone(int tid)
         {
-            Dialogic.EnableTone(_devh, tid);
+            Dialogic.EnableTone(_voiceh, tid);
         }
 
     } // class

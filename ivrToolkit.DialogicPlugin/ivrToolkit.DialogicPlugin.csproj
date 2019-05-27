@@ -85,6 +85,7 @@
     <Compile Include="Dialogic.cs" />
     <Compile Include="DialogicDef.cs" />
     <Compile Include="DialogicLine.cs" />
+    <Compile Include="GcLibDef.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

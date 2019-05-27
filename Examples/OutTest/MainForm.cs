@@ -5,20 +5,17 @@
 // 
 // 
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using ivrToolkit.Core;
+using ivrToolkit.Core.Exceptions;
+using SimulatorTest.ScriptBlocks;
 
 namespace OutTest
 {
     public partial class MainForm : Form
     {
-        private ILine line;
+        private ILine _line;
 
         public MainForm()
         {
@@ -27,13 +24,40 @@ namespace OutTest
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            line = LineManager.GetLine(1);
         }
 
         private void btnDial_Click(object sender, EventArgs e)
         {
-            CallAnalysis result = line.Dial(txtPhoneNumber.Text, 3500);
-            Console.WriteLine(result);
+            try
+            {
+                _line = LineManager.GetLine(int.Parse(txtLine.Text));
+                _line.Hangup();
+                Thread.Sleep(2000);
+                var result = _line.Dial(txtPhoneNumber.Text, 3500);
+
+                if (result == CallAnalysis.Connected)
+                {
+                    var manager = new ScriptManager(_line, new WelcomeScript());
+
+                    while (manager.HasNext())
+                    {
+                        // execute the next script
+                        manager.Execute();
+                    }
+
+                }
+                else
+                {
+                    MessageBox.Show(result.ToString());
+                }
+                _line.Hangup();
+                LineManager.ReleaseAll();
+
+            }
+            catch (HangupException)
+            {
+                MessageBox.Show(@"hungup");                
+            }
         }
     }
 }

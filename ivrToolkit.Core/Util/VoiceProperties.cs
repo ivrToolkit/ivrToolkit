@@ -6,6 +6,7 @@
 // 
 using System;
 using ivrToolkit.Core.Exceptions;
+using System.IO;
 
 namespace ivrToolkit.Core.Util
 {
@@ -29,7 +30,10 @@ namespace ivrToolkit.Core.Util
 
         private VoiceProperties()
         {
-            _p = new Properties("voice.properties");
+
+            string tenantDirectory = TenantSingleton.Instance.TenantDirectory;
+            var path = Path.Combine(tenantDirectory, "voice.properties");
+            _p = new Properties(path);
         }
 
         /// <summary>
@@ -46,6 +50,23 @@ namespace ivrToolkit.Core.Util
             return false;
         }
 
+
+
+        /// <summary>
+        /// The device name pattern. Default is ':P_pdk_na_an_io:V_dxxxB{board}C{channel}' for gx and 'dxxxB{board}C{channel}' for dx.
+        /// </summary>
+        public string DeviceNamePattern {
+            get
+            {
+                return _p.GetProperty("voice.deviceNamePattern", UseGc ? ":P_pdk_na_an_io:V_dxxxB{board}C{channel}" : "dxxxB{board}C{channel}");
+            }
+        }
+
+        /// <summary>
+        /// True to use GC_OpenEx instead of DX_OPEN
+        /// </summary>
+        public bool UseGc { get { return ToBool(_p.GetProperty("voice.useGC", "false")); } }
+        
         /// <summary>
         /// The class name of the plugin to instantiate. Default is 'ivrToolkit.SimulatorPlugin.Simulator'.
         /// </summary>
@@ -78,6 +99,40 @@ namespace ivrToolkit.Core.Util
         /// if true then the dial method will check for dial tone after picking up the receiver/dialing the number.
         /// </summary>
         public bool PreTestDialTone { get { return ToBool(_p.GetProperty("dial.preTestDialTone", "true")); } }
+        /// <summary>
+        /// Number to add the line in order to get the channel.
+        /// </summary>
+        public int SipChannelOffset { get { return int.Parse(_p.GetProperty("sip.channel_offset", "0")); } }
+        /// <summary>
+        /// The SIP port used for H323 signaling
+        /// </summary>
+        public int SipH323SignalingPort { get { return int.Parse(_p.GetProperty("sip.h323_signaling_port", "1720")); } }
+        /// <summary>
+        /// The SIP port used for SIP signaling
+        /// </summary>
+        public int SipSignalingPort { get { return int.Parse(_p.GetProperty("sip.sip_signaling_port", "5060")); } }
+        /// <summary>
+        /// The SIP proxy ip address.  This is the address of the PBX that will be used to connect to the SIP Trunk.
+        /// </summary>
+        public string SipProxyIp { get { return _p.GetProperty("sip.proxy_ip", "10.143.102.42"); } }
+        /// <summary>
+        /// The SIP local ip address.  This is the address of the server that runs this program.
+        /// </summary>
+        public string SipLocalIp { get { return _p.GetProperty("sip.local_ip", "127.0.0.1"); } }
+        /// <summary>
+        /// The SIP account on the PBX server. This is the account that will be used to make and receive calls for this ADS SIP instance.
+        /// </summary>
+        public string SipAlias { get { return _p.GetProperty("sip.alias", "SipAccount"); } }
+        /// <summary>
+        /// The SIP password for the SipAlias on the PBX server. 
+        /// </summary>
+        public string SipPassword { get { return _p.GetProperty("sip.password", "password"); } }
+        /// <summary>
+        /// The SIP realm for the SipAlias on the PBX server. 
+        /// </summary>
+        public string SipRealm { get { return _p.GetProperty("sip.realm", ""); } }
+
+
         /// <summary>
         /// The definition of dial tone. Default is '350,20,440,20,L'. The default Tone Id is '306'.
         /// </summary>

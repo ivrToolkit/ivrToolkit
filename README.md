@@ -5,7 +5,7 @@ An IVR toolkit library for dotNet developers wanting to write telephony applicat
 
 http://www.ivrToolkit.com
 
-Develop branch: [![Build Status](https://travis-ci.com/ivrToolkit/ivrToolkit.svg?branch=develop)](https://travis-ci.com/ivrToolkit/ivrToolkit)
+[![Build Status](https://travis-ci.com/ivrToolkit/ivrToolkit.svg?branch=develop)](https://travis-ci.com/ivrToolkit/ivrToolkit)
 
 License
 -------

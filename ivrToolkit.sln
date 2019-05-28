@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.28306.52
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ivrToolkit.DialogicPlugin", "ivrToolkit.DialogicPlugin\ivrToolkit.DialogicPlugin.csproj", "{FCB3D215-6016-4E0C-BA8B-F0F812C5446A}"
 EndProject
@@ -30,13 +30,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{C68DB211-E713-4265-A2F3-F573383C2C84}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OutTest", "Examples\OutTest\OutTest.csproj", "{8261B4EC-8999-4805-BBB0-EBEF64B4701F}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{167487A9-7E3B-46B9-86EE-BBF98B3D4E65}"
-	ProjectSection(SolutionItems) = preProject
-		.nuget\NuGet.Config = .nuget\NuGet.Config
-		.nuget\NuGet.exe = .nuget\NuGet.exe
-		.nuget\NuGet.targets = .nuget\NuGet.targets
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimulatorTest", "Examples\SimulatorTest\SimulatorTest.csproj", "{3E08C1E3-7D2C-4D13-8168-E08234752DFB}"
 EndProject
@@ -299,5 +292,8 @@ Global
 		{3B4E2B61-D897-4A96-B6BD-DDD29B90500C} = {EF3FFF59-28C8-4FC1-AC00-C7B67131A3CC}
 		{E3D0210D-D86E-42B2-9773-673BBE6678B3} = {C68DB211-E713-4265-A2F3-F573383C2C84}
 		{570A7BE4-8BF3-4B76-B37F-85A0C8576B2F} = {C68DB211-E713-4265-A2F3-F573383C2C84}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {88FA1ED8-1A62-4F30-9E46-20F62AEDCC4B}
 	EndGlobalSection
 EndGlobal

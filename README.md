@@ -2,7 +2,10 @@ ivrToolkit
 ==========
 
 An IVR toolkit library for dotNet developers wanting to write telephony applications. Plugins include a Dialogic driver and a windows sound card driver.
+
 http://www.ivrToolkit.com
+
+[![Build Status](https://travis-ci.com/ivrToolkit/ivrToolkit.svg?branch=develop)](https://travis-ci.com/ivrToolkit/ivrToolkit)
 
 License
 -------

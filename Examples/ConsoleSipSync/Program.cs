@@ -236,7 +236,12 @@ namespace ConsoleSipSync
             {
                 ChannelIndex = Convert.ToInt32(line);
             }
-            sip.WWaitCall();
+            sip.WWaitCallAsync();
+
+            // -2 is expired
+            while (sip.WWaitForCallEventSync(50) == -2) // wait 5 seconds
+            {
+            }
         }
 
         static void CLIDropCall()

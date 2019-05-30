@@ -37,7 +37,10 @@ public:
 	void DialogicStopSync(int channel_index);
 	int DialogicMakeCallSync(int channel_index, const char* ani, const char* dnis);
 	int DialogicDropCallSync(int channel_index);
-	int DialogicWaitCallSync(int channel_index);
+
+
+	void DialogicWaitCallAsync(int channel_index);
+	int DialogicWaitForCallEventSync(int channel_index, int wait_time);
 
 	/*
 	* Asyncronous Functions

@@ -22,8 +22,7 @@ namespace ivrToolkit.DialogicSipPluginSync
         private bool _hungup;
         private bool _stopped;
         private int _volume;
-        private Dialogic dialogic = new Dialogic();
-        private DialogicSIPSync _sip;
+        private readonly DialogicSIPSync _sip;
 
         internal DialogicLine(int devh, int lineNumber, DialogicSIPSync sip)
         {
@@ -37,16 +36,34 @@ namespace ivrToolkit.DialogicSipPluginSync
 
         public string LastTerminator { get; private set; }
 
-        public int LineNumber { get; private set; }
+        public int LineNumber { get; }
 
         private Dialogic.DX_XPB _currentXpb;
 
         public void WaitRings(int rings)
         {
+            Logger.Debug("WaitRings({0})",rings);
 
             if (_stopped) ResetAndThrowStop();
             _status = LineStatusTypes.AcceptingCalls;
-            Dialogic.WaitRings(_devh, rings,_sip);
+
+            // asynchronously start waiting for a call to come in
+            _sip.WWaitCallAsync();
+
+            int result;
+            // -2 is expired
+            while ((result = _sip.WWaitForCallEventSync(50)) == -2) // wait 5 seconds
+            {
+                if (result == -2) Logger.Debug("Wait for call exhausted. Will try again");
+                if (_stopped) ResetAndThrowStop();
+            }
+            if (_stopped) ResetAndThrowStop();
+
+            if (result == -1)
+            {
+                throw new VoiceException("WaitRings threw an exception");
+            }
+
             _status = LineStatusTypes.Connected;
             if (_stopped) ResetAndThrowStop();
         }
@@ -279,8 +296,9 @@ namespace ivrToolkit.DialogicSipPluginSync
         }
         public void Stop()
         {
+            Logger.Debug("Stop()");
             _stopped = true;
-            Dialogic.Stop(_devh);
+            Dialogic.Stop(_devh, _sip);
         }
 
         private void ResetAndThrowStop()

@@ -31,7 +31,10 @@ namespace DialogicWrapperSync {
 		void WUnregister();
 		void WStatus();
 		int WMakeCall(String^ ani, String^ dnis);
-		int WWaitCall();
+
+		void WWaitCallAsync();
+		int WWaitForCallEventSync(int wait_time);
+
 		void WDropCall();
 		String^ WGetDeviceName();
 		int WGetVoiceHandle();

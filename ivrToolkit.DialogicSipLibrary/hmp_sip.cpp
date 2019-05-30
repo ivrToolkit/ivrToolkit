@@ -1899,18 +1899,23 @@ int DialogicFunctions::DialogicDropCallSync(int channel_index){
 	return -1;
 }
 /**
-* Wait for a call syncronously.
+* Wait for a call Asyncronously.
 * @ param channel_index The channel to use to wait for a call.
 */
-int DialogicFunctions::DialogicWaitCallSync(int channel_index){
+void DialogicFunctions::DialogicWaitCallAsync(int channel_index){
 	//printf("DialogicWaitCallSync\n");
 
-	channls[channel_index]->wait_call();
-	if (WaitForEventSync(channel_index, GCEV_ANSWERED, SYNC_WAIT_INFINITE) == SYNC_WAIT_SUCCESS){
-		return 1;
-	}
+	channls[channel_index]->wait_call(); 
+}
 
-	return -1;
+/**
+* Wait for a event syncronously.
+* @ param channel_index The channel to use to wait for.
+* @ param wait_time The time to wait in 1/10 of a second increments
+*/
+int DialogicFunctions::DialogicWaitForCallEventSync(int channel_index, int wait_time) {
+	//printf("DialogicWaitForCallEventSync\n");
+	return WaitForEventSync(channel_index, GCEV_ANSWERED, wait_time);
 }
 
 /*

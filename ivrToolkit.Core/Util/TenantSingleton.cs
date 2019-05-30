@@ -1,26 +1,28 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
+using NLog;
 
 namespace ivrToolkit.Core.Util
 {
     public class TenantSingleton
     {
-        private static TenantSingleton instance;
-        private string _tenantDirectory;
-        private string _tenant = "";
+        private static TenantSingleton _instance;
+        private readonly string _tenantDirectory;
+        private readonly string _tenant = "";
+
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
         private TenantSingleton() {
-
+            Logger.Debug("Starting TenantSingleton");
             String[] args = Environment.GetCommandLineArgs();
+            Logger.Debug($"There are {args.Length} args");
 
             foreach (string s in args)
             {
                 if (s.StartsWith("-t"))
                 {
                     _tenant = s.Substring(2);
+                    Logger.Debug($"Tenant name is {_tenant}");
                 }
             }
 
@@ -36,17 +38,18 @@ namespace ivrToolkit.Core.Util
             {
                 _tenantDirectory = Path.Combine(location, _tenant);
             }
+            Logger.Debug($"Tenant directory = {_tenantDirectory}");
         }
 
         public static TenantSingleton Instance
         {
             get
             {
-                if (instance == null)
+                if (_instance == null)
                 {
-                    instance = new TenantSingleton();
+                    _instance = new TenantSingleton();
                 }
-                return instance;
+                return _instance;
             }
         }
 

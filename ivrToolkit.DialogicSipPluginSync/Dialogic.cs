@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using ivrToolkit.Core;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Util;
-using System.Reflection;
 using NLog;
 using System.IO;
 //Please note that the dll must exist in order for this using to work correctly.
@@ -25,49 +24,46 @@ namespace ivrToolkit.DialogicSipPluginSync
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
         private static readonly object LockObject = new object();
-        private static bool isLibaryStarted;
+        private static bool _isLibaryStarted;
 
         public ILine GetLine(int lineNumber, object data = null)
         {
-            DialogicSIPSync sip = new DialogicSIPSync();
+            var sip = new DialogicSIPSync();
 
-            int offset = VoiceProperties.Current.SipChannelOffset;
+            var offset = VoiceProperties.Current.SipChannelOffset;
 
-            int channel = lineNumber + offset;
+            var channel = lineNumber + offset;
 
             lock (LockObject)
             {
-                int lineCount = LineManager.GetLineCount();
+                var lineCount = LineManager.GetLineCount();
                 //Console.WriteLine("Before Starting library check isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
                 /*
                  * The if statment below checks if the lineCount is 0 
                  * because the line is not added to the lineCount
                  * until after this GetLine method is invoked.
                  */
-                if (!isLibaryStarted && lineCount == 0)
+                if (!_isLibaryStarted && lineCount == 0)
                 {
-                    var assemblyName = VoiceProperties.Current.AssemblyName;
-                    // create an instance of the class from the assembly
-                    var assembly = Assembly.LoadFrom(assemblyName);
-                    var library = (ILibrary)assembly.CreateInstance("ivrToolkit.DialogicSipPluginSync.DialogicLibrary");
+                    var library = new DialogicLibrary();
 
-                    int H323SignalingPort = VoiceProperties.Current.SipH323SignalingPort;
-                    int SipSignalingPort = VoiceProperties.Current.SipSignalingPort;
+                    var h323SignalingPort = VoiceProperties.Current.SipH323SignalingPort;
+                    var sipSignalingPort = VoiceProperties.Current.SipSignalingPort;
 
                     //Console.WriteLine("Starting the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
-                    Logger.Info("Starting the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
-                    library.StartLibraries(H323SignalingPort, SipSignalingPort);
-                    isLibaryStarted = true;
+                    Logger.Info("Starting the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", _isLibaryStarted, lineCount);
+                    library.StartLibraries(h323SignalingPort, sipSignalingPort);
+                    _isLibaryStarted = true;
                 }
                 
                 sip.WOpen(channel);
             }
 
-            string proxy = VoiceProperties.Current.SipProxyIp;
-            string local = VoiceProperties.Current.SipLocalIp;
-            string alias = VoiceProperties.Current.SipAlias;
-            string password = VoiceProperties.Current.SipPassword;
-            string realm = VoiceProperties.Current.SipRealm;
+            var proxy = VoiceProperties.Current.SipProxyIp;
+            var local = VoiceProperties.Current.SipLocalIp;
+            var alias = VoiceProperties.Current.SipAlias;
+            var password = VoiceProperties.Current.SipPassword;
+            var realm = VoiceProperties.Current.SipRealm;
             /*
              * Please note that if the SIP Client is already registered
              * it will take 10 seconds to return
@@ -75,7 +71,7 @@ namespace ivrToolkit.DialogicSipPluginSync
             sip.WRegister(proxy, local, alias, password, realm);
             Logger.Debug("Registration Complete Channel {0}, Line {1}", channel, lineNumber);
 
-            int devh = sip.WGetVoiceHandle();
+            var devh = sip.WGetVoiceHandle();
             /*
              * This returns the line number not the channel.
              * There is no place for channel in the DialogicLine class.
@@ -89,105 +85,51 @@ namespace ivrToolkit.DialogicSipPluginSync
             return new DialogicLine(devh, lineNumber, sip);
         }
 
-        /// <summary>
-        /// Opens the board line.
-        /// </summary>
-        /// <param name="devname">Name of the board line. For example: dxxxB1C1</param>
-        /// <returns>The device handle</returns>
-       /*
-        private static int OpenDevice(string devname)
+        internal static void Stop(int devh, DialogicSIPSync sip)
         {
-            Logger.Debug("OpenDevice({0})", devname);
-            var devh = dx_open(devname, 0);
-            if (devh <= -1)
-            {
-                //var err = string.Format("Could not get device handle for device {0}", devname);
-                var err = ATDV_ERRMSGP(devh);
-                Logger.Debug("Error is: {0}", err);
-                throw new VoiceException(err);
-            }
-            return devh;
-        }
-        */
-        internal static void WaitRings(int devh, int rings, DialogicSIPSync sip)
-        {
-            sip.WWaitCall();
-            /*
-            if (dx_wtring(devh, rings, (int)HookState.OFF_HOOK, -1) == -1)
-            {
-                var err = ATDV_ERRMSGP(devh);
-                throw new VoiceException(err);
-            }
-             */
-        }
-
-        internal static void Stop(int devh)
-        {
+            Logger.Debug("Stop({0})",devh);
             if (dx_stopch(devh, EV_SYNC) == -1)
             {
+                Logger.Debug("Got an error");
                 var err = ATDV_ERRMSGP(devh);
+                Logger.Debug("Error is {0}",err);
                 throw new VoiceException(err);
             }
 
+            Logger.Debug("Continuing with Stop({0})",devh);
             //Get Line Manager Count 
             //If Line Manager Count is less then or equal to 0
             //Then Stop the Dialogic Libraries
             lock (LockObject)
             {
-                int lineCount = LineManager.GetLineCount();
+                var lineCount = LineManager.GetLineCount();
+                Logger.Debug("Line count is {0}", lineCount);
                 //Console.WriteLine("Before Stopping library check isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
                 /*
                  * The if statment below checks if the lineCount is 0 
                  * because the line is removed from the lineCount
                  * before this stop method is invoked.
                  */
-                if (isLibaryStarted && lineCount == 0)
+                if (_isLibaryStarted && lineCount == 0)
                 {
-                    var assemblyName = VoiceProperties.Current.AssemblyName;
-                    // create an instance of the class from the assembly
-                    var assembly = Assembly.LoadFrom(assemblyName);
-                    var library = (ILibrary)assembly.CreateInstance("ivrToolkit.DialogicSipPluginSync.DialogicLibrary");
-                    //Console.WriteLine("Stopping the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
-                    Logger.Info("Stopping the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
+                    Logger.Info("Stopping the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", _isLibaryStarted, lineCount);
+                    var library = new DialogicLibrary();
                     library.StopLibraries();
-                    isLibaryStarted = false;
+                    _isLibaryStarted = false;
                 }
             }
+            Logger.Debug("Hopefully will be stopped ({0})",devh);
         }
 
         /// <summary>
         /// Puts the line on hook.
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
+        /// <param name="sip"></param>
         internal static void Hangup(int devh, DialogicSIPSync sip)
         {
             dx_stopch(devh, EV_SYNC);
             sip.WDropCall();
-            /*
-            var result = dx_sethook(devh, (int)HookState.ON_HOOK, EV_SYNC);
-            if (result <= -1)
-            {
-                var err = ATDV_ERRMSGP(devh);
-                throw new VoiceException(err);
-            }
-            */
-        }
-
-        /// <summary>
-        /// Takes the line off hook.
-        /// </summary>
-        /// <param name="devh">The handle for the Dialogic line.</param>
-        internal static void TakeOffHook(int devh)
-        {
-            /*
-             * Not needed for SIP
-            var result = dx_sethook(devh, (int)HookState.OFF_HOOK, EV_SYNC);
-            if (result <= -1)
-            {
-                var err = ATDV_ERRMSGP(devh);
-                throw new VoiceException(err);
-            }
-             * */
         }
 
         internal static void SetVolume(int devh, int size)
@@ -210,14 +152,10 @@ namespace ivrToolkit.DialogicSipPluginSync
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
         /// <param name="number">The phone number to dial.</param>
+        /// <param name="sip"></param>
         internal static void Dial(int devh, string number, DialogicSIPSync sip)
         {
-            string proxy = VoiceProperties.Current.SipProxyIp;
-            string alias = VoiceProperties.Current.SipAlias;
-            string ani = alias+"@"+proxy;
-            string dnis = number + "@" + proxy;
-
-            int makeCallResult = sip.WMakeCall("ani", "dnis");
+            var makeCallResult = sip.WMakeCall("ani", "dnis");
             Console.WriteLine("Dial: Syncronous Make call Completed starting call process analysis");
             if (makeCallResult <= -1)
             {
@@ -232,18 +170,19 @@ namespace ivrToolkit.DialogicSipPluginSync
         /// <param name="devh">The handle for the Dialogic line.</param>
         /// <param name="number">The phone number to dial.</param>
         /// <param name="answeringMachineLengthInMilliseconds">Answering machine length in milliseconds</param>
+        /// <param name="sip"></param>
         /// <returns>CallAnalysis Enum</returns>
         internal static Core.CallAnalysis DialWithCpa(int devh, string number, int answeringMachineLengthInMilliseconds, DialogicSIPSync sip)
         {
 
             var cap = GetCap(devh);
 
-            string proxy = VoiceProperties.Current.SipProxyIp;
-            string alias = VoiceProperties.Current.SipAlias;
-            string ani = alias + "@" + proxy;
-            string dnis = number + "@" + proxy;
+            var proxy = VoiceProperties.Current.SipProxyIp;
+            var alias = VoiceProperties.Current.SipAlias;
+            var ani = alias + "@" + proxy;
+            var dnis = number + "@" + proxy;
 
-            int makeCallResult = sip.WMakeCall(ani, dnis);
+            sip.WMakeCall(ani, dnis);
             //Console.WriteLine("DialWithCpa: Syncronous Make call Completed starting call process analysis");
             Logger.Debug("DialWithCpa: Syncronous Make call Completed starting call process analysis");
 
@@ -304,81 +243,6 @@ namespace ivrToolkit.DialogicSipPluginSync
             throw new VoiceException("Unknown dail response: "+result);
         }
 
-        private static int GetTid(string tidName)
-        {
-            int value;
-            if (int.TryParse(tidName, out value))
-            {
-                return value;
-            }
-            var fi =
-                typeof(Dialogic).GetField(tidName, BindingFlags.Static | BindingFlags.NonPublic);
-            if (fi != null)
-            {
-                var obj = fi.GetValue(null);
-                if (obj is Int32)
-                {
-                    return (int)obj;
-                }
-            }
-            throw new Exception("tid name is not found: "+tidName);
-        }
-
-        //InitCallP does not work for SIP
-        /*
-         * 
-        internal static void InitCallProgress(int lineNumber)
-        {
-            var toneParams = VoiceProperties.Current.GetPrefixMatch("cpa.tone.");
-
-            foreach (var tone in toneParams)
-            {
-                var part = tone.Split(',');
-                var t = new Tone_T
-                {
-                    str = part[0].Trim(),
-                    tid = GetTid(part[1].Trim()),
-                    freq1 = new Freq_T
-                    {
-                        freq = int.Parse(part[2].Trim()),
-                        deviation = int.Parse(part[3].Trim())
-                    },
-                    freq2 = new Freq_T
-                        {
-                        freq = int.Parse(part[4].Trim()),
-                        deviation = int.Parse(part[5].Trim())
-                    },
-                    on = new State_T
-                    {
-                        time = int.Parse(part[6].Trim()),
-                        deviation = int.Parse(part[7].Trim())
-                    },
-                    off = new State_T
-                    {
-                        time = int.Parse(part[8].Trim()),
-                        deviation = int.Parse(part[9].Trim())
-                    },
-                    repcnt = int.Parse(part[10].Trim())
-                };
-
-                dx_chgfreq(t.tid,
-                           t.freq1.freq,
-                           t.freq1.deviation,
-                           t.freq2.freq,
-                           t.freq2.deviation);
-
-                dx_chgdur(t.tid,
-                          t.on.time,
-                          t.on.deviation,
-                          t.off.time,
-                          t.off.deviation);
-
-                dx_chgrepcnt(t.tid,
-                             t.repcnt);
-            } // foreach
-
-        }
-        */
         private static DX_CAP GetCap(int devh)
         {
             var cap = new DX_CAP();
@@ -418,19 +282,6 @@ namespace ivrToolkit.DialogicSipPluginSync
             return (DX_CAP)boxed;
         }
 
-        //internal static void DeleteTones(int devh)
-        /*
-        internal static void DeleteTones(int lineNumber)
-        {
-            if (sip.w_voice_dx_deltones() == -1)
-            {
-                //var err = ATDV_ERRMSGP(devh);
-                //throw new VoiceException(err);
-                Console.WriteLine("ANOTHER AVOIDABLE EXCEPTION");
-            }
-        }
-         */
-
         /// <summary>
         /// Gets the greeting time in milliseconds.
         /// </summary>
@@ -451,6 +302,7 @@ namespace ivrToolkit.DialogicSipPluginSync
         /// Closes the board line.
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
+        /// <param name="sip"></param>
         internal static void Close(int devh, DialogicSIPSync sip)
         {
             var result = dx_close(devh, 0);
@@ -467,6 +319,7 @@ namespace ivrToolkit.DialogicSipPluginSync
         /// Returns every character including the terminator
         /// </summary>
         /// <param name="devh">The handle for the Dialogic line.</param>
+        /// <param name="sip"></param>
         /// <returns>All the digits in the buffer including terminators</returns>
         internal static string FlushDigitBuffer(int devh, DialogicSIPSync sip)
         {
@@ -493,6 +346,7 @@ namespace ivrToolkit.DialogicSipPluginSync
         /// <param name="devh">The handle for the Dialogic line.</param>
         /// <param name="numberOfDigits">Maximum number of digits allowed in the buffer.</param>
         /// <param name="terminators">Terminator keys</param>
+        /// <param name="sip"></param>
         /// <returns>Returns the digits pressed not including the terminator if there was one</returns>
         internal static string GetDigits(int devh, int numberOfDigits, string terminators, DialogicSIPSync sip)
         {
@@ -573,7 +427,7 @@ namespace ivrToolkit.DialogicSipPluginSync
             }
 
 
-            ClearEventBuffer(devh, 50);
+            ClearEventBuffer(devh);
 
             return answer;
         }
@@ -596,15 +450,15 @@ namespace ivrToolkit.DialogicSipPluginSync
          * This ensures that no events are left in the buffer before I need to consume 
          * an event in another method (syncronously or asyncronously).
          */
-        private static void ClearEventBuffer(int devh, int timeout)
+        private static void ClearEventBuffer(int devh)
         {
             var handler = 0;
-            bool loop_timeout = false;
+            var loopTimeout = false;
             do
             {
                 if (sr_waitevtEx(ref devh, 1, 50, ref handler) == -1)
                 {
-                    loop_timeout = true;
+                    loopTimeout = true;
                     Logger.Debug("ClearEventBuffer: Timeout");
                 }
                 else
@@ -616,7 +470,7 @@ namespace ivrToolkit.DialogicSipPluginSync
                     var reason = ATDX_TERMMSK(devh);
                     Logger.Debug("ClearEventBuffer: Type = {0} Reason = {1} ", type, reason);
                 }
-            } while (!loop_timeout);
+            } while (!loopTimeout);
         }
 
 
@@ -627,9 +481,9 @@ namespace ivrToolkit.DialogicSipPluginSync
          */
         private static void CheckCallState(DialogicSIPSync sip)
         {
-                    int call_state = sip.WGetCallState();
-                    Logger.Debug("CheckCallState : Call State {0}", call_state);
-                    if (call_state != 4)
+                    var callState = sip.WGetCallState();
+                    Logger.Debug("CheckCallState : Call State {0}", callState);
+                    if (callState != 4)
                     {
                         Logger.Debug("CheckCallState : The call has been hang up.");
                         throw new HangupException();
@@ -763,6 +617,7 @@ namespace ivrToolkit.DialogicSipPluginSync
         /// <param name="filename">The name of the file to play.</param>
         /// <param name="terminators">Terminator keys</param>
         /// <param name="xpb">The format of the vox or wav file.</param>
+        /// <param name="sip"></param>
         internal static void PlayFile(int devh, string filename, string terminators, DX_XPB xpb, DialogicSIPSync sip)
         {
 
@@ -806,7 +661,7 @@ namespace ivrToolkit.DialogicSipPluginSync
              * It appears as if digits or something else is sitll in the buffer and the play file is getting skipped.
              * This did nothing.
              */
-            ClearEventBuffer(devh, 50);
+            ClearEventBuffer(devh);
             /*
              * This might have been the fix for the digits problem.
              */
@@ -817,7 +672,7 @@ namespace ivrToolkit.DialogicSipPluginSync
             Logger.Debug("About to play: {0} state: {1}",filename,state);
             //Double Check this code tomorrow.
             if (!File.Exists(filename)){
-                var err = String.Format ("File {0} does not exist so it cannot be played, call will be droped.",filename);
+                var err = $"File {filename} does not exist so it cannot be played, call will be droped.";
                 Logger.Error(err);
                 sip.WDropCall();
                 throw new VoiceException(err);
@@ -1001,6 +856,7 @@ namespace ivrToolkit.DialogicSipPluginSync
         /// <param name="terminators">Terminator keys</param>
         /// <param name="xpb">The format of the vox or wav file.</param>
         /// <param name="timeoutMilli">Number of milliseconds before timeout</param>
+        /// <param name="sip"></param>
         internal static void RecordToFile(int devh, string filename, string terminators, DX_XPB xpb, int timeoutMilli, DialogicSIPSync sip)
         {
 

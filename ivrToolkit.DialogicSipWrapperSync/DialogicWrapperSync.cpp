@@ -77,8 +77,13 @@ int DialogicWrapperSync::DialogicSIPSync::WMakeCall(String^ ani, String^ dnis){
 
 	return dialogicFunctions->DialogicMakeCallSync(channel_index, char_ani, char_dnis);
 }
-int DialogicWrapperSync::DialogicSIPSync::WWaitCall(){
-	return dialogicFunctions->DialogicWaitCallSync(channel_index);
+
+void DialogicWrapperSync::DialogicSIPSync::WWaitCallAsync(){
+	dialogicFunctions->DialogicWaitCallAsync(channel_index);
+}
+
+int DialogicWrapperSync::DialogicSIPSync::WWaitForCallEventSync(int wait_time) {
+	return dialogicFunctions->DialogicWaitForCallEventSync(channel_index, wait_time);
 }
 
 void DialogicWrapperSync::DialogicSIPSync::WDropCall(){

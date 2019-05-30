@@ -148,6 +148,7 @@ namespace ivrToolkit.Core
         /// <param name="lineNumber">The line number to release</param>
         public static void ReleaseLine(int lineNumber)
         {
+            Logger.Debug("ReleaseLine({0})",lineNumber);
             try
             {
                 var line = Lines[lineNumber];
@@ -156,6 +157,7 @@ namespace ivrToolkit.Core
             }
             catch (KeyNotFoundException)
             {
+                Logger.Debug("line not found");
             }
         }
 
@@ -164,6 +166,7 @@ namespace ivrToolkit.Core
         /// </summary>
         public static void ReleaseAll()
         {
+            Logger.Debug("ReleaseAll()");
             var linesList = Lines.ToList();
             foreach (var keyValue in linesList)
             {

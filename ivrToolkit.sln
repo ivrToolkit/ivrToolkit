@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.28306.52
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ivrToolkit.DialogicPlugin", "ivrToolkit.DialogicPlugin\ivrToolkit.DialogicPlugin.csproj", "{FCB3D215-6016-4E0C-BA8B-F0F812C5446A}"
 EndProject
@@ -212,8 +212,8 @@ Global
 		{3E08C1E3-7D2C-4D13-8168-E08234752DFB}.Release|Win32.ActiveCfg = Release|Any CPU
 		{3E08C1E3-7D2C-4D13-8168-E08234752DFB}.Release|x86.ActiveCfg = Release|Any CPU
 		{0A3BA4AC-8FF9-45A1-BB64-CB613A28A26A}.Debug|Any CPU.ActiveCfg = Debug|Win32
-		{0A3BA4AC-8FF9-45A1-BB64-CB613A28A26A}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
-		{0A3BA4AC-8FF9-45A1-BB64-CB613A28A26A}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{0A3BA4AC-8FF9-45A1-BB64-CB613A28A26A}.Debug|Mixed Platforms.ActiveCfg = Release|Win32
+		{0A3BA4AC-8FF9-45A1-BB64-CB613A28A26A}.Debug|Mixed Platforms.Build.0 = Release|Win32
 		{0A3BA4AC-8FF9-45A1-BB64-CB613A28A26A}.Debug|Win32.ActiveCfg = Debug|Win32
 		{0A3BA4AC-8FF9-45A1-BB64-CB613A28A26A}.Debug|Win32.Build.0 = Debug|Win32
 		{0A3BA4AC-8FF9-45A1-BB64-CB613A28A26A}.Debug|x86.ActiveCfg = Debug|Win32
@@ -226,8 +226,8 @@ Global
 		{0A3BA4AC-8FF9-45A1-BB64-CB613A28A26A}.Release|x86.ActiveCfg = Release|Win32
 		{0A3BA4AC-8FF9-45A1-BB64-CB613A28A26A}.Release|x86.Build.0 = Release|Win32
 		{B9B5DAD3-5CDE-41CB-9CFA-B147E2D64548}.Debug|Any CPU.ActiveCfg = Debug|Win32
-		{B9B5DAD3-5CDE-41CB-9CFA-B147E2D64548}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
-		{B9B5DAD3-5CDE-41CB-9CFA-B147E2D64548}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{B9B5DAD3-5CDE-41CB-9CFA-B147E2D64548}.Debug|Mixed Platforms.ActiveCfg = Release|Win32
+		{B9B5DAD3-5CDE-41CB-9CFA-B147E2D64548}.Debug|Mixed Platforms.Build.0 = Release|Win32
 		{B9B5DAD3-5CDE-41CB-9CFA-B147E2D64548}.Debug|Win32.ActiveCfg = Debug|Win32
 		{B9B5DAD3-5CDE-41CB-9CFA-B147E2D64548}.Debug|Win32.Build.0 = Debug|Win32
 		{B9B5DAD3-5CDE-41CB-9CFA-B147E2D64548}.Debug|x86.ActiveCfg = Debug|Win32
@@ -258,7 +258,6 @@ Global
 		{E3D0210D-D86E-42B2-9773-673BBE6678B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E3D0210D-D86E-42B2-9773-673BBE6678B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E3D0210D-D86E-42B2-9773-673BBE6678B3}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{E3D0210D-D86E-42B2-9773-673BBE6678B3}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
 		{E3D0210D-D86E-42B2-9773-673BBE6678B3}.Debug|Win32.ActiveCfg = Debug|Any CPU
 		{E3D0210D-D86E-42B2-9773-673BBE6678B3}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{E3D0210D-D86E-42B2-9773-673BBE6678B3}.Debug|x86.Build.0 = Debug|Any CPU
@@ -292,5 +291,8 @@ Global
 		{3B4E2B61-D897-4A96-B6BD-DDD29B90500C} = {EF3FFF59-28C8-4FC1-AC00-C7B67131A3CC}
 		{E3D0210D-D86E-42B2-9773-673BBE6678B3} = {C68DB211-E713-4265-A2F3-F573383C2C84}
 		{570A7BE4-8BF3-4B76-B37F-85A0C8576B2F} = {C68DB211-E713-4265-A2F3-F573383C2C84}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A5C71D1A-0ABE-437B-89FB-59EE74035D64}
 	EndGlobalSection
 EndGlobal

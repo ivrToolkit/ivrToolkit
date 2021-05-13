@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ConsoleIvr</RootNamespace>
     <AssemblyName>ConsoleIvr</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -26,6 +26,7 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -36,6 +37,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -45,11 +47,9 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ivrToolkit.DialogicSipWrapperSync">
-      <HintPath>..\..\Debug\ivrToolkit.DialogicSipWrapperSync.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -93,16 +93,16 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\ivrToolkit.Core\ivrToolkit.Core.csproj">
-      <Project>{a3db199e-9907-42aa-a5e2-1d5904ab3c4d}</Project>
+      <Project>{d87c2548-721b-482d-b3dd-c04d3206d57c}</Project>
       <Name>ivrToolkit.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\ivrToolkit.DialogicSipLibrary\ivrToolkit.DialogicSipLibrary.vcxproj">
-      <Project>{0a3ba4ac-8ff9-45a1-bb64-cb613a28a26a}</Project>
-      <Name>ivrToolkit.DialogicSipLibrary</Name>
+    <ProjectReference Include="..\..\Plugins\Dialogic\Sip\ivrToolkit.DialogicSipWrapper\ivrToolkit.DialogicSipWrapper.vcxproj">
+      <Project>{b9b5dad3-5cde-41cb-9cfa-b147e2d64548}</Project>
+      <Name>ivrToolkit.DialogicSipWrapper</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\ivrToolkit.DialogicSipPluginSync\ivrToolkit.DialogicSipPluginSync.csproj">
-      <Project>{14001d0e-dd61-4f98-9dfa-f8e9261553a8}</Project>
-      <Name>ivrToolkit.DialogicSipPluginSync</Name>
+    <ProjectReference Include="..\..\Plugins\Dialogic\Sip\ivrToolkit.Plugin.Dialogic.Sip\ivrToolkit.Plugin.Dialogic.Sip.csproj">
+      <Project>{e53830aa-ea2d-4fbc-983d-62349e308b7b}</Project>
+      <Name>ivrToolkit.Plugin.Dialogic.Sip</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -126,6 +126,12 @@
       <ProductName>Windows Installer 4.5</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="NLog.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

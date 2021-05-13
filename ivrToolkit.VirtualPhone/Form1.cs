@@ -1,7 +1,7 @@
 ﻿// 
-// Copyright 2013 Troy Makaro
+// Copyright 2021 Troy Makaro
 // 
-// This file is part of ivrToolkit, distributed under the LESSER GNU GPL. For full terms see the included COPYING file and the COPYING.LESSER file.
+// This file is part of ivrToolkit, distributed under the Apache-2.0 license.
 // 
 // 
 using System;

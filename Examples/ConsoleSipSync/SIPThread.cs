@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using DialogicWrapperSync;
+using DialogicSipWrapper;
 
 namespace ConsoleSipSync
 {
@@ -45,23 +42,14 @@ namespace ConsoleSipSync
         public const string CLI_REQ_INDEX = "index(1-{0},{1}): ";
         public const int CLI_REQ_INDEX_DEFAULT = 1;
         public const string CLI_REQ_ANI = "ani({0}): ";
-        //public const string CLI_REQ_ANI_DEFAULT = "5555555555@10.143.102.42";
         public const string CLI_REQ_ANI_DEFAULT = "Developer1@10.143.102.42";
         public const string CLI_REQ_DNIS = "dnis({0}): ";
         public const string CLI_REQ_DNIS_DEFAULT = "7782320255@10.143.102.42";
-        //Marko's phone number#define CLI_REQ_DNIS_DEFAULT		=	"6047641484@10.143.102.42";
-        public const string CLI_REQ_WAVE_FILE = "wave file({0}): ";
-        public const string CLI_REQ_WAVE_FILE_DEFAULT = "play.wav";
-        public const string CLI_REQ_FAX_FILE = "fax file({0}): ";
-        public const string CLI_REQ_FAX_FILE_DEFAULT = "fax.tif";
-        public const string CLI_REQ_CONFIRM = "confirm?({0}): ";
-        public const string CLI_REQ_CONFIRM_DEFAULT = "Y";
         public const string CLI_REQ_PROXY_IP = "proxy({0}): ";
         public const string CLI_REQ_PROXY_IP_DEFAULT = "10.143.102.42";
         public const string CLI_REQ_LOCAL_IP = "local({0}): ";
         public const string CLI_REQ_LOCAL_IP_DEFAULT = "10.143.102.220";
         public const string CLI_REQ_ALIAS = "alias({0}): ";
-        //public const string CLI_REQ_ALIAS_DEFAULT = "5555555555";
         public const string CLI_REQ_ALIAS_DEFAULT = "Developer1";
         public const string CLI_REQ_PASSWORD = "password({0}): ";
         public const string CLI_REQ_PASSWORD_DEFAULT = "password";
@@ -72,17 +60,13 @@ namespace ConsoleSipSync
          * Setup Variables
          * 
          */
-        private const int MAX_CHANNELS = 2;
-        private const string USER_DISPLAY = "Michael Cox";
-        private const string USER_AGENT = "SRB_SIP_CLIENT";
-        private const int HMP_SIP_PORT = 5060;
-        private static DialogicSIPSync sip = new DialogicSIPSync();
+        private const int MaxChannels = 2;
+        private static DialogicSIPSync _sip = new DialogicSIPSync();
 
         public void CommandLineInput()
         {
 
-            sip = new DialogicSIPSync();
-            //sip.WStartLibraries();
+            _sip = new DialogicSIPSync();
 
 
 
@@ -106,8 +90,8 @@ namespace ConsoleSipSync
                         CLICloseChannel();
                         break;
                     case CLI_QUIT:
-                        sip.WClose();
-                        sip.WStartLibraries(1720,5060);
+                        _sip.WClose();
+                        _sip.WStartLibraries(1720,5060, 12);
                         exitLoop = true;
                         break;
                     case CLI_MAKECALL:
@@ -147,28 +131,28 @@ namespace ConsoleSipSync
         {
             int ChannelIndex = 0;
             // Get the channel to use for the make call.
-            Console.Write(CLI_REQ_INDEX, MAX_CHANNELS, CLI_REQ_INDEX_DEFAULT);
+            Console.Write(CLI_REQ_INDEX, MaxChannels, CLI_REQ_INDEX_DEFAULT);
             string readChannel = Console.ReadLine();
             if (!readChannel.Trim().Equals(""))
             {
                 ChannelIndex = Convert.ToInt32(readChannel);
             }
 
-            sip.WOpen(ChannelIndex);
+            _sip.WOpen(ChannelIndex);
         }
 
         static void CLICloseChannel()
         {
             int ChannelIndex = 0;
             // Get the channel to use for the make call.
-            Console.Write(CLI_REQ_INDEX, MAX_CHANNELS, CLI_REQ_INDEX_DEFAULT);
+            Console.Write(CLI_REQ_INDEX, MaxChannels, CLI_REQ_INDEX_DEFAULT);
             string readChannel = Console.ReadLine();
             if (!readChannel.Trim().Equals(""))
             {
                 ChannelIndex = Convert.ToInt32(readChannel);
             }
 
-            sip.WClose();
+            _sip.WClose();
         }
 
         static void CLIMakeCall()
@@ -179,7 +163,7 @@ namespace ConsoleSipSync
             string dnis = CLI_REQ_DNIS_DEFAULT;
 
             // Get the channel to use for the make call.
-            Console.Write(CLI_REQ_INDEX, MAX_CHANNELS, CLI_REQ_INDEX_DEFAULT);
+            Console.Write(CLI_REQ_INDEX, MaxChannels, CLI_REQ_INDEX_DEFAULT);
             string line = Console.ReadLine();
             if (!line.Trim().Equals(""))
             {
@@ -208,7 +192,7 @@ namespace ConsoleSipSync
             //Console.WriteLine(dnis);
 
             //make the call
-            int return_value = sip.WMakeCall(ani, dnis);
+            int return_value = _sip.WMakeCall(ani, dnis);
             Console.WriteLine("Call Progress Analysis Result: {0} ", return_value);
         }
 
@@ -217,16 +201,16 @@ namespace ConsoleSipSync
 
             int ChannelIndex = CLI_REQ_INDEX_DEFAULT;
 
-            Console.Write(CLI_REQ_INDEX, MAX_CHANNELS, CLI_REQ_INDEX_DEFAULT);
+            Console.Write(CLI_REQ_INDEX, MaxChannels, CLI_REQ_INDEX_DEFAULT);
             string line = Console.ReadLine(); // Get string from user
             if (!line.Trim().Equals(""))
             {
                 ChannelIndex = Convert.ToInt32(line);
             }
-            sip.WWaitCallAsync();
+            _sip.WWaitCallAsync();
 
             // -2 is expired
-            while (sip.WWaitForCallEventSync(50) == -2) // wait 5 seconds
+            while (_sip.WWaitForCallEventSync(50) == -2) // wait 5 seconds
             {
             }
         }
@@ -236,26 +220,26 @@ namespace ConsoleSipSync
 
             int ChannelIndex = CLI_REQ_INDEX_DEFAULT;
 
-            Console.Write(CLI_REQ_INDEX, MAX_CHANNELS, CLI_REQ_INDEX_DEFAULT);
+            Console.Write(CLI_REQ_INDEX, MaxChannels, CLI_REQ_INDEX_DEFAULT);
             string line = Console.ReadLine(); // Get string from user
             if (!line.Trim().Equals(""))
             {
                 ChannelIndex = Convert.ToInt32(line);
             }
-            sip.WDropCall();
+            _sip.WDropCall();
         }
 
         static void CLIStop()
         {
             int ChannelIndex = CLI_REQ_INDEX_DEFAULT;
 
-            Console.Write(CLI_REQ_INDEX, MAX_CHANNELS, CLI_REQ_INDEX_DEFAULT);
+            Console.Write(CLI_REQ_INDEX, MaxChannels, CLI_REQ_INDEX_DEFAULT);
             string line = Console.ReadLine();
             if (!line.Trim().Equals(""))
             {
                 ChannelIndex = Convert.ToInt32(line);
             }
-            sip.WStop();
+            _sip.WStop();
         }
 
         static void CLIRegister()
@@ -306,21 +290,21 @@ namespace ConsoleSipSync
                 Realm = line;
             }
 
-            sip.WRegister(ProxyIp, LocalIp, Alias, Password, Realm);
+            _sip.WRegister(ProxyIp, LocalIp, Alias, Password, Realm);
         }
 
         static void CLIUnregister()
         {
-            sip.WUnregister();
+            _sip.WUnregister();
         }
 
         static void CLIStatus()
         {
-            sip.WStatus();
+            _sip.WStatus();
             Console.WriteLine("##################");
-            String name = sip.WGetDeviceName();
+            String name = _sip.WGetDeviceName();
             Console.WriteLine(name);
-            String name2 = sip.WGetDeviceName();
+            String name2 = _sip.WGetDeviceName();
             Console.WriteLine(name2);
 
         }

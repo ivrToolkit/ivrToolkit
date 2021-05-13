@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using DialogicWrapperSync;
+using DialogicSipWrapper;
 using System.Threading;
 
 namespace ConsoleSipSync
@@ -83,7 +83,7 @@ namespace ConsoleSipSync
         {
 
             sip = new DialogicSIPSync();
-            sip.WStartLibraries(1720,5060);
+            sip.WStartLibraries(1720,5060, 12);
 
             SIPThread sipThreadOne = new SIPThread();
 
@@ -120,7 +120,7 @@ namespace ConsoleSipSync
                         break;
                     case CLI_QUIT:
                         sip.WClose();
-                        sip.WStartLibraries(1720,5060);
+                        sip.WStartLibraries(1720,5060, 12);
                         exitLoop = true;
                         break;
                     case CLI_MAKECALL:

@@ -9,7 +9,7 @@ http://www.ivrToolkit.com
 
 License
 -------
-The IVR toolkit has been released under the LGPL. Please take a look at COPYING and COPYING.LESSER for more information.
+The IVR toolkit has been released under Apache-2.0 license.
 
 Documentation
 -------------

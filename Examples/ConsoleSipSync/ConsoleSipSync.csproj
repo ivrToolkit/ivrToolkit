@@ -32,8 +32,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ivrToolkit.DialogicSipWrapperSync">
-      <HintPath>..\..\Debug\ivrToolkit.DialogicSipWrapperSync.dll</HintPath>
+    <Reference Include="ivrToolkit.DialogicSipWrapper">
+      <HintPath>..\..\Release\ivrToolkit.DialogicSipWrapper.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -47,12 +47,6 @@
     <Compile Include="SIPThread.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\ivrToolkit.DialogicSipLibrary\ivrToolkit.DialogicSipLibrary.vcxproj">
-      <Project>{0a3ba4ac-8ff9-45a1-bb64-cb613a28a26a}</Project>
-      <Name>ivrToolkit.DialogicSipLibrary</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

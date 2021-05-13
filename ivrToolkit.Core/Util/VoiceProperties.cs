@@ -1,7 +1,7 @@
 // 
-// Copyright 2013 Troy Makaro
+// Copyright 2021 Troy Makaro
 // 
-// This file is part of ivrToolkit, distributed under the LESSER GNU GPL. For full terms see the included COPYING file and the COPYING.LESSER file.
+// This file is part of ivrToolkit, distributed under the Apache-2.0 license.
 // 
 // 
 using System;
@@ -107,6 +107,8 @@ namespace ivrToolkit.Core.Util
         /// The SIP port used for H323 signaling
         /// </summary>
         public int SipH323SignalingPort { get { return int.Parse(_p.GetProperty("sip.h323_signaling_port", "1720")); } }
+        public int MaxCalls => int.Parse(_p.GetProperty("sip.max_calls", "1"));
+
         /// <summary>
         /// The SIP port used for SIP signaling
         /// </summary>
@@ -161,6 +163,7 @@ namespace ivrToolkit.Core.Util
                 return tone;
             }
         }
+
         /// <summary>
         /// Gets a property given the name parameter. Only use this method if there is no VoiceProperties helper method.
         /// </summary>

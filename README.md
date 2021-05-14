@@ -13,7 +13,7 @@ The IVR toolkit has been released under Apache-2.0 license.
 
 Documentation
 -------------
-http://www.ivrToolkit.com/documentation.html
+https://www.ivrToolkit.com/documentation
 
 Support 
 -------
@@ -22,7 +22,7 @@ https://github.com/ivrToolkit/ivrToolkit/issues
 Nuget
 -----
 
-http://nuget.org/profiles/ivrToolkit
+https://nuget.org/profiles/ivrToolkit
 
 Source Code
 -----------

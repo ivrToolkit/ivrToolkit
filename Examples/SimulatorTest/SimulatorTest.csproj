@@ -16,7 +16,7 @@
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -27,7 +27,7 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -96,13 +96,9 @@
       <Project>{d87c2548-721b-482d-b3dd-c04d3206d57c}</Project>
       <Name>ivrToolkit.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Plugins\Dialogic\Sip\ivrToolkit.DialogicSipWrapper\ivrToolkit.DialogicSipWrapper.vcxproj">
-      <Project>{b9b5dad3-5cde-41cb-9cfa-b147e2d64548}</Project>
-      <Name>ivrToolkit.DialogicSipWrapper</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Plugins\Dialogic\Sip\ivrToolkit.Plugin.Dialogic.Sip\ivrToolkit.Plugin.Dialogic.Sip.csproj">
-      <Project>{e53830aa-ea2d-4fbc-983d-62349e308b7b}</Project>
-      <Name>ivrToolkit.Plugin.Dialogic.Sip</Name>
+    <ProjectReference Include="..\..\Plugins\Simulator\ivrToolkit.Plugin.Simulator\ivrToolkit.Plugin.Simulator.csproj">
+      <Project>{fdbccfcd-0356-4f03-b603-a8b8e8ef2389}</Project>
+      <Name>ivrToolkit.Plugin.Simulator</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

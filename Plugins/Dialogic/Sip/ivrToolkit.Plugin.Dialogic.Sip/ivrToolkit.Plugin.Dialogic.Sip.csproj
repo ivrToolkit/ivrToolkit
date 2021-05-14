@@ -12,14 +12,6 @@
     <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);GetMyPackageFiles</TargetsForTfmSpecificBuildOutput>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|AnyCPU'">
-    <PlatformTarget>x86</PlatformTarget>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
-    <PlatformTarget>x86</PlatformTarget>
-  </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\ivrToolkit.Core\ivrToolkit.Core.csproj" />
     <ProjectReference Include="..\ivrToolkit.DialogicSipWrapper\ivrToolkit.DialogicSipWrapper.vcxproj" PrivateAssets="All" />

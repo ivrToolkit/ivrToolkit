@@ -4,11 +4,12 @@
 // This file is part of ivrToolkit, distributed under the Apache-2.0 license.
 // 
 // 
-using System;
-using System.Threading;
-using System.Media;
 
-namespace ivrToolkit.SimulatorPlugin
+using System;
+using System.Media;
+using System.Threading;
+
+namespace ivrToolkit.Plugin.Simulator
 {
     public class MediaWavPlayer : IDisposable
     {

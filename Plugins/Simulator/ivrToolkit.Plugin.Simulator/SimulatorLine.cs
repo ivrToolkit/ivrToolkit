@@ -4,6 +4,7 @@
 // This file is part of ivrToolkit, distributed under the Apache-2.0 license.
 // 
 // 
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -13,7 +14,7 @@ using ivrToolkit.Core;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Util;
 
-namespace ivrToolkit.SimulatorPlugin
+namespace ivrToolkit.Plugin.Simulator
 {
     public delegate void HangupDelegate(object sender, EventArgs args);
 

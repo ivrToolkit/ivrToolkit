@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net40;net45;net472</TargetFrameworks>
@@ -11,6 +11,8 @@
     <Copyright>Copyright 2013-2021 Troy Makaro</Copyright>
     <PackageProjectUrl>http://www.ivrtoolkit.com</PackageProjectUrl>
     <PackageIcon>icon.jpg</PackageIcon>
+    <Description>Uses your computer's sound card for testing with the ivrToolkit.VirtualPhone</Description>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>

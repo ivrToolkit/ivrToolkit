@@ -4,11 +4,12 @@
 // This file is part of ivrToolkit, distributed under the Apache-2.0 license.
 // 
 // 
+
 using System.Collections.Generic;
 using System.Globalization;
 using ivrToolkit.Core;
 
-namespace ivrToolkit.SimulatorPlugin
+namespace ivrToolkit.Plugin.Simulator
 {
     public class Simulator : IVoice
     {

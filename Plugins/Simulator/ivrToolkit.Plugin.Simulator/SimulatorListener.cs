@@ -4,14 +4,15 @@
 // This file is part of ivrToolkit, distributed under the Apache-2.0 license.
 // 
 // 
+
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
+using System.Threading;
 
-namespace ivrToolkit.SimulatorPlugin
+namespace ivrToolkit.Plugin.Simulator
 {
     // State object for reading client data asynchronously
     public class StateObject

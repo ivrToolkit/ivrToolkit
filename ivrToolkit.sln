@@ -41,13 +41,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Simulator", "Simulator", "{
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ivrToolkit.DialogicSipWrapper", "Plugins\Dialogic\Sip\ivrToolkit.DialogicSipWrapper\ivrToolkit.DialogicSipWrapper.vcxproj", "{B9B5DAD3-5CDE-41CB-9CFA-B147E2D64548}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ivrToolkit.SimulatorPlugin", "Plugins\Simulator\ivrToolkit.SimulatorPlugin\ivrToolkit.SimulatorPlugin.csproj", "{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ivrToolkit.Plugin.Dialogic.Sip", "Plugins\Dialogic\Sip\ivrToolkit.Plugin.Dialogic.Sip\ivrToolkit.Plugin.Dialogic.Sip.csproj", "{E53830AA-EA2D-4FBC-983D-62349E308B7B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ivrToolkit.Plugin.Dialogic.Analog", "Plugins\Dialogic\Analog\ivrToolkit.Plugin.Dialogic.Analog\ivrToolkit.Plugin.Dialogic.Analog.csproj", "{4DDFCB86-DD65-420F-A190-4477FD43144A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ivrToolkit.Core", "ivrToolkit.Core\ivrToolkit.Core.csproj", "{D87C2548-721B-482D-B3DD-C04D3206D57C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ivrToolkit.Plugin.Simulator", "Plugins\Simulator\ivrToolkit.Plugin.Simulator\ivrToolkit.Plugin.Simulator.csproj", "{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -149,22 +149,6 @@ Global
 		{B9B5DAD3-5CDE-41CB-9CFA-B147E2D64548}.Release|Win32.Build.0 = Release|Win32
 		{B9B5DAD3-5CDE-41CB-9CFA-B147E2D64548}.Release|x86.ActiveCfg = Release|Win32
 		{B9B5DAD3-5CDE-41CB-9CFA-B147E2D64548}.Release|x86.Build.0 = Release|Win32
-		{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51}.Debug|Win32.ActiveCfg = Debug|Any CPU
-		{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51}.Debug|Win32.Build.0 = Debug|Any CPU
-		{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51}.Debug|x86.Build.0 = Debug|Any CPU
-		{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51}.Release|Win32.ActiveCfg = Release|Any CPU
-		{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51}.Release|Win32.Build.0 = Release|Any CPU
-		{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51}.Release|x86.ActiveCfg = Release|Any CPU
-		{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51}.Release|x86.Build.0 = Release|Any CPU
 		{E53830AA-EA2D-4FBC-983D-62349E308B7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E53830AA-EA2D-4FBC-983D-62349E308B7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E53830AA-EA2D-4FBC-983D-62349E308B7B}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
@@ -213,6 +197,22 @@ Global
 		{D87C2548-721B-482D-B3DD-C04D3206D57C}.Release|Win32.Build.0 = Release|Any CPU
 		{D87C2548-721B-482D-B3DD-C04D3206D57C}.Release|x86.ActiveCfg = Release|Any CPU
 		{D87C2548-721B-482D-B3DD-C04D3206D57C}.Release|x86.Build.0 = Release|Any CPU
+		{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389}.Debug|Win32.Build.0 = Debug|Any CPU
+		{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389}.Debug|x86.Build.0 = Debug|Any CPU
+		{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389}.Release|Win32.ActiveCfg = Release|Any CPU
+		{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389}.Release|Win32.Build.0 = Release|Any CPU
+		{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389}.Release|x86.ActiveCfg = Release|Any CPU
+		{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -228,9 +228,9 @@ Global
 		{6E938A2D-DFAC-498A-8421-E463F99EF2A7} = {44B3C5AB-8318-403C-A3E7-E64015BD7103}
 		{B2B6752B-A0D6-4D0E-A41C-182DAC773F99} = {1137A0FF-E16A-4674-BA02-A0D41ADBAB58}
 		{B9B5DAD3-5CDE-41CB-9CFA-B147E2D64548} = {B01EB70E-DD70-47AA-8963-C7C6EA10EB28}
-		{3AC20DB2-78EB-4F85-BDE8-FA0C58F44E51} = {B2B6752B-A0D6-4D0E-A41C-182DAC773F99}
 		{E53830AA-EA2D-4FBC-983D-62349E308B7B} = {B01EB70E-DD70-47AA-8963-C7C6EA10EB28}
 		{4DDFCB86-DD65-420F-A190-4477FD43144A} = {6E938A2D-DFAC-498A-8421-E463F99EF2A7}
+		{FDBCCFCD-0356-4F03-B603-A8B8E8EF2389} = {B2B6752B-A0D6-4D0E-A41C-182DAC773F99}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A5C71D1A-0ABE-437B-89FB-59EE74035D64}

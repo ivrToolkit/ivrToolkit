@@ -4,11 +4,12 @@
 // This file is part of ivrToolkit, distributed under the Apache-2.0 license.
 // 
 // 
+
 using System;
 using System.Threading;
 using NAudio.Wave;
 
-namespace ivrToolkit.SimulatorPlugin
+namespace ivrToolkit.Plugin.Simulator
 {
     public class WavPlayer : IDisposable
     {

@@ -1,20 +1,24 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net40;net45;net472</TargetFrameworks>
+    <TargetFrameworks>net40;net45;net472</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PlatformTarget>x86</PlatformTarget>
     <Version>2.0.6</Version>
-    <Description>An analog implementation using Dialogic System Release 6.0. For use with ivrToolkit.Core. Originally tested with Dialogic build 271</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Copyright>Copyright 2013-2021 Troy Makaro</Copyright>
     <PackageProjectUrl>http://www.ivrtoolkit.com</PackageProjectUrl>
     <PackageIcon>icon.jpg</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NLog" Version="4.7.9" />
+    <PackageReference Include="NAudio" Version="1.7.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\ivrToolkit.Core\ivrToolkit.Core.csproj" />
+    <ProjectReference Include="..\..\..\ivrToolkit.Core\ivrToolkit.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,5 +27,6 @@
       <PackagePath></PackagePath>
     </None>
   </ItemGroup>
+
 
 </Project>

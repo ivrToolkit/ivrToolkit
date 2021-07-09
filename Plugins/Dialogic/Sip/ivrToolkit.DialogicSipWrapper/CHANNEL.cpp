@@ -140,39 +140,7 @@
 		print("wait_call()...");
 		print_gc_error_info("gc_WaitCall", gc_WaitCall(gc_dev, NULL, NULL, 0, EV_ASYNC));
 	}
-	/**
-	* Print informaiton on an incomming call.
-	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::print_offer_info(METAEVENT meta_evt) {
-		char ani[255] = "";
-		char dnis[255] = "";
-		int protocol = CALLPROTOCOL_H323;
-		GC_PARM_BLKP parm_blkp = &(((EXTENSIONEVTBLK*)(meta_evt.extevtdatap))->parmblk);
-		GC_PARM_DATAP parm_datap = NULL;
-		CRN secondary_crn = 0;
-		char transferring_addr[GC_ADDRSIZE] = "";
 
-		gc_GetCallInfo(crn, ORIGINATION_ADDRESS, ani);
-		gc_GetCallInfo(crn, DESTINATION_ADDRESS, dnis);
-		gc_GetCallInfo(crn, CALLPROTOCOL, (char*)&protocol);
-		print("number %s, got %s offer from %s",
-			dnis, protocol == CALLPROTOCOL_H323 ? "H323" : "SIP", ani);
-
-		while ((parm_datap = gc_util_next_parm(parm_blkp, parm_datap))) {
-			switch (parm_datap->parm_ID) {
-			case GCPARM_SECONDARYCALL_CRN:
-				memcpy(&secondary_crn, parm_datap->value_buf, parm_datap->value_size);
-				print("GCPARM_SECONDARYCALL_CRN: 0x%x", secondary_crn);
-				break;
-			case GCPARM_TRANSFERRING_ADDR:
-				memcpy(transferring_addr, parm_datap->value_buf, parm_datap->value_size);
-				print("GCPARM_TRANSFERRING_ADDR: %s", transferring_addr);
-				break;
-			default:
-				break;
-			}
-		}
-	}
 	/**
 	* Print call status infromation.
 	*/

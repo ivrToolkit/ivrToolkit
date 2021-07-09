@@ -49,9 +49,6 @@ public:
 	* Asyncronous Functions
 	* ASyncornous Functions must have an Async Event Thread running in order to get event results.
 	*/
-	/*Channel Functions*/
-	void DialogicStartAsyncEventThread();
-	void DialogicStopAsyncEventThread();
 	/*Registration Functions*/
 	void DialogicRegister(const char* proxy_ip, const char* local_ip, const char* alias, const char* password, const char* realm);
 	void DialogicUnregister();

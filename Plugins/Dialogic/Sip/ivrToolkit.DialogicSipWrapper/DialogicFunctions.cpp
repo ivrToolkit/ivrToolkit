@@ -527,7 +527,6 @@ int ProcessEventSync(int wait_event, long event_handle, int channel, int dev_han
 			//pch->wait_call();
 			break;
 		case GCEV_OFFERED:
-			pch->print_offer_info(meta_evt);
 			pch->ack_call();
 			break;
 		case GCEV_CALLPROC:
@@ -624,7 +623,7 @@ bool hasExpired(int count, int wait_time){
 	if (wait_time == SYNC_WAIT_INFINITE)	{
 		return false;
 	}
-	else if (count > wait_time){
+	if (count > wait_time){
 		return true;
 	}
 	
@@ -717,221 +716,6 @@ int WaitForEventSync(int channel, int wait_for_event, int wait_time){
 		return SYNC_WAIT_EXPIRED;
 	}
 	return SYNC_WAIT_ERROR;
-}
-
-/**
-* This is the logic for prcoessing an event in Dialogic ASYNC mode.
-*/
-void ProcessEvent()
-{
-
-	int timeout = 0;
-	long event_handle = 0;
-	int evt_dev = 0;
-	int evt_code = 0;
-	int evt_len = 0;
-	void* evt_datap = NULL;
-	METAEVENT meta_evt;
-	ivrToolkit::DialogicSipWrapper::CHANNEL* pch = NULL;
-	GC_PARM_BLKP gc_parm_blkp = NULL;
-	GC_PARM_DATAP gc_parm_datap = NULL;
-	int value = 0;
-
-	/*
-	* This has been removed as this loop now executes inside a seperate thread.  
-	* This is way easier to understand as now I do not have all these weird loops in the code.
-	* Unfortunatlly I had to replace the continue statements with return statements as the loops 
-	* were using continue statements to avoid code before variables had been initalized.
-	* This is a hack and I will need to clean up the variables later.
-	PRINT_CLI_HELP_MSG;
-
-	while (TRUE) {
-		do {
-			timeout = sr_waitevt(50);
-			if (FALSE == analyse_cli()) {
-				return;
-			}
-			Sleep(1000);
-		} while (timeout == SR_TMOUT);
-		*/
-
-		evt_dev = (int)sr_getevtdev(event_handle);
-		evt_code = (int)sr_getevttype(event_handle);
-		evt_len = (int)sr_getevtlen(event_handle);
-		evt_datap = (void*)sr_getevtdatap(event_handle);
-
-		gc_GetMetaEventEx(&meta_evt, event_handle);
-
-
-		if (meta_evt.flags & GCME_GC_EVENT) {
-
-			//for register
-			if (evt_dev == board_dev && GCEV_SERVICERESP == meta_evt.evttype) {
-				gc_parm_blkp = (GC_PARM_BLKP)(meta_evt.extevtdatap);
-				gc_parm_datap = gc_util_next_parm(gc_parm_blkp, gc_parm_datap);
-
-				while (NULL != gc_parm_datap) {
-					if (IPSET_REG_INFO == gc_parm_datap->set_ID) {
-						if (IPPARM_REG_STATUS == gc_parm_datap->parm_ID) {
-							value = (int)(gc_parm_datap->value_buf[0]);
-							switch (value) {
-							case IP_REG_CONFIRMED:
-								printf("IPSET_REG_INFO/IPPARM_REG_STATUS: IP_REG_CONFIRMED\n");
-								break;
-							case IP_REG_REJECTED:
-								printf("IPSET_REG_INFO/IPPARM_REG_STATUS: IP_REG_REJECTED\n");
-								break;
-							default:
-								break;
-							}
-						}
-						else if (IPPARM_REG_SERVICEID == gc_parm_datap->parm_ID) {
-							value = (int)(gc_parm_datap->value_buf[0]);
-							printf("IPSET_REG_INFO/IPPARM_REG_SERVICEID: 0x%x\n", value);
-						}
-
-					}
-					else if (IPSET_LOCAL_ALIAS == gc_parm_datap->set_ID){
-						char * localAlias = new char[gc_parm_datap->value_size + 1];
-						localAlias = (char*)&gc_parm_datap->value_buf;
-						printf("\tIPSET_LOCAL_ALIAS value: %s\n", localAlias);
-					}
-					else if (IPSET_SIP_MSGINFO == gc_parm_datap->set_ID){
-						char * msgInfo = new char[gc_parm_datap->value_size + 1];
-						msgInfo = (char*)&gc_parm_datap->value_buf;
-						printf("\tIPSET_SIP_MSGINFO value: %s\n", msgInfo);
-					}
-					gc_parm_datap = gc_util_next_parm(gc_parm_blkp, gc_parm_datap);
-				}
-				//continue;
-				return;
-			}
-
-			gc_GetUsrAttr(meta_evt.linedev, (void**)&pch);
-			if (NULL == pch)
-				return;
-				//continue;
-				
-
-			
-			pch->print("got GC event : %s", GCEV_MSG(evt_code));
-			gc_GetCRN(&pch->crn, &meta_evt);
-
-			switch (evt_code)
-			{
-			case GCEV_ALERTING:
-				printf("##########ALERTING###########");
-				pch->start_call_progress_analysis();
-				break;
-			case GCEV_OPENEX:
-				pch->set_dtmf();
-				pch->connect_voice();
-				break;
-			case GCEV_UNBLOCKED:
-				pch->wait_call();
-				break;
-			case GCEV_OFFERED:
-				pch->print_offer_info(meta_evt);
-				pch->ack_call();
-				break;
-			case GCEV_CALLPROC:
-				pch->accept_call();
-				break;
-			case GCEV_ACCEPT:
-				pch->answer_call();
-				break;
-			case GCEV_ANSWERED:
-				//pch->do_fax(DF_TX);
-				break;
-			case GCEV_CALLSTATUS:
-				pch->print_call_status(meta_evt);
-				break;
-			case GCEV_CONNECTED:
-				//pch->do_fax(DF_RX);
-				break;
-			case GCEV_DROPCALL:
-				pch->release_call();
-				break;
-			case GCEV_DISCONNECTED:
-				pch->print_call_status(meta_evt);
-				pch->restore_voice();
-				pch->drop_call();
-				break;
-			case GCEV_EXTENSIONCMPLT:
-			case GCEV_EXTENSION:
-				pch->process_extension(meta_evt);
-				break;
-			case GCEV_RELEASECALL:
-				pch->already_connect_fax = FALSE;
-				pch->fax_proceeding = FALSE;
-				pch->crn = 0;
-				break;
-			case GCEV_TASKFAIL:
-				pch->print_call_status(meta_evt);
-				if (TRUE == pch->fax_proceeding)
-					pch->restore_voice();
-				break;
-			default:
-				break;
-			}
-		}
-		else {
-
-			for (int i = 0; i<MAX_CHANNELS; i++) {
-				if (channls[i]->vox_dev == evt_dev)
-					pch = channls[i];
-			}
-			if (NULL == pch)
-				return;
-				//continue;
-
-			switch (evt_code)
-			{
-			case TDX_PLAY:
-				pch->print("got voice event : TDX_PLAY");
-				pch->process_voice_done();
-				break;
-			case TDX_RECORD:
-				pch->print("got voice event : TDX_RECORD");
-				pch->process_voice_done();
-				break;
-			case TDX_CST:
-				pch->print("got voice event : TDX_CST");
-				if (DE_DIGITS == ((DX_CST*)evt_datap)->cst_event) {
-					pch->print("DE_DIGITS: [%c]", (char)((DX_CST*)evt_datap)->cst_data);
-				}
-				break;
-			
-			default:
-				pch->print("unexcepted R4 event(0x%x)", evt_code);
-				break;
-			}
-		}
-
-	//}
-
-}
-
-/**
-* The wait event loop for the async event handling thread function
-*
-* @param parm case to the index in the ExtendedAsyncInfo array
-*/
-void WaitEvent(void* parm)
-{
-	// wait for, and process, events untill application exits
-	printf("[%4d] WaitEvent Thread started\n", GetCurrentThreadId());
-
-	do
-	{
-		//	Wait one second for an event
-		if (sr_waitevt(1000) != -1)
-		{
-			// If the event is valid, process it
-			ProcessEvent();
-		}
-	} while (!exitFlag);
-	printf("[%4d] WaitEvent Thread stopping\n", GetCurrentThreadId());
 }
 
 /**
@@ -1136,22 +920,6 @@ int DialogicFunctions::DialogicWaitForCallEventSync(int channel_index, int wait_
 * ASyncronous Functions
 */
 
-/**
-* Start the thread that handles Dialogic Asycnronous events.
-*/
-void DialogicFunctions::DialogicStartAsyncEventThread(){
-	//printf("[%4d] starting...\n", GetCurrentThreadId());
-	hThread = (HANDLE)_beginthread(WaitEvent, 0, (void*)NULL);
-}
-/**
-* Stop the thread that handles Dialogic Asycnronous events.
-*/
-void DialogicFunctions::DialogicStopAsyncEventThread(){
-	//printf("[%4d] stopping...\n", GetCurrentThreadId());
-	exitFlag = true;
-	CloseHandle(hThread);
-	WaitForSingleObject(hThread, INFINITE);
-}
 /**
 * Register the sip client asyncronously
 * Set registration information for the PBX

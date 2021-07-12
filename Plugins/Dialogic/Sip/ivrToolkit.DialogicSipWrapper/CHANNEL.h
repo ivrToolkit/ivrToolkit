@@ -42,7 +42,6 @@ namespace ivrToolkit::DialogicSipWrapper
 		void restore_voice();
 		void set_dtmf();
 		void wait_call();
-		void print_offer_info(METAEVENT meta_evt);
 		void print_call_status(METAEVENT meta_evt);
 		void print_gc_error_info(const char* func_name, int func_return);
 		void ack_call();

@@ -56,7 +56,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             // -2 is expired
             while ((result = _sip.WWaitForCallEventSync(50)) == -2) // wait 5 seconds
             {
-                if (result == -2) Logger.Debug("Wait for call exhausted. Will try again");
+                if (result == -2) Logger.Trace("Wait for call exhausted. Will try again");
                 if (_stopped) ResetAndThrowStop();
             }
             if (_stopped) ResetAndThrowStop();

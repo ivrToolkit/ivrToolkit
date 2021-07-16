@@ -391,6 +391,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             CheckCallState(sip);
 
             var reason = ATDX_TERMMSK(devh);
+            Logger.Debug("Type = TDX_GETDIG, Reason = {0} = {1}", reason, GetReasonDescription(reason));
+
             if ((reason & TM_ERROR) == TM_ERROR)
             {
                 throw new VoiceException("TM_ERROR");
@@ -403,16 +405,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             {
                 throw new HangupException();
             }
-            if ((reason & TM_BARGEIN) == TM_BARGEIN) Console.WriteLine("TM_BARGEIN");
-            //if ((reason & TM_DIGIT) == TM_DIGIT) Console.WriteLine("TM_DIGIT");
-            //if ((reason & TM_EOD) == TM_EOD) Console.WriteLine("TM_EOD");
-            if ((reason & TM_MAXDATA) == TM_MAXDATA) Console.WriteLine("TM_MAXDATA");
-            //if ((reason & TM_MAXDTMF) == TM_MAXDTMF) Console.WriteLine("TM_MAXDTMF");
-            if ((reason & TM_MAXNOSIL) == TM_MAXNOSIL) Console.WriteLine("TM_MTAXNOSIL");
-            if ((reason & TM_MAXSIL) == TM_MAXSIL) Console.WriteLine("TM_MAXSIL");
-            //if ((reason & TM_NORMTERM) == TM_NORMTERM) Console.WriteLine("TM_NORMTERM");
-            if ((reason & TM_PATTERN) == TM_PATTERN) Console.WriteLine("TM_PATTERN");
-            if ((reason & TM_TONE) == TM_TONE) Console.WriteLine("TM_TONE");
 
 
             var answer = digit.dg_value;
@@ -455,25 +447,81 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
          */
         private static void ClearEventBuffer(int devh)
         {
+            Logger.Debug("ClearEventBuffer()");
             var handler = 0;
-            var loopTimeout = false;
             do
             {
                 if (sr_waitevtEx(ref devh, 1, 50, ref handler) == -1)
                 {
-                    loopTimeout = true;
-                    Logger.Debug("ClearEventBuffer: Timeout");
+                    Logger.Trace("ClearEventBuffer: Timeout");
+                    return;
                 }
-                else
-                {
-                    /*
-                     * Get the event
-                     */
-                    var type = sr_getevttype((uint)handler);
-                    var reason = ATDX_TERMMSK(devh);
-                    Logger.Debug("ClearEventBuffer: Type = {0} Reason = {1} ", type, reason);
-                }
-            } while (!loopTimeout);
+
+                /*
+                 * Get the event
+                 */
+                var type = sr_getevttype((uint)handler);
+                var reason = ATDX_TERMMSK(devh);
+                Logger.Debug("ClearEventBuffer: Type = {0}, Reason = {1} = {2}", GetEventTypeDescription(type), reason, GetReasonDescription(reason));
+            } while (true);
+        }
+
+        private static string GetEventTypeDescription(int type)
+        {
+            switch (type)
+            {
+                case TDX_PLAY:
+                    return "Play Completed";
+                case TDX_RECORD:
+                    return "Record Complete";
+                case TDX_GETDIG:
+                    return "Get Digits Completed";
+                case TDX_DIAL:
+                    return "Dial Completed";
+                case TDX_CALLP:
+                    return "Call Progress Completed";
+                case TDX_CST:
+                    return "CST Event Received";
+                case TDX_SETHOOK:
+                    return "SetHook Completed";
+                case TDX_WINK:
+                    return "Wink Completed";
+                case TDX_ERROR:
+                    return "Error Event";
+                case TDX_PLAYTONE:
+                    return "Play Tone Completed";
+                case TDX_GETR2MF:
+                    return "Get R2MF completed";
+                case TDX_BARGEIN:
+                    return "Barge in completed";
+                case TDX_NOSTOP:
+                    return "No Stop needed to be Issued";
+                case TDX_UNKNOWN:
+                    return "TDX_UNKNOWN";
+            }
+
+            return type.ToString();
+        }
+
+        private static string GetReasonDescription(int reason)
+        {
+            List<string> list = new List<string>();
+            if ((reason & TM_NORMTERM) == TM_NORMTERM) list.Add("Normal Termination");
+            if ((reason & TM_MAXDTMF) == TM_MAXDTMF) list.Add("Max Number of Digits Recd");
+            if ((reason & TM_MAXSIL) == TM_MAXSIL) list.Add("Max Silence");
+            if ((reason & TM_MAXNOSIL) == TM_MAXNOSIL) list.Add("Max Non-Silence");
+            if ((reason & TM_LCOFF) == TM_LCOFF) list.Add("Loop Current Off");
+            if ((reason & TM_IDDTIME) == TM_IDDTIME) list.Add("Inter Digit Delay");
+            if ((reason & TM_MAXTIME) == TM_MAXTIME) list.Add("Max Function Time Exceeded");
+            if ((reason & TM_DIGIT) == TM_DIGIT) list.Add("Digit Mask or Digit Type Term.");
+            if ((reason & TM_PATTERN) == TM_PATTERN) list.Add("Pattern Match Silence Off");
+            if ((reason & TM_USRSTOP) == TM_USRSTOP) list.Add("Function Stopped by User");
+            if ((reason & TM_EOD) == TM_EOD) list.Add("End of Data Reached on Playback");
+            if ((reason & TM_TONE) == TM_TONE) list.Add("Tone On/Off Termination");
+            if ((reason & TM_BARGEIN) == TM_BARGEIN) list.Add("Play terminated due to Barge-in");
+            if ((reason & TM_ERROR) == TM_ERROR) list.Add("I/O Device Error");
+            if ((reason & TM_MAXDATA) == TM_MAXDATA) list.Add("Max Data reached for FSK");
+            return string.Join("|",list.ToArray());
         }
 
 
@@ -485,13 +533,58 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private static void CheckCallState(DialogicSip sip)
         {
                     var callState = sip.WGetCallState();
-                    Logger.Debug("CheckCallState : Call State {0}", callState);
+                    Logger.Debug("CheckCallState: Call State {0}", GetCallStateDescription(callState));
                     if (callState != 4)
                     {
-                        Logger.Debug("CheckCallState : The call has been hang up.");
+                        Logger.Debug("CheckCallState: The call has been hang up.");
                         throw new HangupException();
 
                     }
+        }
+
+
+
+        // todo There are defined in the GcLibDef.cs file in the analog plugin. Need to consider solidation
+
+        private static string GetCallStateDescription(int callState)
+        {
+            switch (callState)
+            {
+                case 0x00:
+                    return "GCST_NULL";
+                case 0x01:
+                    return "GCST_ACCEPTED";
+                case 0x02:
+                    return "GCST_ALERTING";
+                case 0x04:
+                    return "GCST_CONNECTED";
+                case 0x08:
+                    return "GCST_OFFERED";
+                case 0x10:
+                    return "GCST_DIALING";
+                case 0x20:
+                    return "GCST_IDLE";
+                case 0x40:
+                    return "GCST_DISCONNECTED";
+                case 0x80:
+                    return "GCST_DIALTONE";
+                case 0x100:
+                    return "GCST_ONHOLDPENDINGTRANSFER";
+                case 0x200:
+                    return "GCST_ONHOLD";
+                case 0x400:
+                    return "GCST_DETECTED";
+                case 0x800:
+                    return "GCST_PROCEEDING";
+                case 0x1000:
+                    return "GCST_SENDMOREINFO";
+                case 0x2000:
+                    return "GCST_GETMOREINFO";
+                case 0x4000:
+                    return "GCST_CALLROUTING";
+            }
+
+            return callState.ToString();
         }
 
         private static DV_TPT[] GetTerminationConditions(int numberOfDigits, string terminators, int timeoutInMilliseconds)
@@ -661,7 +754,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 throw new VoiceException(err);
             }
             /*
-             * It appears as if digits or something else is sitll in the buffer and the play file is getting skipped.
+             * It appears as if digits or something else is still in the buffer and the play file is getting skipped.
              * This did nothing.
              */
             ClearEventBuffer(devh);
@@ -738,42 +831,20 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     throw new VoiceException(err);
                 }
 
-                //var type = sr_getevttype((uint)handler);
-                if (type == TDX_PLAY)
+                var reason = ATDX_TERMMSK(devh);
+
+                Logger.Debug("Type = TDX_PLAY, Reason = {0} = {1}", reason, GetReasonDescription(reason));
+                if ((reason & TM_ERROR) == TM_ERROR)
                 {
-                    var reason = ATDX_TERMMSK(devh);
-
-                    Logger.Debug("Type = TDX_PLAY Reason = {0}", reason);
-                    if ((reason & TM_ERROR) == TM_ERROR)
-                    {
-                        throw new VoiceException("TM_ERROR");
-                    }
-                    if ((reason & TM_USRSTOP) == TM_USRSTOP)
-                    {
-                        throw new StopException();
-                    }
-                    if ((reason & TM_LCOFF) == TM_LCOFF)
-                    {
-                        throw new HangupException();
-                    }
-                    if ((reason & TM_MAXTIME) == TM_MAXTIME) Logger.Debug("TM_MAXTIME");
-
-                    if ((reason & TM_BARGEIN) == TM_BARGEIN) Logger.Debug("TM_BARGEIN");
-                    //                    if ((reason & TM_DIGIT) == TM_DIGIT) Logger.Debug("TM_DIGIT");
-                    //                    if ((reason & TM_EOD) == TM_EOD) Logger.Debug("TM_EOD"); // This is how I know they listend to full message
-                    if ((reason & TM_IDDTIME) == TM_IDDTIME) Logger.Debug("TM_IDDTIME");
-                    if ((reason & TM_MAXDATA) == TM_MAXDATA) Logger.Debug("TM_MAXDATA");
-                    //                    if ((reason & TM_MAXDTMF) == TM_MAXDTMF) Logger.Debug("TM_MAXDTMF");
-                    if ((reason & TM_MAXNOSIL) == TM_MAXNOSIL) Logger.Debug("TM_MTAXNOSIL");
-                    if ((reason & TM_MAXSIL) == TM_MAXSIL) Logger.Debug("TM_MAXSIL");
-                    //                    if ((reason & TM_NORMTERM) == TM_NORMTERM) Logger.Debug("TM_NORMTERM");
-                    if ((reason & TM_PATTERN) == TM_PATTERN) Logger.Debug("TM_PATTERN");
-                    if ((reason & TM_TONE) == TM_TONE) Logger.Debug("TM_TONE");
+                    throw new VoiceException("TM_ERROR");
                 }
-                else
+                if ((reason & TM_USRSTOP) == TM_USRSTOP)
                 {
-                    var reason = ATDX_TERMMSK(devh);
-                    Logger.Error("got here: Type = {0} Reason = {1} ", type, reason);
+                    throw new StopException();
+                }
+                if ((reason & TM_LCOFF) == TM_LCOFF)
+                {
+                    throw new HangupException();
                 }
                 return;
             } // while
@@ -924,9 +995,10 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 //Check if the call is still connected
                 CheckCallState(sip);
 
-                var type = sr_getevttype((uint)handler);
+                var type = sr_getevttype((uint) handler);
                 //Ignore events that are not of they type we want.
-                if (type != TDX_RECORD) {
+                if (type != TDX_RECORD)
+                {
                     continue;
                 }
 
@@ -936,40 +1008,23 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     throw new VoiceException(err);
                 }
 
-                //var type = sr_getevttype((uint)handler);
-                if (type == TDX_RECORD)
+                var reason = ATDX_TERMMSK(devh);
+                Logger.Debug("Type = TDX_RECORD, Reason = {0} = {1}", reason, GetReasonDescription(reason));
+                if ((reason & TM_ERROR) == TM_ERROR)
                 {
-                    var reason = ATDX_TERMMSK(devh);
-                    if ((reason & TM_ERROR) == TM_ERROR)
-                    {
-                        throw new VoiceException("TM_ERROR");
-                    }
-                    if ((reason & TM_USRSTOP) == TM_USRSTOP)
-                    {
-                        throw new StopException();
-                    }
-                    if ((reason & TM_LCOFF) == TM_LCOFF)
-                    {
-                        throw new HangupException();
-                    }
-                    if ((reason & TM_MAXTIME) == TM_MAXTIME) Console.WriteLine("TM_MAXTIME");
+                    throw new VoiceException("TM_ERROR");
+                }
 
-                    if ((reason & TM_BARGEIN) == TM_BARGEIN) Console.WriteLine("TM_BARGEIN");
-                    if ((reason & TM_DIGIT) == TM_DIGIT) Console.WriteLine("TM_DIGIT");
-                    if ((reason & TM_EOD) == TM_EOD) Console.WriteLine("TM_EOD");
-                    if ((reason & TM_IDDTIME) == TM_IDDTIME) Console.WriteLine("TM_IDDTIME");
-                    if ((reason & TM_MAXDATA) == TM_MAXDATA) Console.WriteLine("TM_MAXDATA");
-                    if ((reason & TM_MAXDTMF) == TM_MAXDTMF) Console.WriteLine("TM_MAXDTMF");
-                    if ((reason & TM_MAXNOSIL) == TM_MAXNOSIL) Console.WriteLine("TM_MTAXNOSIL");
-                    if ((reason & TM_MAXSIL) == TM_MAXSIL) Console.WriteLine("TM_MAXSIL");
-                    if ((reason & TM_NORMTERM) == TM_NORMTERM) Console.WriteLine("TM_NORMTERM");
-                    if ((reason & TM_PATTERN) == TM_PATTERN) Console.WriteLine("TM_PATTERN");
-                    if ((reason & TM_TONE) == TM_TONE) Console.WriteLine("TM_TONE");
-                }
-                else
+                if ((reason & TM_USRSTOP) == TM_USRSTOP)
                 {
-                    Console.WriteLine("got here: " + type);
+                    throw new StopException();
                 }
+
+                if ((reason & TM_LCOFF) == TM_LCOFF)
+                {
+                    throw new HangupException();
+                }
+
                 FlushDigitBuffer(devh, sip);
                 return;
             }

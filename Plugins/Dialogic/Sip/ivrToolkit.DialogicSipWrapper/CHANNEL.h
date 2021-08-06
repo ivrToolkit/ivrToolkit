@@ -6,6 +6,8 @@
 // 
 #pragma once
 #include <gclib.h>
+#include <boost/log/trivial.hpp>
+
 namespace ivrToolkit::DialogicSipWrapper
 {
 	public class CHANNEL
@@ -70,7 +72,10 @@ namespace ivrToolkit::DialogicSipWrapper
 		int voice_dx_chgrepcnt(int tonetype, int repcount);
 		int voice_dx_getdig();
 		int globalcall_gc_GetCallState();
-		void print(const char* format, ...);
+		void printDebug( const char* format, ...);
+		void printError(const char* format, ...);
+		void printInfo(const char* format, ...);
+		void printTrace(const char* format, ...);
 	};
 
 }

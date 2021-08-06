@@ -27,14 +27,13 @@ namespace ivrToolkit::DialogicSipWrapper {
 		!DialogicSip();
 
 		//wrapper methods
-		void WStartLibraries(int h323_signaling_port, int sip_signaling_port, int maxCalls);
+		int WStartLibraries(int h323_signaling_port, int sip_signaling_port, int maxCalls, int logLevel);
 		void WStopLibraries();
 		void WOpen(int lineNumber, int offset);
 		void WClose();
 		void WStop();
 		void WRegister(String^ proxy_ip, String^ local_ip, String^ alias, String^ password, String^ realm);
 		void WUnregister();
-		void WStatus();
 		int WMakeCall(String^ ani, String^ dnis);
 
 		void WWaitCallAsync();

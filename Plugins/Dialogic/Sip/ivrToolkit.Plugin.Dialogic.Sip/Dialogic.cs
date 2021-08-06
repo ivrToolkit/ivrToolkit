@@ -26,6 +26,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         private static readonly object LockObject = new object();
         private static bool _isLibaryStarted;
+        private static bool _libraryFailedToStart;
 
         public ILine GetLine(int lineNumber, object data = null)
         {
@@ -38,24 +39,25 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             lock (LockObject)
             {
+                if (_libraryFailedToStart) throw new Exception("SIP library previously failed to start");
                 var lineCount = LineManager.GetLineCount();
-                //Console.WriteLine("Before Starting library check isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
-                /*
-                 * The if statment below checks if the lineCount is 0 
-                 * because the line is not added to the lineCount
-                 * until after this GetLine method is invoked.
-                 */
-                if (!_isLibaryStarted && lineCount == 0)
+                if (!_isLibaryStarted)
                 {
-                    var library = new DialogicLibrary(sip);
-
                     var h323SignalingPort = VoiceProperties.Current.SipH323SignalingPort;
                     var sipSignalingPort = VoiceProperties.Current.SipSignalingPort;
                     var maxCalls = VoiceProperties.Current.MaxCalls;
 
-                    //Console.WriteLine("Starting the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
+                    var cppLogLevel = VoiceProperties.Current.CppLogLevel;
+
                     Logger.Info("Starting the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", _isLibaryStarted, lineCount);
-                    library.StartLibraries(h323SignalingPort, sipSignalingPort, maxCalls);
+                    int result = sip.WStartLibraries(h323SignalingPort, sipSignalingPort, maxCalls, cppLogLevel);
+                    if (result < 0)
+                    {
+                        _libraryFailedToStart = true;
+                        var message = "The SIP driver has failed to initialize";
+                        Logger.Error(message);
+                        throw new Exception(message);
+                    }
                     _isLibaryStarted = true;
                 }
                 
@@ -116,8 +118,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 if (_isLibaryStarted && lineCount == 0)
                 {
                     Logger.Info("Stopping the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", _isLibaryStarted, lineCount);
-                    var library = new DialogicLibrary();
-                    library.StopLibraries();
+                    sip.WStopLibraries();
                     _isLibaryStarted = false;
                 }
             }

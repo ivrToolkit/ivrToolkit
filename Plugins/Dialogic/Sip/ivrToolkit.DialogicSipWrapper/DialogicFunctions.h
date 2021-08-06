@@ -28,7 +28,7 @@ public:
 	* 
 	*/
 	/*Start Functions*/
-	void DialogicStartSync(int h323_signaling_port, int sip_signaling_port, int maxCalls);
+	int DialogicStartSync(int h323_signaling_port, int sip_signaling_port, int maxCalls, int logLevel);
 	void DialogicStopSync();
 	/*Channel Functions*/
 	void DialogicOpenSync(int lineNumber, int offset);
@@ -50,7 +50,6 @@ public:
 	* ASyncornous Functions must have an Async Event Thread running in order to get event results.
 	*/
 	/*Registration Functions*/
-	void DialogicRegister(const char* proxy_ip, const char* local_ip, const char* alias, const char* password, const char* realm);
 	void DialogicUnregister();
 	/*Call Functions*/
 	void DialogicStatus();

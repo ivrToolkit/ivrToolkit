@@ -164,6 +164,34 @@ namespace ivrToolkit.Core.Util
             }
         }
 
+        // Trivial severity levels from c++ Boost
+        enum severity_level
+        {
+            trace,
+            debug,
+            info,
+            warning,
+            error,
+            fatal
+        };
+
+        public int CppLogLevel
+        {
+            get
+            {
+                var result = _p.GetProperty("sip.cppLogLevel", "info");
+                try
+                {
+                    var level = (severity_level)Enum.Parse(typeof(severity_level), result, true);
+                    return (int)level;
+                }
+                catch (Exception)
+                {
+                    return 0; // info
+                }
+            }
+        }
+
         /// <summary>
         /// Gets a property given the name parameter. Only use this method if there is no VoiceProperties helper method.
         /// </summary>

@@ -54,7 +54,8 @@ namespace ivrToolkit.Core.Util
         /// <summary>
         /// The device name pattern. Default is ':P_pdk_na_an_io:V_dxxxB{board}C{channel}' for gx and 'dxxxB{board}C{channel}' for dx.
         /// </summary>
-        public string DeviceNamePattern {
+        public string DeviceNamePattern
+        {
             get
             {
                 return _p.GetProperty("voice.deviceNamePattern", UseGc ? ":P_pdk_na_an_io:V_dxxxB{board}C{channel}" : "dxxxB{board}C{channel}");
@@ -65,7 +66,7 @@ namespace ivrToolkit.Core.Util
         /// True to use GC_OpenEx instead of DX_OPEN
         /// </summary>
         public bool UseGc { get { return ToBool(_p.GetProperty("voice.useGC", "false")); } }
-        
+
         /// <summary>
         /// The class name of the plugin to instantiate. Default is 'ivrToolkit.SimulatorPlugin.Simulator'.
         /// </summary>
@@ -141,9 +142,9 @@ namespace ivrToolkit.Core.Util
         {
             get
             {
-                var tone = new CustomTone(_p.GetProperty("customTone.dialTone","350,20,440,20,L"))
+                var tone = new CustomTone(_p.GetProperty("customTone.dialTone", "350,20,440,20,L"))
                 {
-                    Tid = int.Parse(_p.GetProperty("customTone.dialTone.tid","306"))
+                    Tid = int.Parse(_p.GetProperty("customTone.dialTone.tid", "306"))
                 };
                 return tone;
             }
@@ -155,24 +156,29 @@ namespace ivrToolkit.Core.Util
         {
             get
             {
-                var tone = new CustomTone(_p.GetProperty("dial.customOutbound.noFreeLineTone","480,30,620,40,25,5,25,5,2"))
+                var tone = new CustomTone(_p.GetProperty("dial.customOutbound.noFreeLineTone", "480,30,620,40,25,5,25,5,2"))
                 {
-                    Tid = int.Parse(_p.GetProperty("dial.customOutbound.noFreeLineTone.tid","305"))
+                    Tid = int.Parse(_p.GetProperty("dial.customOutbound.noFreeLineTone.tid", "305"))
                 };
                 return tone;
             }
         }
 
         // Trivial severity levels from c++ Boost
-        enum severity_level
+        enum SeverityLevel
         {
-            trace,
-            debug,
-            info,
-            warning,
-            error,
-            fatal
+            // ReSharper disable UnusedMember.Local
+            Trace,
+            Debug,
+            Info,
+            Warning,
+            Error,
+            Fatal
+            // ReSharper restore UnusedMember.Local
         };
+
+        public int CppLogMaxFiles => int.Parse(_p.GetProperty("sip.cppLogMaxFiles", "5"));
+        public int CppLogRotationSize => int.Parse(_p.GetProperty("sip.cppLogRotationSize", "2097152")); // 2MB default
 
         public int CppLogLevel
         {
@@ -181,7 +187,7 @@ namespace ivrToolkit.Core.Util
                 var result = _p.GetProperty("sip.cppLogLevel", "info");
                 try
                 {
-                    var level = (severity_level)Enum.Parse(typeof(severity_level), result, true);
+                    var level = (SeverityLevel)Enum.Parse(typeof(SeverityLevel), result, true);
                     return (int)level;
                 }
                 catch (Exception)

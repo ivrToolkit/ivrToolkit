@@ -53,7 +53,7 @@ const char* auth_realm;
 * debugging an error when an API function returns does not return
 * as SUCCESS (1).
 */
-void print_gc_error_info(const char *func_name, int func_return) {
+void print_gc_error_info(const char* func_name, int func_return) {
 	GC_INFO gc_error_info;
 	if (func_return == GC_ERROR) {
 		gc_ErrorInfo(&gc_error_info);
@@ -94,7 +94,7 @@ void enum_dev_information()
 		sprintf_s(board_name, "dxxxB%d", i);
 		handle = dx_open(board_name, 0);
 		sub_dev_count = ATDV_SUBDEVS(handle);
-		
+
 		BOOST_LOG_TRIVIAL(info) << boost::format("        voice board %d has %d sub-devs.") % i % sub_dev_count;
 		for (j = 1; j <= sub_dev_count; j++) {
 			sprintf_s(dev_name, "dxxxB%dC%d", i, j);
@@ -105,7 +105,7 @@ void enum_dev_information()
 				(ft.ft_fax & FT_FAX ? "" : "NOT ") %
 				(ft.ft_fax & FT_FAX_T38UDP ? "" : "NOT ") %
 				(ft.ft_e2p_brd_cfg & FT_CSP ? "" : "NOT ");
-			
+
 			dx_close(dev_handle);
 		}
 		dx_close(handle);
@@ -117,7 +117,7 @@ void enum_dev_information()
 		sprintf_s(board_name, "dtiB%d", i);
 		handle = dt_open(board_name, 0);
 		sub_dev_count = ATDV_SUBDEVS(handle);
-		
+
 		BOOST_LOG_TRIVIAL(info) << boost::format("        dti board %d has %d sub-devs.") % i % sub_dev_count;
 		dt_close(handle);
 	}
@@ -230,7 +230,7 @@ void registration(int channel_index, const char* proxy_ip, const char* local_ip,
 		sprintf_s(contact, "sip:%s@%s", alias, local_ip);// Contact header field
 		register_address.time_to_live = 3600;
 		register_address.max_hops = 30;
-		
+
 
 
 		gc_util_insert_parm_ref(&gc_parm_blkp, IPSET_REG_INFO, IPPARM_REG_ADDRESS, static_cast<unsigned char>(sizeof(IP_REGISTER_ADDRESS)), &register_address);
@@ -251,7 +251,7 @@ void unregistration(int channel_index)
 	unsigned long serviceID = 1;
 
 	if (registered) {
-		BOOST_LOG_TRIVIAL(debug) << boost::format("Channel %i: unregistration()...") %channel_index;
+		BOOST_LOG_TRIVIAL(debug) << boost::format("Channel %i: unregistration()...") % channel_index;
 		gc_util_insert_parm_val(&gc_parm_blkp, IPSET_REG_INFO, IPPARM_OPERATION_DEREGISTER, sizeof(char), IP_REG_DELETE_ALL);
 		gc_util_insert_parm_val(&gc_parm_blkp, GCSET_SERVREQ, PARM_REQTYPE, sizeof(unsigned char), IP_REQTYPE_REGISTRATION);
 		gc_util_insert_parm_val(&gc_parm_blkp, GCSET_SERVREQ, PARM_ACK, sizeof(unsigned char), IP_REQTYPE_REGISTRATION);
@@ -275,13 +275,14 @@ void print_all_cclibs_status()
 		BOOST_LOG_TRIVIAL(info) << boost::format("   available: %s") % (cclib_status & GC_CCLIB_AVL ? "yes" : "no");
 		BOOST_LOG_TRIVIAL(info) << boost::format("   failed: %s") % (cclib_status & GC_CCLIB_FAILED ? "yes" : "no");
 		BOOST_LOG_TRIVIAL(info) << boost::format("   stub: %s") % (cclib_status & GC_CCLIB_STUB ? "yes" : "no");
-	} else {
+	}
+	else {
 		/* error handling */
 		gc_ErrorInfo(&gc_error_info);
 		BOOST_LOG_TRIVIAL(error) << boost::format("Error: gc_CCLibStatusEx(), lib_name: %s, GC ErrorValue: 0x%hx - %s, CCLibID: %i - %s, CC ErrorValue : 0x % lx - %s") %
-				 "GC_ALL_LIB" % gc_error_info.gcValue % gc_error_info.gcMsg %
-				 gc_error_info.ccLibId % gc_error_info.ccLibName %
-				 gc_error_info.ccValue % gc_error_info.ccMsg;
+			"GC_ALL_LIB" % gc_error_info.gcValue % gc_error_info.gcMsg %
+			gc_error_info.ccLibId % gc_error_info.ccLibName %
+			gc_error_info.ccValue % gc_error_info.ccMsg;
 	}
 }
 
@@ -295,15 +296,15 @@ int global_call_start(int h323_signaling_port, int sip_signaling_port, int maxCa
 	IP_VIRTBOARD ip_virtboard[1];
 
 	BOOST_LOG_TRIVIAL(info) << boost::format("global_call_start(h323_signaling_port=%i, sip_signaling_port=%i, maxCalls=%i)...") % h323_signaling_port % sip_signaling_port % maxCalls;
-	
+
 	print_all_cclibs_status();
 
 	enum_dev_information();
 
 
 	memset(&ipcclibstart, 0, sizeof(IPCCLIB_START_DATA));
-	memset(ip_virtboard, 0, sizeof(IP_VIRTBOARD)*1);
-	
+	memset(ip_virtboard, 0, sizeof(IP_VIRTBOARD) * 1);
+
 	INIT_IPCCLIB_START_DATA(&ipcclibstart, 1, ip_virtboard);
 	INIT_IP_VIRTBOARD(&ip_virtboard[0]);
 
@@ -326,7 +327,7 @@ int global_call_start(int h323_signaling_port, int sip_signaling_port, int maxCa
 	// 143 = 8F
 	// 99 = 63
 	// 100 = 64
-	
+
 	ip_virtboard[0].h323_signaling_port = h323_signaling_port;	// or application defined port for H.323 
 	ip_virtboard[0].sip_signaling_port = sip_signaling_port;		// or application defined port for SIP
 	ip_virtboard[0].sup_serv_mask = IP_SUP_SERV_CALL_XFER;	// Enable SIP Transfer Feature
@@ -346,12 +347,12 @@ int global_call_start(int h323_signaling_port, int sip_signaling_port, int maxCa
 	gclib_start.cclib_list = cc_Lib_Start;
 
 	const int result = gc_Start(&gclib_start);
-	
+
 	if (result < 0) {
 		BOOST_LOG_TRIVIAL(error) << "Error Global Call Libraries could not be started. ";
 		print_gc_error_info("gc_Start", result);
 	}
-	else{
+	else {
 		started = TRUE;
 		BOOST_LOG_TRIVIAL(info) << "global_call_start() done.";
 	}
@@ -448,13 +449,13 @@ int ProcessEventSync(int wait_event, long event_handle, int channel)
 					}
 
 				}
-				else if (IPSET_LOCAL_ALIAS == gc_parm_datap->set_ID){
-					char * localAlias = new char[gc_parm_datap->value_size + 1];
+				else if (IPSET_LOCAL_ALIAS == gc_parm_datap->set_ID) {
+					char* localAlias = new char[gc_parm_datap->value_size + 1];
 					localAlias = reinterpret_cast<char*>(&gc_parm_datap->value_buf);
 					BOOST_LOG_TRIVIAL(debug) << boost::format("Channel %i: IPSET_LOCAL_ALIAS value: %s") % channel % localAlias;
 				}
-				else if (IPSET_SIP_MSGINFO == gc_parm_datap->set_ID){
-					char * msgInfo = new char[gc_parm_datap->value_size + 1];
+				else if (IPSET_SIP_MSGINFO == gc_parm_datap->set_ID) {
+					char* msgInfo = new char[gc_parm_datap->value_size + 1];
 					msgInfo = reinterpret_cast<char*>(&gc_parm_datap->value_buf);
 					BOOST_LOG_TRIVIAL(debug) << boost::format("Channel %i: IPSET_SIP_MSGINFO value: %s") % channel % msgInfo;
 				}
@@ -466,7 +467,7 @@ int ProcessEventSync(int wait_event, long event_handle, int channel)
 
 		BOOST_LOG_TRIVIAL(debug) << boost::format("Channel %i: gc_GetUsrAttr(meta_evt.linedev = %d)") % channel % meta_evt.linedev;
 		gc_GetUsrAttr(meta_evt.linedev, reinterpret_cast<void**>(&pch));
-		
+
 		if (nullptr == pch) return -1;
 
 
@@ -532,7 +533,7 @@ int ProcessEventSync(int wait_event, long event_handle, int channel)
 		switch (evt_code)
 		{
 		case TDX_PLAY:
-			pch->printDebug( "got voice event : TDX_PLAY");
+			pch->printDebug("got voice event : TDX_PLAY");
 			pch->process_voice_done();
 			break;
 		case TDX_RECORD:
@@ -541,7 +542,7 @@ int ProcessEventSync(int wait_event, long event_handle, int channel)
 			break;
 		case TDX_CST:
 			pch->printDebug("got voice event : TDX_CST");
-			if (void * evt_datap = nullptr; DE_DIGITS == static_cast<DX_CST*>(evt_datap)->cst_event) {
+			if (void* evt_datap = nullptr; DE_DIGITS == static_cast<DX_CST*>(evt_datap)->cst_event) {
 				pch->printDebug("DE_DIGITS: [%c]", static_cast<char>(static_cast<DX_CST*>(evt_datap)->cst_data));
 			}
 			break;
@@ -555,7 +556,7 @@ int ProcessEventSync(int wait_event, long event_handle, int channel)
 }
 /**
 * Checks to see if the syncronous wrapper has expired.
-* It was easier to understand the lgoic if it was seperated into 
+* It was easier to understand the lgoic if it was seperated into
 * this smaller code block.
 * This is part of the sycnronous wrapper for Dialogic ASYNC mode.
 *
@@ -564,14 +565,14 @@ int ProcessEventSync(int wait_event, long event_handle, int channel)
 * @param count The number of times a Dialogic wait event has looped.
 * @param wait_time The number of times to allow a Dialogic wait event to loop
 */
-bool hasExpired(int count, int wait_time){
-	if (wait_time == SYNC_WAIT_INFINITE)	{
+bool hasExpired(int count, int wait_time) {
+	if (wait_time == SYNC_WAIT_INFINITE) {
 		return false;
 	}
-	if (count > wait_time){
+	if (count > wait_time) {
 		return true;
 	}
-	
+
 	return false;
 }
 /**
@@ -587,19 +588,19 @@ bool hasExpired(int count, int wait_time){
 * @param count The number of times a Dialogic wait event has looped.
 * @param wait_time The number of times to allow a Dialogic wait event to loop
 */
-bool loopAgain(int event_thrown, int wait_for_event, int count, int wait_time){
+bool loopAgain(int event_thrown, int wait_for_event, int count, int wait_time) {
 	bool has_event_thrown = false;
 	bool has_expired = false;
 
-	if (event_thrown == wait_for_event){
+	if (event_thrown == wait_for_event) {
 		has_event_thrown = true;
 	}
 
-	if (hasExpired(count, wait_time)){
+	if (hasExpired(count, wait_time)) {
 		has_expired = true;
 	}
 
-	if (has_event_thrown || has_expired){
+	if (has_event_thrown || has_expired) {
 		return false;
 	}
 	return true;
@@ -615,7 +616,7 @@ bool loopAgain(int event_thrown, int wait_for_event, int count, int wait_time){
 * @param wait_for_event The event that we are waiting to occur.
 * @param wait_time The number of times to allow a Dialogic wait event to loop
 */
-int WaitForEventSync(int channel, int wait_for_event, int wait_time){
+int WaitForEventSync(int channel, int wait_for_event, int wait_time) {
 	BOOST_LOG_TRIVIAL(trace) << boost::format("Channel %i: WaitForEventSync(channel=%i, wait_for_event=%i:%s, wait_time=%i)") % channel % channel % wait_for_event % GCEV_MSG(wait_for_event) % wait_time;
 
 	int event_thrown = -1;
@@ -643,35 +644,45 @@ int WaitForEventSync(int channel, int wait_for_event, int wait_time){
 
 		}
 		count++;
-	} while (loopAgain(event_thrown,wait_for_event,count, wait_time));
+	} while (loopAgain(event_thrown, wait_for_event, count, wait_time));
 
-	if (event_thrown == wait_for_event){
+	if (event_thrown == wait_for_event) {
 		return SYNC_WAIT_SUCCESS;
 	}
-	if (hasExpired(count, wait_time)){
+	if (hasExpired(count, wait_time)) {
 		return SYNC_WAIT_EXPIRED;
 	}
 	return SYNC_WAIT_ERROR;
 }
 
-void init_logging(const char* logPath, int logLevel)
+void DialogicFunctions::StartLogger(const char* log_path, int max_files, int rotation_size, int log_level) const
 {
-	printf_s("fullLocation is (%s)\n", logPath);
+	printf_s("max_files = %i, rotation_size = %i, log_level=%i, log_path is (%s)\n", max_files, rotation_size, log_level, log_path);
+
+	char* file_name = "\\ADS_CPP.%5N.log";
+	const int size = strlen(log_path) + strlen(file_name) + 1;
+	char* full_path = static_cast<char*>(malloc(size));
+
+	strcpy_s(full_path, size, log_path);
+	strcat_s(full_path, size, file_name);
+
+	printf_s("full_path is (%s)\n", full_path);
 
 	logging::register_simple_formatter_factory<logging::trivial::severity_level, char>("Severity");
 
 	logging::add_file_log
 	(
-		keywords::file_name = logPath,
-		keywords::rotation_size = 70 * 1024 * 1024,
+		keywords::file_name = full_path,
+		keywords::rotation_size = rotation_size,
 		keywords::format = "[%TimeStamp%] [%ThreadID%] [%Severity%] %Message%",
-		keywords::open_mode = std::ios_base::app, 
-		keywords::auto_flush = true
+		keywords::auto_flush = true,
+		keywords::max_files = max_files,
+		keywords::target = log_path
 	);
 
 	logging::core::get()->set_filter
 	(
-		logging::trivial::severity >= logLevel
+		logging::trivial::severity >= log_level
 	);
 
 	logging::add_common_attributes();
@@ -684,9 +695,8 @@ void init_logging(const char* logPath, int logLevel)
 /**
 * Starts Dialogic Libraries syncronously
 */
-int DialogicFunctions::DialogicStartSync(const char* logPath, int logLevel, int h323_signaling_port, int sip_signaling_port, int maxCalls){
-	if (!started){
-		init_logging(logPath, logLevel);
+int DialogicFunctions::DialogicStartSync(int h323_signaling_port, int sip_signaling_port, int maxCalls) {
+	if (!started) {
 		return global_call_start(h323_signaling_port, sip_signaling_port, maxCalls);
 	}
 	return 0;
@@ -694,8 +704,8 @@ int DialogicFunctions::DialogicStartSync(const char* logPath, int logLevel, int 
 /**
 * Stops Dialogic Libraries syncronously
 */
-void DialogicFunctions::DialogicStopSync(){
-	if (started){
+void DialogicFunctions::DialogicStopSync() {
+	if (started) {
 		BOOST_LOG_TRIVIAL(info) << "DialogicFunctions::DialogicStopSync";
 		const int result = gc_Stop();
 		print_gc_error_info("gc_Stop", result);
@@ -707,18 +717,18 @@ void DialogicFunctions::DialogicStopSync(){
 * @param lineNumber
 * @param offset
 */
-void DialogicFunctions::DialogicOpenSync(int lineNumber, int offset){
+void DialogicFunctions::DialogicOpenSync(int lineNumber, int offset) {
 	const int channel_index = lineNumber + offset;
 	BOOST_LOG_TRIVIAL(debug) << boost::format("Channel %i: DialogicFunctions::DialogicOpenSync") % channel_index;
 	open_channel(lineNumber, offset);
 
 	/*
 	* I wait forever as if I cannot open the device this will keep it open
-	* to show that an error is occuring.  I might want to put 
+	* to show that an error is occuring.  I might want to put
 	* more logic in this and return an ERROR or SUCCESS in the future.
 	*/
 
-	if (WaitForEventSync(channel_index, GCEV_UNBLOCKED, SYNC_WAIT_INFINITE) == SYNC_WAIT_SUCCESS){
+	if (WaitForEventSync(channel_index, GCEV_UNBLOCKED, SYNC_WAIT_INFINITE) == SYNC_WAIT_SUCCESS) {
 		//printf("GCEV_UNBLOCKED");
 	}
 
@@ -727,7 +737,7 @@ void DialogicFunctions::DialogicOpenSync(int lineNumber, int offset){
 * Close a channel syncronously
 * @param channel_index The channel to close.
 */
-void DialogicFunctions::DialogicCloseSync(int channel_index){
+void DialogicFunctions::DialogicCloseSync(int channel_index) {
 	BOOST_LOG_TRIVIAL(info) << boost::format("Channel %i: DialogicCloseSync (%i) ") % channel_index % channel_index;
 	/*
 	Due to the threading of this application never unregester until then.  Otherwise this could
@@ -747,7 +757,7 @@ void DialogicFunctions::DialogicCloseSync(int channel_index){
 * @param password The password for the alias to connect to the PBX with.
 * @param realm The realm for the alias to connect to the PBX with.
 */
-void DialogicFunctions::DialogicRegisterSync(int channel_index, const char* proxy_ip, const char* local_ip, const char* alias, const char* password, const char* realm){
+void DialogicFunctions::DialogicRegisterSync(int channel_index, const char* proxy_ip, const char* local_ip, const char* alias, const char* password, const char* realm) {
 
 	auth_proxy_ip = proxy_ip;
 	auth_alias = alias;
@@ -756,7 +766,7 @@ void DialogicFunctions::DialogicRegisterSync(int channel_index, const char* prox
 
 	if (!registered) {
 		registration(channel_index, proxy_ip, local_ip, alias, password, realm);
-		if (WaitForEventSync(channel_index, IP_REG_CONFIRMED, 100) == SYNC_WAIT_SUCCESS){
+		if (WaitForEventSync(channel_index, IP_REG_CONFIRMED, 100) == SYNC_WAIT_SUCCESS) {
 			//printf("Registered");
 		}
 	}
@@ -764,9 +774,9 @@ void DialogicFunctions::DialogicRegisterSync(int channel_index, const char* prox
 /**
 * Unregister the sip client syncronously.
 */
-void DialogicFunctions::DialogicUnregisterSync(int channel_index){
+void DialogicFunctions::DialogicUnregisterSync(int channel_index) {
 	unregistration(channel_index);
-	if (WaitForEventSync(channel_index, IP_REG_CONFIRMED, 100) == SYNC_WAIT_SUCCESS){
+	if (WaitForEventSync(channel_index, IP_REG_CONFIRMED, 100) == SYNC_WAIT_SUCCESS) {
 		//printf("IP_REG_CONFIRMED\n");
 	}
 }
@@ -774,7 +784,7 @@ void DialogicFunctions::DialogicUnregisterSync(int channel_index){
 * Stop voice functions (Play, Record, etc.) for the channel syncronously.
 * @param channel_index The channel to stop voice functions.
 */
-void DialogicFunctions::DialogicStopSync(int channel_index){
+void DialogicFunctions::DialogicStopSync(int channel_index) {
 	//printf("DialogicStopSync\n");
 	return channels[channel_index]->stop();
 }
@@ -785,13 +795,13 @@ void DialogicFunctions::DialogicStopSync(int channel_index){
 * @param ani The call origin formatted as alias@proxy_ip Example: Developer1@127.0.0.1
 * @param dnis The call desintation formatted as number@proxy_ip Example: 5554443333@127.0.0.1
 */
-int DialogicFunctions::DialogicMakeCallSync(int channel_index, const char* ani, const char* dnis){
+int DialogicFunctions::DialogicMakeCallSync(int channel_index, const char* ani, const char* dnis) {
 	//printf("DialogicMakeCallSync\n");
 	authentication(channel_index, auth_proxy_ip, auth_alias, auth_password, auth_realm);
 	channels[channel_index]->make_call(ani, dnis);
 
 	// it was orginally set to 2 seconds which I don't think was enough
-	if (WaitForEventSync(channel_index, GCEV_ALERTING, 10000) == SYNC_WAIT_SUCCESS){
+	if (WaitForEventSync(channel_index, GCEV_ALERTING, 10000) == SYNC_WAIT_SUCCESS) {
 		return 1;
 	}
 
@@ -802,13 +812,13 @@ int DialogicFunctions::DialogicMakeCallSync(int channel_index, const char* ani, 
 * Make a drop call syncronously.
 * @param channel_index The channel to use to drop a call.
 */
-int DialogicFunctions::DialogicDropCallSync(int channel_index){
+int DialogicFunctions::DialogicDropCallSync(int channel_index) {
 	//printf("DialogicDropCallSync\n");
 
 	/*
 	* If the channel is IDLE there is no call to drop.
 	*/
-	if (0 == channels[channel_index]->crn){
+	if (0 == channels[channel_index]->crn) {
 		BOOST_LOG_TRIVIAL(debug) << boost::format("Channel %i: status IDLE.") % channel_index;
 		return 1;
 	}
@@ -824,9 +834,9 @@ int DialogicFunctions::DialogicDropCallSync(int channel_index){
 
 	/*
 	* If a timeout event occurs for drop call I can assume that
-	* the call has already ended 
+	* the call has already ended
 	*/
-	if (const int result = WaitForEventSync(channel_index, GCEV_RELEASECALL, 100); result == SYNC_WAIT_SUCCESS || result == SYNC_WAIT_EXPIRED){
+	if (const int result = WaitForEventSync(channel_index, GCEV_RELEASECALL, 100); result == SYNC_WAIT_SUCCESS || result == SYNC_WAIT_EXPIRED) {
 		//printf("GCEV_RELEASECALL\n");
 		return 1;
 	}
@@ -837,10 +847,10 @@ int DialogicFunctions::DialogicDropCallSync(int channel_index){
 * Wait for a call Asyncronously.
 * @ param channel_index The channel to use to wait for a call.
 */
-void DialogicFunctions::DialogicWaitCallAsync(int channel_index){
+void DialogicFunctions::DialogicWaitCallAsync(int channel_index) {
 	//printf("DialogicWaitCallSync\n");
 
-	channels[channel_index]->wait_call(); 
+	channels[channel_index]->wait_call();
 }
 
 /**
@@ -861,7 +871,7 @@ int DialogicFunctions::DialogicWaitForCallEventSync(int channel_index, int wait_
 * Stop voice functions for the channel.
 * @param channel_index The channel to stop the voice functions.
 */
-void DialogicFunctions::DialogicStop(int channel_index){
+void DialogicFunctions::DialogicStop(int channel_index) {
 	//printf("DialogicStop\n");
 	channels[channel_index]->stop();
 }
@@ -871,7 +881,7 @@ void DialogicFunctions::DialogicStop(int channel_index){
 * @param channel_index The channel to use to play the file.
 * @param filename The filename (full path if not in lcoal executable directory) for the wave file to play.
 */
-void DialogicFunctions::DialogicPlayFile(int channel_index, const char* filename){
+void DialogicFunctions::DialogicPlayFile(int channel_index, const char* filename) {
 	//printf("DialogicPlayFile\n");
 	channels[channel_index]->play_wave_file(filename);
 }
@@ -879,18 +889,18 @@ void DialogicFunctions::DialogicPlayFile(int channel_index, const char* filename
 * Record a file using the Dialogic Voice API for the channel.
 * @param channel_index The channel to use to record the file.
 */
-void DialogicFunctions::DialogicRecordFile(int channel_index){
+void DialogicFunctions::DialogicRecordFile(int channel_index) {
 	//printf("DialogicRecordFile\n");
 	channels[channel_index]->record_wave_file();
 }
 
-/** 
+/**
 * Get the Voice Device handle.
 * Avoid using this feature unless you absolutly have to.
 * It would be better to put the code inside the CHANNEL class in this code.
 * @param channel_index The channel to get the voice device handle for.
 */
-int DialogicFunctions::DialogicGetVoiceHandle(int channel_index){
+int DialogicFunctions::DialogicGetVoiceHandle(int channel_index) {
 	BOOST_LOG_TRIVIAL(debug) << boost::format("Channel %i: DialogicGetVoiceHandle") % channel_index;
 	return channels[channel_index]->get_voice_handle();
 }
@@ -899,7 +909,7 @@ int DialogicFunctions::DialogicGetVoiceHandle(int channel_index){
 * Get call state.
 * @param channel_index The channel to use.
 */
-int DialogicFunctions::DialogicGetCallState(int channel_index){
+int DialogicFunctions::DialogicGetCallState(int channel_index) {
 	BOOST_LOG_TRIVIAL(debug) << boost::format("Channel %i: DialogicGetCallState") % channel_index;
 	return channels[channel_index]->globalcall_gc_GetCallState();
 }

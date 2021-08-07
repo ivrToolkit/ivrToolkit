@@ -22,13 +22,13 @@ public:
 
 	/*
 	* Syncronous Functions
-	* Syncronous functions are wrapper with their own event processor.  
-	* It is strongly discourged from using Asyncronous and Syncronous functions 
+	* Syncronous functions are wrapper with their own event processor.
+	* It is strongly discourged from using Asyncronous and Syncronous functions
 	* together as this could result in race conditions.
-	* 
+	*
 	*/
 	/*Start Functions*/
-	static int DialogicStartSync(const char* logPath, int logLevel, int h323_signaling_port, int sip_signaling_port, int maxCalls);
+	static int DialogicStartSync(int h323_signaling_port, int sip_signaling_port, int maxCalls);
 	static void DialogicStopSync();
 	/*Channel Functions*/
 	static void DialogicOpenSync(int lineNumber, int offset);
@@ -53,6 +53,7 @@ public:
 	void DialogicUnregister();
 	/*Call Functions*/
 	void DialogicStatus();
+	void StartLogger(const char* log_path, int max_files, int rotation_size, int log_level) const;
 	static void DialogicPlayFile(int channel_index, const char* filename);
 	static void DialogicRecordFile(int channel_index);
 	static void DialogicStop(int channel_index);

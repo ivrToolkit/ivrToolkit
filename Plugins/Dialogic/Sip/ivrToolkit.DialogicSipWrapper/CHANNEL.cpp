@@ -31,15 +31,13 @@ namespace keywords = boost::log::keywords;
 
 	ivrToolkit::DialogicSipWrapper::CHANNEL::CHANNEL(int lineNumber, int offset): gc_dev(0), ipm_dev(0), ip_xslot(0), vox_xslot(0), tpt(), xpb(), vox_iott(),
 	                                                             device_name{},
-	                                                             fax_proceeding(0),
 	                                                             crn(0),
-	                                                             already_connect_fax(0),
 	                                                             vox_dev(0)
 	{
 		_lineNumber = lineNumber;
 		_offset = offset;
 		_id = _lineNumber + _offset;
-		printDebug("CHANNEL(%i, %i)\n", lineNumber , offset);
+		printDebug("CHANNEL(%i, %i)", lineNumber , offset);
 	}
 
 /**
@@ -50,10 +48,10 @@ namespace keywords = boost::log::keywords;
 		_id = _lineNumber + _offset;
 		
 		printDebug("open(i=%i)...", _id);
-		int board_id = (_id - 1) / 4 + 1;
-		int channel_id = _id - (board_id - 1) * 4;
+		const int board_id = (_id - 1) / 4 + 1;
+		const int channel_id = _id - (board_id - 1) * 4;
 		long request_id = 0;
-		GC_PARM_BLKP gc_parm_blkp = NULL;
+		GC_PARM_BLKP gc_parm_blkp = nullptr;
 		char dev_name[64] = "";
 		sprintf(dev_name, "dxxxB%dC%d", board_id, channel_id);
 		vox_dev = dx_open(dev_name, NULL);
@@ -61,10 +59,10 @@ namespace keywords = boost::log::keywords;
 		dx_setevtmsk(vox_dev, DM_RINGS | DM_DIGITS | DM_LCOF);
 		sprintf(dev_name, ":P_SIP:N_iptB1T%d:M_ipmB1C%d:V_dxxxB%dC%d", _lineNumber, _id, board_id, channel_id);
 		sprintf(device_name, dev_name);
-		printDebug("Device name = %s\n", dev_name);
-		int result = gc_OpenEx(&gc_dev, dev_name, EV_ASYNC, NULL);
-		printDebug("result for gc_OpenEx() = %i\n", result);
-		printDebug("gc_dev = %d\n", gc_dev);
+		printDebug("Device name = %s", dev_name);
+		const int result = gc_OpenEx(&gc_dev, dev_name, EV_ASYNC, nullptr);
+		printDebug("result for gc_OpenEx() = %i", result);
+		printDebug("gc_dev = %d", gc_dev);
 		print_gc_error_info("gc_OpenEx", result);
 
 		//Enabling GCEV_INVOKE_XFER_ACCEPTED Events
@@ -82,19 +80,22 @@ namespace keywords = boost::log::keywords;
 	/**
 	* Get the global call device handle, no checks are made if the device has been opened.
 	*/
-	long ivrToolkit::DialogicSipWrapper::CHANNEL::get_device_handle() {
+	long ivrToolkit::DialogicSipWrapper::CHANNEL::get_device_handle() const
+	{
 		return gc_dev;
 	}
 	/**
 	* Get the voice device handle, no checks are made if the device has been opened.
 	*/
-	int ivrToolkit::DialogicSipWrapper::CHANNEL::get_voice_handle() {
+	int ivrToolkit::DialogicSipWrapper::CHANNEL::get_voice_handle() const
+	{
 		return vox_dev;
 	}
 	/**
 	* Get the media device handle, no checks are made if the device has been opened.
 	*/
-	int ivrToolkit::DialogicSipWrapper::CHANNEL::get_media_device_handle() {
+	int ivrToolkit::DialogicSipWrapper::CHANNEL::get_media_device_handle() const
+	{
 		return ipm_dev;
 	}
 	/**
@@ -102,8 +103,8 @@ namespace keywords = boost::log::keywords;
 	*/
 	void ivrToolkit::DialogicSipWrapper::CHANNEL::connect_voice() {
 		printDebug("connect_voice()...");
-		printDebug("vox_dev = %d\n", vox_dev);
-		printDebug("gc_dev = %d\n", gc_dev);
+		printDebug("vox_dev = %d", vox_dev);
+		printDebug("gc_dev = %d", gc_dev);
 		SC_TSINFO sc_tsinfo;
 		gc_GetResourceH(gc_dev, &ipm_dev, GC_MEDIADEVICE);
 		sc_tsinfo.sc_numts = 1;
@@ -124,7 +125,7 @@ namespace keywords = boost::log::keywords;
 	void ivrToolkit::DialogicSipWrapper::CHANNEL::restore_voice() {
 		printDebug("restore_voice()...");
 		IP_CONNECT ip_connect;
-		GC_PARM_BLKP gc_parm_blkp = NULL;
+		GC_PARM_BLKP gc_parm_blkp = nullptr;
 		SC_TSINFO sc_tsinfo;
 		sc_tsinfo.sc_numts = 1;
 		sc_tsinfo.sc_tsarrayp = &vox_xslot;
@@ -134,16 +135,17 @@ namespace keywords = boost::log::keywords;
 		dx_listen(vox_dev, &sc_tsinfo);
 		ip_connect.version = 0x100;
 		ip_connect.mediaHandle = ipm_dev;
-		gc_util_insert_parm_ref(&gc_parm_blkp, IPSET_FOIP, IPPARM_T38_DISCONNECT, sizeof(IP_CONNECT), (void*)(&ip_connect));
+		gc_util_insert_parm_ref(&gc_parm_blkp, IPSET_FOIP, IPPARM_T38_DISCONNECT, sizeof(IP_CONNECT), &ip_connect);
 		gc_SetUserInfo(GCTGT_GCLIB_CRN, crn, gc_parm_blkp, GC_SINGLECALL);
 		gc_util_delete_parm_blk(gc_parm_blkp);
 	}
 	/**
 	* Set the channel to use DTMF for all calls.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::set_dtmf() {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::set_dtmf() const
+	{
 		printDebug("set_dtmf()...");
-		GC_PARM_BLKP parmblkp = NULL;
+		GC_PARM_BLKP parmblkp = nullptr;
 		gc_util_insert_parm_val(&parmblkp, IPSET_DTMF, IPPARM_SUPPORT_DTMF_BITMASK,
 			sizeof(char), IP_DTMF_TYPE_RFC_2833);
 		gc_util_insert_parm_val(&parmblkp, IPSET_DTMF, IPPARM_DTMF_RFC2833_PAYLOAD_TYPE,
@@ -155,15 +157,17 @@ namespace keywords = boost::log::keywords;
 	/**
 	* Set the channel to wait for a call Asyncronously.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::wait_call() {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::wait_call() const
+	{
 		printDebug("wait_call()...");
-		print_gc_error_info("gc_WaitCall", gc_WaitCall(gc_dev, NULL, NULL, 0, EV_ASYNC));
+		print_gc_error_info("gc_WaitCall", gc_WaitCall(gc_dev, nullptr, nullptr, 0, EV_ASYNC));
 	}
 
 	/**
 	* Print call status infromation.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::print_call_status(METAEVENT meta_evt) {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::print_call_status(METAEVENT meta_evt) const
+	{
 		GC_INFO call_status_info = { 0 };
 		gc_ResultInfo(&meta_evt, &call_status_info);
 		printDebug("CALLSTATUS Info: \n GC InfoValue:0x%hx-%s,\n CCLibID:%i-%s, CC InfoValue:0x%lx-%s,\n Additional Info:%s",
@@ -177,7 +181,8 @@ namespace keywords = boost::log::keywords;
 	* debugging an error when an API function returns does not return
 	* as SUCCESS (1).
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::print_gc_error_info(const char* func_name, int func_return) {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::print_gc_error_info(const char* func_name, int func_return) const
+	{
 		GC_INFO gc_error_info;
 		if (GC_ERROR == func_return) {
 			gc_ErrorInfo(&gc_error_info);
@@ -191,7 +196,8 @@ namespace keywords = boost::log::keywords;
 	/**
 	* Acknowlage a call.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::ack_call() {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::ack_call() const
+	{
 		GC_CALLACK_BLK gc_callack_blk;
 		memset(&gc_callack_blk, 0, sizeof(GC_CALLACK_BLK));
 		gc_callack_blk.type = GCACK_SERVICE_PROC;
@@ -201,14 +207,16 @@ namespace keywords = boost::log::keywords;
 	/**
 	* Accept a call.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::accept_call() {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::accept_call() const
+	{
 		printDebug("accept_call()...");
 		print_gc_error_info("gc_AcceptCall", gc_AcceptCall(crn, 2, EV_ASYNC));
 	}
 	/**
 	* Answer a call.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::answer_call() {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::answer_call() const
+	{
 		printDebug("answer_call()...");
 		set_codec(GCTGT_GCLIB_CRN);
 		print_gc_error_info("gc_AnswerCall", gc_AnswerCall(crn, 2, EV_ASYNC));
@@ -225,10 +233,10 @@ namespace keywords = boost::log::keywords;
 	*/
 	void ivrToolkit::DialogicSipWrapper::CHANNEL::make_call(const char* ani, const char* dnis) {
 		printDebug("make_call(%s -> %s)...", ani, dnis);
-		GC_PARM_BLKP gc_parm_blkp = NULL;
+		GC_PARM_BLKP gc_parm_blkp = nullptr;
 		GC_MAKECALL_BLK gc_mk_blk;
 		GCLIB_MAKECALL_BLK gclib_mk_blk = { 0 };
-		gc_mk_blk.cclib = NULL;
+		gc_mk_blk.cclib = nullptr;
 		gc_mk_blk.gclib = &gclib_mk_blk;
 
 		strcpy(gc_mk_blk.gclib->origination.address, ani);
@@ -238,13 +246,13 @@ namespace keywords = boost::log::keywords;
 
 		char sip_header[1024] = "";
 		sprintf(sip_header, "User-Agent: %s", USER_AGENT); //proprietary header
-		gc_util_insert_parm_ref_ex(&gc_parm_blkp, IPSET_SIP_MSGINFO, IPPARM_SIP_HDR, (unsigned long)(strlen(sip_header) + 1), sip_header);
+		gc_util_insert_parm_ref_ex(&gc_parm_blkp, IPSET_SIP_MSGINFO, IPPARM_SIP_HDR, static_cast<unsigned long>(strlen(sip_header) + 1), sip_header);
 
 		sprintf(sip_header, "From: %s<sip:%s>", USER_DISPLAY, ani); //From header
-		gc_util_insert_parm_ref_ex(&gc_parm_blkp, IPSET_SIP_MSGINFO, IPPARM_SIP_HDR, (unsigned long)(strlen(sip_header) + 1), sip_header);
+		gc_util_insert_parm_ref_ex(&gc_parm_blkp, IPSET_SIP_MSGINFO, IPPARM_SIP_HDR, static_cast<unsigned long>(strlen(sip_header) + 1), sip_header);
 
-		sprintf(sip_header, "Contact: %s<sip:%s:%d>", USER_DISPLAY, ani, HMP_SIP_PORT); //Contact header TODO incorrect hmp_sip_port
-		gc_util_insert_parm_ref_ex(&gc_parm_blkp, IPSET_SIP_MSGINFO, IPPARM_SIP_HDR, (unsigned long)(strlen(sip_header) + 1), sip_header);
+		sprintf(sip_header, "Contact: %s<sip:%s:%d>", USER_DISPLAY, ani, HMP_SIP_PORT); //Contact header
+		gc_util_insert_parm_ref_ex(&gc_parm_blkp, IPSET_SIP_MSGINFO, IPPARM_SIP_HDR, static_cast<unsigned long>(strlen(sip_header) + 1), sip_header);
 
 		gc_SetUserInfo(GCTGT_GCLIB_CHAN, gc_dev, gc_parm_blkp, GC_SINGLECALL);
 		gc_util_delete_parm_blk(gc_parm_blkp);
@@ -253,22 +261,22 @@ namespace keywords = boost::log::keywords;
 
 		gclib_mk_blk.ext_datap = gc_parm_blkp;
 		set_codec(GCTGT_GCLIB_CHAN);
-		print_gc_error_info("gc_MakeCall", gc_MakeCall(gc_dev, &crn, (char*)dnis, &gc_mk_blk, 30, EV_ASYNC));
+		print_gc_error_info("gc_MakeCall", gc_MakeCall(gc_dev, &crn, const_cast<char*>(dnis), &gc_mk_blk, 30, EV_ASYNC));
 		gc_util_delete_parm_blk(gc_parm_blkp);
 	}
 	/**
 	* Drop a call in progress.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::drop_call() {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::drop_call() const
+	{
 		printDebug("drop_call()...");
-		if (already_connect_fax)
-			restore_voice();
 		print_gc_error_info("gc_DropCall", gc_DropCall(crn, GC_NORMAL_CLEARING, EV_ASYNC));
 	}
 	/**
 	* Release a call.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::release_call() {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::release_call() const
+	{
 		printDebug("release_call()...");
 		print_gc_error_info("gc_ReleaseCallEx", gc_ReleaseCallEx(crn, EV_ASYNC));
 	}
@@ -288,7 +296,7 @@ namespace keywords = boost::log::keywords;
 		xpb.wBitsPerSample = 8;
 		vox_iott.io_fhandle = dx_fileopen(file, _O_RDONLY | _O_BINARY);
 		vox_iott.io_type = IO_DEV | IO_EOT;
-		vox_iott.io_bufp = 0;
+		vox_iott.io_bufp = nullptr;
 		vox_iott.io_offset = 0;
 		vox_iott.io_length = -1;
 		dx_clrdigbuf(vox_dev);
@@ -313,7 +321,7 @@ namespace keywords = boost::log::keywords;
 		sprintf(file, "record_wave_ch%d_timeD%02dH%02dM%02dS%02d.%04d.wav", _id, t.wDay, t.wHour, t.wMinute, t.wSecond, t.wMilliseconds);
 		vox_iott.io_fhandle = dx_fileopen(file, _O_RDWR | _O_BINARY | _O_CREAT | _O_TRUNC, 0666);
 		vox_iott.io_type = IO_DEV | IO_EOT;
-		vox_iott.io_bufp = 0;
+		vox_iott.io_bufp = nullptr;
 		vox_iott.io_offset = 0;
 		vox_iott.io_length = -1;
 		dx_clrdigbuf(vox_dev);
@@ -333,13 +341,13 @@ namespace keywords = boost::log::keywords;
 	/**
 	* Print the voice event termination reason.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::print_voice_done_terminal_reason() {
-		int term_reason = ATDX_TERMMSK(vox_dev);
-		if (TM_DIGIT == term_reason)
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::print_voice_done_terminal_reason() const
+	{
+		if (const int term_reason = ATDX_TERMMSK(vox_dev); term_reason == TM_DIGIT)
 			printDebug("print_voice_done_terminal_reason: TM_DIGIT");
-		else if (TM_EOD == term_reason)
+		else if (term_reason == TM_EOD)
 			printDebug("print_voice_done_terminal_reason: TM_EOD");
-		else if (TM_USRSTOP == term_reason)
+		else if (term_reason == TM_USRSTOP)
 			printDebug("print_voice_done_terminal_reason: TM_USRSTOP");
 		else
 			printError("print_voice_done_terminal_reason: 0x%x", term_reason);
@@ -347,47 +355,52 @@ namespace keywords = boost::log::keywords;
 	/**
 	* Send a request to start audio .
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::send_audio_request() {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::send_audio_request() const
+	{
 		printDebug("send_audio_request()...");
-		GC_PARM_BLKP gc_parm_blkp = NULL;
-		gc_util_insert_parm_ref(&gc_parm_blkp, IPSET_SWITCH_CODEC, IPPARM_AUDIO_INITIATE, sizeof(int), NULL);
-		gc_Extension(GCTGT_GCLIB_CRN, crn, IPEXTID_CHANGEMODE, gc_parm_blkp, NULL, EV_ASYNC);
+		GC_PARM_BLKP gc_parm_blkp = nullptr;
+		gc_util_insert_parm_ref(&gc_parm_blkp, IPSET_SWITCH_CODEC, IPPARM_AUDIO_INITIATE, sizeof(int), nullptr);
+		gc_Extension(GCTGT_GCLIB_CRN, crn, IPEXTID_CHANGEMODE, gc_parm_blkp, nullptr, EV_ASYNC);
 		gc_util_delete_parm_blk(gc_parm_blkp);
 	}
 	/**
 	* Send a reques to start fax.
 	* Please note that most fax features have been removed fromt he code.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::send_t38_request() {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::send_t38_request() const
+	{
 		printDebug("send_t38_request()...");
-		GC_PARM_BLKP gc_parm_blkp = NULL;
-		gc_util_insert_parm_ref(&gc_parm_blkp, IPSET_SWITCH_CODEC, IPPARM_T38_INITIATE, sizeof(int), NULL);
-		gc_Extension(GCTGT_GCLIB_CRN, crn, IPEXTID_CHANGEMODE, gc_parm_blkp, NULL, EV_ASYNC);
+		GC_PARM_BLKP gc_parm_blkp = nullptr;
+		gc_util_insert_parm_ref(&gc_parm_blkp, IPSET_SWITCH_CODEC, IPPARM_T38_INITIATE, sizeof(int), nullptr);
+		gc_Extension(GCTGT_GCLIB_CRN, crn, IPEXTID_CHANGEMODE, gc_parm_blkp, nullptr, EV_ASYNC);
 		gc_util_delete_parm_blk(gc_parm_blkp);
 	}
 	/**
 	* Process a codec request.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::response_codec_request(BOOL accept_call) {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::response_codec_request(BOOL accept_call) const
+	{
 		printDebug("response_codec_request(%s)...", accept_call ? "accept" : "reject");
-		GC_PARM_BLKP gc_parm_blkp = NULL;
+		GC_PARM_BLKP gc_parm_blkp = nullptr;
 		gc_util_insert_parm_val(&gc_parm_blkp, IPSET_SWITCH_CODEC, accept_call ? IPPARM_ACCEPT : IPPARM_REJECT, sizeof(int), NULL);
-		gc_Extension(GCTGT_GCLIB_CRN, crn, IPEXTID_CHANGEMODE, gc_parm_blkp, NULL, EV_ASYNC);
+		gc_Extension(GCTGT_GCLIB_CRN, crn, IPEXTID_CHANGEMODE, gc_parm_blkp, nullptr, EV_ASYNC);
 		gc_util_delete_parm_blk(gc_parm_blkp);
 	}
 	/**
 	* stop a voice device.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::stop() {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::stop() const
+	{
 		printInfo("stop()...");
 		dx_stopch(vox_dev, EV_ASYNC);
 	}
 	/**
 	* Process a metaevent extension block.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::process_extension(METAEVENT meta_evt) {
-		GC_PARM_BLKP gc_parm_blkp = &((EXTENSIONEVTBLK*)meta_evt.extevtdatap)->parmblk;
-		GC_PARM_DATA* parm_datap = NULL;
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::process_extension(METAEVENT meta_evt) const
+	{
+		const GC_PARM_BLKP gc_parm_blkp = &static_cast<EXTENSIONEVTBLK*>(meta_evt.extevtdatap)->parmblk;
+		GC_PARM_DATA* parm_datap = nullptr;
 		RTP_ADDR rtp_addr;
 		struct in_addr ip_addr;
 
@@ -428,7 +441,7 @@ namespace keywords = boost::log::keywords;
 					break;
 				}
 				if (sizeof(IP_CAPABILITY) == parm_datap->value_size) {
-					IP_CAPABILITY* ip_capp = (IP_CAPABILITY*)parm_datap->value_buf;
+					IP_CAPABILITY* ip_capp = reinterpret_cast<IP_CAPABILITY*>(parm_datap->value_buf);
 					printDebug("    stream codec infomation for TX: capability(%d), dir(%d), frames_per_pkt(%d), VAD(%d)",
 						ip_capp->capability , ip_capp->direction , ip_capp->extra.audio.frames_per_pkt , ip_capp->extra.audio.VAD);
 				}
@@ -480,7 +493,8 @@ namespace keywords = boost::log::keywords;
 	/**
 	* set supported codecs.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::set_codec(int crn_or_chan) {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::set_codec(int crn_or_chan) const
+	{
 		printDebug("set_codec(g711Ulaw64k/t38UDPFax)...");
 		IP_CAPABILITY ip_cap[3];
 		ip_cap[0].capability = GCCAP_AUDIO_g711Ulaw64k;
@@ -500,7 +514,7 @@ namespace keywords = boost::log::keywords;
 		ip_cap[2].direction = IP_CAP_DIR_LCLTXRX;
 		ip_cap[2].payload_type = 0;
 		ip_cap[2].extra.data.max_bit_rate = 144;
-		GC_PARM_BLKP parmblkp = NULL;
+		GC_PARM_BLKP parmblkp = nullptr;
 		for (int i = 0; i < 3; i++)
 			gc_util_insert_parm_ref(&parmblkp, GCSET_CHAN_CAPABILITY, IPPARM_LOCAL_CAPABILITY, sizeof(IP_CAPABILITY), &ip_cap[i]);
 		if (GCTGT_GCLIB_CRN == crn_or_chan)
@@ -513,7 +527,8 @@ namespace keywords = boost::log::keywords;
 	/**
 	* close the voice device and the global call device.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::close() {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::close() const
+	{
 		printInfo("close()...");
 		dx_close(vox_dev);
 		gc_Close(gc_dev);
@@ -522,7 +537,8 @@ namespace keywords = boost::log::keywords;
 	/**
 	* Print information.  All channel related prints statments should go through this print.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::printDebug(const char* format, ...) {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::printDebug(const char* format, ...) const
+	{
 		char buf[1024] = "";
 		va_list argptr;
 		va_start(argptr, format);
@@ -530,13 +546,14 @@ namespace keywords = boost::log::keywords;
 		buf[1023] = '\0';
 		va_end(argptr);
 
-		BOOST_LOG_TRIVIAL(debug) << boost::format("Channel %d: %s\n") % _id % buf;
+		BOOST_LOG_TRIVIAL(debug) << boost::format("Channel %d: %s") % _id % buf;
 	}
 
 	/**
 	* Print information.  All channel related prints statments should go through this print.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::printInfo(const char* format, ...) {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::printInfo(const char* format, ...) const
+	{
 		char buf[1024] = "";
 		va_list argptr;
 		va_start(argptr, format);
@@ -544,13 +561,14 @@ namespace keywords = boost::log::keywords;
 		buf[1023] = '\0';
 		va_end(argptr);
 
-		BOOST_LOG_TRIVIAL(info) << boost::format("Channel %d: %s\n") % _id % buf;
+		BOOST_LOG_TRIVIAL(info) << boost::format("Channel %d: %s") % _id % buf;
 	}
 
 	/**
 	* Print information.  All channel related prints statments should go through this print.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::printError(const char* format, ...) {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::printError(const char* format, ...) const
+	{
 		char buf[1024] = "";
 		va_list argptr;
 		va_start(argptr, format);
@@ -558,13 +576,14 @@ namespace keywords = boost::log::keywords;
 		buf[1023] = '\0';
 		va_end(argptr);
 
-		BOOST_LOG_TRIVIAL(error) << boost::format("Channel %d: %s\n") % _id % buf;
+		BOOST_LOG_TRIVIAL(error) << boost::format("Channel %d: %s") % _id % buf;
 	}
 
 	/**
 	* Print information.  All channel related prints statments should go through this print.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::printTrace(const char* format, ...) {
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::printTrace(const char* format, ...) const
+	{
 		char buf[1024] = "";
 		va_list argptr;
 		va_start(argptr, format);
@@ -572,13 +591,14 @@ namespace keywords = boost::log::keywords;
 		buf[1023] = '\0';
 		va_end(argptr);
 
-		BOOST_LOG_TRIVIAL(trace) << boost::format("Channel %d: %s\n") % _id % buf;
+		BOOST_LOG_TRIVIAL(trace) << boost::format("Channel %d: %s") % _id % buf;
 	}
 
 /**
 	* Start Dialogic Call Progress Analysis
 	*/
-	int ivrToolkit::DialogicSipWrapper::CHANNEL::start_call_progress_analysis() {
+	int ivrToolkit::DialogicSipWrapper::CHANNEL::start_call_progress_analysis() const
+	{
 		DX_CAP cap; // Voice call analysis & call progress structure
 		dx_clrcap(&cap);
 
@@ -599,55 +619,56 @@ namespace keywords = boost::log::keywords;
 	/**
 	* Check the Call Progress Analysis Result.
 	*/
-	void ivrToolkit::DialogicSipWrapper::CHANNEL::process_cpa_result(int cpa_result) {
-		printDebug("cpa_result: %i\n", cpa_result);
+	void ivrToolkit::DialogicSipWrapper::CHANNEL::process_cpa_result(int cpa_result) const
+	{
+		printDebug("cpa_result: %i", cpa_result);
 		switch (cpa_result) {
 		case CR_BUSY:
-			printDebug("Call progress analysis: CR_BUSY\n");
+			printDebug("Call progress analysis: CR_BUSY");
 			break;
 		case CR_CEPT:
-			printDebug("Call progress analysis: CR_CEPT\n");
+			printDebug("Call progress analysis: CR_CEPT");
 			break;
 		case CR_CNCT:
-			printDebug("Call progress analysis: CR_CNCT\n");
+			printDebug("Call progress analysis: CR_CNCT");
 			//int cpa_cnct_type = ATDX_CONNTYPE(vox_dev);
 			switch (ATDX_CONNTYPE(vox_dev)) {
 			case CON_CAD:
-				printDebug("Call connection type: CON_CAD\n");
+				printDebug("Call connection type: CON_CAD");
 				break;
 			case CON_DIGITAL:
-				printDebug("Call connection type: CON_DIGITAL\n");
+				printDebug("Call connection type: CON_DIGITAL");
 				break;
 			case CON_LPC:
-				printDebug("Call connection type: CON_LPC\n");
+				printDebug("Call connection type: CON_LPC");
 				break;
 			case CON_PAMD:
-				printDebug("Call connection type: CON_PAMD\n");
+				printDebug("Call connection type: CON_PAMD");
 				break;
 			case CON_PVD:
 				/*
 				* If someone delibarly hangs up the call is still considered connected and then hung up.
 				*/
-				printDebug("Call connection type: CON_PVD\n");
+				printDebug("Call connection type: CON_PVD");
 				break;
 			default: 
 				break;
 			}
 			break;
 		case CR_ERROR:
-			printDebug("Call progress analysis: CR_ERROR\n");
+			printDebug("Call progress analysis: CR_ERROR");
 			break;
 		case CR_FAXTONE:
-			printDebug("Call progress analysis: CR_FAXTONE\n");
+			printDebug("Call progress analysis: CR_FAXTONE");
 			break;
 		case CR_NOANS:
-			printDebug("Call progress analysis: CR_NOANS\n");
+			printDebug("Call progress analysis: CR_NOANS");
 			break;
 		case CR_NORB:
-			printDebug("Call progress analysis: CR_NORB\n");
+			printDebug("Call progress analysis: CR_NORB");
 			break;
 		case CR_STOPD:
-			printDebug("Call progress analysis: CR_STOPD\n");
+			printDebug("Call progress analysis: CR_STOPD");
 			break;
 		default: 
 			break;
@@ -659,15 +680,16 @@ namespace keywords = boost::log::keywords;
 	* This might be used to check if an answering maching
 	* answer the call instead of a person.
 	*/
-	int ivrToolkit::DialogicSipWrapper::CHANNEL::get_salutation_length()
+	int ivrToolkit::DialogicSipWrapper::CHANNEL::get_salutation_length() const
 	{
-		int result = ATDX_ANSRSIZ(vox_dev);
+		const int result = ATDX_ANSRSIZ(vox_dev);
 		return result * 10;
 	}
 	/**
 	* Invoke the Dialogic Voice API dx_deltones function via the Channel.
 	*/
-	int ivrToolkit::DialogicSipWrapper::CHANNEL::voice_dx_deltones() {
+	int ivrToolkit::DialogicSipWrapper::CHANNEL::voice_dx_deltones() const
+	{
 		return dx_deltones(vox_dev);
 	}
 	/**
@@ -693,7 +715,8 @@ namespace keywords = boost::log::keywords;
 	* Invoke the Dialogic Voice API dx_getdig function via the Channel.
 	* This is a sample function and is not ready for a real program to use.
 	*/
-	int ivrToolkit::DialogicSipWrapper::CHANNEL::voice_dx_getdig() {
+	int ivrToolkit::DialogicSipWrapper::CHANNEL::voice_dx_getdig() const
+	{
 		DV_DIGIT dig;
 		DV_TPT tpt;
 		/* set up TPT to wait for 3 digits and terminate */
@@ -710,24 +733,24 @@ namespace keywords = boost::log::keywords;
 		/* collect 3 digits from the user */
 		if (dx_getdig(vox_dev, &tpt, &dig, EV_SYNC) == -1) {
 			/* error, display error message */
-			printDebug("dx_getdig error %d, %s\n", ATDV_LASTERR(vox_dev) , ATDV_ERRMSGP(vox_dev));
+			printDebug("dx_getdig error %d, %s", ATDV_LASTERR(vox_dev) , ATDV_ERRMSGP(vox_dev));
 		}
 		else {
 			/* display digits received and digit type */
-			printDebug("Received \"%s\"\n", dig.dg_value);
+			printDebug("Received \"%s\"", dig.dg_value);
 			/*
 			* digit types have 0x30 ORed with them strip it off
 			* so that we can use the DG_xxx equates from the header files
 			*/
 			switch (dig.dg_type[0] & 0x000f) {
 			case DG_DTMF:
-				printDebug("Digit type is DTMF\n");
+				printDebug("Digit type is DTMF");
 				break;
 			case DG_DPD:
-				printDebug("Digit type is DPD\n");
+				printDebug("Digit type is DPD");
 				break;
 			default:
-				printError("Digit type is Unknown, %d\n", dig.dg_type[0] & 0x000f);
+				printError("Digit type is Unknown, %d", dig.dg_type[0] & 0x000f);
 			}
 		}
 		/*
@@ -739,7 +762,8 @@ namespace keywords = boost::log::keywords;
 	/**
 	* Invoke the Dialogic Global Call API gc_GetCallState function via the Channel.
 	*/
-	int ivrToolkit::DialogicSipWrapper::CHANNEL::globalcall_gc_GetCallState() {
+	int ivrToolkit::DialogicSipWrapper::CHANNEL::globalcall_gc_GetCallState() const
+	{
 		int call_state; /* current state of call */
 		print_gc_error_info("gc_GetCallState", gc_GetCallState(crn, &call_state));
 		return call_state;

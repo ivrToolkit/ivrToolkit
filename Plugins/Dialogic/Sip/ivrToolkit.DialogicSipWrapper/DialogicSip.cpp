@@ -10,26 +10,7 @@
 #include "DialogicFunctions.h"
 using namespace Runtime::InteropServices;
 
-
 #include <iostream>
-
-
-
-
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/sinks/text_file_backend.hpp>
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/log/sources/severity_logger.hpp>
-#include <boost/log/sources/record_ostream.hpp>
-#include <boost/format.hpp>
-
-namespace logging = boost::log;
-namespace src = boost::log::sources;
-namespace sinks = boost::log::sinks;
-namespace keywords = boost::log::keywords;
 
 //Default Constructor
 ivrToolkit::DialogicSipWrapper::DialogicSip::DialogicSip(): channel_index(0)
@@ -50,8 +31,10 @@ ivrToolkit::DialogicSipWrapper::DialogicSip::!DialogicSip(){
 	delete dialogicFunctions;
 }
 
-int ivrToolkit::DialogicSipWrapper::DialogicSip::WStartLibraries(int h323_signaling_port, int sip_signaling_port, int maxCalls, int logLevel ){
-	return dialogicFunctions->DialogicStartSync(h323_signaling_port, sip_signaling_port, maxCalls, logLevel);
+int ivrToolkit::DialogicSipWrapper::DialogicSip::WStartLibraries(String^ logPath, int logLevel, int h323_signaling_port, int sip_signaling_port, int maxCalls ){
+	IntPtr p = Marshal::StringToHGlobalAnsi(logPath);
+	char* char_logPath = static_cast<char*>(p.ToPointer());
+	return dialogicFunctions->DialogicStartSync(char_logPath, logLevel, h323_signaling_port, sip_signaling_port, maxCalls);
 }
 void ivrToolkit::DialogicSipWrapper::DialogicSip::WStopLibraries(){
 	dialogicFunctions->DialogicStopSync();
@@ -59,8 +42,6 @@ void ivrToolkit::DialogicSipWrapper::DialogicSip::WStopLibraries(){
 
 void ivrToolkit::DialogicSipWrapper::DialogicSip::WOpen(int lineNumber, int offset){
 	channel_index = lineNumber + offset;
-	int channel = channel_index;
-	BOOST_LOG_TRIVIAL(debug) << boost::format("Channel %i: DialogicSIPSync::WOpen(lineNumber=%i, offset=%i)\n") % channel % lineNumber % offset;
 	dialogicFunctions->DialogicOpenSync(lineNumber, offset);
 }
 void ivrToolkit::DialogicSipWrapper::DialogicSip::WClose(){
@@ -114,11 +95,7 @@ int ivrToolkit::DialogicSipWrapper::DialogicSip::WWaitForCallEventSync(int wait_
 void ivrToolkit::DialogicSipWrapper::DialogicSip::WDropCall(){
 	dialogicFunctions->DialogicDropCallSync(channel_index);
 }
-String^ ivrToolkit::DialogicSipWrapper::DialogicSip::WGetDeviceName(){
-	const char* device_name = dialogicFunctions->DialogicGetDeviceName(channel_index);
-	String^ clistr = gcnew String(device_name);
-	return clistr;
-}
+
 int ivrToolkit::DialogicSipWrapper::DialogicSip::WGetVoiceHandle(){
 	return dialogicFunctions->DialogicGetVoiceHandle(channel_index);
 }

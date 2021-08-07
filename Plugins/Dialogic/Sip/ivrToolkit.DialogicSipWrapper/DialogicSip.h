@@ -27,7 +27,7 @@ namespace ivrToolkit::DialogicSipWrapper {
 		!DialogicSip();
 
 		//wrapper methods
-		int WStartLibraries(int h323_signaling_port, int sip_signaling_port, int maxCalls, int logLevel);
+		int WStartLibraries(String^ logPath, int logLevel, int h323_signaling_port, int sip_signaling_port, int maxCalls);
 		void WStopLibraries();
 		void WOpen(int lineNumber, int offset);
 		void WClose();
@@ -40,7 +40,6 @@ namespace ivrToolkit::DialogicSipWrapper {
 		int WWaitForCallEventSync(int wait_time);
 
 		void WDropCall();
-		String^ WGetDeviceName();
 		int WGetVoiceHandle();
 		int WGetCallState();
 

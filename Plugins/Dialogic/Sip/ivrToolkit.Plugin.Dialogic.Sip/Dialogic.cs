@@ -46,11 +46,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     var h323SignalingPort = VoiceProperties.Current.SipH323SignalingPort;
                     var sipSignalingPort = VoiceProperties.Current.SipSignalingPort;
                     var maxCalls = VoiceProperties.Current.MaxCalls;
-
                     var cppLogLevel = VoiceProperties.Current.CppLogLevel;
+                    var logPath = Path.Combine(TenantSingleton.Instance.TenantDirectory, "logs","ADS_CPP_%N.log");
 
                     Logger.Info("Starting the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", _isLibaryStarted, lineCount);
-                    int result = sip.WStartLibraries(h323SignalingPort, sipSignalingPort, maxCalls, cppLogLevel);
+                    int result = sip.WStartLibraries(logPath, cppLogLevel, h323SignalingPort, sipSignalingPort, maxCalls);
                     if (result < 0)
                     {
                         _libraryFailedToStart = true;
@@ -109,7 +109,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             {
                 var lineCount = LineManager.GetLineCount();
                 Logger.Debug("Line count is {0}", lineCount);
-                //Console.WriteLine("Before Stopping library check isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
                 /*
                  * The if statment below checks if the lineCount is 0 
                  * because the line is removed from the lineCount
@@ -160,7 +159,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         internal static void Dial(int devh, string number, DialogicSip sip)
         {
             var makeCallResult = sip.WMakeCall("ani", "dnis");
-            Console.WriteLine("Dial: Syncronous Make call Completed starting call process analysis");
+            Logger.Debug("Dial: Syncronous Make call Completed starting call process analysis");
             if (makeCallResult <= -1)
             {
                 throw new VoiceException("Dialogic.Dial Failed");
@@ -187,7 +186,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var dnis = number + "@" + proxy;
 
             sip.WMakeCall(ani, dnis);
-            //Console.WriteLine("DialWithCpa: Syncronous Make call Completed starting call process analysis");
             Logger.Debug("DialWithCpa: Syncronous Make call Completed starting call process analysis");
 
             var result = dx_dial(devh, "", ref cap, DX_CALLP | EV_SYNC);
@@ -360,19 +358,21 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         internal static string GetDigits(int devh, int numberOfDigits, string terminators, int timeout, DialogicSip sip)
         {
-
-            //sip.w_voice_dx_getdig(0);
+            Logger.Debug("NumberOfDigits: {0} terminators: {1} timeout: {2}",
+                numberOfDigits, terminators, timeout);
 
             var state = ATDX_STATE(devh);
-            Console.WriteLine("state: {0}", state);
+            if (Logger.IsDebugEnabled)
+            {
+                Logger.Debug("state: {0}", GetChannelStateDescription(state));
+            }
 
-           Console.WriteLine("Before Error numberOfDigits: " + numberOfDigits + " terminators: " + terminators + " timeout: " + timeout);
             /*
              * If number of digits is 99 this will fail on SIP.
              * An invalid tpt error will be thrown.
              * I hacked this in place just to keep going with development.
              */
-           if (numberOfDigits >= 10) numberOfDigits = 10;
+            if (numberOfDigits >= 15) numberOfDigits = 15;
 
             var tpt = GetTerminationConditions(numberOfDigits, terminators, timeout);
 
@@ -533,17 +533,59 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
          */
         private static void CheckCallState(DialogicSip sip)
         {
-                    var callState = sip.WGetCallState();
-                    Logger.Debug("CheckCallState: Call State {0}", GetCallStateDescription(callState));
-                    if (callState != 4)
-                    {
-                        Logger.Debug("CheckCallState: The call has been hang up.");
-                        throw new HangupException();
+            var callState = sip.WGetCallState();
+            Logger.Debug("CheckCallState: Call State {0}", GetCallStateDescription(callState));
+            if (callState != 4)
+            {
+                Logger.Debug("CheckCallState: The call has been hang up.");
+                throw new HangupException();
 
-                    }
+            }
         }
 
+        private static string GetChannelStateDescription(int channelState)
+        {
+            switch (channelState)
+            {
+                case 1:
+                    return "Channel is idle";
+                case 2:
+                    return "Channel is playing back";
+                case 3:
+                    return "Channel is recording";
+                case 4:
+                    return "Channel is dialing";
+                case 5:
+                    return "Channel is getting digits";
+                case 6:
+                    return "Channel is generating a tone";
+                case 7:
+                    return "Operation has terminated";
+                case 8:
+                    return "Channel is sending a fax";
+                case 9:
+                    return "Channel is receiving a fax";
+                case 10:
+                    return "Channel is between fax pages";
+                case 11:
+                    return "A change in hookstate is in progress";
+                case 12:
+                    return "A wink operation is in progress";
+                case 13:
+                    return "Channel is Call Progress Mode";
+                case 14:
+                    return "Channel is Getting R2MF";
+                case 15:
+                    return "Call status Rings state";
+                case 16:
+                    return "Channel is blocked";
+                case 17:
+                    return "Channel is preparing record and driver has not yet sent record";
 
+            }
+
+            return $"Unknown channel: {channelState}";
+        }
 
         // todo There are defined in the GcLibDef.cs file in the analog plugin. Need to consider solidation
 
@@ -765,7 +807,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             //ClearDigits(devh);
 
             var state = ATDX_STATE(devh);
-            Console.WriteLine("About to play: {0} state: {1}", filename, state);
             Logger.Debug("About to play: {0} state: {1}",filename,state);
             //Double Check this code tomorrow.
             if (!File.Exists(filename)){
@@ -798,12 +839,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             {
                 // This code has a timeout so that if the user hangs up while playing a file it can be detected.
                 sr_waitevtEx(ref devh, 1, 5000, ref handler);
-                //if (sr_waitevtEx(ref devh, 1, 100, ref handler) == -1)
-                //{
-                    //var err = ATDV_ERRMSGP(devh);
-                    //dx_fileclose(iott.io_fhandle);
-                    //throw new VoiceException(err);
-                //}
 
                 //Check if the call is still connected
                 try
@@ -986,12 +1021,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             {
                 // This code has a timeout so that if the user hangs up while recording there name it can be detected.
                 sr_waitevtEx(ref devh, 1, 5000, ref handler);
-                //if (sr_waitevtEx(ref devh, 1, 100, ref handler) == -1)
-                //{
-                //    var err = ATDV_ERRMSGP(devh);
-                //    dx_fileclose(iott.io_fhandle);
-                //    throw new VoiceException(err);
-                //}
 
                 //Check if the call is still connected
                 CheckCallState(sip);

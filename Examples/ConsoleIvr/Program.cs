@@ -1,8 +1,8 @@
 ﻿using System;
 using ivrToolkit.Core;
-using ivrToolkit.Core.Util;
 using ConsoleIvr.ScriptBlocks;
 using System.Threading;
+using ivrToolkit.Core.Exceptions;
 
 namespace ConsoleIvr
 {
@@ -29,11 +29,11 @@ namespace ConsoleIvr
 
                 Console.WriteLine("All threads should be alive.");
                 Console.ReadLine();
-                _exit = true;
-                Thread.Sleep(1000);
+                //_exit = true;
 
                 Console.WriteLine("Before Line Manager Release All");
                 LineManager.ReleaseAll();
+                Console.WriteLine("After Line Manager Release All");
 
                 waitThread1.Join();
                 waitThread2.Join();
@@ -53,7 +53,7 @@ namespace ConsoleIvr
             {
                 Console.WriteLine("WaitCall: Line {0}: Get Line", lineNumber);
                 var line = LineManager.GetLine(lineNumber);
-                Console.WriteLine("################################WaitCall: Line {0}: Got Line", lineNumber);
+                Console.WriteLine("WaitCall: Line {0}: Got Line", lineNumber);
                 while (!_exit)
                 {
                     Console.WriteLine("WaitCall: Line {0}: Hang Up", lineNumber);
@@ -64,7 +64,6 @@ namespace ConsoleIvr
 
                     try
                     {
-
                         ScriptManager manager = new ScriptManager(line, new WelcomeScript());
 
                         while (manager.HasNext())
@@ -74,23 +73,26 @@ namespace ConsoleIvr
                         }
 
                         line.Hangup();
-
                     }
-                    catch (ivrToolkit.Core.Exceptions.HangupException)
+                    catch (HangupException)
                     {
                         line.Hangup();
-
                     }
 
                 }
+
                 Console.WriteLine("WaitCall: Line {0}: End of Wait Call", lineNumber);
                 line.Close();
                 Console.WriteLine("WaitCall: Line {0}: End of Wait Call Line Closed", lineNumber);
             }
+            catch (StopException)
+            {
+                Console.WriteLine("StopException on line {0}", lineNumber);
+            }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                //Thread.Sleep(5000);
+                Console.WriteLine("Exception on line {0}: {1}", lineNumber, e.Message);
+                Console.WriteLine(e.StackTrace);
             }
         }
     }

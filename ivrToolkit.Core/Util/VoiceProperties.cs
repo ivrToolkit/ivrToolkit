@@ -30,7 +30,6 @@ namespace ivrToolkit.Core.Util
 
         private VoiceProperties()
         {
-
             string tenantDirectory = TenantSingleton.Instance.TenantDirectory;
             var path = Path.Combine(tenantDirectory, "voice.properties");
             _p = new Properties(path);

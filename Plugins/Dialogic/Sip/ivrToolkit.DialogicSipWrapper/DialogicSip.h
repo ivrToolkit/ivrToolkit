@@ -13,7 +13,7 @@ using namespace System;
 
 namespace ivrToolkit::DialogicSipWrapper {
 	/*
-	* This class only provides methods that are syncronous.  This helps prevent any confusion between 
+	* This class only provides methods that are syncronous.  This helps prevent any confusion between
 	* using syncornous and asyncronous features of the wrapper.
 	*/
 	public ref class DialogicSip
@@ -25,28 +25,27 @@ namespace ivrToolkit::DialogicSipWrapper {
 		~DialogicSip();
 		//finalizer cleans up unmanaged resources
 		!DialogicSip();
+		void StartLogger(String^ log_path, int max_files, int rotation_size, int log_level);
 
 		//wrapper methods
-		void WStartLibraries(int h323_signaling_port, int sip_signaling_port, int maxCalls);
+		int WStartLibraries(int h323_signaling_port, int sip_signaling_port, int maxCalls);
 		void WStopLibraries();
 		void WOpen(int lineNumber, int offset);
 		void WClose();
 		void WStop();
 		void WRegister(String^ proxy_ip, String^ local_ip, String^ alias, String^ password, String^ realm);
 		void WUnregister();
-		void WStatus();
 		int WMakeCall(String^ ani, String^ dnis);
 
 		void WWaitCallAsync();
 		int WWaitForCallEventSync(int wait_time);
 
 		void WDropCall();
-		String^ WGetDeviceName();
 		int WGetVoiceHandle();
 		int WGetCallState();
 
 	private:
-		DialogicFunctions *dialogicFunctions;
+		DialogicFunctions* dialogicFunctions;
 		int channel_index;
 
 	};

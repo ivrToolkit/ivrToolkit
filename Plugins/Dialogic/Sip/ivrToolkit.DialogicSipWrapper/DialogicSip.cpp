@@ -10,44 +10,52 @@
 #include "DialogicFunctions.h"
 using namespace Runtime::InteropServices;
 
+#include <iostream>
+
 //Default Constructor
-ivrToolkit::DialogicSipWrapper::DialogicSip::DialogicSip(): channel_index(0)
+ivrToolkit::DialogicSipWrapper::DialogicSip::DialogicSip() : channel_index(0)
 {
 	//Fill in consturctor logic
 	dialogicFunctions = new DialogicFunctions();
 }
 
 // destructor cleans up managed resources
-ivrToolkit::DialogicSipWrapper::DialogicSip::~DialogicSip(){
+ivrToolkit::DialogicSipWrapper::DialogicSip::~DialogicSip() {
 	// clean up code to release managed resource (at present there are none)
 	// to avoid code duplication 
 	// call finalizer to release unmanaged resources
 	this->!DialogicSip();
 }
 //finalizer cleans up unmanaged resources
-ivrToolkit::DialogicSipWrapper::DialogicSip::!DialogicSip(){
+ivrToolkit::DialogicSipWrapper::DialogicSip::!DialogicSip() {
 	delete dialogicFunctions;
 }
 
-void ivrToolkit::DialogicSipWrapper::DialogicSip::WStartLibraries(int h323_signaling_port, int sip_signaling_port, int maxCalls){
-	dialogicFunctions->DialogicStartSync(h323_signaling_port, sip_signaling_port, maxCalls);
+void ivrToolkit::DialogicSipWrapper::DialogicSip::StartLogger(String^ log_path, int max_files, int rotation_size, int log_level)
+{
+	IntPtr p = Marshal::StringToHGlobalAnsi(log_path);
+	char* char_logPath = static_cast<char*>(p.ToPointer());
+	dialogicFunctions->StartLogger(char_logPath, max_files, rotation_size, log_level);
 }
-void ivrToolkit::DialogicSipWrapper::DialogicSip::WStopLibraries(){
+
+int ivrToolkit::DialogicSipWrapper::DialogicSip::WStartLibraries(int h323_signaling_port, int sip_signaling_port, int maxCalls) {
+	return dialogicFunctions->DialogicStartSync(h323_signaling_port, sip_signaling_port, maxCalls);
+}
+void ivrToolkit::DialogicSipWrapper::DialogicSip::WStopLibraries() {
 	dialogicFunctions->DialogicStopSync();
 }
 
-void ivrToolkit::DialogicSipWrapper::DialogicSip::WOpen(int lineNumber, int offset){
-	printf("DialogicSIPSync::WOpen(lineNumber=%i, offset=%i)\n", lineNumber, offset);
+void ivrToolkit::DialogicSipWrapper::DialogicSip::WOpen(int lineNumber, int offset) {
 	channel_index = lineNumber + offset;
 	dialogicFunctions->DialogicOpenSync(lineNumber, offset);
 }
-void ivrToolkit::DialogicSipWrapper::DialogicSip::WClose(){
+void ivrToolkit::DialogicSipWrapper::DialogicSip::WClose() {
 	dialogicFunctions->DialogicCloseSync(channel_index);
 }
-void ivrToolkit::DialogicSipWrapper::DialogicSip::WStop(){
+void ivrToolkit::DialogicSipWrapper::DialogicSip::WStop() {
 	dialogicFunctions->DialogicStop(channel_index);
 }
-void ivrToolkit::DialogicSipWrapper::DialogicSip::WRegister(String^ proxy_ip, String^ local_ip, String^ alias, String^ password, String^ realm){
+void ivrToolkit::DialogicSipWrapper::DialogicSip::WRegister(String^ proxy_ip, String^ local_ip, String^ alias, String^ password, String^ realm) {
 
 	IntPtr p = Marshal::StringToHGlobalAnsi(proxy_ip);
 	char* char_proxy_ip = static_cast<char*>(p.ToPointer());
@@ -66,15 +74,11 @@ void ivrToolkit::DialogicSipWrapper::DialogicSip::WRegister(String^ proxy_ip, St
 
 	dialogicFunctions->DialogicRegisterSync(channel_index, char_proxy_ip, char_local_ip, char_alias, char_password, char_realm);
 }
-void ivrToolkit::DialogicSipWrapper::DialogicSip::WUnregister(){
+void ivrToolkit::DialogicSipWrapper::DialogicSip::WUnregister() {
 	dialogicFunctions->DialogicUnregisterSync(channel_index);
 }
-void ivrToolkit::DialogicSipWrapper::DialogicSip::WStatus(){
-	printf("WStatus %i \n", channel_index);
-	printf("WFeature not yet implemented\n");
-	//dialogicFunctions->DialogicStatus();
-}
-int ivrToolkit::DialogicSipWrapper::DialogicSip::WMakeCall(String^ ani, String^ dnis){
+
+int ivrToolkit::DialogicSipWrapper::DialogicSip::WMakeCall(String^ ani, String^ dnis) {
 
 	IntPtr p = Marshal::StringToHGlobalAnsi(ani);
 	char* char_ani = static_cast<char*>(p.ToPointer());
@@ -85,7 +89,7 @@ int ivrToolkit::DialogicSipWrapper::DialogicSip::WMakeCall(String^ ani, String^ 
 	return dialogicFunctions->DialogicMakeCallSync(channel_index, char_ani, char_dnis);
 }
 
-void ivrToolkit::DialogicSipWrapper::DialogicSip::WWaitCallAsync(){
+void ivrToolkit::DialogicSipWrapper::DialogicSip::WWaitCallAsync() {
 	dialogicFunctions->DialogicWaitCallAsync(channel_index);
 }
 
@@ -93,17 +97,13 @@ int ivrToolkit::DialogicSipWrapper::DialogicSip::WWaitForCallEventSync(int wait_
 	return dialogicFunctions->DialogicWaitForCallEventSync(channel_index, wait_time);
 }
 
-void ivrToolkit::DialogicSipWrapper::DialogicSip::WDropCall(){
+void ivrToolkit::DialogicSipWrapper::DialogicSip::WDropCall() {
 	dialogicFunctions->DialogicDropCallSync(channel_index);
 }
-String^ ivrToolkit::DialogicSipWrapper::DialogicSip::WGetDeviceName(){
-	const char* device_name = dialogicFunctions->DialogicGetDeviceName(channel_index);
-	String^ clistr = gcnew String(device_name);
-	return clistr;
-}
-int ivrToolkit::DialogicSipWrapper::DialogicSip::WGetVoiceHandle(){
+
+int ivrToolkit::DialogicSipWrapper::DialogicSip::WGetVoiceHandle() {
 	return dialogicFunctions->DialogicGetVoiceHandle(channel_index);
 }
-int ivrToolkit::DialogicSipWrapper::DialogicSip::WGetCallState(){
+int ivrToolkit::DialogicSipWrapper::DialogicSip::WGetCallState() {
 	return dialogicFunctions->DialogicGetCallState(channel_index);
 }

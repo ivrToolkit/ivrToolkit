@@ -26,39 +26,46 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         private static readonly object LockObject = new object();
         private static bool _isLibaryStarted;
+        private static bool _libraryFailedToStart;
 
         public ILine GetLine(int lineNumber, object data = null)
         {
             var sip = new DialogicSip();
 
             var offset = VoiceProperties.Current.SipChannelOffset;
-            Logger.Debug("lineNumber = {0}, offset = {1}",lineNumber, offset);
+            Logger.Debug("lineNumber = {0}, offset = {1}", lineNumber, offset);
 
             var channel = lineNumber + offset;
 
             lock (LockObject)
             {
+                if (_libraryFailedToStart) throw new Exception("SIP library previously failed to start");
                 var lineCount = LineManager.GetLineCount();
-                //Console.WriteLine("Before Starting library check isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
-                /*
-                 * The if statment below checks if the lineCount is 0 
-                 * because the line is not added to the lineCount
-                 * until after this GetLine method is invoked.
-                 */
-                if (!_isLibaryStarted && lineCount == 0)
+                if (!_isLibaryStarted)
                 {
-                    var library = new DialogicLibrary(sip);
-
                     var h323SignalingPort = VoiceProperties.Current.SipH323SignalingPort;
                     var sipSignalingPort = VoiceProperties.Current.SipSignalingPort;
                     var maxCalls = VoiceProperties.Current.MaxCalls;
 
-                    //Console.WriteLine("Starting the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
+                    var cppLogLevel = VoiceProperties.Current.CppLogLevel;
+                    var cppLogMaxFiles = VoiceProperties.Current.CppLogMaxFiles;
+                    var cppLogRotationSize = VoiceProperties.Current.CppLogRotationSize;
+                    var logPath = Path.Combine(TenantSingleton.Instance.TenantDirectory, "logs");
+
+                    sip.StartLogger(logPath, cppLogMaxFiles, cppLogRotationSize, cppLogLevel);
+
                     Logger.Info("Starting the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", _isLibaryStarted, lineCount);
-                    library.StartLibraries(h323SignalingPort, sipSignalingPort, maxCalls);
+                    int result = sip.WStartLibraries(h323SignalingPort, sipSignalingPort, maxCalls);
+                    if (result < 0)
+                    {
+                        _libraryFailedToStart = true;
+                        var message = "The SIP driver has failed to initialize";
+                        Logger.Error(message);
+                        throw new Exception(message);
+                    }
                     _isLibaryStarted = true;
                 }
-                
+
                 sip.WOpen(lineNumber, offset);
             }
 
@@ -90,16 +97,17 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         internal static void Stop(int devh, DialogicSip sip)
         {
-            Logger.Debug("Stop({0})",devh);
+            Logger.Debug("Stop({0})", devh);
             if (dx_stopch(devh, EV_SYNC) == -1)
             {
                 Logger.Debug("Got an error");
-                var err = ATDV_ERRMSGP(devh);
-                Logger.Debug("Error is {0}",err);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
+                Logger.Debug("Error is {0}", err);
                 throw new VoiceException(err);
             }
 
-            Logger.Debug("Continuing with Stop({0})",devh);
+            Logger.Debug("Continuing with Stop({0})", devh);
             //Get Line Manager Count 
             //If Line Manager Count is less then or equal to 0
             //Then Stop the Dialogic Libraries
@@ -107,7 +115,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             {
                 var lineCount = LineManager.GetLineCount();
                 Logger.Debug("Line count is {0}", lineCount);
-                //Console.WriteLine("Before Stopping library check isLibraryStarted {0}, lineCount {1}", isLibaryStarted, lineCount);
                 /*
                  * The if statment below checks if the lineCount is 0 
                  * because the line is removed from the lineCount
@@ -116,12 +123,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 if (_isLibaryStarted && lineCount == 0)
                 {
                     Logger.Info("Stopping the Dialogic Libraries isLibraryStarted {0}, lineCount {1}", _isLibaryStarted, lineCount);
-                    var library = new DialogicLibrary();
-                    library.StopLibraries();
+                    sip.WStopLibraries();
                     _isLibaryStarted = false;
                 }
             }
-            Logger.Debug("Hopefully will be stopped ({0})",devh);
+            Logger.Debug("Hopefully will be stopped ({0})", devh);
         }
 
         /// <summary>
@@ -145,8 +151,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = dx_adjsv(devh, SV_VOLUMETBL, SV_ABSPOS, adjsize);
             if (result <= -1)
             {
-                var error = ATDV_ERRMSGP(devh);
-                throw new VoiceException(error);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
+                throw new VoiceException(err);
             }
         }
 
@@ -159,7 +166,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         internal static void Dial(int devh, string number, DialogicSip sip)
         {
             var makeCallResult = sip.WMakeCall("ani", "dnis");
-            Console.WriteLine("Dial: Syncronous Make call Completed starting call process analysis");
+            Logger.Debug("Dial: Syncronous Make call Completed starting call process analysis");
             if (makeCallResult <= -1)
             {
                 throw new VoiceException("Dialogic.Dial Failed");
@@ -186,14 +193,14 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var dnis = number + "@" + proxy;
 
             sip.WMakeCall(ani, dnis);
-            //Console.WriteLine("DialWithCpa: Syncronous Make call Completed starting call process analysis");
             Logger.Debug("DialWithCpa: Syncronous Make call Completed starting call process analysis");
 
             var result = dx_dial(devh, "", ref cap, DX_CALLP | EV_SYNC);
             if (result <= -1)
             {
-                var error = ATDV_ERRMSGP(devh);
-                throw new VoiceException(error);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
+                throw new VoiceException(err);
             }
             Logger.Debug("Call Progress Analysius Result {0}", result);
             var c = (CallAnalysis)result;
@@ -243,7 +250,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     // calling method will check and throw the stopException
                     return Core.CallAnalysis.Stopped;
             }
-            throw new VoiceException("Unknown dail response: "+result);
+            throw new VoiceException("Unknown dail response: " + result);
         }
 
         private static DX_CAP GetCap(int devh)
@@ -253,7 +260,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = dx_clrcap(ref cap);
             if (result <= -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
 
@@ -267,17 +275,17 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 var info = capType.GetField(capName);
                 if (info == null)
                 {
-                    throw new Exception("Could not find dx_cap."+capName);
+                    throw new Exception("Could not find dx_cap." + capName);
                 }
                 var obj = info.GetValue(cap);
                 if (obj is ushort)
                 {
-                    var value = ushort.Parse(VoiceProperties.Current.GetProperty("cap."+capName));
+                    var value = ushort.Parse(VoiceProperties.Current.GetProperty("cap." + capName));
                     info.SetValue(boxed, value);
                 }
                 else if (obj is byte)
                 {
-                    var value = byte.Parse(VoiceProperties.Current.GetProperty("cap."+capName));
+                    var value = byte.Parse(VoiceProperties.Current.GetProperty("cap." + capName));
                     info.SetValue(boxed, value);
                 }
             }
@@ -295,7 +303,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = ATDX_ANSRSIZ(devh);
             if (result <= -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
             return result * 10;
@@ -311,7 +320,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = dx_close(devh, 0);
             if (result <= -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
             sip.WClose();
@@ -359,19 +369,21 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         internal static string GetDigits(int devh, int numberOfDigits, string terminators, int timeout, DialogicSip sip)
         {
-
-            //sip.w_voice_dx_getdig(0);
+            Logger.Debug("NumberOfDigits: {0} terminators: {1} timeout: {2}",
+                numberOfDigits, terminators, timeout);
 
             var state = ATDX_STATE(devh);
-            Console.WriteLine("state: {0}", state);
+            if (Logger.IsDebugEnabled)
+            {
+                Logger.Debug("state: {0}", GetChannelStateDescription(state));
+            }
 
-           Console.WriteLine("Before Error numberOfDigits: " + numberOfDigits + " terminators: " + terminators + " timeout: " + timeout);
             /*
              * If number of digits is 99 this will fail on SIP.
              * An invalid tpt error will be thrown.
              * I hacked this in place just to keep going with development.
              */
-           if (numberOfDigits >= 10) numberOfDigits = 10;
+            if (numberOfDigits >= 15) numberOfDigits = 15;
 
             var tpt = GetTerminationConditions(numberOfDigits, terminators, timeout);
 
@@ -383,7 +395,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = dx_getdig(devh, ref tpt[0], out digit, EV_SYNC);
             if (result == -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
 
             }
@@ -391,6 +404,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             CheckCallState(sip);
 
             var reason = ATDX_TERMMSK(devh);
+            Logger.Debug("Type = TDX_GETDIG, Reason = {0} = {1}", reason, GetReasonDescription(reason));
+
             if ((reason & TM_ERROR) == TM_ERROR)
             {
                 throw new VoiceException("TM_ERROR");
@@ -403,16 +418,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             {
                 throw new HangupException();
             }
-            if ((reason & TM_BARGEIN) == TM_BARGEIN) Console.WriteLine("TM_BARGEIN");
-            //if ((reason & TM_DIGIT) == TM_DIGIT) Console.WriteLine("TM_DIGIT");
-            //if ((reason & TM_EOD) == TM_EOD) Console.WriteLine("TM_EOD");
-            if ((reason & TM_MAXDATA) == TM_MAXDATA) Console.WriteLine("TM_MAXDATA");
-            //if ((reason & TM_MAXDTMF) == TM_MAXDTMF) Console.WriteLine("TM_MAXDTMF");
-            if ((reason & TM_MAXNOSIL) == TM_MAXNOSIL) Console.WriteLine("TM_MTAXNOSIL");
-            if ((reason & TM_MAXSIL) == TM_MAXSIL) Console.WriteLine("TM_MAXSIL");
-            //if ((reason & TM_NORMTERM) == TM_NORMTERM) Console.WriteLine("TM_NORMTERM");
-            if ((reason & TM_PATTERN) == TM_PATTERN) Console.WriteLine("TM_PATTERN");
-            if ((reason & TM_TONE) == TM_TONE) Console.WriteLine("TM_TONE");
 
 
             var answer = digit.dg_value;
@@ -440,7 +445,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             if (dx_clrdigbuf(devh) == -1)
             {
                 Logger.Error("ClearDigits: Error");
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
         }
@@ -455,25 +461,81 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
          */
         private static void ClearEventBuffer(int devh)
         {
+            Logger.Debug("ClearEventBuffer()");
             var handler = 0;
-            var loopTimeout = false;
             do
             {
                 if (sr_waitevtEx(ref devh, 1, 50, ref handler) == -1)
                 {
-                    loopTimeout = true;
-                    Logger.Debug("ClearEventBuffer: Timeout");
+                    Logger.Trace("ClearEventBuffer: Timeout");
+                    return;
                 }
-                else
-                {
-                    /*
-                     * Get the event
-                     */
-                    var type = sr_getevttype((uint)handler);
-                    var reason = ATDX_TERMMSK(devh);
-                    Logger.Debug("ClearEventBuffer: Type = {0} Reason = {1} ", type, reason);
-                }
-            } while (!loopTimeout);
+
+                /*
+                 * Get the event
+                 */
+                var type = sr_getevttype((uint)handler);
+                var reason = ATDX_TERMMSK(devh);
+                Logger.Debug("ClearEventBuffer: Type = {0}, Reason = {1} = {2}", GetEventTypeDescription(type), reason, GetReasonDescription(reason));
+            } while (true);
+        }
+
+        private static string GetEventTypeDescription(int type)
+        {
+            switch (type)
+            {
+                case TDX_PLAY:
+                    return "Play Completed";
+                case TDX_RECORD:
+                    return "Record Complete";
+                case TDX_GETDIG:
+                    return "Get Digits Completed";
+                case TDX_DIAL:
+                    return "Dial Completed";
+                case TDX_CALLP:
+                    return "Call Progress Completed";
+                case TDX_CST:
+                    return "CST Event Received";
+                case TDX_SETHOOK:
+                    return "SetHook Completed";
+                case TDX_WINK:
+                    return "Wink Completed";
+                case TDX_ERROR:
+                    return "Error Event";
+                case TDX_PLAYTONE:
+                    return "Play Tone Completed";
+                case TDX_GETR2MF:
+                    return "Get R2MF completed";
+                case TDX_BARGEIN:
+                    return "Barge in completed";
+                case TDX_NOSTOP:
+                    return "No Stop needed to be Issued";
+                case TDX_UNKNOWN:
+                    return "TDX_UNKNOWN";
+            }
+
+            return type.ToString();
+        }
+
+        private static string GetReasonDescription(int reason)
+        {
+            List<string> list = new List<string>();
+            if ((reason & TM_NORMTERM) == TM_NORMTERM) list.Add("Normal Termination");
+            if ((reason & TM_MAXDTMF) == TM_MAXDTMF) list.Add("Max Number of Digits Recd");
+            if ((reason & TM_MAXSIL) == TM_MAXSIL) list.Add("Max Silence");
+            if ((reason & TM_MAXNOSIL) == TM_MAXNOSIL) list.Add("Max Non-Silence");
+            if ((reason & TM_LCOFF) == TM_LCOFF) list.Add("Loop Current Off");
+            if ((reason & TM_IDDTIME) == TM_IDDTIME) list.Add("Inter Digit Delay");
+            if ((reason & TM_MAXTIME) == TM_MAXTIME) list.Add("Max Function Time Exceeded");
+            if ((reason & TM_DIGIT) == TM_DIGIT) list.Add("Digit Mask or Digit Type Term.");
+            if ((reason & TM_PATTERN) == TM_PATTERN) list.Add("Pattern Match Silence Off");
+            if ((reason & TM_USRSTOP) == TM_USRSTOP) list.Add("Function Stopped by User");
+            if ((reason & TM_EOD) == TM_EOD) list.Add("End of Data Reached on Playback");
+            if ((reason & TM_TONE) == TM_TONE) list.Add("Tone On/Off Termination");
+            if ((reason & TM_BARGEIN) == TM_BARGEIN) list.Add("Play terminated due to Barge-in");
+            if ((reason & TM_ERROR) == TM_ERROR) list.Add("I/O Device Error");
+            if ((reason & TM_MAXDATA) == TM_MAXDATA) list.Add("Max Data reached for FSK");
+            return string.Join("|", list.ToArray());
         }
 
 
@@ -484,14 +546,101 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
          */
         private static void CheckCallState(DialogicSip sip)
         {
-                    var callState = sip.WGetCallState();
-                    Logger.Debug("CheckCallState : Call State {0}", callState);
-                    if (callState != 4)
-                    {
-                        Logger.Debug("CheckCallState : The call has been hang up.");
-                        throw new HangupException();
+            var callState = sip.WGetCallState();
+            Logger.Debug("CheckCallState: Call State {0}", GetCallStateDescription(callState));
+            if (callState != 4)
+            {
+                Logger.Debug("CheckCallState: The call has been hang up.");
+                throw new HangupException();
 
-                    }
+            }
+        }
+
+        private static string GetChannelStateDescription(int channelState)
+        {
+            switch (channelState)
+            {
+                case 1:
+                    return "Channel is idle";
+                case 2:
+                    return "Channel is playing back";
+                case 3:
+                    return "Channel is recording";
+                case 4:
+                    return "Channel is dialing";
+                case 5:
+                    return "Channel is getting digits";
+                case 6:
+                    return "Channel is generating a tone";
+                case 7:
+                    return "Operation has terminated";
+                case 8:
+                    return "Channel is sending a fax";
+                case 9:
+                    return "Channel is receiving a fax";
+                case 10:
+                    return "Channel is between fax pages";
+                case 11:
+                    return "A change in hookstate is in progress";
+                case 12:
+                    return "A wink operation is in progress";
+                case 13:
+                    return "Channel is Call Progress Mode";
+                case 14:
+                    return "Channel is Getting R2MF";
+                case 15:
+                    return "Call status Rings state";
+                case 16:
+                    return "Channel is blocked";
+                case 17:
+                    return "Channel is preparing record and driver has not yet sent record";
+
+            }
+
+            return $"Unknown channel: {channelState}";
+        }
+
+        // todo There are defined in the GcLibDef.cs file in the analog plugin. Need to consider solidation
+
+        private static string GetCallStateDescription(int callState)
+        {
+            switch (callState)
+            {
+                case 0x00:
+                    return "GCST_NULL";
+                case 0x01:
+                    return "GCST_ACCEPTED";
+                case 0x02:
+                    return "GCST_ALERTING";
+                case 0x04:
+                    return "GCST_CONNECTED";
+                case 0x08:
+                    return "GCST_OFFERED";
+                case 0x10:
+                    return "GCST_DIALING";
+                case 0x20:
+                    return "GCST_IDLE";
+                case 0x40:
+                    return "GCST_DISCONNECTED";
+                case 0x80:
+                    return "GCST_DIALTONE";
+                case 0x100:
+                    return "GCST_ONHOLDPENDINGTRANSFER";
+                case 0x200:
+                    return "GCST_ONHOLD";
+                case 0x400:
+                    return "GCST_DETECTED";
+                case 0x800:
+                    return "GCST_PROCEEDING";
+                case 0x1000:
+                    return "GCST_SENDMOREINFO";
+                case 0x2000:
+                    return "GCST_GETMOREINFO";
+                case 0x4000:
+                    return "GCST_CALLROUTING";
+            }
+
+            return callState.ToString();
         }
 
         private static DV_TPT[] GetTerminationConditions(int numberOfDigits, string terminators, int timeoutInMilliseconds)
@@ -499,49 +648,49 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var tpts = new List<DV_TPT>();
 
             var tpt = new DV_TPT
-                {
-                    tp_type = IO_CONT,
-                    tp_termno = DX_MAXDTMF,
-                    tp_length = (ushort) numberOfDigits,
-                    tp_flags = TF_MAXDTMF,
-                    tp_nextp = IntPtr.Zero
-                };
+            {
+                tp_type = IO_CONT,
+                tp_termno = DX_MAXDTMF,
+                tp_length = (ushort)numberOfDigits,
+                tp_flags = TF_MAXDTMF,
+                tp_nextp = IntPtr.Zero
+            };
             tpts.Add(tpt);
 
             var bitMask = DefineDigits(terminators);
             if (bitMask != 0)
             {
                 tpt = new DV_TPT
-                    {
-                        tp_type = IO_CONT,
-                        tp_termno = DX_DIGMASK,
-                        tp_length = (ushort) bitMask,
-                        tp_flags = TF_DIGMASK,
-                        tp_nextp = IntPtr.Zero
-                    };
+                {
+                    tp_type = IO_CONT,
+                    tp_termno = DX_DIGMASK,
+                    tp_length = (ushort)bitMask,
+                    tp_flags = TF_DIGMASK,
+                    tp_nextp = IntPtr.Zero
+                };
                 tpts.Add(tpt);
             }
             if (timeoutInMilliseconds != 0)
             {
                 tpt = new DV_TPT
-                    {
-                        tp_type = IO_CONT,
-                        tp_termno = DX_IDDTIME,
-                        tp_length = (ushort) (timeoutInMilliseconds/100),
-                        tp_flags = TF_IDDTIME,
-                        tp_nextp = IntPtr.Zero
-                    };
+                {
+                    tp_type = IO_CONT,
+                    tp_termno = DX_IDDTIME,
+                    tp_length = (ushort)(timeoutInMilliseconds / 100),
+                    tp_flags = TF_IDDTIME,
+                    tp_nextp = IntPtr.Zero
+                };
                 tpts.Add(tpt);
             }
 
             tpt = new DV_TPT
-                {
-                    tp_type = IO_EOT,
-                    tp_termno = DX_LCOFF,
-                    tp_length = 3,
-                    tp_flags = TF_LCOFF | TF_10MS,
-                    tp_nextp = IntPtr.Zero
-                };
+            {
+                tp_type = IO_EOT,
+                tp_termno = DX_LCOFF,
+                tp_length = 3,
+                tp_flags = TF_LCOFF | TF_10MS,
+                tp_nextp = IntPtr.Zero
+            };
             tpts.Add(tpt);
 
             return tpts.ToArray();
@@ -625,9 +774,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
 
             /* set up DV_TPT */
-            var tpt = GetTerminationConditions(10, terminators,0);
+            var tpt = GetTerminationConditions(10, terminators, 0);
 
-            var iott = new DX_IOTT {io_type = IO_DEV | IO_EOT, io_bufp = null, io_offset = 0, io_length = -1};
+            var iott = new DX_IOTT { io_type = IO_DEV | IO_EOT, io_bufp = null, io_offset = 0, io_length = -1 };
             /* set up DX_IOTT */
             if ((iott.io_fhandle = dx_fileopen(filename, _O_RDONLY | _O_BINARY)) == -1)
             {
@@ -653,7 +802,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                         err = "File or path not found.";
                         break;
                 }
-                err += " File: |"+filename+"|";
+                err += " File: |" + filename + "|";
 
                 //I don't think this is needed when we get an error opening a file
                 //dx_fileclose(iott.io_fhandle);
@@ -661,7 +810,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 throw new VoiceException(err);
             }
             /*
-             * It appears as if digits or something else is sitll in the buffer and the play file is getting skipped.
+             * It appears as if digits or something else is still in the buffer and the play file is getting skipped.
              * This did nothing.
              */
             ClearEventBuffer(devh);
@@ -671,10 +820,10 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             //ClearDigits(devh);
 
             var state = ATDX_STATE(devh);
-            Console.WriteLine("About to play: {0} state: {1}", filename, state);
-            Logger.Debug("About to play: {0} state: {1}",filename,state);
+            Logger.Debug("About to play: {0} state: {1}", filename, state);
             //Double Check this code tomorrow.
-            if (!File.Exists(filename)){
+            if (!File.Exists(filename))
+            {
                 var err = $"File {filename} does not exist so it cannot be played, call will be droped.";
                 Logger.Error(err);
                 sip.WDropCall();
@@ -686,7 +835,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             {
                 Logger.Error("Tried to play: {0} state: {1}", filename, state);
 
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 dx_fileclose(iott.io_fhandle);
                 throw new VoiceException(err);
             }
@@ -704,12 +854,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             {
                 // This code has a timeout so that if the user hangs up while playing a file it can be detected.
                 sr_waitevtEx(ref devh, 1, 5000, ref handler);
-                //if (sr_waitevtEx(ref devh, 1, 100, ref handler) == -1)
-                //{
-                    //var err = ATDV_ERRMSGP(devh);
-                    //dx_fileclose(iott.io_fhandle);
-                    //throw new VoiceException(err);
-                //}
 
                 //Check if the call is still connected
                 try
@@ -734,46 +878,25 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 // make sure the file is closed
                 if (dx_fileclose(iott.io_fhandle) == -1)
                 {
-                    var err = ATDV_ERRMSGP(devh);
+                    var errPtr = ATDV_ERRMSGP(devh);
+                    var err = errPtr.IntPtrToString();
                     throw new VoiceException(err);
                 }
 
-                //var type = sr_getevttype((uint)handler);
-                if (type == TDX_PLAY)
+                var reason = ATDX_TERMMSK(devh);
+
+                Logger.Debug("Type = TDX_PLAY, Reason = {0} = {1}", reason, GetReasonDescription(reason));
+                if ((reason & TM_ERROR) == TM_ERROR)
                 {
-                    var reason = ATDX_TERMMSK(devh);
-
-                    Logger.Debug("Type = TDX_PLAY Reason = {0}", reason);
-                    if ((reason & TM_ERROR) == TM_ERROR)
-                    {
-                        throw new VoiceException("TM_ERROR");
-                    }
-                    if ((reason & TM_USRSTOP) == TM_USRSTOP)
-                    {
-                        throw new StopException();
-                    }
-                    if ((reason & TM_LCOFF) == TM_LCOFF)
-                    {
-                        throw new HangupException();
-                    }
-                    if ((reason & TM_MAXTIME) == TM_MAXTIME) Logger.Debug("TM_MAXTIME");
-
-                    if ((reason & TM_BARGEIN) == TM_BARGEIN) Logger.Debug("TM_BARGEIN");
-                    //                    if ((reason & TM_DIGIT) == TM_DIGIT) Logger.Debug("TM_DIGIT");
-                    //                    if ((reason & TM_EOD) == TM_EOD) Logger.Debug("TM_EOD"); // This is how I know they listend to full message
-                    if ((reason & TM_IDDTIME) == TM_IDDTIME) Logger.Debug("TM_IDDTIME");
-                    if ((reason & TM_MAXDATA) == TM_MAXDATA) Logger.Debug("TM_MAXDATA");
-                    //                    if ((reason & TM_MAXDTMF) == TM_MAXDTMF) Logger.Debug("TM_MAXDTMF");
-                    if ((reason & TM_MAXNOSIL) == TM_MAXNOSIL) Logger.Debug("TM_MTAXNOSIL");
-                    if ((reason & TM_MAXSIL) == TM_MAXSIL) Logger.Debug("TM_MAXSIL");
-                    //                    if ((reason & TM_NORMTERM) == TM_NORMTERM) Logger.Debug("TM_NORMTERM");
-                    if ((reason & TM_PATTERN) == TM_PATTERN) Logger.Debug("TM_PATTERN");
-                    if ((reason & TM_TONE) == TM_TONE) Logger.Debug("TM_TONE");
+                    throw new VoiceException("TM_ERROR");
                 }
-                else
+                if ((reason & TM_USRSTOP) == TM_USRSTOP)
                 {
-                    var reason = ATDX_TERMMSK(devh);
-                    Logger.Error("got here: Type = {0} Reason = {1} ", type, reason);
+                    throw new StopException();
+                }
+                if ((reason & TM_LCOFF) == TM_LCOFF)
+                {
+                    throw new HangupException();
                 }
                 return;
             } // while
@@ -793,7 +916,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             if (dx_addtone(devh, 0, 0) == -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
         }
@@ -809,7 +933,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             if (dx_addtone(devh, 0, 0) == -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
         }
@@ -818,7 +943,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             if (dx_distone(devh, tid, DM_TONEON | DM_TONEOFF) == -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
         }
@@ -827,7 +953,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             if (dx_enbtone(devh, tid, DM_TONEON | DM_TONEOFF) == -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
         }
@@ -841,7 +968,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 {
                     return 0;
                 }
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
             if (eblk.ev_event == DE_TONEON || eblk.ev_event == DE_TONEOFF)
@@ -868,7 +996,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             /* set up DV_TPT */
             var tpt = GetTerminationConditions(1, terminators, timeoutMilli);
 
-            var iott = new DX_IOTT {io_type = IO_DEV | IO_EOT, io_bufp = null, io_offset = 0, io_length = -1};
+            var iott = new DX_IOTT { io_type = IO_DEV | IO_EOT, io_bufp = null, io_offset = 0, io_length = -1 };
             /* set up DX_IOTT */
             if ((iott.io_fhandle = dx_fileopen(filename, _O_CREAT | _O_BINARY | _O_RDWR, _S_IWRITE)) == -1)
             {
@@ -903,7 +1031,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             /* Now record the file */
             if (dx_reciottdata(devh, ref iott, ref tpt[0], ref xpb, RM_TONE | EV_ASYNC) == -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 dx_fileclose(iott.io_fhandle);
                 throw new VoiceException(err);
             }
@@ -914,62 +1043,41 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             {
                 // This code has a timeout so that if the user hangs up while recording there name it can be detected.
                 sr_waitevtEx(ref devh, 1, 5000, ref handler);
-                //if (sr_waitevtEx(ref devh, 1, 100, ref handler) == -1)
-                //{
-                //    var err = ATDV_ERRMSGP(devh);
-                //    dx_fileclose(iott.io_fhandle);
-                //    throw new VoiceException(err);
-                //}
 
                 //Check if the call is still connected
                 CheckCallState(sip);
 
                 var type = sr_getevttype((uint)handler);
                 //Ignore events that are not of they type we want.
-                if (type != TDX_RECORD) {
+                if (type != TDX_RECORD)
+                {
                     continue;
                 }
 
                 if (dx_fileclose(iott.io_fhandle) == -1)
                 {
-                    var err = ATDV_ERRMSGP(devh);
+                    var errPtr = ATDV_ERRMSGP(devh);
+                    var err = errPtr.IntPtrToString();
                     throw new VoiceException(err);
                 }
 
-                //var type = sr_getevttype((uint)handler);
-                if (type == TDX_RECORD)
+                var reason = ATDX_TERMMSK(devh);
+                Logger.Debug("Type = TDX_RECORD, Reason = {0} = {1}", reason, GetReasonDescription(reason));
+                if ((reason & TM_ERROR) == TM_ERROR)
                 {
-                    var reason = ATDX_TERMMSK(devh);
-                    if ((reason & TM_ERROR) == TM_ERROR)
-                    {
-                        throw new VoiceException("TM_ERROR");
-                    }
-                    if ((reason & TM_USRSTOP) == TM_USRSTOP)
-                    {
-                        throw new StopException();
-                    }
-                    if ((reason & TM_LCOFF) == TM_LCOFF)
-                    {
-                        throw new HangupException();
-                    }
-                    if ((reason & TM_MAXTIME) == TM_MAXTIME) Console.WriteLine("TM_MAXTIME");
+                    throw new VoiceException("TM_ERROR");
+                }
 
-                    if ((reason & TM_BARGEIN) == TM_BARGEIN) Console.WriteLine("TM_BARGEIN");
-                    if ((reason & TM_DIGIT) == TM_DIGIT) Console.WriteLine("TM_DIGIT");
-                    if ((reason & TM_EOD) == TM_EOD) Console.WriteLine("TM_EOD");
-                    if ((reason & TM_IDDTIME) == TM_IDDTIME) Console.WriteLine("TM_IDDTIME");
-                    if ((reason & TM_MAXDATA) == TM_MAXDATA) Console.WriteLine("TM_MAXDATA");
-                    if ((reason & TM_MAXDTMF) == TM_MAXDTMF) Console.WriteLine("TM_MAXDTMF");
-                    if ((reason & TM_MAXNOSIL) == TM_MAXNOSIL) Console.WriteLine("TM_MTAXNOSIL");
-                    if ((reason & TM_MAXSIL) == TM_MAXSIL) Console.WriteLine("TM_MAXSIL");
-                    if ((reason & TM_NORMTERM) == TM_NORMTERM) Console.WriteLine("TM_NORMTERM");
-                    if ((reason & TM_PATTERN) == TM_PATTERN) Console.WriteLine("TM_PATTERN");
-                    if ((reason & TM_TONE) == TM_TONE) Console.WriteLine("TM_TONE");
-                }
-                else
+                if ((reason & TM_USRSTOP) == TM_USRSTOP)
                 {
-                    Console.WriteLine("got here: " + type);
+                    throw new StopException();
                 }
+
+                if ((reason & TM_LCOFF) == TM_LCOFF)
+                {
+                    throw new HangupException();
+                }
+
                 FlushDigitBuffer(devh, sip);
                 return;
             }

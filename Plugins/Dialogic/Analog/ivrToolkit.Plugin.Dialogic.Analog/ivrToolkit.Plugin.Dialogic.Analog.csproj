@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net40;net45;net472</TargetFrameworks>
-    <Version>2.0.6</Version>
+    <Version>2.0.9</Version>
     <Description>An analog implementation using Dialogic System Release 6.0. For use with ivrToolkit.Core. Originally tested with Dialogic build 271</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>http://www.ivrtoolkit.com</PackageProjectUrl>

@@ -762,7 +762,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private static extern int sr_getboardcnt(string class_namep, ref int boardcntp);
 
         [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern String ATDV_ERRMSGP(int chdev);
+        private static extern IntPtr ATDV_ERRMSGP(int chdev);
 
         [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         private static extern int ATDV_LASTERR(int chdev);

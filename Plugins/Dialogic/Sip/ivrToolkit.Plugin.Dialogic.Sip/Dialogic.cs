@@ -101,7 +101,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             if (dx_stopch(devh, EV_SYNC) == -1)
             {
                 Logger.Debug("Got an error");
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 Logger.Debug("Error is {0}", err);
                 throw new VoiceException(err);
             }
@@ -150,8 +151,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = dx_adjsv(devh, SV_VOLUMETBL, SV_ABSPOS, adjsize);
             if (result <= -1)
             {
-                var error = ATDV_ERRMSGP(devh);
-                throw new VoiceException(error);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
+                throw new VoiceException(err);
             }
         }
 
@@ -196,8 +198,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = dx_dial(devh, "", ref cap, DX_CALLP | EV_SYNC);
             if (result <= -1)
             {
-                var error = ATDV_ERRMSGP(devh);
-                throw new VoiceException(error);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
+                throw new VoiceException(err);
             }
             Logger.Debug("Call Progress Analysius Result {0}", result);
             var c = (CallAnalysis)result;
@@ -257,7 +260,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = dx_clrcap(ref cap);
             if (result <= -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
 
@@ -299,7 +303,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = ATDX_ANSRSIZ(devh);
             if (result <= -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
             return result * 10;
@@ -315,7 +320,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = dx_close(devh, 0);
             if (result <= -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
             sip.WClose();
@@ -389,7 +395,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = dx_getdig(devh, ref tpt[0], out digit, EV_SYNC);
             if (result == -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
 
             }
@@ -438,7 +445,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             if (dx_clrdigbuf(devh) == -1)
             {
                 Logger.Error("ClearDigits: Error");
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
         }
@@ -827,7 +835,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             {
                 Logger.Error("Tried to play: {0} state: {1}", filename, state);
 
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 dx_fileclose(iott.io_fhandle);
                 throw new VoiceException(err);
             }
@@ -869,7 +878,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 // make sure the file is closed
                 if (dx_fileclose(iott.io_fhandle) == -1)
                 {
-                    var err = ATDV_ERRMSGP(devh);
+                    var errPtr = ATDV_ERRMSGP(devh);
+                    var err = errPtr.IntPtrToString();
                     throw new VoiceException(err);
                 }
 
@@ -906,7 +916,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             if (dx_addtone(devh, 0, 0) == -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
         }
@@ -922,7 +933,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             if (dx_addtone(devh, 0, 0) == -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
         }
@@ -931,7 +943,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             if (dx_distone(devh, tid, DM_TONEON | DM_TONEOFF) == -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
         }
@@ -940,7 +953,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             if (dx_enbtone(devh, tid, DM_TONEON | DM_TONEOFF) == -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
         }
@@ -954,7 +968,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 {
                     return 0;
                 }
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 throw new VoiceException(err);
             }
             if (eblk.ev_event == DE_TONEON || eblk.ev_event == DE_TONEOFF)
@@ -1016,7 +1031,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             /* Now record the file */
             if (dx_reciottdata(devh, ref iott, ref tpt[0], ref xpb, RM_TONE | EV_ASYNC) == -1)
             {
-                var err = ATDV_ERRMSGP(devh);
+                var errPtr = ATDV_ERRMSGP(devh);
+                var err = errPtr.IntPtrToString();
                 dx_fileclose(iott.io_fhandle);
                 throw new VoiceException(err);
             }
@@ -1040,7 +1056,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
                 if (dx_fileclose(iott.io_fhandle) == -1)
                 {
-                    var err = ATDV_ERRMSGP(devh);
+                    var errPtr = ATDV_ERRMSGP(devh);
+                    var err = errPtr.IntPtrToString();
                     throw new VoiceException(err);
                 }
 

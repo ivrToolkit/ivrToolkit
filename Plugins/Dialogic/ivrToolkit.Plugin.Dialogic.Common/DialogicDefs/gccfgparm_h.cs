@@ -1,6 +1,6 @@
 ﻿// ReSharper disable CommentTypo
 // ReSharper disable InconsistentNaming
-namespace ivrToolkit.Dialogic.Common.DialogicDefs
+namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
 {
     public class gccfgparm_h
     {

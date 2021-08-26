@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 // ReSharper disable StringLiteralTypo
 // ReSharper disable CommentTypo
 
-namespace ivrToolkit.Dialogic.Common.DialogicDefs
+namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
 {
     public class gclib_h
     {

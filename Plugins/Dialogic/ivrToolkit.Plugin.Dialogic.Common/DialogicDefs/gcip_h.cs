@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // ReSharper disable CommentTypo
 // ReSharper disable UnusedMember.Global
 
-namespace ivrToolkit.Dialogic.Common.DialogicDefs
+namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
 {
     public class gcip_h
     {

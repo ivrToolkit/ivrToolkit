@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <Version>5.0.0-alpha1</Version>
+    <Version>5.0.0-alpha2</Version>
     <Description>A SIP implementation using Dialogic HMP V525. For use with ivrToolkit.Core</Description>
     <Copyright>Copyright 2013-2021 Troy Makaro</Copyright>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -10,7 +10,6 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageIcon>icon.jpg</PackageIcon>
     <PackageIconUrl />
-    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);GetMyPackageFiles</TargetsForTfmSpecificBuildOutput>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -23,7 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\ivrToolkit.Core\ivrToolkit.Core.csproj" />
-    <ProjectReference Include="..\..\ivrToolkit.Dialogic.Common\ivrToolkit.Dialogic.Common.csproj" />
+    <ProjectReference Include="..\..\ivrToolkit.Plugin.Dialogic.Common\ivrToolkit.Plugin.Dialogic.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,12 +31,4 @@
       <PackagePath></PackagePath>
     </None>
   </ItemGroup>
-
-  <Target Name="GetMyPackageFiles">
-    <ItemGroup>
-      <BuildOutputInPackage Include="$(OutputPath)ivrToolkit.Dialogic.Common.dll" />
-    </ItemGroup>
-  </Target>
-
-
 </Project>

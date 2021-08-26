@@ -1,4 +1,4 @@
-﻿namespace ivrToolkit.Dialogic.Common.DialogicDefs
+﻿namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
 {
     public class ipmedia_codecs_h
     {

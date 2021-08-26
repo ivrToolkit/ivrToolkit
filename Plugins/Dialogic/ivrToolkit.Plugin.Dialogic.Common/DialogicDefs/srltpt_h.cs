@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+
 // ReSharper disable InconsistentNaming
 // ReSharper disable CommentTypo
 
-namespace ivrToolkit.Dialogic.Common.DialogicDefs
+namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
 {
     public class srltpt_h
     {

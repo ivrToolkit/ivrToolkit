@@ -1,9 +1,9 @@
 ﻿using System;
-using ivrToolkit.Dialogic.Common.DialogicDefs;
-using ivrToolkit.Dialogic.Common.Exceptions;
 using System.Runtime.InteropServices;
+using ivrToolkit.Plugin.Dialogic.Common.DialogicDefs;
+using ivrToolkit.Plugin.Dialogic.Common.Exceptions;
 
-namespace ivrToolkit.Dialogic.Common.Extensions
+namespace ivrToolkit.Plugin.Dialogic.Common.Extensions
 {
     public static class DialogicExtensions
     {

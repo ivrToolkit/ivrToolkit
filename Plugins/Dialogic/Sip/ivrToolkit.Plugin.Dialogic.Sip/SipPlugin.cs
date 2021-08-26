@@ -4,8 +4,8 @@ using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.Util;
-using ivrToolkit.Dialogic.Common.DialogicDefs;
-using ivrToolkit.Dialogic.Common.Extensions;
+using ivrToolkit.Plugin.Dialogic.Common.DialogicDefs;
+using ivrToolkit.Plugin.Dialogic.Common.Extensions;
 using Microsoft.Extensions.Logging;
 
 // ReSharper disable StringLiteralTypo

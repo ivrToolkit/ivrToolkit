@@ -4,7 +4,7 @@
 // ReSharper disable UnusedMember.Global
 // ReSharper disable StringLiteralTypo
 
-namespace ivrToolkit.Dialogic.Common.DialogicDefs
+namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
 {
     public class msilib_h
     {

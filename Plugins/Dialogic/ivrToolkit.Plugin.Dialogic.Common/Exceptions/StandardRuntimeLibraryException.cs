@@ -1,9 +1,7 @@
-﻿using ivrToolkit.Dialogic.Common.DialogicDefs;
-using System;
-using System.Diagnostics;
+﻿using System;
 using System.Linq;
 
-namespace ivrToolkit.Dialogic.Common.Exceptions
+namespace ivrToolkit.Plugin.Dialogic.Common.Exceptions
 {
     public class StandardRuntimeLibraryException : Exception
     {

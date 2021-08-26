@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace ivrToolkit.Dialogic.Common.DialogicDefs
+namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
 {
     public class DXDIGIT_H
     {

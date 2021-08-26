@@ -1,11 +1,12 @@
 ﻿using System.Runtime.InteropServices;
+
 // ReSharper disable CommentTypo
 
 // ReSharper disable UnusedMember.Global
 // ReSharper disable InconsistentNaming
 // ReSharper disable StringLiteralTypo
 
-namespace ivrToolkit.Dialogic.Common.DialogicDefs
+namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
 {
     public class DXXXLIB_H
     {

@@ -1,9 +1,8 @@
-﻿using ivrToolkit.Dialogic.Common.DialogicDefs;
-using System;
-using System.Diagnostics;
+﻿using System;
 using System.Linq;
+using ivrToolkit.Plugin.Dialogic.Common.DialogicDefs;
 
-namespace ivrToolkit.Dialogic.Common.Exceptions
+namespace ivrToolkit.Plugin.Dialogic.Common.Exceptions
 {
     public class GlobalCallErrorException : Exception
     {

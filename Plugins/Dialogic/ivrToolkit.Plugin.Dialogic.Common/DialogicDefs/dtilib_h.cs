@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 // ReSharper disable UnusedMember.Global
 // ReSharper disable StringLiteralTypo
 
-namespace ivrToolkit.Dialogic.Common.DialogicDefs
+namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
 {
     public class dtilib_h
     {

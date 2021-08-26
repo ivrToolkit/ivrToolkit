@@ -3,6 +3,12 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <Version>5.0.0-alpha1</Version>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <Description>A toolkit for writing Interactive Voice Response Applications with primary support for Dialogic Cards.</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Copyright>Copyright 2013-2021 Troy Makaro</Copyright>
+    <PackageProjectUrl>http://www.ivrtoolkit.com</PackageProjectUrl>
+    <PackageIcon>icon.jpg</PackageIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

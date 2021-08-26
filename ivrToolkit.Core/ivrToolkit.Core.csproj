@@ -9,6 +9,7 @@
     <Copyright>Copyright 2013-2021 Troy Makaro</Copyright>
     <PackageProjectUrl>http://www.ivrtoolkit.com</PackageProjectUrl>
     <PackageIcon>icon.jpg</PackageIcon>
+    <PackageIconUrl />
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -420,6 +421,13 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="icon.jpg">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

@@ -1,41 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net40;net45;net472</TargetFrameworks>
-    <Version>2.0.9</Version>
-    <Description>A SIP implementation using Dialogic HMP V525. For use with ivrToolkit.Core</Description>
-    <Copyright>Copyright 2013-2021 Troy Makaro</Copyright>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageProjectUrl>http://www.ivrtoolkit.com</PackageProjectUrl>
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <PackageIcon>icon.jpg</PackageIcon>
-    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);GetMyPackageFiles</TargetsForTfmSpecificBuildOutput>
+    <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\ivrToolkit.Core\ivrToolkit.Core.csproj" />
-    <ProjectReference Include="..\ivrToolkit.DialogicSipWrapper\ivrToolkit.DialogicSipWrapper.vcxproj" PrivateAssets="All" />
+    <ProjectReference Include="..\..\ivrToolkit.Dialogic.Common\ivrToolkit.Dialogic.Common.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <None Include="icon.jpg">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-  </ItemGroup>
-
-  <Target Name="GetMyPackageFiles">
-    <ItemGroup>
-      <BuildOutputInPackage Include="$(OutputPath)ivrToolkit.DialogicSipWrapper.dll" />
-    </ItemGroup>
-  </Target>
 
 </Project>

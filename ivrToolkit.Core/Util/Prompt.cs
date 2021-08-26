@@ -6,6 +6,9 @@
 // 
 using System;
 using ivrToolkit.Core.Exceptions;
+using ivrToolkit.Core.Extensions;
+using ivrToolkit.Core.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Core.Util
 {
@@ -15,225 +18,193 @@ namespace ivrToolkit.Core.Util
     public class Prompt
     {
         private readonly ILine _line;
-
-        private bool _allowEmpty = true;
+        private readonly ILogger<Prompt> _logger;
 
         /// <summary>
-        /// Instatiate the class with the line out want to ask questions on.
+        /// Instantiate the class with the line out want to ask questions on.
         /// </summary>
+        /// <param name="loggerFactory"></param>
+        /// <param name="voiceProperties"></param>
         /// <param name="line">The voice line to use</param>
-        public Prompt(ILine line)
+        public Prompt(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, ILine line)
         {
+            _logger = loggerFactory.CreateLogger<Prompt>();
+            _logger.LogDebug("Ctr()");
+
             _line = line;
+            Attempts = voiceProperties.PromptAttempts;
+            BlankAttempts = voiceProperties.PromptBlankAttempts;
         }
 
         /// <summary>
         /// Lets blank be a valid answer. Only works if OnValidation = null. If you supply onValidation then you are in total
         /// control of the validation.
         /// </summary>
-        public bool AllowEmpty
-        {
-            get { return _allowEmpty; }
-            set { _allowEmpty = value; }
-        }
+        public bool AllowEmpty { get; set; } = true;
 
-        private string _specialTerminator;
         /// <summary>
         /// You can define special terminator digits that will fire the OnSpecialTerminator event. For example a '*' could take you to a special option to control volume.
         /// </summary>
-        public string SpecialTerminator
-        {
-            get { return _specialTerminator; }
-            set { _specialTerminator = value; }
-        }
+        public string SpecialTerminator { get; set; }
 
-        private string _tooManyAttemptsMessage;
         /// <summary>
         /// A message to be played before throwing the TooManyAttemptsException. If null then no message will be played.
         /// </summary>
-        public string TooManyAttemptsMessage
-        {
-            get { return _tooManyAttemptsMessage; }
-            set { _tooManyAttemptsMessage = value; }
-        }
-        private string _invalidAnswerMessage;
-        /// <summary>
-        /// A message to be played if the answer is inccorrect. If null then no message will be played.
-        /// </summary>
-        public string InvalidAnswerMessage
-        {
-            get { return _invalidAnswerMessage; }
-            set { _invalidAnswerMessage = value; }
-        }
+        public string TooManyAttemptsMessage { get; set; }
 
-        private string _promptMessage;
+        /// <summary>
+        /// A message to be played if the answer is incorrect. If null then no message will be played.
+        /// </summary>
+        public string InvalidAnswerMessage { get; set; }
+
         /// <summary>
         /// The prompt message to play before calling the GetDigits method
         /// </summary>
-        public string PromptMessage
-        {
-            get { return _promptMessage; }
-            set { _promptMessage = value; }
-        }
+        public string PromptMessage { get; set; }
 
-        private bool _catchTooManyAttempts = true;
         /// <summary>
         /// Set to false and the prompt will return a value of "". Set to true and TooManyAttemptsException will be thrown.
         /// </summary>
-        public bool CatchTooManyAttempts
-        {
-            get { return _catchTooManyAttempts; }
-            set { _catchTooManyAttempts = value; }
-        }
+        public bool CatchTooManyAttempts { get; set; } = true;
+
         /// <summary>
         /// Method signature for use with the OnValidation event
         /// </summary>
         /// <param name="answer">The string to be validated</param>
         /// <returns>true if valid. false if invalid</returns>
         public delegate bool ValidationHandler(string answer);
+
         /// <summary>
         /// Use this event to define your own validation.
         /// </summary>
         public event ValidationHandler OnValidation;
+
         /// <summary>
         /// Method signature for use with the OnSpecialTerminator event
         /// </summary>
         public delegate void SpecialTerminatorHandler();
+
         /// <summary>
         /// Use this event to define what you want to do if a special terminator digit was pressed.
         /// </summary>
         public event SpecialTerminatorHandler OnSpecialTerminator;
+
         /// <summary>
         /// Method signature for the OnKeysEntered event
         /// </summary>
         /// <param name="keys">The digits pressed</param>
         /// <param name="terminator">The terminator digit pressed</param>
         public delegate void KeysEnteredHandler(string keys, string terminator);
+
         /// <summary>
         /// Use this event to track what keys have been pressed. The intended use is for logging keypresses not for validation.
         /// </summary>
         public event KeysEnteredHandler OnKeysEntered;
+
         /// <summary>
         /// Method signature for the OnPrePlay event
         /// </summary>
-        /// <param name="fileOrSentance">The wav file name or a sentance. A sentance is the 'data|code,data|code' format that PlayString uses</param>
+        /// <param name="fileOrSentance">The wav file name or a sentence. A sentence is the 'data|code,data|code' format that PlayString uses</param>
         public delegate void PrePlayHandler(string fileOrSentance);
+
         /// <summary>
         /// Use this event to do something just before the prompt is asked.
         /// </summary>
         public event PrePlayHandler OnPrePlay;
 
-        private int _attempts = VoiceProperties.Current.PromptAttempts;
-
-        private int _blankAttempts = VoiceProperties.Current.PromptBlankAttempts;
 
         /// <summary>
         /// The number of attempts before throwing the TooManyAttemptsException
         /// </summary>
-        public int Attempts
-        {
-            get { return _attempts; }
-            set { _attempts = value; }
-        }
+        public int Attempts { get; set; }
 
         /// <summary>
         /// The number of blank attempts before throwing the TooManyAttemptsException
         /// </summary>
-        public int BlankAttempts
-        {
-            get { return _blankAttempts; }
-            set { _blankAttempts = value; }
-        }
+        public int BlankAttempts { get; set; }
 
-        private int _numberOfDigits = 99;
         /// <summary>
-        /// The number of digits the prompt can ask for before automatically terminating. The default is 99 so every prompt requires a pound key for termination. Set to 1 for menu prompts.
+        /// The number of digits the prompt can ask for before automatically terminating. The default is DG_MAXDIGS = 31 so every prompt requires a pound key for termination. Set to 1 for menu prompts.
         /// </summary>
-        public int NumberOfDigits
-        {
-            get { return _numberOfDigits; }
-            set { _numberOfDigits = value; }
-        }
-        private string _terminators = "#";
+        public int NumberOfDigits { get; set; } = 31;
+
         /// <summary>
         /// List of one or more valid termination digits. The default is '#'. You can also use 'T' which will allow a timeout to be a valid termination key
         /// </summary>
-        public string Terminators
-        {
-            get { return _terminators; }
-            set { _terminators = value; }
-        }
-        private string _answer;
+        public string Terminators { get; set; } = "#";
+
         /// <summary>
         /// Calling Ask() returns the answer anyways but if you want you can also retrieve the keypresses with this property.
         /// </summary>
-        public string Answer
-        {
-            get { return _answer; }
-            set { _answer = value; }
-        }
+        public string Answer { get; set; }
+
         /// <summary>
         /// Asks the question and returns an answer.
         /// </summary>
         public string Ask()
         {
+            _logger.LogDebug("Ask()");
             var count = 0;
             var blankCount = 0;
-            var myTerminators = _terminators + (_specialTerminator ?? "");
-            while (count < _attempts)
+            var myTerminators = Terminators + (SpecialTerminator ?? "");
+            while (count < Attempts)
             {
-                if (blankCount >= _blankAttempts)
+                if (blankCount >= BlankAttempts)
                 {
                     break;
                 }
+
                 try
                 {
-                    if (OnPrePlay != null)
-                    {
-                        OnPrePlay(_promptMessage);
-                    }
-                    PlayFileOrPhrase(_promptMessage);
-                    _answer = _line.GetDigits(_numberOfDigits, myTerminators+"t");
+                    OnPrePlay?.Invoke(PromptMessage);
+
+                    PlayFileOrPhrase(PromptMessage);
+                    Answer = _line.GetDigits(NumberOfDigits, myTerminators + "t");
                     if (OnKeysEntered != null)
                     {
                         var term = _line.LastTerminator;
-                        OnKeysEntered(_answer, term);
+                        OnKeysEntered(Answer, term);
                     }
+
                     if (_line.LastTerminator == "t")
                     {
                         if (myTerminators.IndexOf("t", StringComparison.Ordinal) == -1)
                         {
                             throw new GetDigitsTimeoutException();
                         }
-                        if (!_allowEmpty && _answer == "")
+
+                        if (!AllowEmpty && Answer == "")
                         {
-                            throw new GetDigitsTimeoutException();                                
+                            throw new GetDigitsTimeoutException();
                         }
                     }
-                    if (_specialTerminator != null && _line.LastTerminator == _specialTerminator)
+
+                    if (SpecialTerminator != null && _line.LastTerminator == SpecialTerminator)
                     {
                         if (OnSpecialTerminator != null)
                         {
                             OnSpecialTerminator();
                         }
+
                         count--; // give them another chance
                     }
                     else
                     {
                         if (OnValidation != null)
                         {
-                            if (OnValidation(_answer))
+                            if (OnValidation(Answer))
                             {
-                                return _answer;
+                                return Answer;
                             }
                         }
                         else
                         {
-                            if (_answer != "" || _allowEmpty) return _answer;
+                            if (Answer != "" || AllowEmpty) return Answer;
                         }
-                        if (_invalidAnswerMessage != null)
+
+                        if (InvalidAnswerMessage != null)
                         {
-                            PlayFileOrPhrase(_invalidAnswerMessage);
+                            PlayFileOrPhrase(InvalidAnswerMessage);
                         }
                     }
                 }
@@ -243,24 +214,28 @@ namespace ivrToolkit.Core.Util
 
                 // increment counters
                 blankCount++;
-                if (!string.IsNullOrEmpty(_answer)) blankCount = 0;
+                if (!string.IsNullOrEmpty(Answer)) blankCount = 0;
                 count++;
 
             } // while
 
             // too many attempts
-            if (!_catchTooManyAttempts)
+            if (!CatchTooManyAttempts)
             {
                 return "";
             }
-            if  (_tooManyAttemptsMessage != null) {
-                PlayFileOrPhrase(_tooManyAttemptsMessage);
+
+            if (TooManyAttemptsMessage != null)
+            {
+                PlayFileOrPhrase(TooManyAttemptsMessage);
             }
+
             throw new TooManyAttempts();
         }
 
         private void PlayFileOrPhrase(string fileNameOrPhrase)
         {
+            _logger.LogDebug("PlayFileOrPhrase({0})", fileNameOrPhrase);
             if (fileNameOrPhrase.IndexOf("|", StringComparison.Ordinal) != -1)
             {
                 _line.PlayString(fileNameOrPhrase);

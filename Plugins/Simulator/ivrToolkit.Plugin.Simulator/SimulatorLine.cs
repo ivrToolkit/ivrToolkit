@@ -11,8 +11,9 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using ivrToolkit.Core;
+using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
-using ivrToolkit.Core.Util;
+using ivrToolkit.Core.Interfaces;
 
 namespace ivrToolkit.Plugin.Simulator
 {
@@ -29,6 +30,8 @@ namespace ivrToolkit.Plugin.Simulator
 
 
         private LineStatusTypes _status = LineStatusTypes.OnHook;
+
+        public ILineManagement Management { get; }
 
         public LineStatusTypes Status
         {
@@ -88,6 +91,11 @@ namespace ivrToolkit.Plugin.Simulator
             {
                 Hangup();
             }
+        }
+
+        public void CheckDispose()
+        {
+            throw new NotImplementedException();
         }
 
         public void WaitRings(int rings)
@@ -382,5 +390,9 @@ namespace ivrToolkit.Plugin.Simulator
         }
 
         public int Volume { get; set; }
+        public void Dispose()
+        {
+            throw new NotImplementedException();
+        }
     } // class
 }

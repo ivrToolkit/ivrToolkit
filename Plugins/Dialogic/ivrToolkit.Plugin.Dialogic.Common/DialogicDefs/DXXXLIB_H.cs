@@ -87,6 +87,18 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int dx_clrdigbuf(int chdev);
 
+        [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int ATDX_CONNTYPE(int SrlDevice);
+
+        [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void dx_clrcap(ref DX_CAP capp);
+
+        [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int dx_dial(int chdev, string dialstring, ref DX_CAP capp, ushort mode);
+
+        [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int ATDX_ANSRSIZ(int SrlDevice);
+
         /* FAX features */
         public const int FT_FAX = 0x0001;
         public const int FT_VFX40 = 0x0002;

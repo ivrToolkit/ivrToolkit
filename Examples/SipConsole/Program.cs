@@ -25,18 +25,12 @@ namespace SipConsole
             var logger = loggerFactory.CreateLogger<Program>();
             logger.LogDebug("Starting the program!");
 
-            var dialogicVoiceProperties = new VoiceProperties(loggerFactory, "voice.properties");
+            var dialogicSipVoiceProperties = new DialogicSipVoiceProperties(loggerFactory, "voice.properties");
 
-            // there are two ways to setup the PluginManager.
-            // 1) instantiate the plugin and inject it into the PluginManager
-            // 2) Have the PluginManager instantiate the plugin from voice.properties (original way)
-
-            var sipPlugin = new SipPlugin(loggerFactory, dialogicVoiceProperties);
+            var sipPlugin = new SipPlugin(loggerFactory, dialogicSipVoiceProperties);
 
             PluginManager pluginManager = null;
 
-            // Optionally setup the plugin from voice.properties
-            //pluginManager = new PluginManager(loggerFactory, dialogicVoiceProperties);
             try
             {
                 pluginManager = new PluginManager(loggerFactory, sipPlugin);
@@ -45,7 +39,7 @@ namespace SipConsole
                 var line = pluginManager.GetLine(1);
 
                 Console.WriteLine("Start Line {0}", 1);
-                var waitThread1 = new Thread(() => WaitCall(loggerFactory, dialogicVoiceProperties, line));
+                var waitThread1 = new Thread(() => WaitCall(loggerFactory, dialogicSipVoiceProperties, line));
 
                 waitThread1.Start();
 

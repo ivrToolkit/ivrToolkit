@@ -431,6 +431,31 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
          */
         public const int IPSET_SIP_MSGINFO = BASE_SETID + 27;
 
+        /* Different Parm IDs that can be used with SetID IPSET_SIP_MSGINFO */
+
+        public const int IPPARM_REQUEST_URI = 0x01;
+        public const int IPPARM_CONTACT_URI = 0x02;
+        public const int IPPARM_FROM_DISPLAY = 0x03;
+        public const int IPPARM_TO_DISPLAY = 0x04;
+        public const int IPPARM_CONTACT_DISPLAY = 0x05;
+        public const int IPPARM_REFERRED_BY = 0x06;
+        public const int IPPARM_REPLACES = 0x07;
+        public const int IPPARM_CONTENT_DISPOSITION = 0x08;
+        public const int IPPARM_CONTENT_ENCODING = 0x09;
+        public const int IPPARM_CONTENT_LENGTH = 0x0a;
+        public const int IPPARM_CONTENT_TYPE = 0x0b;
+        public const int IPPARM_REFER_TO = 0x0c;
+        public const int IPPARM_DIVERSION_URI = 0x0d;
+        public const int IPPARM_EVENT_HDR = 0x0e;
+        public const int IPPARM_EXPIRES_HDR = 0x0f;
+        public const int IPPARM_CALLID_HDR = 0x10;
+        public const int IPPARM_SIP_HDR = 0x11;
+        public const int IPPARM_FROM = 0x12;
+        public const int IPPARM_TO = 0x13;
+        public const int IPPARM_SIP_HDR_REMOVE = 0x14;
+        public const int IPPARM_SIP_VIA_HDR_REPLACE = 0x15;
+
+
     }
 
 

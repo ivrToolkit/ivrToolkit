@@ -1,5 +1,4 @@
 ﻿using System;
-using ivrToolkit.Core;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
@@ -16,12 +15,12 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
     public class SipPlugin : IIvrPlugin
     {
         private readonly ILoggerFactory _loggerFactory;
-        private readonly VoiceProperties _voiceProperties;
+        private readonly DialogicSipVoiceProperties _voiceProperties;
         private UnmanagedMemoryService _unmanagedMemoryService;
         private readonly ILogger<SipPlugin> _logger;
         private bool _disposed;
 
-        public SipPlugin(ILoggerFactory loggerFactory, VoiceProperties voiceProperties)
+        public SipPlugin(ILoggerFactory loggerFactory, DialogicSipVoiceProperties voiceProperties)
         {
             loggerFactory.ThrowIfNull(nameof(loggerFactory));
             voiceProperties.ThrowIfNull(nameof(voiceProperties));

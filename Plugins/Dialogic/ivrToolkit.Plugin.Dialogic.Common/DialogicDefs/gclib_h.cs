@@ -46,8 +46,10 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public static extern int gc_SetUsrAttr(int linedev, IntPtr usr_attr);
 
         [DllImport("libgc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int gc_util_insert_parm_ref(ref IntPtr parm_blkpp, ushort setID, ushort parmID,
-            byte data_size, IntPtr datap);
+        public static extern int gc_util_insert_parm_ref(ref IntPtr parm_blkpp, ushort setID, ushort parmID, byte data_size, IntPtr datap);
+
+        [DllImport("libgc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int gc_util_insert_parm_ref_ex(ref IntPtr parm_blkpp, uint setID, uint parmID, uint data_size, IntPtr datap);
 
         [DllImport("libgc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int gc_SetAuthenticationInfo(int target_type, int target_id, IntPtr target_datap);
@@ -103,6 +105,12 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         [DllImport("libgc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int gc_Extension(int target_type, int target_id, byte ext_id,
             IntPtr parmblkp, ref IntPtr retblkp, uint mode);
+
+        [DllImport("libgc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int gc_MakeCall(int linedev, ref int crnp, string numberstr,
+            ref GC_MAKECALL_BLK makecallp, int timeout, uint mode);
+
+
 
 
 
@@ -470,7 +478,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public const int GCACK_SERVICE_PROC = 0x3;
         public const int GCACK_SERVICE_INFO = 0x4;
 
-        public const int GCPV_ENABLE = 1;      /* enable feature */
+        public const int GCPV_ENABLE = 1; /* enable feature */
         public const int GCPV_DISABLE = 0; /* disable feature */
 
         /*
@@ -500,7 +508,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         /*
          * The call states defined for supplementary services  
          */
-        public const int GCSUPP_CALLSTBASE = 0x40000000;				/* Call state base for GC supplementary services */
+        public const int GCSUPP_CALLSTBASE = 0x40000000; /* Call state base for GC supplementary services */
         public const int GCST_INVOKE_XFER_ACCEPTED = GCSUPP_CALLSTBASE | 0x1;
         public const int GCST_INVOKE_XFER = GCSUPP_CALLSTBASE | 0x2;
         public const int GCST_REQ_XFER = GCSUPP_CALLSTBASE | 0x4;
@@ -509,6 +517,23 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public const int GCST_REQ_INIT_XFER = GCSUPP_CALLSTBASE | 0x20;
         public const int GCST_HOLD = GCSUPP_CALLSTBASE | 0x40;
         public const int GCST_HELD = GCSUPP_CALLSTBASE | 0x80;
+
+        public const int MAX_ADDRESS_LEN = GC_ADDRSIZE; /* Maximum length of an address */
+
+        /* 
+         * List of possible values for address_type parameter in the 
+         * GCLIB_ADDRESS_BLK structure.
+         */
+        public const int GCADDRTYPE_TRANSPARENT = 1;    /* Transparent Number*/
+        public const int GCADDRTYPE_NAT = 2;    /* National Number */
+        public const int GCADDRTYPE_INTL = 3;    /* International Number */
+        public const int GCADDRTYPE_LOC = 4;    /* Local Number */
+        public const int GCADDRTYPE_IP = 5;    /* Internet Protocol Address) */
+        public const int GCADDRTYPE_URL = 6;    /* URL Address */
+        public const int GCADDRTYPE_DOMAIN = 7;    /* Domain address) */
+        public const int GCADDRTYPE_EMAIL = 8;    /* Email Address */
+        public const int GCADDRTYPE_NET_SPECIFIC = 9;    /* Network specific address */
+        public const int GCADDRTYPE_ABBREVIATED = 10; /* Abbreviated address */
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
@@ -546,7 +571,6 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         /* + = CCLib ID number */
         /* -1 = unknown */
         public int rfu1; /* for future use only */
-
     }
 
 
@@ -631,7 +655,8 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
 
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
-    public struct DNIS{
+    public struct DNIS
+    {
         public int accept;
     }
 
@@ -654,7 +679,8 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
-    public struct GC_PRIVATE {
+    public struct GC_PRIVATE
+    {
         public int gc_private1;
         public int gc_private2;
         public int gc_private3;
@@ -664,20 +690,14 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
     [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Ansi, Pack = 1)]
     public struct GC_CALLACK_BLK
     {
-        [FieldOffset(0)]
-        public uint type; /* type of a structure inside following union */
-        [FieldOffset(4)]
-        public int rfu; /* will be used for common functionality */
+        [FieldOffset(0)] public uint type; /* type of a structure inside following union */
+        [FieldOffset(4)] public int rfu; /* will be used for common functionality */
 
         //    union {
-        [FieldOffset(8)]
-        public DNIS dnis;
-        [FieldOffset(8)]
-        public ISDN isdn;
-        [FieldOffset(8)]
-        public INFO info;
-        [FieldOffset(8)]
-        public GC_PRIVATE gc_private;
+        [FieldOffset(8)] public DNIS dnis;
+        [FieldOffset(8)] public ISDN isdn;
+        [FieldOffset(8)] public INFO info;
+        [FieldOffset(8)] public GC_PRIVATE gc_private;
     }
 
     /* IP_AUDIO_CAPABILITY : This structure is used to allow some minimum set of information
@@ -739,12 +759,9 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
     [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Ansi, Pack = 1)]
     public struct IP_CAPABILITY_UNION
     {
-        [FieldOffset(0)]
-        public IP_AUDIO_CAPABILITY audio;
-        [FieldOffset(0)]
-        public IP_VIDEO_CAPABILITY video;
-        [FieldOffset(0)]
-        public IP_DATA_CAPABILITY data;
+        [FieldOffset(0)] public IP_AUDIO_CAPABILITY audio;
+        [FieldOffset(0)] public IP_VIDEO_CAPABILITY video;
+        [FieldOffset(0)] public IP_DATA_CAPABILITY data;
     }
 
     /* IP_CAPABILITY | This structure is intended to be a very simplified capability 
@@ -806,6 +823,74 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public int mediaHandle;
         public int faxHandle;
         public eIPConnectType_e connectType;
+    }
+
+
+    /* 
+     *    This structure is used for providing address information about the 
+     *    origination and destination parties in the makecall block.
+     */
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+    public struct GCLIB_ADDRESS_BLK
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+        public string address; /* address data element */
+        public byte address_type; /* address type parameter */
+        public byte address_plan; /* address plan parameter */
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+        public string sub_address; /* address data element */
+        public byte sub_address_type; /* sub-address data element */
+        public byte sub_address_plan; /* sub-address plan data element */
+    }
+
+    /*
+     *   This structure provides information about the medium e.g. timeslot to be
+     *   used for the call. See the Technology User's Guide for support information.  
+     */
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+    public struct GCLIB_CHAN_BLK
+    {
+        public byte medium_id; /* select timeslot/port */
+        public byte medium_sel; /* Preferred or exclusive */
+    }
+
+    /*
+     *   This structure provides information about the call e.g. category of the
+     *   call. See the Technology User's Guide for support information.  
+     */
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+    public struct GCLIB_CALL_BLK
+    {
+        public byte category; /* Category of the call */
+        public byte address_info; /* Indicates if address is */
+        /* complete or overlap mode */
+    }
+
+
+
+    /*
+     *   This is the Generic GC makecall block to be used for all technologies.
+     */
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+    public struct GCLIB_MAKECALL_BLK
+    {
+        public GCLIB_ADDRESS_BLK destination; /* Called party information */
+        public GCLIB_ADDRESS_BLK origination; /* Calling party information */
+        public GCLIB_CHAN_BLK chan_info; /* Channel information */
+        public GCLIB_CALL_BLK call_info; /* Call information */
+        public GC_PARM_BLK ext_datap; /* Extended parameters */
+    }
+
+
+    /*
+     *    This structure is used for passing the GC generic makecall block or 
+     *    a technology specific makecall block.
+     */
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+    public struct GC_MAKECALL_BLK
+    {
+        public IntPtr gclib; /* Generic makecall block */
+        public IntPtr cclib; /* cclib specific portion */
     }
 
 }

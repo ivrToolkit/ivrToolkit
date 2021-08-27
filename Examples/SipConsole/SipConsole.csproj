@@ -56,6 +56,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\ivrToolkit.Core\ivrToolkit.Core.csproj" />
+    <ProjectReference Include="..\..\Plugins\Dialogic\ivrToolkit.Plugin.Dialogic.Common\ivrToolkit.Plugin.Dialogic.Common.csproj" />
     <ProjectReference Include="..\..\Plugins\Dialogic\Sip\ivrToolkit.Plugin.Dialogic.Sip\ivrToolkit.Plugin.Dialogic.Sip.csproj" />
   </ItemGroup>
 

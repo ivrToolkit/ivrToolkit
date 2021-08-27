@@ -8,11 +8,11 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using ivrToolkit.Core;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
+using ivrToolkit.Plugin.Dialogic.Common;
 using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Plugin.Dialogic.Analog
@@ -20,7 +20,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
     public class AnalogLine : ILine, ILineManagement
     {
         private readonly int _voiceh;
-        private readonly VoiceProperties _voiceProperties;
+        private readonly DialogicVoiceProperties _voiceProperties;
         private readonly ILogger<AnalogLine> _logger;
         private LineStatusTypes _status = LineStatusTypes.OnHook;
 
@@ -29,7 +29,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         private bool _stopped;
         private int _volume;
 
-        public AnalogLine(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, int devh, int voiceh, int lineNumber)
+        public AnalogLine(ILoggerFactory loggerFactory, DialogicVoiceProperties voiceProperties, int devh, int voiceh, int lineNumber)
         {
             _logger = loggerFactory.CreateLogger<AnalogLine>();
             // can only instantiate this class from IVoice

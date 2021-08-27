@@ -41,29 +41,6 @@ namespace ivrToolkit.Core
             _ivrPlugin = ivrPlugin;
         }
 
-        public PluginManager(ILoggerFactory loggerFactory, VoiceProperties voiceProperties)
-        {
-            loggerFactory.ThrowIfNull(nameof(loggerFactory));
-            voiceProperties.ThrowIfNull(nameof(voiceProperties));
-
-            _logger = loggerFactory.CreateLogger<PluginManager>();
-            _logger.LogDebug("ctr() - generates plugin from voice.properties");
-
-            var className = voiceProperties.ClassName;
-            var assemblyName = voiceProperties.AssemblyName;
-
-            // create an instance of the class from the assembly
-            var assembly = Assembly.LoadFrom(assemblyName);
-            var obj = assembly.CreateInstance(className);
-
-            // check if this class implements IIvrPlugin interface
-            if (obj is not IIvrPlugin plugin)
-            {
-                throw new VoiceException("class must implement the IIvrPlugin interface");
-            }
-            _ivrPlugin = plugin;
-        }
-
         /// <summary>
         /// Gets the line class that will do the line manipulation. This method relies on the following entries in voice.properties:
         /// 

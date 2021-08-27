@@ -7,9 +7,9 @@
 
 using System;
 using System.Globalization;
-using ivrToolkit.Core;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
+using ivrToolkit.Plugin.Dialogic.Common;
 using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Plugin.Dialogic.Analog
@@ -20,12 +20,12 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
     public class AnalogPlugin : IIvrPlugin
     {
         private readonly ILoggerFactory _loggerFactory;
-        private readonly VoiceProperties _voiceProperties;
+        private readonly DialogicVoiceProperties _voiceProperties;
         private readonly object _lockObject = new();
         private bool _initialized;
         private readonly ILogger<AnalogPlugin> _logger;
 
-        public AnalogPlugin(ILoggerFactory loggerFactory, VoiceProperties voiceProperties)
+        public AnalogPlugin(ILoggerFactory loggerFactory, DialogicVoiceProperties voiceProperties)
         {
             _loggerFactory = loggerFactory;
             _voiceProperties = voiceProperties;

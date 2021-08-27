@@ -537,14 +537,118 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         public void RecordToFile(string filename)
         {
-            CheckDisposed();
-            throw new NotImplementedException();
+            RecordToFile(filename, 60000 * 5); // default timeout of 5 minutes
         }
 
-        public void RecordToFile(string filename, int timeoutMillisconds)
+        public void RecordToFile(string filename, int timeoutMilliseconds)
         {
-            CheckDisposed();
-            throw new NotImplementedException();
+            _logger.LogDebug("RecordToFile({0}, {1})", filename, timeoutMilliseconds);
+
+            CheckDisposing();
+            RecordToFile(filename, "0123456789#*abcd", _currentXpb, timeoutMilliseconds);
+        }
+
+        /// <summary>
+        /// Record a vox or wav file.
+        /// </summary>
+        /// <param name="filename">The name of the file to play.</param>
+        /// <param name="terminators">Terminator keys</param>
+        /// <param name="xpb">The format of the vox or wav file.</param>
+        /// <param name="timeoutMilli">Number of milliseconds before timeout</param>
+        private void RecordToFile(string filename, string terminators, DX_XPB xpb, int timeoutMilli)
+        {
+
+            FlushDigitBuffer();
+
+            /* set up DV_TPT */
+            var tpt = GetTerminationConditions(1, terminators, timeoutMilli);
+
+            var iott = new DX_IOTT { io_type = DXTABLES_H.IO_DEV | DXTABLES_H.IO_EOT, io_bufp = null, io_offset = 0, io_length = -1 };
+            /* set up DX_IOTT */
+            if ((iott.io_fhandle = DXXXLIB_H.dx_fileopen(filename, fcntl_h._O_CREAT | fcntl_h._O_BINARY | fcntl_h._O_RDWR, stat_h._S_IWRITE)) == -1)
+            {
+                var fileErr = DXXXLIB_H.dx_fileerrno();
+
+                var err = "";
+
+                switch (fileErr)
+                {
+                    case DXTABLES_H.EACCES:
+                        err = "Tried to open read-only file for writing, file's sharing mode does not allow specified operations, or given path is directory.";
+                        break;
+                    case DXTABLES_H.EEXIST:
+                        err = "_O_CREAT and _O_EXCL flags specified, but filename already exists.";
+                        break;
+                    case DXTABLES_H.EINVAL:
+                        err = "Invalid oflag or pmode argument.";
+                        break;
+                    case DXTABLES_H.EMFILE:
+                        err = "No more file descriptors available (too many open files).";
+                        break;
+                    case DXTABLES_H.ENOENT:
+                        err = "File or path not found.";
+                        break;
+                }
+
+                DXXXLIB_H.dx_fileclose(iott.io_fhandle);
+
+                throw new VoiceException(err);
+            }
+
+            /* Now record the file */
+            if (DXXXLIB_H.dx_reciottdata(_devh, ref iott, ref tpt[0], ref xpb, DXXXLIB_H.RM_TONE | DXXXLIB_H.EV_ASYNC) == -1)
+            {
+                var errPtr = srllib_h.ATDV_ERRMSGP(_devh);
+                var err = errPtr.IntPtrToString();
+                DXXXLIB_H.dx_fileclose(iott.io_fhandle);
+                throw new VoiceException(err);
+            }
+
+            var handler = 0;
+
+            while (true)
+            {
+                var handles = new[] { _devh };
+                // This code has a timeout so that if the user hangs up while recording there name it can be detected.
+                srllib_h.sr_waitevtEx(handles, 1, 5000, ref handler);
+
+                //Check if the call is still connected
+                CheckCallState();
+
+                var type = srllib_h.sr_getevttype((uint)handler);
+                //Ignore events that are not of they type we want.
+                if (type != DXXXLIB_H.TDX_RECORD)
+                {
+                    continue;
+                }
+
+                if (DXXXLIB_H.dx_fileclose(iott.io_fhandle) == -1)
+                {
+                    var errPtr = srllib_h.ATDV_ERRMSGP(_devh);
+                    var err = errPtr.IntPtrToString();
+                    throw new VoiceException(err);
+                }
+
+                var reason = DXXXLIB_H.ATDX_TERMMSK(_devh);
+                _logger.LogDebug("Type = TDX_RECORD, Reason = {0} = {1}", reason, GetReasonDescription(reason));
+                if ((reason & DXTABLES_H.TM_ERROR) == DXTABLES_H.TM_ERROR)
+                {
+                    throw new VoiceException("TM_ERROR");
+                }
+
+                if ((reason & DXTABLES_H.TM_USRSTOP) == DXTABLES_H.TM_USRSTOP)
+                {
+                    throw new DisposingException();
+                }
+
+                if ((reason & DXTABLES_H.TM_LCOFF) == DXTABLES_H.TM_LCOFF)
+                {
+                    throw new HangupException();
+                }
+
+                FlushDigitBuffer();
+                return;
+            }
         }
 
         public string GetDigits(int numberOfDigits, string terminators)

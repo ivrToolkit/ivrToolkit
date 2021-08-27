@@ -53,6 +53,9 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public static extern int dx_playiottdata(int ChDev, ref DX_IOTT iottp, ref DV_TPT tptp, ref DX_XPB xpbp, ushort mode);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int dx_reciottdata(int ChDev, ref DX_IOTT iottp, ref DV_TPT tptp, ref DX_XPB xpbp, ushort mode);
+
+        [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int dx_fileclose(int handle);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
@@ -346,6 +349,32 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public const int CS_HOOK = 11;    /* A change in hookstate is in progress */
         public const int CS_WINK = 12;    /* A wink operation is in progress */
         public const int CS_RINGS = 15; /* Call status Rings state */
+
+        /*
+         * Channel Mode values
+         */
+        public const int MD_ADPCM = 0x0000;    /* ADPCM data (the default) */
+        public const int MD_PCM = 0x0100;    /* Mu-Law PCM data */
+        public const int MD_FFT = 0x0200;    /* FFT data (debugging) */
+        public const int MD_GAIN = 0x0000;    /* AGC on */
+        public const int MD_NOGAIN = 0x1000;    /* AGC off */
+        public const int PM_TONE = 0x0001;    /* Tone initiated play/record */
+        public const int RM_TONE = PM_TONE;
+        public const int PM_SR6 = 0x2000;    /* 6KHz sampling rate (digitization) */
+        public const int PM_SR8 = 0x4000;    /* 8KHz sampling rate (digitization) */
+        public const int RM_SR6 = PM_SR6;
+        public const int RM_SR8 = PM_SR8;
+        public const int PM_ALAW = 0x0020;    /* Play A-Law data         */
+        public const int RM_ALAW = PM_ALAW;   /* Record data using A-Law */
+        public const int PM_DTINIT = 0x0002;    /* Play with DTMF init */
+        public const int RM_DTINIT = PM_DTINIT; /* Record with DTMF init */
+        public const int PM_DTINITSET = 0x0010 | PM_DTINIT; /* Play with DTMF init set */
+        public const int RM_DTINITSET = PM_DTINITSET;   /* Record with DTMF init set */
+        public const int R2_COMPELDIG = 0x0400;    /* R2MF Compelled signalling */
+        public const int RM_USERTONE = 0x0040;
+        public const int RM_NOTIFY = 0x0004;    /* record notification beep tone must be generated */
+        public const int RM_VADNOTIFY = 0x0008;
+        public const int RM_ISCR = 0x0080;
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]

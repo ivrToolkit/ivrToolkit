@@ -5,15 +5,15 @@ using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Plugin.Dialogic.Sip;
 using Microsoft.Extensions.Logging;
-using SipConsole.ScriptBlocks;
+using SipInTest.ScriptBlocks;
 
-namespace SipConsole
+namespace SipInTest
 {
     class Program
     {
         static void Main()
         {
-            using ILoggerFactory loggerFactory =
+            var loggerFactory =
                 LoggerFactory.Create(builder =>
                     builder.AddSimpleConsole(options =>
                     {
@@ -46,13 +46,9 @@ namespace SipConsole
                 Console.WriteLine("All threads should be alive.");
                 Console.ReadLine();
 
-                Console.WriteLine("Before Line Manager Release All");
+                Console.WriteLine("Releasing all lines");
                 pluginManager.ReleaseAll();
-                Console.WriteLine("After Line Manager Release All");
-
                 waitThread1.Join();
-
-                Console.WriteLine("Threads should now be dead.");
             }
             catch (Exception e)
             {

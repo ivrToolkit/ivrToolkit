@@ -9,7 +9,7 @@ using ivrToolkit.Core;
 using ivrToolkit.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 
-namespace SipConsole.ScriptBlocks
+namespace SipInTest.ScriptBlocks
 {
     public class GoodbyeScript : AbstractScript
     {

@@ -10,7 +10,7 @@ using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 
-namespace SipConsole.ScriptBlocks
+namespace SipInTest.ScriptBlocks
 {
     public class MainScript : AbstractScript
     {

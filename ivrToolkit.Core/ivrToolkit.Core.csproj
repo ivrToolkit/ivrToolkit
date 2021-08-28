@@ -21,6 +21,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="voice.properties" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="System Recordings\0.wav">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -415,6 +419,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="System Recordings\z.wav">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="voice.properties">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

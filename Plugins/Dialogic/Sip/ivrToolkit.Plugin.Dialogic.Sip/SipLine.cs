@@ -255,10 +255,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             var cap = GetCap();
 
-            var proxy = _voiceProperties.SipProxyIp;
-            var alias = _voiceProperties.SipAlias;
-            var ani = alias + "@" + proxy;
-            var dnis = number + "@" + proxy;
+            var ani = _voiceProperties.SipAlias + "@" + _voiceProperties.SipProxyIp;
+            var dnis = number + "@" + _voiceProperties.SipProxyIp;
 
             SetAuthenticationInfo();
             MakeCall(ani, dnis);
@@ -358,50 +356,64 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _logger.LogDebug("SipHeader is: {0}", sipHeader);
 
             var dataSize = (uint)(sipHeader.Length + 1);
-            var pSipHeader = Marshal.StringToHGlobalAnsi(sipHeader); // todo free me! could be others
+            var pSipHeader1 = Marshal.StringToHGlobalAnsi(sipHeader); // todo free me! could be others
             var result = gclib_h.gc_util_insert_parm_ref_ex(ref gcParmBlkp, gcip_defs_h.IPSET_SIP_MSGINFO,
-                gcip_defs_h.IPPARM_SIP_HDR, dataSize, pSipHeader);
+                gcip_defs_h.IPPARM_SIP_HDR, dataSize, pSipHeader1);
             result.ThrowIfGlobalCallError();
 
             sipHeader = $"From: {_voiceProperties.SipFrom}<sip:{ani}>"; //From header
             _logger.LogDebug("SipHeader is: {0}", sipHeader);
             dataSize = (uint)(sipHeader.Length + 1);
-            pSipHeader = Marshal.StringToHGlobalAnsi(sipHeader); // todo free me! could be others
+            var pSipHeader2 = Marshal.StringToHGlobalAnsi(sipHeader); // todo free me! could be others
             result = gclib_h.gc_util_insert_parm_ref_ex(ref gcParmBlkp, gcip_defs_h.IPSET_SIP_MSGINFO,
-                gcip_defs_h.IPPARM_SIP_HDR, dataSize, pSipHeader);
+                gcip_defs_h.IPPARM_SIP_HDR, dataSize, pSipHeader2);
             result.ThrowIfGlobalCallError();
 
             sipHeader = $"Contact: {_voiceProperties.SipConctact}<sip:{ani}:{_voiceProperties.SipHmpSipPort}>"; //Contact header
             _logger.LogDebug("SipHeader is: {0}", sipHeader);
             dataSize = (uint)(sipHeader.Length + 1);
-            pSipHeader = Marshal.StringToHGlobalAnsi(sipHeader); // todo free me! could be others
+            var pSipHeader3 = Marshal.StringToHGlobalAnsi(sipHeader); // todo free me! could be others
             result = gclib_h.gc_util_insert_parm_ref_ex(ref gcParmBlkp, gcip_defs_h.IPSET_SIP_MSGINFO,
-                gcip_defs_h.IPPARM_SIP_HDR, dataSize, pSipHeader);
+                gcip_defs_h.IPPARM_SIP_HDR, dataSize, pSipHeader3);
             result.ThrowIfGlobalCallError();
 
             result = gclib_h.gc_SetUserInfo(gclib_h.GCTGT_GCLIB_CHAN, _gcDev, gcParmBlkp, gclib_h.GC_SINGLECALL);
             result.ThrowIfGlobalCallError();
             gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
 
+            gcParmBlkp = IntPtr.Zero;
             result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkp, gcip_defs_h.IPSET_PROTOCOL,
                 gcip_defs_h.IPPARM_PROTOCOL_BITMASK, sizeof(int), gcip_defs_h.IP_PROTOCOL_SIP);
             result.ThrowIfGlobalCallError();
 
-            var gcMkBlk = new GC_MAKECALL_BLK();
+            var gclibMkBlk = new GCLIB_MAKECALL_BLK
+            {
+                // todo are these necessary?
+                call_info = new GCLIB_CALL_BLK(),
+                chan_info = new GCLIB_CHAN_BLK(),
+                destination = new GCLIB_ADDRESS_BLK(),
+                origination = new GCLIB_ADDRESS_BLK(),
+                ext_datap = IntPtr.Zero
+            };
 
-            var gclibMkBlk = new GCLIB_MAKECALL_BLK();
+
             gclibMkBlk.origination.address = ani;
             gclibMkBlk.origination.address_type = gclib_h.GCADDRTYPE_TRANSPARENT;
 
-            var gcParmBlk = Marshal.PtrToStructure<GC_PARM_BLK>(gcParmBlkp);
-            gclibMkBlk.ext_datap = gcParmBlk;
+            gclibMkBlk.ext_datap = gcParmBlkp;
 
-            gcMkBlk.cclib = IntPtr.Zero;
-            gcMkBlk.gclib = _unmanagedMemoryService.Create(gclibMkBlk);
+            var gcMkBlk = new GC_MAKECALL_BLK
+            {
+                cclib = IntPtr.Zero,
+                gclib = _unmanagedMemoryService.Create(gclibMkBlk)
+            };
 
             SetCodec(gclib_h.GCTGT_GCLIB_CHAN);
+
             result = gclib_h.gc_MakeCall(_gcDev, ref _callReferenceNumber, dnis, ref gcMkBlk, 30, DXXXLIB_H.EV_ASYNC);
+            _logger.LogDebug("here4");
             result.ThrowIfGlobalCallError();
+            _logger.LogDebug("here5");
             gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
         }
 
@@ -743,10 +755,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             _logger.LogDebug("AddSpecialCustomTones()");
             AddCustomTone(_voiceProperties.DialTone);
-            if (_voiceProperties.CustomOutboundEnabled)
-            {
-                AddCustomTone(_voiceProperties.NoFreeLineTone);
-            }
         }
 
 
@@ -856,7 +864,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _boardDev = 0;
             var result = gclib_h.gc_OpenEx(ref _boardDev, ":N_iptB1:P_IP", DXXXLIB_H.EV_SYNC, IntPtr.Zero);
             _logger.LogDebug(
-                "get _boardDev: result = {0} = gc_openEx([out]{1}, :N_iptB1:P_IP, EV_SYNC, IntPtr.Zero)...", result,
+                "get _boardDev: result = {0} = gc_openEx([ref]{1}, :N_iptB1:P_IP, EV_SYNC, IntPtr.Zero)...", result,
                 _boardDev);
             result.ThrowIfGlobalCallError();
 
@@ -1034,6 +1042,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             result.ThrowIfGlobalCallError();
             _logger.LogDebug("Register() - called gc_ReqService asynchronously");
             gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
+
+            result = WaitForEvent(gclib_h.GCEV_SERVICERESP, 1000); // wait for 10 seconds 
+            _logger.LogDebug("Result for gc_ReqService is {0}", result); // todo cleanup
         }
 
         private void SetAuthenticationInfo()
@@ -1726,7 +1737,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         */
         private void SetCodec(int crnOrChan)
         {
-            _logger.LogDebug("set_codec{0})", crnOrChan);
+            _logger.LogDebug("set_codec({0})", crnOrChan);
 
             var ipCap = new IP_CAPABILITY[3];
 

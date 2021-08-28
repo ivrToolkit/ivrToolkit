@@ -21,6 +21,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="voice.properties" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="voice.properties">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\..\ivrToolkit.Core\ivrToolkit.Core.csproj" />
   </ItemGroup>
 

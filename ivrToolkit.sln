@@ -35,6 +35,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ivrToolkit.Plugin.Dialogic.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SipInTest", "Examples\SipInTest\SipInTest.csproj", "{74115B8E-005E-4E77-81E4-59FCE5215318}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SipOutTest", "Examples\SipOutTest\SipOutTest.csproj", "{0A66F8E5-1524-424D-85F4-F7BD26EE6C14}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -159,6 +161,22 @@ Global
 		{74115B8E-005E-4E77-81E4-59FCE5215318}.Release|Win32.Build.0 = Release|Any CPU
 		{74115B8E-005E-4E77-81E4-59FCE5215318}.Release|x86.ActiveCfg = Release|Any CPU
 		{74115B8E-005E-4E77-81E4-59FCE5215318}.Release|x86.Build.0 = Release|Any CPU
+		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14}.Debug|Win32.Build.0 = Debug|Any CPU
+		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14}.Debug|x86.Build.0 = Debug|Any CPU
+		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14}.Release|Win32.ActiveCfg = Release|Any CPU
+		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14}.Release|Win32.Build.0 = Release|Any CPU
+		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14}.Release|x86.ActiveCfg = Release|Any CPU
+		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -172,6 +190,7 @@ Global
 		{B9BF6F63-4A3A-4D49-AB6A-8757158B8AB6} = {6E938A2D-DFAC-498A-8421-E463F99EF2A7}
 		{E0748466-4C26-43DE-8021-1BCDEA786572} = {44B3C5AB-8318-403C-A3E7-E64015BD7103}
 		{74115B8E-005E-4E77-81E4-59FCE5215318} = {C68DB211-E713-4265-A2F3-F573383C2C84}
+		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14} = {C68DB211-E713-4265-A2F3-F573383C2C84}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A5C71D1A-0ABE-437B-89FB-59EE74035D64}

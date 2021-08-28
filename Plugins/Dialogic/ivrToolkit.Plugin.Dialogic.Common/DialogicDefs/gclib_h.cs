@@ -878,7 +878,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public GCLIB_ADDRESS_BLK origination; /* Calling party information */
         public GCLIB_CHAN_BLK chan_info; /* Channel information */
         public GCLIB_CALL_BLK call_info; /* Call information */
-        public GC_PARM_BLK ext_datap; /* Extended parameters */
+        public IntPtr ext_datap; /* Extended parameters */
     }
 
 

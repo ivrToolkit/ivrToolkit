@@ -467,7 +467,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         void ILineManagement.Dispose()
         {
             _logger.LogDebug("ILineManagement.Dispose() for line: {0}", _lineNumber);
-            CheckDisposed();
+            if (_disposed)
+            {
+                _logger.LogDebug("Line {0} has already been disposed", _lineNumber);
+                return;
+            }
             _disposeTriggerActivated = true;
 
             var result = DXXXLIB_H.dx_stopch(_devh, DXXXLIB_H.EV_SYNC);
@@ -478,7 +482,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         public void Dispose()
         {
-            CheckDisposed();
+            if (_disposed)
+            {
+                _logger.LogDebug("Dispose() - Line is already disposed");
+                return;
+            }
             _logger.LogDebug("Dispose() - Disposing of the line");
 
             try

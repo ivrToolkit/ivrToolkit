@@ -52,17 +52,19 @@ namespace SipOutTest
                     var line = pluginManager.GetLine(ln);
 
                     _logger.LogDebug("Start Line {0}", ln);
-                    var waitThread1 = new Thread(() => WaitCall(loggerFactory, dialogicSipVoiceProperties, line, phoneNumber));
+                    var waitThread = new Thread(() => WaitCall(loggerFactory, dialogicSipVoiceProperties, line, phoneNumber));
 
-                    waitThread1.Start();
+                    waitThread.Start();
 
-                    _logger.LogDebug("All threads should be alive.");
-                    Console.ReadLine();
+                    _logger.LogDebug("Thread should be alive.");
+
+                    // wait for the thread to end.
+                    waitThread.Join(); 
 
                     _logger.LogDebug("Releasing all lines");
                     pluginManager.ReleaseAll();
-                    waitThread1.Join();
-                }
+                    Console.WriteLine();
+                } // while
             }
             catch (Exception e)
             {
@@ -70,6 +72,7 @@ namespace SipOutTest
             }
             finally
             {
+                _logger.LogDebug("In finally of main thread.");
                 pluginManager?.ReleaseAll();
                 pluginManager?.Dispose();
             }
@@ -105,7 +108,7 @@ namespace SipOutTest
                             break;
                         case CallAnalysis.AnsweringMachine:
                             line.Hangup();
-                            break;
+                            return;
                     }
 
                     _logger.LogDebug("callAnalysis is: {0}", callAnalysis );
@@ -127,8 +130,10 @@ namespace SipOutTest
                         _logger.LogDebug("Hangup Detected");
                         line.Hangup();
                     }
-
+                    _logger.LogDebug("Disposing of line");
+                    Thread.Sleep(5000); // todo remove me
                     line.Dispose();
+                    _logger.LogDebug("Line is now disposed");
                     return;
                 }
             }

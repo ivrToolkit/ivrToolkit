@@ -356,7 +356,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _logger.LogDebug("SipHeader is: {0}", sipHeader);
 
             var dataSize = (uint)(sipHeader.Length + 1);
-            var pSipHeader1 = Marshal.StringToHGlobalAnsi(sipHeader); // todo free me! could be others
+            var pSipHeader1 = Marshal.StringToHGlobalAnsi(sipHeader);
             var result = gclib_h.gc_util_insert_parm_ref_ex(ref gcParmBlkp, gcip_defs_h.IPSET_SIP_MSGINFO,
                 gcip_defs_h.IPPARM_SIP_HDR, dataSize, pSipHeader1);
             result.ThrowIfGlobalCallError();
@@ -364,7 +364,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             sipHeader = $"From: {_voiceProperties.SipFrom}<sip:{ani}>"; //From header
             _logger.LogDebug("SipHeader is: {0}", sipHeader);
             dataSize = (uint)(sipHeader.Length + 1);
-            var pSipHeader2 = Marshal.StringToHGlobalAnsi(sipHeader); // todo free me! could be others
+            var pSipHeader2 = Marshal.StringToHGlobalAnsi(sipHeader);
             result = gclib_h.gc_util_insert_parm_ref_ex(ref gcParmBlkp, gcip_defs_h.IPSET_SIP_MSGINFO,
                 gcip_defs_h.IPPARM_SIP_HDR, dataSize, pSipHeader2);
             result.ThrowIfGlobalCallError();
@@ -372,30 +372,26 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             sipHeader = $"Contact: {_voiceProperties.SipConctact}<sip:{ani}:{_voiceProperties.SipHmpSipPort}>"; //Contact header
             _logger.LogDebug("SipHeader is: {0}", sipHeader);
             dataSize = (uint)(sipHeader.Length + 1);
-            var pSipHeader3 = Marshal.StringToHGlobalAnsi(sipHeader); // todo free me! could be others
+            var pSipHeader3 = Marshal.StringToHGlobalAnsi(sipHeader);
             result = gclib_h.gc_util_insert_parm_ref_ex(ref gcParmBlkp, gcip_defs_h.IPSET_SIP_MSGINFO,
                 gcip_defs_h.IPPARM_SIP_HDR, dataSize, pSipHeader3);
             result.ThrowIfGlobalCallError();
 
+
             result = gclib_h.gc_SetUserInfo(gclib_h.GCTGT_GCLIB_CHAN, _gcDev, gcParmBlkp, gclib_h.GC_SINGLECALL);
             result.ThrowIfGlobalCallError();
             gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
+
+            Marshal.FreeHGlobal(pSipHeader1);
+            Marshal.FreeHGlobal(pSipHeader2);
+            Marshal.FreeHGlobal(pSipHeader3);
 
             gcParmBlkp = IntPtr.Zero;
             result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkp, gcip_defs_h.IPSET_PROTOCOL,
                 gcip_defs_h.IPPARM_PROTOCOL_BITMASK, sizeof(int), gcip_defs_h.IP_PROTOCOL_SIP);
             result.ThrowIfGlobalCallError();
 
-            var gclibMkBlk = new GCLIB_MAKECALL_BLK
-            {
-                // todo are these necessary?
-                call_info = new GCLIB_CALL_BLK(),
-                chan_info = new GCLIB_CHAN_BLK(),
-                destination = new GCLIB_ADDRESS_BLK(),
-                origination = new GCLIB_ADDRESS_BLK(),
-                ext_datap = IntPtr.Zero
-            };
-
+            var gclibMkBlk = new GCLIB_MAKECALL_BLK();
 
             gclibMkBlk.origination.address = ani;
             gclibMkBlk.origination.address_type = gclib_h.GCADDRTYPE_TRANSPARENT;

@@ -259,7 +259,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var dnis = number + "@" + _voiceProperties.SipProxyIp;
 
             SetAuthenticationInfo();
-            MakeCall(ani, dnis);
+            MakeCallAsync(ani, dnis);
             var result = WaitForEvent(gclib_h.GCEV_ALERTING, 100); // 10 seconds
 
             CheckDisposing();
@@ -267,14 +267,14 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             switch (result)
             {
                 case SYNC_WAIT_EXPIRED:
-                    message = "The MakeCall method timed out waiting for the GCEV_ALERTING event";
+                    message = "The MakeCallAsync method timed out waiting for the GCEV_ALERTING event";
                     _logger.LogError(message);
                     throw new VoiceException(message);
                 case SYNC_WAIT_SUCCESS:
-                    _logger.LogDebug("The MakeCall method received the GCEV_ALERTING event");
+                    _logger.LogDebug("The MakeCallAsync method received the GCEV_ALERTING event");
                     break;
                 case SYNC_WAIT_ERROR:
-                    message = "The MakeCall method failed waiting for the GCEV_ALERTING event";
+                    message = "The MakeCallAsync method failed waiting for the GCEV_ALERTING event";
                     _logger.LogError(message);
                     throw new VoiceException(message);
             }
@@ -347,9 +347,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         * not supported.  Dialogic has not been able to provide me with any examples
         * of this function working in SIP with SYNC mode.
         */
-        private void MakeCall(string ani, string dnis)
+        private void MakeCallAsync(string ani, string dnis)
         {
-            _logger.LogDebug("MakeCall({0}, {1})", ani, dnis);
+            _logger.LogDebug("MakeCallAsync({0}, {1})", ani, dnis);
 
             var gcParmBlkp = IntPtr.Zero;
             var sipHeader = $"User-Agent: {_voiceProperties.SipUserAgent}";
@@ -411,9 +411,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             SetCodec(gclib_h.GCTGT_GCLIB_CHAN);
 
             result = gclib_h.gc_MakeCall(_gcDev, ref _callReferenceNumber, dnis, ref gcMkBlk, 30, DXXXLIB_H.EV_ASYNC);
-            _logger.LogDebug("here4");
             result.ThrowIfGlobalCallError();
-            _logger.LogDebug("here5");
             gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
         }
 
@@ -1043,7 +1041,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _logger.LogDebug("Register() - called gc_ReqService asynchronously");
             gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
 
-            result = WaitForEvent(gclib_h.GCEV_SERVICERESP, 1000); // wait for 10 seconds 
+            result = WaitForEvent(gclib_h.GCEV_SERVICERESP, 100); // wait for 10 seconds 
             _logger.LogDebug("Result for gc_ReqService is {0}", result); // todo cleanup
         }
 
@@ -1098,15 +1096,26 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 gcip_defs_h.EXTENSIONEVT_STREAMING_STATUS | gcip_defs_h.EXTENSIONEVT_T38_STATUS);
             result.ThrowIfGlobalCallError();
 
-
-            // todo I don't think this works in SYNC mode in the c version either. The c version is in ASYNC mode but NEVER
-            // todo checks to see if it works! If you use ASYNC you must wait for the event!!!
             var requestId = 0;
             result = gclib_h.gc_SetConfigData(gclib_h.GCTGT_CCLIB_NETIF, _boardDev, gcParmBlkPtr, 0,
                 gclib_h.GCUPDATE_IMMEDIATE, ref requestId, DXXXLIB_H.EV_ASYNC);
             result.ThrowIfGlobalCallError();
 
             gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
+
+            result = WaitForEvent(gclib_h.GCEV_SETCONFIGDATA, 100); // wait for 10 seconds
+            switch (result)
+            {
+                case SYNC_WAIT_EXPIRED:
+                    _logger.LogError("gc_SetConfigData has expired");
+                    break;
+                case SYNC_WAIT_SUCCESS:
+                    _logger.LogDebug("gc_SetConfigData was a success");
+                    break;
+                case SYNC_WAIT_ERROR:
+                    _logger.LogError("gc_SetConfigData has failed");
+                    break;
+            }
         }
 
         /**
@@ -1270,10 +1279,10 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         private int WaitForEventIndefinitely(int waitForEvent)
         {
-            _logger.LogDebug("WaitForEventIndefinitely({0}) - {1}", waitForEvent, gcmsg_h.GCEV_MSG(waitForEvent));
+            _logger.LogDebug("*** Waiting for event: {0}, waitInterval = indefinitely", gcmsg_h.GCEV_MSG(waitForEvent));
 
             int result;
-            while ((result = WaitForEvent(gclib_h.GCEV_ANSWERED, 50)) ==
+            while ((result = WaitForEvent(gclib_h.GCEV_ANSWERED, 50, false)) ==
                    SYNC_WAIT_EXPIRED) // wait 50 * 1/10 of second = 5 seconds
             {
                 if (result == -SYNC_WAIT_EXPIRED) _logger.LogTrace("Wait for call exhausted. Will try again");
@@ -1283,11 +1292,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             return result;
         }
 
-        // each waitInterval represents 1/10 of a second
-        private int WaitForEvent(int waitForEvent, int waitInterval)
+        private int WaitForEvent(int waitForEvent, int waitInterval, bool showDebug = true)
         {
-            _logger.LogTrace("WaitForEvent({0}, {1}) - {2}", waitForEvent, waitInterval,
-                gcmsg_h.GCEV_MSG(waitForEvent));
+            if (showDebug) _logger.LogDebug("*** Waiting for event: {0}, waitInterval = {1}", gcmsg_h.GCEV_MSG(waitForEvent), waitInterval);
 
             var eventThrown = -1;
             var count = 0;
@@ -1572,9 +1579,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     //LogWarningMessage(metaEvt);
                     DropCallAsync();
                     break;
-                case gclib_h.GCEV_EXTENSIONCMPLT: // todo - I think this is wrong
-                    _logger.LogDebug("GCEV_EXTENSIONCMPLT");
-                    // todo pch->process_extension(metaEvt);
+                case gclib_h.GCEV_EXTENSIONCMPLT:
+                    _logger.LogDebug("GCEV_EXTENSIONCMPLT - we do nothing with this event");
                     break;
                 case gclib_h.GCEV_EXTENSION:
                     _logger.LogDebug("GCEV_EXTENSION");
@@ -1584,12 +1590,18 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     _logger.LogDebug("GCEV_RELEASECALL - set crn = 0");
                     _callReferenceNumber = 0;
                     break;
+                case gclib_h.GCEV_SETCONFIGDATA:
+                    _logger.LogDebug("GCEV_SETCONFIGDATA - we do nothing with this event");
+                    break;
+                case gclib_h.GCEV_PROCEEDING:
+                    _logger.LogDebug("GCEV_PROCEEDING - gc_makeCall is proceeding");
+                    break;
                 case gclib_h.GCEV_TASKFAIL:
                     _logger.LogDebug("GCEV_TASKFAIL");
                     LogWarningMessage(metaEvt);
                     break;
                 default:
-                    _logger.LogDebug("gc_Unknown type - {0}", metaEvt.evttype);
+                    _logger.LogInformation("gc_Unknown type - {0}", metaEvt.evttype);
                     break;
             }
         }

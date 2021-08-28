@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using ivrToolkit.Core;
+using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Plugin.Dialogic.Sip;
@@ -88,6 +89,25 @@ namespace SipOutTest
                     Thread.Sleep(1000);
                     _logger.LogDebug("Dial: Line {0}: dialing {1}...", lineNumber, phoneNumber);
                     var callAnalysis = line.Dial(phoneNumber, 3500);
+                    switch (callAnalysis)
+                    {
+                        case CallAnalysis.Busy:
+                        case CallAnalysis.Error:
+                        case CallAnalysis.FaxTone:
+                        case CallAnalysis.NoAnswer:
+                        case CallAnalysis.NoDialTone:
+                        case CallAnalysis.NoFreeLine:
+                        case CallAnalysis.NoRingback:
+                        case CallAnalysis.OperatorIntercept:
+                        case CallAnalysis.Stopped:
+                            return;
+                        case CallAnalysis.Connected:
+                            break;
+                        case CallAnalysis.AnsweringMachine:
+                            line.Hangup();
+                            break;
+                    }
+
                     _logger.LogDebug("callAnalysis is: {0}", callAnalysis );
 
                     try
@@ -99,14 +119,17 @@ namespace SipOutTest
                             // execute the next script
                             manager.Execute();
                         }
-
+                        _logger.LogDebug("scripts are done so hanging up.");
                         line.Hangup();
                     }
                     catch (HangupException)
                     {
+                        _logger.LogDebug("Hangup Detected");
                         line.Hangup();
                     }
 
+                    line.Dispose();
+                    return;
                 }
             }
             catch (DisposingException)

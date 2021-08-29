@@ -1,4 +1,5 @@
 ﻿using System;
+using ivrToolkit.Core;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
@@ -65,6 +66,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _logger.LogDebug("GetLine({0})", lineNumber);
             return new SipLine(_loggerFactory, _voiceProperties, lineNumber);
         }
+
+        public VoiceProperties VoiceProperties => _voiceProperties;
 
         private void Start()
         {

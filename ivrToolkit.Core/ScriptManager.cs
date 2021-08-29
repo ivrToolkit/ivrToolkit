@@ -39,7 +39,6 @@ namespace ivrToolkit.Core
     /// </example>
     public class ScriptManager
     {
-        private readonly ILine _line;
         private IScript _nextScript;
         private readonly ILogger<ScriptManager> _logger;
 
@@ -56,14 +55,12 @@ namespace ivrToolkit.Core
         /// Initializes the script manager with the current voice line and a starting script.
         /// </summary>
         /// <param name="loggerFactory"></param>
-        /// <param name="line">The voice line to use</param>
         /// <param name="startingScript">The first script</param>
-        public ScriptManager(ILoggerFactory loggerFactory, ILine line, IScript startingScript)
+        public ScriptManager(ILoggerFactory loggerFactory, IScript startingScript)
         {
             _logger = loggerFactory.CreateLogger<ScriptManager>();
             _logger.LogDebug("Ctr()");
             NextScript = startingScript;
-            _line = line;
         }
 
         /// <summary>
@@ -72,7 +69,6 @@ namespace ivrToolkit.Core
         public void Execute()
         {
             _logger.LogDebug("Execute()");
-            _nextScript.Line = _line;
             _nextScript = _nextScript.Execute();
         }
 

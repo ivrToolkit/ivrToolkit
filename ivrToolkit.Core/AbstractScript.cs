@@ -19,29 +19,23 @@ namespace ivrToolkit.Core
         private readonly ILoggerFactory _loggerFactory;
         private readonly VoiceProperties _voiceProperties;
 
-        protected AbstractScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties)
+        protected AbstractScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, ILine line)
         {
             _loggerFactory = loggerFactory;
             _voiceProperties = voiceProperties;
+            Line = line;
+            PromptFunctions = new PromptFunctions(_loggerFactory, _voiceProperties, line);
         }
 
-        private ILine _line;
 
         /// <summary>
         /// Used within your script block to handle prompts
         /// </summary>
-        protected IPromptFunctions PromptFunctions { get; private set; }
+        protected IPromptFunctions PromptFunctions { get; }
 
         /// <inheritdoc/>
-        public ILine Line
-        {
-            get => _line;
-            set
-            {
-                _line = value;
-                PromptFunctions = new PromptFunctions(_loggerFactory, _voiceProperties, _line);
-            }
-        }
+        public ILine Line { get; }
+
         /// <inheritdoc/>
         public abstract string Description
         {

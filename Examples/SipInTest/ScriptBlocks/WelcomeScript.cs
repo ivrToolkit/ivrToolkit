@@ -15,12 +15,14 @@ namespace SipInTest.ScriptBlocks
     {
         private readonly ILoggerFactory _loggerFactory;
         private readonly VoiceProperties _voiceProperties;
+        private readonly ILine _line;
         private readonly ILogger<WelcomeScript> _logger;
 
-        public WelcomeScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties) : base(loggerFactory, voiceProperties)
+        public WelcomeScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, ILine line) : base(loggerFactory, voiceProperties, line)
         {
             _loggerFactory = loggerFactory;
             _voiceProperties = voiceProperties;
+            _line = line;
             _logger = loggerFactory.CreateLogger<WelcomeScript>();
             _logger.LogDebug("Ctr()");
         }
@@ -32,7 +34,7 @@ namespace SipInTest.ScriptBlocks
             _logger.LogDebug("Execute()");
             // say My welcome message
             Line.PlayFile(@"Voice Files\ThankYou.wav");
-            return new MainScript(_loggerFactory, _voiceProperties);
+            return new MainScript(_loggerFactory, _voiceProperties, _line);
         }
 
     } // class

@@ -16,14 +16,16 @@ namespace SipInTest.ScriptBlocks
     {
         private readonly ILoggerFactory _loggerFactory;
         private readonly VoiceProperties _voiceProperties;
+        private readonly ILine _line;
         private readonly ILogger<MainScript> _logger;
 
-        public MainScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties) : base(loggerFactory, voiceProperties)
+        public MainScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, ILine line) : base(loggerFactory, voiceProperties, line)
         {
             _loggerFactory = loggerFactory;
             _logger = loggerFactory.CreateLogger<MainScript>();
             _logger.LogDebug("Ctr()");
             _voiceProperties = voiceProperties;
+            _line = line;
         }
 
         public override string Description => "Main Script";
@@ -44,7 +46,7 @@ namespace SipInTest.ScriptBlocks
                 result = PromptFunctions.SingleDigitPrompt(@"Voice Files\TryAgain.wav", "12");
                 if (result == "2") break;
             } // endless loop
-            return new GoodbyeScript(_loggerFactory, _voiceProperties);
+            return new GoodbyeScript(_loggerFactory, _voiceProperties, _line);
         }
     } // class
 }

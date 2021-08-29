@@ -15,7 +15,7 @@ namespace SipOutTest.ScriptBlocks
     {
         private readonly ILogger<GoodbyeScript> _logger;
 
-        public GoodbyeScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties) : base(loggerFactory, voiceProperties)
+        public GoodbyeScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, ILine line) : base(loggerFactory, voiceProperties, line)
         {
             _logger = loggerFactory.CreateLogger<GoodbyeScript>();
             _logger.LogDebug("Ctr()");

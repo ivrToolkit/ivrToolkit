@@ -61,6 +61,8 @@ namespace ivrToolkit.Core
             }
         }
 
+        public VoiceProperties VoiceProperties => _ivrPlugin.VoiceProperties;
+
         /// <summary>
         /// Releases a voice line and removes it from the list of used lines.
         /// </summary>

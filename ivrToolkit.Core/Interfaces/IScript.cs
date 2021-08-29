@@ -42,7 +42,6 @@ namespace ivrToolkit.Core.Interfaces
         ILine Line
         {
             get;
-            set;
         }
         /// <summary>
         /// Gets the description of the script block.

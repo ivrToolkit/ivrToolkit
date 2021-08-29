@@ -78,7 +78,7 @@ namespace SipInTest
 
                     try
                     {
-                        var manager = new ScriptManager(loggerFactory, line, new WelcomeScript(loggerFactory, dialogicVoiceProperties));
+                        var manager = new ScriptManager(loggerFactory, new WelcomeScript(loggerFactory, dialogicVoiceProperties, line));
 
                         while (manager.HasNext())
                         {

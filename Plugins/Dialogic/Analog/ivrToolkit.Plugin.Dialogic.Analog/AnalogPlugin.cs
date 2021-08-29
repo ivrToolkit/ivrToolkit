@@ -7,6 +7,7 @@
 
 using System;
 using System.Globalization;
+using ivrToolkit.Core;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Plugin.Dialogic.Common;
@@ -95,6 +96,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
             return new AnalogLine(_loggerFactory, _voiceProperties, handles.Devh, handles.Voiceh, lineNumber);
         }
 
+        public VoiceProperties VoiceProperties => _voiceProperties;
 
         private string GetDeviceName(int lineNumber)
         {

@@ -64,7 +64,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             if (_disposed) throw new VoiceException("You cannot get a line from a disposed plugin");
 
             _logger.LogDebug("GetLine({0})", lineNumber);
-            return new SipLine(_loggerFactory, _voiceProperties, lineNumber);
+            var line = new SipLine(_loggerFactory, _voiceProperties, lineNumber);
+            return new LineWrapper(_loggerFactory, lineNumber, line);
         }
 
         public VoiceProperties VoiceProperties => _voiceProperties;

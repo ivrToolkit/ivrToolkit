@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Plugin.Dialogic.Sip
 {
-    public class SipLine : ILine, ILineManagement
+    public class SipLine : ILineBase, ILineManagement
     {
         private const int SYNC_WAIT_INFINITE = -1;
         private const int SYNC_WAIT_EXPIRED = -2;
@@ -40,14 +40,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private int _ipmDev;
         private IntPtr _ipXslot;
 
-        private LineStatusTypes _status = LineStatusTypes.OnHook;
-
-        private bool _disposeTriggerActivated;
         private int _volume;
         private IntPtr _voxXslot;
         private bool _waitCallSet;
         private readonly ILoggerFactory _loggerFactory;
-        private bool _disposed;
+        private bool _disposeTriggerActivated;
 
 
         public SipLine(ILoggerFactory loggerFactory, DialogicSipVoiceProperties voiceProperties, int lineNumber)
@@ -75,26 +72,14 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         public ILineManagement Management => this;
 
-        public LineStatusTypes Status => _status;
 
         public string LastTerminator { get; set; }
 
         public int LineNumber => _lineNumber;
 
-        public void CheckDispose()
-        {
-            _logger.LogDebug("CheckDispose()");
-            CheckDisposed();
-            CheckDisposing();
-        }
-
         public void WaitRings(int rings)
         {
             _logger.LogDebug("WaitRings({0})", rings);
-            CheckDisposed();
-            CheckDisposing();
-
-            _status = LineStatusTypes.AcceptingCalls;
 
             var crnPtr = IntPtr.Zero;
 
@@ -112,23 +97,15 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             // asynchronously start waiting for a call to come in
             result = WaitForEventIndefinitely(gclib_h.GCEV_ANSWERED);
-
-            CheckDisposing();
-
             if (result == -1)
             {
                 throw new VoiceException("WaitRings threw an exception");
             }
-
-            _status = LineStatusTypes.Connected;
-            CheckDisposing();
         }
 
         public void Hangup()
         {
             _logger.LogDebug("Hangup(); - crn = {0}", _callReferenceNumber);
-            _status = LineStatusTypes.OnHook;
-            CheckDisposed();
 
             var result = DXXXLIB_H.dx_stopch(_devh, DXXXLIB_H.EV_SYNC);
             result.ThrowIfStandardRuntimeLibraryError(_devh);
@@ -185,23 +162,15 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         public void TakeOffHook()
         {
-            _logger.LogDebug("TakeOffHook()");
-            _status = LineStatusTypes.OffHook;
-            CheckDisposed();
             /*
              * Sip Does not need to take the received off the hook
              */
-            //Dialogic.TakeOffHook(_devh);
         }
 
 
         public CallAnalysis Dial(string number, int answeringMachineLengthInMilliseconds)
         {
             _logger.LogDebug("Dial({0}, {1})", number, answeringMachineLengthInMilliseconds);
-            CheckDisposed();
-
-            //TakeOffHook();
-            _logger.LogDebug("Line is now off hook");
 
             var dialToneTid = _voiceProperties.DialTone.Tid;
 
@@ -226,20 +195,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             if (dialToneEnabled) DisableTone(_devh, dialToneTid);
 
             _logger.LogDebug("about to dial: {0}", number);
-            var result = DialWithCpa(_devh, number, answeringMachineLengthInMilliseconds);
-            _logger.LogDebug("CallAnalysis is: {0}", result.ToString());
-            if (result == CallAnalysis.Stopped) ThrowDisposingException();
-
-            if (result == CallAnalysis.AnsweringMachine || result == CallAnalysis.Connected)
-            {
-                _status = LineStatusTypes.Connected;
-            }
-            else
-            {
-                Hangup();
-            }
-
-            return result;
+            return DialWithCpa(_devh, number, answeringMachineLengthInMilliseconds);
         }
 
         /// <summary>
@@ -262,7 +218,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             MakeCallAsync(ani, dnis);
             var result = WaitForEvent(gclib_h.GCEV_ALERTING, 100); // 10 seconds
 
-            CheckDisposing();
             string message;
             switch (result)
             {
@@ -467,35 +422,21 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         void ILineManagement.Dispose()
         {
             _logger.LogDebug("ILineManagement.Dispose() for line: {0}", _lineNumber);
-            if (_disposed)
-            {
-                _logger.LogDebug("Line {0} has already been disposed", _lineNumber);
-                return;
-            }
-            _disposeTriggerActivated = true;
 
             var result = DXXXLIB_H.dx_stopch(_devh, DXXXLIB_H.EV_SYNC);
             result.ThrowIfStandardRuntimeLibraryError(_devh);
+            _disposeTriggerActivated = true;
         }
 
         #endregion
 
         public void Dispose()
         {
-            if (_disposed)
-            {
-                _logger.LogDebug("Dispose() - Line is already disposed");
-                return;
-            }
             _logger.LogDebug("Dispose() - Disposing of the line");
 
             try
             {
                 _waitCallSet = false;
-                if (_status != LineStatusTypes.OnHook)
-                {
-                    Hangup();
-                }
 
                 var result = DXXXLIB_H.dx_close(_devh);
                 result.ThrowIfStandardRuntimeLibraryError(_devh);
@@ -512,8 +453,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             finally
             {
-                _disposed = true;
-                _disposeTriggerActivated = false;
                 _unmanagedMemoryService?.Dispose();
                 _unmanagedMemoryService = null;
             }
@@ -522,32 +461,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         public void PlayFile(string filename)
         {
             _logger.LogDebug("PlayFile({0})", filename);
-            CheckDisposed();
-            CheckDisposing();
-            try
-            {
-                PlaySipFile(filename, "0123456789#*abcd");
-            }
-            catch (DisposingException)
-            {
-                ThrowDisposingException();
-            }
-            catch (HangupException)
-            {
-                _status = LineStatusTypes.OnHook;
-                throw;
-            }
+            PlaySipFile(filename, "0123456789#*abcd");
         }
 
-        private void CheckDisposed()
-        {
-            if (_disposed) ThrowDisposedException();
-        }
-
-        private void CheckDisposing()
-        {
-            if (_disposeTriggerActivated) ThrowDisposingException();
-        }
 
         public void RecordToFile(string filename)
         {
@@ -557,8 +473,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         public void RecordToFile(string filename, int timeoutMilliseconds)
         {
             _logger.LogDebug("RecordToFile({0}, {1})", filename, timeoutMilliseconds);
-
-            CheckDisposing();
             RecordToFile(filename, "0123456789#*abcd", _currentXpb, timeoutMilliseconds);
         }
 
@@ -668,45 +582,19 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         public string GetDigits(int numberOfDigits, string terminators)
         {
             _logger.LogDebug("GetDigits({0}, {1})", numberOfDigits, terminators);
-            CheckDisposed();
-            CheckDisposing();
-            try
-            {
-                var answer = GetDigits(_devh, numberOfDigits, terminators);
-                return StripOffTerminator(answer, terminators);
-            }
-            catch (DisposingException)
-            {
-                ThrowDisposingException();
-            }
-            catch (HangupException)
-            {
-                _status = LineStatusTypes.OnHook;
-                throw;
-            }
-
-            return null; // will never get here
+            return GetDigits(_devh, numberOfDigits, terminators);
         }
 
         public string FlushDigitBuffer()
         {
             _logger.LogDebug("FlushDigitBuffer()");
-            CheckDisposed();
-            CheckDisposing();
 
-            var all = "";
-            try
+            // add "T" so that I can get all the characters.
+            var all = GetDigits(_devh, DXDIGIT_H.DG_MAXDIGS, "T", 100);
+            // strip off timeout terminator if there is once
+            if (all.EndsWith("T"))
             {
-                // add "T" so that I can get all the characters.
-                all = GetDigits(_devh, DXDIGIT_H.DG_MAXDIGS, "T", 100);
-                // strip off timeout terminator if there is once
-                if (all.EndsWith("T"))
-                {
-                    all = all.Substring(0, all.Length - 1);
-                }
-            }
-            catch (GetDigitsTimeoutException)
-            {
+                all = all.Substring(0, all.Length - 1);
             }
 
             return all;
@@ -722,7 +610,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     throw new VoiceException("size must be between -10 to 10");
                 }
 
-                CheckDisposed();
                 var adjsize = (ushort)value;
                 var result = DXXXLIB_H.dx_adjsv(_devh, DXXXLIB_H.SV_VOLUMETBL, DXXXLIB_H.SV_ABSPOS, adjsize);
                 result.ThrowIfStandardRuntimeLibraryError(_devh);
@@ -745,7 +632,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         public void DeleteCustomTones()
         {
             _logger.LogDebug("DeleteCustomTones()");
-            CheckDisposed();
             //Dialogic.DeleteTones(LineNumber);
             //Dialogic.InitCallProgress(LineNumber);
             //Dialogic.DeleteTones(_devh);
@@ -763,7 +649,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         public void AddCustomTone(CustomTone tone)
         {
             _logger.LogDebug("AddCustomTone()");
-            CheckDisposed();
 
             if (tone.ToneType == CustomToneType.Single)
             {
@@ -1314,6 +1199,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     eventThrown = ProcessEvent(eventHandle);
                     if (eventThrown == waitForEvent) break;
                 }
+                CheckDisposing();
 
                 count++;
             } while (LoopAgain(eventThrown, waitForEvent, count, waitInterval));
@@ -2393,26 +2279,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             return $"Unknown channel: {channelState}";
         }
 
-
-        private string StripOffTerminator(string answer, string terminators)
+        private void CheckDisposing()
         {
-            _logger.LogDebug("StripOffTerminator({0}, {1})", answer, terminators);
-
-            LastTerminator = "";
-            if (answer.Length >= 1)
-            {
-                var lastDigit = answer.Substring(answer.Length - 1, 1);
-                if (terminators != null & terminators != "")
-                {
-                    if (terminators.IndexOf(lastDigit, StringComparison.Ordinal) != -1)
-                    {
-                        LastTerminator = lastDigit;
-                        answer = answer.Substring(0, answer.Length - 1);
-                    }
-                }
-            }
-
-            return answer;
+            if (_disposeTriggerActivated) ThrowDisposingException();
         }
 
         private void ThrowDisposingException()

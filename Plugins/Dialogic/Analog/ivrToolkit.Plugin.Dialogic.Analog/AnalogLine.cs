@@ -17,16 +17,13 @@ using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Plugin.Dialogic.Analog
 {
-    public class AnalogLine : ILine, ILineManagement
+    public class AnalogLine : ILineBase, ILineManagement
     {
         private readonly int _voiceh;
         private readonly DialogicVoiceProperties _voiceProperties;
         private readonly ILogger<AnalogLine> _logger;
-        private LineStatusTypes _status = LineStatusTypes.OnHook;
 
         private readonly int _devh;
-        private bool _hungup;
-        private bool _stopped;
         private int _volume;
 
         public AnalogLine(ILoggerFactory loggerFactory, DialogicVoiceProperties voiceProperties, int devh, int voiceh, int lineNumber)
@@ -49,35 +46,22 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
 
         private DialogicDef.DX_XPB _currentXpb;
 
-        public void CheckDispose()
-        {
-            throw new NotImplementedException();
-        }
-
         public void WaitRings(int rings)
         {
-            if (_stopped) ResetAndThrowStop();
-            _status = LineStatusTypes.AcceptingCalls;
             WaitRings(_voiceh, rings);
-            _status = LineStatusTypes.Connected;
-            if (_stopped) ResetAndThrowStop();
         }
 
         public void Hangup()
         {
-            _status = LineStatusTypes.OnHook;
             Hangup(_voiceh);
         }
         public void TakeOffHook()
         {
-            _status = LineStatusTypes.OffHook;
             TakeOffHook(_voiceh);
         }
 
         public CallAnalysis Dial(string number, int answeringMachineLengthInMilliseconds)
         {
-            if (_stopped) ResetAndThrowStop();
-
             TakeOffHook();
             _logger.LogDebug("Line is now off hook");
 
@@ -139,28 +123,8 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
             }
 
             _logger.LogDebug("about to dial: {0}",number);
-            var result = DialWithCpa(_voiceh, number, answeringMachineLengthInMilliseconds);
-            _logger.LogDebug("CallAnalysis is: {0}",result.ToString());
-            if (result == CallAnalysis.Stopped) ResetAndThrowStop();
+            return DialWithCpa(_voiceh, number, answeringMachineLengthInMilliseconds);
 
-            if (result == CallAnalysis.AnsweringMachine || result == CallAnalysis.Connected)
-            {
-                _status = LineStatusTypes.Connected;
-            }
-            else
-            {
-                Hangup();
-            }
-            return result;
-        }
-
-        public void Close()
-        {
-            if (_status != LineStatusTypes.OnHook)
-            {
-                Hangup();
-            }
-            Close(_devh, _voiceh);
         }
 
         private void SetDefaultFileType() {
@@ -175,19 +139,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
 
         public void PlayFile(string filename)
         {
-            if (_stopped) ResetAndThrowStop();
-            try
-            {
-                PlayFile(_voiceh, filename, "0123456789#*abcd", _currentXpb);
-            }
-            catch (DisposingException)
-            {
-                ResetAndThrowStop();
-            }
-            catch (HangupException)
-            {
-                ResetAndThrowHangup();
-            }
+            PlayFile(_voiceh, filename, "0123456789#*abcd", _currentXpb);
         }
 
         public void RecordToFile(string filename)
@@ -197,18 +149,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
 
         public void RecordToFile(string filename, int timeoutMilliseconds)
         {
-            if (_stopped) ResetAndThrowStop();
-            try {
-                RecordToFile(_voiceh, filename, "0123456789#*abcd", _currentXpb, timeoutMilliseconds);
-            }
-            catch (DisposingException)
-            {
-                ResetAndThrowStop();
-            }
-            catch (HangupException)
-            {
-                ResetAndThrowHangup();
-            }
+            RecordToFile(_voiceh, filename, "0123456789#*abcd", _currentXpb, timeoutMilliseconds);
         }
 
         /// <summary>
@@ -219,20 +160,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         /// <returns>Returns the digits pressed not including the terminator if there was one</returns>
         public string GetDigits(int numberOfDigits, string terminators)
         {
-            if (_stopped) ResetAndThrowStop();
-            try {
-                var answer = GetDigits(_voiceh, numberOfDigits, terminators);
-                return StripOffTerminator(answer, terminators);
-            }
-            catch (DisposingException)
-            {
-                ResetAndThrowStop();
-            }
-            catch (HangupException)
-            {
-                ResetAndThrowHangup();
-            }
-            return null; // will never get here
+            return GetDigits(_voiceh, numberOfDigits, terminators);
         }
 
         /// <summary>
@@ -241,7 +169,6 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         /// <returns>All the digits in the buffer including terminators</returns>
         public string FlushDigitBuffer()
         {
-            if (_stopped) ResetAndThrowStop();
             return FlushDigitBuffer(_voiceh);
         }
 
@@ -256,58 +183,6 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
                 SetVolume(_voiceh,value);
                 _volume = value;
             }
-        }
-
-        private string StripOffTerminator(string answer, string terminators)
-        {
-            LastTerminator = "";
-            if (answer.Length >= 1)
-            {
-                var lastDigit = answer.Substring(answer.Length - 1, 1);
-                if (terminators != null & terminators != "")
-                {
-                    if (terminators.IndexOf(lastDigit, StringComparison.Ordinal) != -1)
-                    {
-                        LastTerminator = lastDigit;
-                        answer = answer.Substring(0, answer.Length - 1);
-                    }
-                }
-            }
-            return answer;
-        }
-
-        public LineStatusTypes Status
-        {
-            get { return _status; }
-        }
-
-        public void CheckStop()
-        {
-            if (_stopped) ResetAndThrowStop();
-            if (_hungup) ResetAndThrowHangup();
-        }
-
-        public void Stop()
-        {
-            _stopped = true;
-            Stop(_voiceh);
-        }
-
-        private void ResetAndThrowStop()
-        {
-            Reset();
-            throw new DisposingException();
-        }
-        private void ResetAndThrowHangup()
-        {
-            Reset();
-            _status = LineStatusTypes.OnHook;
-            throw new HangupException();
-        }
-        private void Reset()
-        {
-            _hungup = false;
-            _stopped = false;
         }
 
         public void DeleteCustomTones()
@@ -360,6 +235,15 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
             throw new NotImplementedException();
         }
 
+        void ILineManagement.Dispose()
+        {
+            if (DialogicDef.dx_stopch(_devh, DialogicDef.EV_SYNC) == -1)
+            {
+                var err = DialogicDef.ATDV_ERRMSGP(_devh);
+                throw new VoiceException(err);
+            }
+        }
+
         #region OldDialogicCrap
         // This is just temporary while I figure out the best place to put the code.
         // There may be some shared methods that can be used between SIP and ANALOG.
@@ -371,15 +255,6 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         private void WaitRings(int devh, int rings)
         {
             if (DialogicDef.dx_wtring(devh, rings, (int)DialogicDef.HookState.OFF_HOOK, -1) == -1)
-            {
-                var err = DialogicDef.ATDV_ERRMSGP(devh);
-                throw new VoiceException(err);
-            }
-        }
-
-        private void Stop(int devh)
-        {
-            if (DialogicDef.dx_stopch(devh, DialogicDef.EV_SYNC) == -1)
             {
                 var err = DialogicDef.ATDV_ERRMSGP(devh);
                 throw new VoiceException(err);

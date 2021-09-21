@@ -17,10 +17,6 @@ namespace ivrToolkit.Core.Tests
         {
             var line = new Mock<ILineBase>();
             line.Setup(x => x.Management.Dispose());
-            //line.Setup(x => x.Dial("1", 1000)).Returns(CallAnalysis.AnsweringMachine);
-            //line.Setup(x => x.Dial("1", 1000)).Returns(CallAnalysis.Connected);
-            //line.Setup(x => x.Dial("1", 1000)).Returns(CallAnalysis.Stopped);
-            //line.Setup(x => x.Dial("1", 1000)).Returns(CallAnalysis.NoAnswer);
             return line;
         }
 
@@ -79,10 +75,10 @@ namespace ivrToolkit.Core.Tests
         public void LineWrapper_Dial_GetAnsweringMachine_lineStatus_connected()
         {
             var mock = GetMockedLineBase();
-            mock.Setup(x => x.Dial("12223334444", 1000)).Returns(CallAnalysis.AnsweringMachine);
+            mock.Setup(x => x.Dial(It.IsAny<string>(), It.IsAny<int>())).Returns(CallAnalysis.AnsweringMachine);
 
             var test = new LineWrapper(new NullLoggerFactory(), 1, mock.Object);
-            var result = test.Dial("12223334444", 1000);
+            test.Dial("12223334444", 1000);
             test.Status.Should().Be(LineStatusTypes.Connected);
         }
 
@@ -90,10 +86,10 @@ namespace ivrToolkit.Core.Tests
         public void LineWrapper_Dial_GetConnected_lineStatus_connected()
         {
             var mock = GetMockedLineBase();
-            mock.Setup(x => x.Dial("12223334444", 1000)).Returns(CallAnalysis.Connected);
+            mock.Setup(x => x.Dial(It.IsAny<string>(), It.IsAny<int>())).Returns(CallAnalysis.Connected);
 
             var test = new LineWrapper(new NullLoggerFactory(), 1, mock.Object);
-            var result = test.Dial("12223334444", 1000);
+            test.Dial("12223334444", 1000);
             test.Status.Should().Be(LineStatusTypes.Connected);
         }
 
@@ -101,10 +97,10 @@ namespace ivrToolkit.Core.Tests
         public void LineWrapper_Dial_GetBusy_lineStatus_onHook()
         {
             var mock = GetMockedLineBase();
-            mock.Setup(x => x.Dial("12223334444", 1000)).Returns(CallAnalysis.Busy);
+            mock.Setup(x => x.Dial(It.IsAny<string>(), It.IsAny<int>())).Returns(CallAnalysis.Busy);
 
             var test = new LineWrapper(new NullLoggerFactory(), 1, mock.Object);
-            var result = test.Dial("12223334444", 1000);
+            test.Dial("12223334444", 1000);
             test.Status.Should().Be(LineStatusTypes.OnHook);
         }
 
@@ -112,7 +108,7 @@ namespace ivrToolkit.Core.Tests
         public void LineWrapper_Dial_GetStopped_throws_DisposingException()
         {
             var mock = GetMockedLineBase();
-            mock.Setup(x => x.Dial("12223334444", 1000)).Returns(CallAnalysis.Stopped);
+            mock.Setup(x => x.Dial(It.IsAny<string>(), It.IsAny<int>())).Returns(CallAnalysis.Stopped);
 
             var test = new LineWrapper(new NullLoggerFactory(), 1, mock.Object);
 

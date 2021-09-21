@@ -1,6 +1,7 @@
 ﻿using System;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
+using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -55,8 +56,7 @@ namespace ivrToolkit.Core
         public void WaitRings(int rings)
         {
             _logger.LogDebug("WaitRings({0})", rings);
-            CheckDisposed();
-            CheckDisposing();
+            CheckDispose();
 
             _status = LineStatusTypes.AcceptingCalls;
 
@@ -70,7 +70,7 @@ namespace ivrToolkit.Core
         {
             _logger.LogDebug("Hangup()");
             _status = LineStatusTypes.OnHook;
-            CheckDisposed();
+            CheckDispose();
 
             _lineImplementation.Hangup();
         }
@@ -79,7 +79,7 @@ namespace ivrToolkit.Core
         {
             _logger.LogDebug("TakeOffHook()");
             _status = LineStatusTypes.OffHook;
-            CheckDisposed();
+            CheckDispose();
 
             _lineImplementation.TakeOffHook();
         }
@@ -87,8 +87,11 @@ namespace ivrToolkit.Core
 
         public CallAnalysis Dial(string number, int answeringMachineLengthInMilliseconds)
         {
+            answeringMachineLengthInMilliseconds.ThrowIfLessThanOrEqualTo(999, nameof(answeringMachineLengthInMilliseconds));
+            number.ThrowIfNullOrWhiteSpace(nameof(number));
+
             _logger.LogDebug("Dial({0}, {1})", number, answeringMachineLengthInMilliseconds);
-            CheckDisposed();
+            CheckDispose();
 
             TakeOffHook();
             _logger.LogDebug("Line is now off hook");
@@ -157,8 +160,7 @@ namespace ivrToolkit.Core
         public void PlayFile(string filename)
         {
             _logger.LogDebug("PlayFile({0})", filename);
-            CheckDisposed();
-            CheckDisposing();
+            CheckDispose();
             try
             {
                 _lineImplementation.PlayFile(filename);
@@ -174,16 +176,6 @@ namespace ivrToolkit.Core
             }
         }
 
-        private void CheckDisposed()
-        {
-            if (_disposed) ThrowDisposedException();
-        }
-
-        private void CheckDisposing()
-        {
-            if (_disposeTriggerActivated) ThrowDisposingException();
-        }
-
         public void RecordToFile(string filename)
         {
             RecordToFile(filename, 60000 * 5); // default timeout of 5 minutes
@@ -193,7 +185,7 @@ namespace ivrToolkit.Core
         {
             _logger.LogDebug("RecordToFile({0}, {1})", filename, timeoutMilliseconds);
 
-            CheckDisposing();
+            CheckDispose();
 
             _lineImplementation.RecordToFile(filename, timeoutMilliseconds);
         }
@@ -202,8 +194,7 @@ namespace ivrToolkit.Core
         public string GetDigits(int numberOfDigits, string terminators)
         {
             _logger.LogDebug("GetDigits({0}, {1})", numberOfDigits, terminators);
-            CheckDisposed();
-            CheckDisposing();
+            CheckDispose();
             try
             {
                 var answer = _lineImplementation.GetDigits(numberOfDigits, terminators);
@@ -225,8 +216,7 @@ namespace ivrToolkit.Core
         public string FlushDigitBuffer()
         {
             _logger.LogDebug("FlushDigitBuffer()");
-            CheckDisposed();
-            CheckDisposing();
+            CheckDispose();
 
             var all = "";
             try
@@ -242,7 +232,11 @@ namespace ivrToolkit.Core
 
         public int Volume
         {
-            get => _volume;
+            get
+            {
+                CheckDispose();
+                return _volume;
+            }
             set
             {
                 if (value < -10 || value > 10)
@@ -250,7 +244,7 @@ namespace ivrToolkit.Core
                     throw new VoiceException("size must be between -10 to 10");
                 }
 
-                CheckDisposed();
+                CheckDispose();
 
                 _lineImplementation.Volume = value;
                 _volume = value;
@@ -276,6 +270,16 @@ namespace ivrToolkit.Core
             }
 
             return answer;
+        }
+
+        private void CheckDisposed()
+        {
+            if (_disposed) ThrowDisposedException();
+        }
+
+        private void CheckDisposing()
+        {
+            if (_disposeTriggerActivated) ThrowDisposingException();
         }
 
         private void ThrowDisposingException()

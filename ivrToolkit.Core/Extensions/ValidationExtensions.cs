@@ -14,6 +14,28 @@ namespace ivrToolkit.Core.Extensions
             return parameter;
         }
 
+        public static string ThrowIfNullOrEmpty(this string parameter, string parameterName)
+        {
+            if (string.IsNullOrEmpty(parameter))
+            {
+                if (parameter == null) throw new ArgumentNullException();
+                throw new ArgumentException(parameterName);
+            }
+
+            return parameter;
+        }
+
+        public static string ThrowIfNullOrWhiteSpace(this string parameter, string parameterName)
+        {
+            if (string.IsNullOrWhiteSpace(parameter))
+            {
+                if (parameter == null) throw new ArgumentNullException();
+                throw new ArgumentException(parameterName);
+            }
+
+            return parameter;
+        }
+
         public static T ThrowIfLessThanOrEqualTo<T>(this T value, T index, string parameterName) where T : IComparable<T>
         {
             if (value.CompareTo(index) <= 0)

@@ -57,7 +57,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
         }
 
-        public ILine GetLine(int lineNumber)
+        public IIvrLine GetLine(int lineNumber)
         {
             lineNumber.ThrowIfLessThanOrEqualTo(0, nameof(lineNumber));
 

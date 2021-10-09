@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Plugin.Dialogic.Sip
 {
-    public class SipLine : ILineBase, ILineManagement
+    public class SipLine : IIvrBaseLine, IIvrLineManagement
     {
         private const int SYNC_WAIT_INFINITE = -1;
         private const int SYNC_WAIT_EXPIRED = -2;
@@ -70,7 +70,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             DeleteCustomTones(); // uses dx_deltones() so I have to readd call progress tones. I also readd special tones
         }
 
-        public ILineManagement Management => this;
+        public IIvrLineManagement Management => this;
 
 
         public string LastTerminator { get; set; }
@@ -419,9 +419,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         #region ILineManagement region
 
-        void ILineManagement.Dispose()
+        void IIvrLineManagement.TriggerDispose()
         {
-            _logger.LogDebug("ILineManagement.Dispose() for line: {0}", _lineNumber);
+            _logger.LogDebug("ILineManagement.TriggerDispose() for line: {0}", _lineNumber);
 
             var result = DXXXLIB_H.dx_stopch(_devh, DXXXLIB_H.EV_SYNC);
             result.ThrowIfStandardRuntimeLibraryError(_devh);

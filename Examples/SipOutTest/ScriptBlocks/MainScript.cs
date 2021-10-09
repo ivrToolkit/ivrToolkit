@@ -16,10 +16,10 @@ namespace SipOutTest.ScriptBlocks
     {
         private readonly ILoggerFactory _loggerFactory;
         private readonly VoiceProperties _voiceProperties;
-        private readonly ILine _line;
+        private readonly IIvrLine _line;
         private readonly ILogger<MainScript> _logger;
 
-        public MainScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, ILine line) : base(loggerFactory, voiceProperties, line)
+        public MainScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, IIvrLine line) : base(loggerFactory, voiceProperties, line)
         {
             _loggerFactory = loggerFactory;
             _logger = loggerFactory.CreateLogger<MainScript>();

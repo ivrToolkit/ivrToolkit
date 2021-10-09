@@ -79,7 +79,7 @@ namespace SipOutTest
         }
 
 
-        static void WaitCall(ILoggerFactory loggerFactory, VoiceProperties dialogicVoiceProperties, ILine line, string phoneNumber)
+        static void WaitCall(ILoggerFactory loggerFactory, VoiceProperties dialogicVoiceProperties, IIvrLine line, string phoneNumber)
         {
             var lineNumber = line.LineNumber;
             try

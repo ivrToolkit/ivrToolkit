@@ -39,7 +39,7 @@ namespace ivrToolkit.Core.Interfaces
         /// <summary>
         /// Gets the voice line used by the script block
         /// </summary>
-        ILine Line
+        IIvrLine Line
         {
             get;
         }

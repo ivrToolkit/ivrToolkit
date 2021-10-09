@@ -16,7 +16,7 @@ using ivrToolkit.Core.Interfaces;
 namespace ivrToolkit.Core.Extensions
 {
     /// <summary>
-    /// This is an extension class for the ILine interface. It give you extended functionality for handling money, dates, times, ordinals etc.
+    /// This is an extension class for the IIvrLine interface. It give you extended functionality for handling money, dates, times, ordinals etc.
     /// </summary>
     public static class LineExtensions
     {
@@ -35,7 +35,7 @@ namespace ivrToolkit.Core.Extensions
         /// </summary>
         /// <param name="line">The voice line object</param>
         /// <param name="phoneNumber">The phone number must be 7, 10 or 11 characters long with no spaces or dashes. Just numbers.</param>
-        public static void PlayPhoneNumber(this ILine line, string phoneNumber)
+        public static void PlayPhoneNumber(this IIvrLine line, string phoneNumber)
         {
             phoneNumber = phoneNumber.PadLeft(11);
             phoneNumber = phoneNumber.Substring(0, 1) + " " + phoneNumber.Substring(1, 3) + " " + 
@@ -65,7 +65,7 @@ namespace ivrToolkit.Core.Extensions
         ///     line.playDate(myDateTime,"m-d-yyy h:m a/p");
         ///     </example>
         /// </remarks>
-        public static void PlayDate(this ILine line, DateTime dateTime, string mask)
+        public static void PlayDate(this IIvrLine line, DateTime dateTime, string mask)
         {
             mask = mask.ToLower();
             var parts = mask.Split(new[] { ' ',':', '-' });
@@ -161,7 +161,7 @@ namespace ivrToolkit.Core.Extensions
 
         // speak years 2010 to 2099 with the word thousand
         ///
-        private static void SpeakYearThousands(ILine line, string year)
+        private static void SpeakYearThousands(IIvrLine line, string year)
         {
             var y1 = year.Substring(0, 2);
             var y2 = year.Substring(2, 2);
@@ -203,7 +203,7 @@ namespace ivrToolkit.Core.Extensions
         /// </summary>
         /// <param name="line">The voice line object</param>
         /// <param name="number">The number you want to speak</param>
-        public static void PlayMoney(this ILine line, double number)
+        public static void PlayMoney(this IIvrLine line, double number)
         {
             var n = number.ToString("F"); // two decimal places
             var index = n.IndexOf(".", StringComparison.Ordinal);
@@ -234,7 +234,7 @@ namespace ivrToolkit.Core.Extensions
         /// </summary>
         /// <param name="line">The voice line object</param>
         /// <param name="characters">0-9, a-z, # and *</param>
-        public static void PlayCharacters(this ILine line, string characters)
+        public static void PlayCharacters(this IIvrLine line, string characters)
         {
             var chars = characters.ToCharArray();
             foreach (var c in chars)
@@ -262,7 +262,7 @@ namespace ivrToolkit.Core.Extensions
         /// </summary>
         /// <param name="line">The voice line object</param>
         /// <param name="number">The number to speak out</param>
-        public static void PlayNumber(this ILine line, double number)
+        public static void PlayNumber(this IIvrLine line, double number)
         {
             var n =number.ToString("G");
             var index = n.IndexOf(".", StringComparison.Ordinal);
@@ -293,7 +293,7 @@ namespace ivrToolkit.Core.Extensions
         /// </summary>
         /// <param name="line">The voice line object</param>
         /// <param name="number">The integer to speak out.</param>
-        public static void PlayInteger(this ILine line, long number)
+        public static void PlayInteger(this IIvrLine line, long number)
         {
             if (number < 0)
             {
@@ -342,7 +342,7 @@ namespace ivrToolkit.Core.Extensions
         /// </summary>
         /// <param name="line">The voice line object</param>
         /// <param name="number">A number between 1 and 31</param>
-        public static void PlayOrdinal(this ILine line, int number)
+        public static void PlayOrdinal(this IIvrLine line, int number)
 
         {
             PlayF(line,"ord" + number);
@@ -364,7 +364,7 @@ namespace ivrToolkit.Core.Extensions
         /// </remarks>
         /// <param name="line">The voice line object</param>
         /// <param name="str">The string to interpret in the format of 'data|code,data|code,data|code'...</param>
-        public static void PlayString(this ILine line, string str)
+        public static void PlayString(this IIvrLine line, string str)
         {
             var parts = str.Split(new[]{','});
             foreach (var part in parts)
@@ -407,7 +407,7 @@ namespace ivrToolkit.Core.Extensions
             }
         }
 
-        private static void SpeakUpTo999(ILine line, long number)
+        private static void SpeakUpTo999(IIvrLine line, long number)
         {
             const long hundred = 100;
             var hundreds = number / hundred;
@@ -430,7 +430,7 @@ namespace ivrToolkit.Core.Extensions
             }
         }
 
-        private static void PlayF(ILine line, string filename)
+        private static void PlayF(IIvrLine line, string filename)
         {
             line.PlayFile(ROOT + filename + ".wav");
         }

@@ -19,7 +19,7 @@ namespace ivrToolkit.Core
         private readonly ILoggerFactory _loggerFactory;
         private readonly VoiceProperties _voiceProperties;
 
-        protected AbstractScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, ILine line)
+        protected AbstractScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, IIvrLine line)
         {
             _loggerFactory = loggerFactory;
             _voiceProperties = voiceProperties;
@@ -34,7 +34,7 @@ namespace ivrToolkit.Core
         protected IPromptFunctions PromptFunctions { get; }
 
         /// <inheritdoc/>
-        public ILine Line { get; }
+        public IIvrLine Line { get; }
 
         /// <inheritdoc/>
         public abstract string Description

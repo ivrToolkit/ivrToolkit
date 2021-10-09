@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Plugin.Dialogic.Analog
 {
-    public class AnalogLine : ILineBase, ILineManagement
+    public class AnalogLine : IIvrBaseLine, IIvrLineManagement
     {
         private readonly int _voiceh;
         private readonly DialogicVoiceProperties _voiceProperties;
@@ -38,7 +38,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
             DeleteCustomTones(); // uses dx_deltones() so I have to re-add call progress tones. I also re-add special tones
         }
 
-        public ILineManagement Management => this;
+        public IIvrLineManagement Management => this;
 
         public string LastTerminator { get; private set; }
 
@@ -235,7 +235,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
             throw new NotImplementedException();
         }
 
-        void ILineManagement.Dispose()
+        void IIvrLineManagement.TriggerDispose()
         {
             if (DialogicDef.dx_stopch(_devh, DialogicDef.EV_SYNC) == -1)
             {

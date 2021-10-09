@@ -62,7 +62,7 @@ namespace SipInTest
         }
 
 
-        static void WaitCall(ILoggerFactory loggerFactory, VoiceProperties dialogicVoiceProperties, ILine line)
+        static void WaitCall(ILoggerFactory loggerFactory, VoiceProperties dialogicVoiceProperties, IIvrLine line)
         {
             var lineNumber = line.LineNumber;
             try

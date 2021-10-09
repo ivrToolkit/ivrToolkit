@@ -13,11 +13,11 @@ namespace ivrToolkit.Core
     /// <summary>
     /// This wrapper handles common functionality in all plugin lines so that the implementation doesn't have to handle it.
     /// </summary>
-    public class LineWrapper : ILine, ILineManagement
+    public class LineWrapper : IIvrLine, IIvrLineManagement
     {
 
         private readonly int _lineNumber;
-        private readonly ILineBase _lineImplementation;
+        private readonly IIvrBaseLine _lineImplementation;
 
         private readonly ILogger<LineWrapper> _logger;
 
@@ -29,7 +29,7 @@ namespace ivrToolkit.Core
         private bool _disposed;
 
 
-        public LineWrapper(ILoggerFactory loggerFactory, int lineNumber, ILineBase lineImplementation)
+        public LineWrapper(ILoggerFactory loggerFactory, int lineNumber, IIvrBaseLine lineImplementation)
         {
             _lineNumber = lineNumber;
             _lineImplementation = lineImplementation;
@@ -38,7 +38,7 @@ namespace ivrToolkit.Core
 
         }
 
-        public ILineManagement Management => this;
+        public IIvrLineManagement Management => this;
 
         public LineStatusTypes Status => _status;
 
@@ -117,16 +117,16 @@ namespace ivrToolkit.Core
 
         #region ILineManagement region
 
-        void ILineManagement.Dispose()
+        void IIvrLineManagement.TriggerDispose()
         {
-            _logger.LogDebug("ILineManagement.Dispose() for line: {0}", _lineNumber);
+            _logger.LogDebug("ILineManagement.TriggerDispose() for line: {0}", _lineNumber);
             if (_disposed)
             {
                 _logger.LogDebug("Line {0} has already been disposed", _lineNumber);
                 return;
             }
 
-            _lineImplementation.Management.Dispose();
+            _lineImplementation.Management.TriggerDispose();
             _disposeTriggerActivated = true;
         }
 
@@ -136,10 +136,10 @@ namespace ivrToolkit.Core
         {
             if (_disposed)
             {
-                _logger.LogDebug("Dispose() - Line is already disposed");
+                _logger.LogDebug("TriggerDispose() - Line is already disposed");
                 return;
             }
-            _logger.LogDebug("Dispose() - Disposing of the line");
+            _logger.LogDebug("TriggerDispose() - Disposing of the line");
 
             try
             {

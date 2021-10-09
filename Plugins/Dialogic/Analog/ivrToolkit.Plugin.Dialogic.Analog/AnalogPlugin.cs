@@ -73,7 +73,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
             
         }
 
-        public ILine GetLine(int lineNumber)
+        public IIvrLine GetLine(int lineNumber)
         {
             lock (_lockObject)
             {

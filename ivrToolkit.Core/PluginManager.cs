@@ -23,7 +23,7 @@ namespace ivrToolkit.Core
     /// </example>
     public class PluginManager : IDisposable
     {
-        private readonly Dictionary<int, ILine> _lines = new();
+        private readonly Dictionary<int, IIvrLine> _lines = new();
         private readonly object _lockObject = new();
 
         private readonly IIvrPlugin _ivrPlugin;
@@ -48,7 +48,7 @@ namespace ivrToolkit.Core
         /// 
         /// <param name="lineNumber">The line number to connect to starting at 1</param>
         /// <returns>A class that represents the phone line</returns>
-        public ILine GetLine(int lineNumber)
+        public IIvrLine GetLine(int lineNumber)
         {
             lineNumber.ThrowIfLessThanOrEqualTo(0, nameof(lineNumber));
 
@@ -80,7 +80,7 @@ namespace ivrToolkit.Core
                     _lines.Remove(lineNumber);
                     // some other thread is handling this line and it will get the DisposingException and handle the stopping of the line.
 
-                    line.Management.Dispose();
+                    line.Management.TriggerDispose();
                 }
                 catch (KeyNotFoundException)
                 {

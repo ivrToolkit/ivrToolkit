@@ -12,21 +12,14 @@ namespace ivrToolkit.Core.Interfaces
 {
     /// <summary>
     /// This interface exposes the main methods used to control the selected plugin.
+    /// It is meant to be used by the LineWrapper class only.
     /// </summary>
-    public interface ILine : IDisposable
+    public interface IIvrBaseLine : IDisposable
     {
         /// <summary>
         /// Functionality for managing the line from another thread.
         /// </summary>
-        ILineManagement Management { get; }
-
-        /// <summary>
-        /// The Status of the line.
-        /// </summary>
-        LineStatusTypes Status
-        {
-            get;
-        }
+        IIvrLineManagement Management { get; }
 
         /// <summary>
         /// The last terminator key that was pressed
@@ -43,11 +36,6 @@ namespace ivrToolkit.Core.Interfaces
         {
             get;
         }
-
-        /// <summary>
-        /// Use this within long computational methods to check if the line has hung-up or stopped.
-        /// </summary>
-        void CheckDispose();
 
         /// <summary>
         /// The number of rings to wait before answering

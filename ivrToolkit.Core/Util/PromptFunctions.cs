@@ -18,7 +18,7 @@ namespace ivrToolkit.Core.Util
     {
         private readonly ILoggerFactory _loggerFactory;
         private readonly VoiceProperties _voiceProperties;
-        private readonly ILine _line;
+        private readonly IIvrLine _line;
         private readonly ILogger<PromptFunctions> _logger;
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace ivrToolkit.Core.Util
         /// <param name="loggerFactory"></param>
         /// <param name="voiceProperties"></param>
         /// <param name="line">The voice line to ask the questions on</param>
-        public PromptFunctions(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, ILine line)
+        public PromptFunctions(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, IIvrLine line)
         {
             _loggerFactory = loggerFactory;
             _logger = loggerFactory.CreateLogger<PromptFunctions>();

@@ -15,10 +15,10 @@ namespace SipInTest.ScriptBlocks
     {
         private readonly ILoggerFactory _loggerFactory;
         private readonly VoiceProperties _voiceProperties;
-        private readonly ILine _line;
+        private readonly IIvrLine _line;
         private readonly ILogger<WelcomeScript> _logger;
 
-        public WelcomeScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, ILine line) : base(loggerFactory, voiceProperties, line)
+        public WelcomeScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, IIvrLine line) : base(loggerFactory, voiceProperties, line)
         {
             _loggerFactory = loggerFactory;
             _voiceProperties = voiceProperties;

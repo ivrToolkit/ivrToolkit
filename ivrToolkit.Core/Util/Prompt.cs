@@ -17,7 +17,7 @@ namespace ivrToolkit.Core.Util
     /// </summary>
     public class Prompt
     {
-        private readonly ILine _line;
+        private readonly IIvrLine _line;
         private readonly ILogger<Prompt> _logger;
 
         /// <summary>
@@ -26,7 +26,7 @@ namespace ivrToolkit.Core.Util
         /// <param name="loggerFactory"></param>
         /// <param name="voiceProperties"></param>
         /// <param name="line">The voice line to use</param>
-        public Prompt(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, ILine line)
+        public Prompt(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, IIvrLine line)
         {
             _logger = loggerFactory.CreateLogger<Prompt>();
             _logger.LogDebug("Ctr()");

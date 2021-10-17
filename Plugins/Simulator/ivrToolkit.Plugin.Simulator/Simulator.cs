@@ -7,11 +7,11 @@
 
 using System.Collections.Generic;
 using System.Globalization;
-using ivrToolkit.Core;
+using ivrToolkit.Core.Interfaces;
 
 namespace ivrToolkit.Plugin.Simulator
 {
-    public class Simulator : IVoice
+    public class Simulator : IIvrPlugin
     {
         private static readonly Dictionary<string, SimulatorLine> Lines = new Dictionary<string, SimulatorLine>();
 
@@ -35,6 +35,16 @@ namespace ivrToolkit.Plugin.Simulator
         public static void ReleaseLine(int lineNumber)
         {
             Lines.Remove(lineNumber.ToString(CultureInfo.InvariantCulture));
+        }
+
+        public void Dispose()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public ILine GetLine(int lineNumber)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Core.Util
 {
@@ -17,14 +18,19 @@ namespace ivrToolkit.Core.Util
     /// </summary>
     public class Properties
     {
-        private readonly Dictionary<string, string> _stuff = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> _stuff = new();
+        private readonly ILogger<Properties> _logger;
 
         /// <summary>
         /// Opens up a java style property file.
         /// </summary>
+        /// <param name="loggerFactory">Used for debugging</param>
         /// <param name="fileName">The name of the file to open.</param>
-        public Properties(string fileName)
+        public Properties(ILoggerFactory loggerFactory, string fileName)
         {
+            _logger = loggerFactory.CreateLogger<Properties>();
+            _logger.LogDebug("ctr(ILoggerFactory, {0})", fileName);
+
             var lines = File.ReadAllLines(fileName);
             foreach (var line in lines) {
                 if (!line.Trim().StartsWith("#")) {
@@ -45,7 +51,9 @@ namespace ivrToolkit.Core.Util
         /// <returns>The value store for the key</returns>
         public string GetProperty(string key)
         {
-            try {
+            _logger.LogDebug("GetProperty({0})", key);
+            try
+            {
                 return _stuff[key.ToLower()];
             } catch (KeyNotFoundException) {
                 return null;

@@ -4,6 +4,10 @@
 // This file is part of ivrToolkit, distributed under the Apache-2.0 license.
 // 
 // 
+
+using ivrToolkit.Core.Interfaces;
+using Microsoft.Extensions.Logging;
+
 namespace ivrToolkit.Core
 {
     /// <summary>
@@ -11,7 +15,7 @@ namespace ivrToolkit.Core
     /// </summary>
     /// <remarks>
     /// <code>
-    /// An example of a simple IVR program usingscript blocks would be:
+    /// An example of a simple IVR program using script blocks would be:
     /// 
     /// ScriptBlocks\Welcome.cs
     /// ScriptBlocks\MainMenu.cs
@@ -35,26 +39,28 @@ namespace ivrToolkit.Core
     /// </example>
     public class ScriptManager
     {
-        private readonly ILine _line;
         private IScript _nextScript;
+        private readonly ILogger<ScriptManager> _logger;
 
         /// <summary>
         /// The next script block to be executed.
         /// </summary>
         public IScript NextScript
         {
-            get { return _nextScript; }
-            set { _nextScript = value; }
+            get => _nextScript;
+            set => _nextScript = value;
         }
+
         /// <summary>
         /// Initializes the script manager with the current voice line and a starting script.
         /// </summary>
-        /// <param name="line">The voice line to use</param>
+        /// <param name="loggerFactory"></param>
         /// <param name="startingScript">The first script</param>
-        public ScriptManager(ILine line, IScript startingScript)
+        public ScriptManager(ILoggerFactory loggerFactory, IScript startingScript)
         {
+            _logger = loggerFactory.CreateLogger<ScriptManager>();
+            _logger.LogDebug("Ctr()");
             NextScript = startingScript;
-            _line = line;
         }
 
         /// <summary>
@@ -62,7 +68,7 @@ namespace ivrToolkit.Core
         /// </summary>
         public void Execute()
         {
-            _nextScript.Line = _line;
+            _logger.LogDebug("Execute()");
             _nextScript = _nextScript.Execute();
         }
 
@@ -72,6 +78,7 @@ namespace ivrToolkit.Core
         /// <returns>Returns the next script block to execute or null if there are no more.</returns>
         public bool HasNext()
         {
+            _logger.LogDebug("HasNext()");
             return _nextScript != null;
         }
     } // class

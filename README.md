@@ -5,7 +5,7 @@ An IVR toolkit library for dotNet developers wanting to write telephony applicat
 
 http://www.ivrToolkit.com
 
-[![Build Status](https://travis-ci.com/ivrToolkit/ivrToolkit.svg?branch=develop)](https://travis-ci.com/ivrToolkit/ivrToolkit)
+[![.NET Core Desktop](https://github.com/ivrToolkit/ivrToolkit/actions/workflows/dotnet-desktop.yml/badge.svg)](https://github.com/ivrToolkit/ivrToolkit/actions/workflows/dotnet-desktop.yml)
 
 License
 -------

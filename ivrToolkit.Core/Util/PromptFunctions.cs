@@ -6,6 +6,8 @@
 // 
 using System;
 using System.Linq;
+using ivrToolkit.Core.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Core.Util
 {
@@ -14,13 +16,23 @@ namespace ivrToolkit.Core.Util
     /// </summary>
     public class PromptFunctions : IPromptFunctions
     {
-        private readonly ILine _line;
+        private readonly ILoggerFactory _loggerFactory;
+        private readonly VoiceProperties _voiceProperties;
+        private readonly IIvrLine _line;
+        private readonly ILogger<PromptFunctions> _logger;
+
         /// <summary>
         /// Initiates the class with a voice line
         /// </summary>
+        /// <param name="loggerFactory"></param>
+        /// <param name="voiceProperties"></param>
         /// <param name="line">The voice line to ask the questions on</param>
-        public PromptFunctions(ILine line)
+        public PromptFunctions(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, IIvrLine line)
         {
+            _loggerFactory = loggerFactory;
+            _logger = loggerFactory.CreateLogger<PromptFunctions>();
+            _logger.LogDebug("Ctr()");
+            _voiceProperties = voiceProperties;
             _line = line;
         }
 
@@ -30,7 +42,9 @@ namespace ivrToolkit.Core.Util
         /// </summary>
         public virtual Prompt GetRegularStylePrompt()
         {
-            var p = new Prompt(_line) {NumberOfDigits = 99, Terminators = "#", Attempts = GetAttempts(), BlankAttempts = GetBlankAttempts()};
+            _logger.LogDebug("GetRegularStylePrompt()");
+            var DG_MAXDIGS = 31;
+            var p = new Prompt(_loggerFactory, _voiceProperties, _line) {NumberOfDigits = DG_MAXDIGS, Terminators = "#", Attempts = GetAttempts(), BlankAttempts = GetBlankAttempts()};
             return p;
         }
         
@@ -41,7 +55,8 @@ namespace ivrToolkit.Core.Util
         /// <returns></returns>
         public virtual Prompt GetMenuStylePrompt()
         {
-            var p = new Prompt(_line) { NumberOfDigits = 1, Terminators = "", Attempts = GetAttempts(), BlankAttempts = GetBlankAttempts() };
+            _logger.LogDebug("GetMenuStylePrompt()");
+            var p = new Prompt(_loggerFactory, _voiceProperties, _line) { NumberOfDigits = 1, Terminators = "", Attempts = GetAttempts(), BlankAttempts = GetBlankAttempts() };
             return p;
         }
 
@@ -51,7 +66,8 @@ namespace ivrToolkit.Core.Util
         /// <returns></returns>
         public int GetAttempts()
         {
-            return VoiceProperties.Current.PromptAttempts;
+            _logger.LogDebug("GetAttempts()");
+            return _voiceProperties.PromptAttempts;
         }
         /// <summary>
         /// 
@@ -59,7 +75,8 @@ namespace ivrToolkit.Core.Util
         /// <returns></returns>
         public int GetBlankAttempts()
         {
-            return VoiceProperties.Current.PromptBlankAttempts;
+            _logger.LogDebug("GetBlankAttempts()");
+            return _voiceProperties.PromptBlankAttempts;
         }
 
         /// <summary>
@@ -71,12 +88,10 @@ namespace ivrToolkit.Core.Util
         /// <returns>The digit pressed that is within the allowed string.</returns>
         public string SingleDigitPrompt(string promptMessage, string allowed)
         {
+            _logger.LogDebug("SingleDigitPrompt()");
             var p = GetMenuStylePrompt();
             p.PromptMessage = promptMessage;
-            p.OnValidation += delegate(string answer)
-                {
-                    return allowed.IndexOf(answer, StringComparison.Ordinal) != -1;
-                };
+            p.OnValidation += answer => allowed.IndexOf(answer, StringComparison.Ordinal) != -1;
             return p.Ask();
         }
 
@@ -88,6 +103,7 @@ namespace ivrToolkit.Core.Util
         /// <returns>A response of any size including empty</returns>
         public string RegularPrompt(string promptMessage)
         {
+            _logger.LogDebug("RegularPrompt({0})", promptMessage );
             return RegularPrompt(promptMessage, null);
         }
 
@@ -100,13 +116,16 @@ namespace ivrToolkit.Core.Util
         /// <returns>A response matching on of the validAnswers[] string</returns>
         public string RegularPrompt(string promptMessage, string[] validAnswers)
         {
-            Prompt.ValidationHandler customHandler = delegate(string answer)
+            _logger.LogDebug("RegularPrompt({0}, {1})", promptMessage, validAnswers);
+
+            bool CustomHandler(string answer)
             {
                 if (validAnswers == null) return true;
 
                 return validAnswers.Any(s => answer == s);
-            };
-            return CustomValidationPrompt(promptMessage, customHandler);
+            }
+
+            return CustomValidationPrompt(promptMessage, CustomHandler);
         }
 
         /// <summary>
@@ -118,6 +137,7 @@ namespace ivrToolkit.Core.Util
         /// <returns></returns>
         public string CustomValidationPrompt(string promptMessage, Prompt.ValidationHandler customHandler)
         {
+            _logger.LogDebug("RegularPrompt({0}, Prompt.ValidationHandler)", promptMessage);
             var prompt = GetRegularStylePrompt();
             prompt.PromptMessage = promptMessage;
             prompt.OnValidation += customHandler;

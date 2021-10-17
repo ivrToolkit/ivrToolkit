@@ -4,7 +4,10 @@
 // This file is part of ivrToolkit, distributed under the Apache-2.0 license.
 // 
 // 
+
+using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.Util;
+using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Core
 {
@@ -13,31 +16,26 @@ namespace ivrToolkit.Core
     /// </summary>
     public abstract class AbstractScript : IScript
     {
-        private ILine _line;
-        private IPromptFunctions _promptFunctions;
+        private readonly ILoggerFactory _loggerFactory;
+        private readonly VoiceProperties _voiceProperties;
+
+        protected AbstractScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, IIvrLine line)
+        {
+            _loggerFactory = loggerFactory;
+            _voiceProperties = voiceProperties;
+            Line = line;
+            PromptFunctions = new PromptFunctions(_loggerFactory, _voiceProperties, line);
+        }
+
 
         /// <summary>
         /// Used within your script block to handle prompts
         /// </summary>
-        protected IPromptFunctions PromptFunctions
-        {
-            get
-            {
-                return _promptFunctions;
-            }
-        }
+        protected IPromptFunctions PromptFunctions { get; }
 
         /// <inheritdoc/>
-        public ILine Line
-        {
-            get
-            { return _line; }
-            set
-            {
-                _line = value;
-                _promptFunctions = new PromptFunctions(_line);
-            }
-        }
+        public IIvrLine Line { get; }
+
         /// <inheritdoc/>
         public abstract string Description
         {

@@ -7,7 +7,6 @@
 
 using System;
 using System.Threading;
-using NAudio.Wave;
 
 namespace ivrToolkit.Plugin.Simulator
 {

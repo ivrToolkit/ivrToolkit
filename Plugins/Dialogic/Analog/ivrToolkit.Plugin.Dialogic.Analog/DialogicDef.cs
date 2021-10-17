@@ -18,7 +18,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
     #pragma warning disable 169
     #pragma warning disable 649
 
-    public partial class Dialogic
+    public class DialogicDef
     {
         public const int CON_CAD = 1;
         public const int CON_LPC = 2;
@@ -172,31 +172,31 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
             public string dg_type;
         }
 
-        private enum HookState
+        public enum HookState
         {
             ON_HOOK = 0,
             OFF_HOOK = 1
         }
 
-        private const int DM_TONEON = 0x01;  /* Tone ON Mask */
-        private const int DM_TONEOFF = 0x02;  /* Tone OFF Mask */
+        public const int DM_TONEON = 0x01;  /* Tone ON Mask */
+        public const int DM_TONEOFF = 0x02;  /* Tone OFF Mask */
 
-        private const int EV_ASYNC = 0x8000;
-        private const int EV_SYNC = 0x0000;
+        public const int EV_ASYNC = 0x8000;
+        public const int EV_SYNC = 0x0000;
 
-        private struct Freq_T
+        public struct Freq_T
         {
             public int freq;          // frequency Hz
             public int deviation;     // deviation in Hz
         }
 
-        private struct State_T
+        public struct State_T
         {
             public int time;          // time in 10ms
             public int deviation;     // deviation in ms
         }
 
-        private struct Tone_T
+        public struct Tone_T
         {
             public string str;        // informational string
 
@@ -208,7 +208,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
             public int repcnt;     // repitition count
         }
         // call analysis 
-        private enum CallAnalysis
+        public enum CallAnalysis
         {
             CR_BUSY = 7, /* Line busy */
             CR_NOANS = 8, /* No answer */
@@ -220,34 +220,65 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
             CR_FAXTONE = 18, /* Fax tone detected */
             CR_ERROR = 0x100 /* Call analysis error */
         }
-        private enum DeviceType
+        public enum DeviceType
         {
             SC_VOX = 0x01,
             SC_LSI = 0x02
         }
 
-        private enum DuplexMode
+        public enum DuplexMode
         {
             SC_FULLDUP = 0x00,
             SC_HALFDUP = 0x01
         }
 
-        private const ushort SV_SPEEDTBL = 0x01;    /* Modify Speed */
-        private const ushort SV_VOLUMETBL = 0x02;   /* Modify Volume */
+        public enum ToneTypes
+        {
+            /*
+             * Tone ID types
+             */
+            TID_FIRST = 250,
+            TID_DIAL_LCL = 250,
+            TID_DIAL_INTL = 251,
+            TID_DIAL_XTRA = 252,
+            TID_BUSY1 = 253,
+            TID_RNGBK1 = 254,
+            TID_BUSY2 = 255,
+            TID_RNGBK2 = 256,
 
-        private const ushort SV_ABSPOS = 0x00;      /* Absolute Position */
-        private const ushort SV_RELCURPOS = 0x10;   /* Relative to Current Position */
-        private const ushort SV_TOGGLE = 0x20;      /* Toggle */
+            TID_DISCONNECT = 257,
+            TID_FAX1 = 258,
+            TID_FAX2 = 259,
+            TID_LAST = 259, /* last in springware */
 
-        private const ushort SV_WRAPMOD = 0x0010;
-        private const ushort SV_SETDEFAULT = 0x0020;
-        private const ushort SV_LEVEL = 0x0100;
-        private const ushort SV_BEGINPLAY = 0x0200;
+            TID_SIT_NC = 260,
+            TID_SIT_IC = 261,
+            TID_SIT_VC = 262,
 
-        private const ushort SV_TOGORIGIN = 0x00;    /* Toggle Between Origin and Last Modified Position */
-        private const ushort SV_CURORIGIN = 0x01;    /* Reset Current Position to Origin */
-        private const ushort SV_CURLASTMOD = 0x02;   /* Reset Current Position to Last Modified Position */
-        private const ushort SV_RESETORIG = 0x03;    /* Reset Current Position and Last Modified State to Origin */
+            TID_SIT_RO = 263,
+            TID_SIT_ANY = 264,
+
+            TID_SIT_NC_INTERLATA = 265,
+            TID_SIT_RO_INTERLATA = 266,
+            TID_SIT_IO = 267
+        }
+
+        public const ushort SV_SPEEDTBL = 0x01;    /* Modify Speed */
+        public const ushort SV_VOLUMETBL = 0x02;   /* Modify Volume */
+
+        public const ushort SV_ABSPOS = 0x00;      /* Absolute Position */
+        public const ushort SV_RELCURPOS = 0x10;   /* Relative to Current Position */
+        public const ushort SV_TOGGLE = 0x20;      /* Toggle */
+
+        public const ushort SV_WRAPMOD = 0x0010;
+        public const ushort SV_SETDEFAULT = 0x0020;
+        public const ushort SV_LEVEL = 0x0100;
+        public const ushort SV_BEGINPLAY = 0x0200;
+
+        public const ushort SV_TOGORIGIN = 0x00;    /* Toggle Between Origin and Last Modified Position */
+        public const ushort SV_CURORIGIN = 0x01;    /* Reset Current Position to Origin */
+        public const ushort SV_CURLASTMOD = 0x02;   /* Reset Current Position to Last Modified Position */
+        public const ushort SV_RESETORIG = 0x03;    /* Reset Current Position and Last Modified State to Origin */
 
         [StructLayout(LayoutKind.Sequential)]
         public struct DX_CST
@@ -257,7 +288,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct DV_TPT
+        public struct DV_TPT
         {
             public ushort tp_type; /* Flags Describing this Entry */
             public ushort tp_termno; /* Termination Parameter Number */
@@ -273,7 +304,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct DX_IOTT
+        public struct DX_IOTT
         {
             public ushort io_type; /* Transfer type */
             public ushort rfu; /* reserved */
@@ -292,8 +323,9 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
             /// DX_IOTT*
             public IntPtr io_prevp; /* (optional) Pointer to previous DX_IOTT */
         }
+
         [StructLayout(LayoutKind.Sequential)]
-        private struct DX_CAP
+        public struct DX_CAP
         {
             public ushort ca_nbrdna; /* # of rings before no answer. */
             public ushort ca_stdely; /* Delay after dialing before analysis. */
@@ -353,134 +385,106 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
             public ushort ca_noanswer; /* time before no answer after 1st ring (deflt=30s) */
             public ushort ca_maxintering; /* Max inter ring delay before connect (8 sec) */
         }
-        /*
-         * Tone ID types
-         */
-        private const int TID_FIRST = 250;
-        private const int TID_DIAL_LCL = 250;
-        private const int TID_DIAL_INTL = 251;
-        private const int TID_DIAL_XTRA = 252;
-        private const int TID_BUSY1 = 253;
-        private const int TID_RNGBK1 = 254;
-        private const int TID_BUSY2 = 255;
-        private const int TID_RNGBK2 = 256;
-
-        private const int TID_DISCONNECT = 257;
-        private const int TID_FAX1 = 258;
-        private const int TID_FAX2 = 259;
-        private const int TID_LAST = 259;  /* last in springware */
-
-        private const int TID_SIT_NC = 260;
-        private const int TID_SIT_IC = 261;
-        private const int TID_SIT_VC = 262;
-
-        private const int TID_SIT_RO = 263;
-        private const int TID_SIT_ANY = 264;
-
-        private const int TID_SIT_NC_INTERLATA = 265;
-        private const int TID_SIT_RO_INTERLATA = 266;
-        private const int TID_SIT_IO = 267;
-
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int dx_eventhandler(uint parm);
 
 
-        private const uint EV_ANYEVT = 0xFFFFFFFF;
-        private const int EV_ANYDEV = -1;
+        public const uint EV_ANYEVT = 0xFFFFFFFF;
+        public const int EV_ANYDEV = -1;
 
 
-        private const int USR_EXIT = -1;
+        public const int USR_EXIT = -1;
 
-        private const int INB = 3;
-        private const int OUTB = 4;
-        private const int TDX_USR_TIMER = TDX_UNKNOWN + 100;
+        public const int INB = 3;
+        public const int OUTB = 4;
+        public const int TDX_USR_TIMER = TDX_UNKNOWN + 100;
 
         /* 
          * Termination mask defines for use with ATDX_TERMMSK( )
          */
-        private const int TM_NORMTERM = 0x00000;     /* Normal Termination */
-        private const int TM_MAXDTMF = 0x00001;     /* Max Number of Digits Recd */
-        private const int TM_MAXSIL = 0x00002;     /* Max Silence */
-        private const int TM_MAXNOSIL = 0x00004;     /* Max Non-Silence */
-        private const int TM_LCOFF = 0x00008;     /* Loop Current Off */
-        private const int TM_IDDTIME = 0x00010;     /* Inter Digit Delay */
-        private const int TM_MAXTIME = 0x00020;     /* Max Function Time Exceeded */
-        private const int TM_DIGIT = 0x00040;     /* Digit Mask or Digit Type Term. */
-        private const int TM_PATTERN = 0x00080;     /* Pattern Match Silence Off */
-        private const int TM_USRSTOP = 0x00100;     /* Function Stopped by User */
-        private const int TM_EOD = 0x00200;     /* End of Data Reached on Playback */
-        private const int TM_TONE = 0x02000;     /* Tone On/Off Termination */
-        private const int TM_BARGEIN = 0x08000;     /* Play terminated due to Barge-in */
-        private const int TM_ERROR = 0x80000;     /* I/O Device Error */
-        private const int TM_MAXDATA = 0x100000;	  /* Max Data reached for FSK */
+        public const int TM_NORMTERM = 0x00000;     /* Normal Termination */
+        public const int TM_MAXDTMF = 0x00001;     /* Max Number of Digits Recd */
+        public const int TM_MAXSIL = 0x00002;     /* Max Silence */
+        public const int TM_MAXNOSIL = 0x00004;     /* Max Non-Silence */
+        public const int TM_LCOFF = 0x00008;     /* Loop Current Off */
+        public const int TM_IDDTIME = 0x00010;     /* Inter Digit Delay */
+        public const int TM_MAXTIME = 0x00020;     /* Max Function Time Exceeded */
+        public const int TM_DIGIT = 0x00040;     /* Digit Mask or Digit Type Term. */
+        public const int TM_PATTERN = 0x00080;     /* Pattern Match Silence Off */
+        public const int TM_USRSTOP = 0x00100;     /* Function Stopped by User */
+        public const int TM_EOD = 0x00200;     /* End of Data Reached on Playback */
+        public const int TM_TONE = 0x02000;     /* Tone On/Off Termination */
+        public const int TM_BARGEIN = 0x08000;     /* Play terminated due to Barge-in */
+        public const int TM_ERROR = 0x80000;     /* I/O Device Error */
+        public const int TM_MAXDATA = 0x100000;	  /* Max Data reached for FSK */
 
 
         // Event Types 
-        private const int TDX_PLAY = 0x81; /* Play Completed */
-        private const int TDX_RECORD = 0x82; /* Record Completed */
-        private const int TDX_GETDIG = 0x83; /* Get Digits Completed */
-        private const int TDX_DIAL = 0x84; /* Dial Completed */
-        private const int TDX_CALLP = 0x85; /* Call Progress Completed */
-        private const int TDX_CST = 0x86; /* CST Event Received */
-        private const int TDX_SETHOOK = 0x87; /* SetHook Completed */
-        private const int TDX_WINK = 0x88; /* Wink Completed */
-        private const int TDX_ERROR = 0x89; /* Error Event */
-        private const int TDX_PLAYTONE = 0x8A; /* Play Tone Completed */
-        private const int TDX_GETR2MF = 0x8B; /* Get R2MF completed */
-        private const int TDX_BARGEIN = 0x8C; /* Barge in completed */
-        private const int TDX_NOSTOP = 0x8D; /* No Stop needed to be Issued */
-        private const int TDX_UNKNOWN = 1000;
+        public const int TDX_PLAY = 0x81; /* Play Completed */
+        public const int TDX_RECORD = 0x82; /* Record Completed */
+        public const int TDX_GETDIG = 0x83; /* Get Digits Completed */
+        public const int TDX_DIAL = 0x84; /* Dial Completed */
+        public const int TDX_CALLP = 0x85; /* Call Progress Completed */
+        public const int TDX_CST = 0x86; /* CST Event Received */
+        public const int TDX_SETHOOK = 0x87; /* SetHook Completed */
+        public const int TDX_WINK = 0x88; /* Wink Completed */
+        public const int TDX_ERROR = 0x89; /* Error Event */
+        public const int TDX_PLAYTONE = 0x8A; /* Play Tone Completed */
+        public const int TDX_GETR2MF = 0x8B; /* Get R2MF completed */
+        public const int TDX_BARGEIN = 0x8C; /* Barge in completed */
+        public const int TDX_NOSTOP = 0x8D; /* No Stop needed to be Issued */
+        public const int TDX_UNKNOWN = 1000;
 
-        private const int DE_RINGS = 1; /* Rings received */
-        private const int DE_SILON = 2; /* Silence on */
-        private const int DE_SILOFF = 3; /* Silenec off */
-        private const int DE_LCON = 4; /* Loop current on */
-        private const int DE_LCOFF = 5; /* Loop current off */
-        private const int DE_WINK = 6; /* Wink received */
-        private const int DE_RNGOFF = 7; /* Ring off event */
-        private const int DE_DIGITS = 8; /* Digit Received */
-        private const int DE_DIGOFF = 9; /* Digit tone off event */
-        private const int DE_LCREV = 13; /* Loop current reversal */
-        private const int DE_TONEON = 17; /* Tone ON Event Received */
-        private const int DE_TONEOFF = 18; /* Tone OFF Event Received */
-        private const int DE_STOPRINGS = 19; /* Stop ring detect state */
-        private const int DE_VAD = 20; /* Voice Energy detected */
+        public const int DE_RINGS = 1; /* Rings received */
+        public const int DE_SILON = 2; /* Silence on */
+        public const int DE_SILOFF = 3; /* Silenec off */
+        public const int DE_LCON = 4; /* Loop current on */
+        public const int DE_LCOFF = 5; /* Loop current off */
+        public const int DE_WINK = 6; /* Wink received */
+        public const int DE_RNGOFF = 7; /* Ring off event */
+        public const int DE_DIGITS = 8; /* Digit Received */
+        public const int DE_DIGOFF = 9; /* Digit tone off event */
+        public const int DE_LCREV = 13; /* Loop current reversal */
+        public const int DE_TONEON = 17; /* Tone ON Event Received */
+        public const int DE_TONEOFF = 18; /* Tone OFF Event Received */
+        public const int DE_STOPRINGS = 19; /* Stop ring detect state */
+        public const int DE_VAD = 20; /* Voice Energy detected */
 
-        private const int DX_CALLP = 1;
+        public const int DX_CALLP = 1;
 
-        private int DM_RINGS = (1 << (DE_RINGS - 1));
+        public int DM_RINGS = (1 << (DE_RINGS - 1));
 
-        private const int DX_OPTEN = 1; /* Enable Operator Intercept with Connect */
-        private const int DX_OPTDIS = 2; /* Disable Operator Intercept */
-        private const int DX_OPTNOCON = 3; /* Enable Operator Intercept w/o Connect */
-        private const int DX_PVDENABLE = 4; /* Enable PVD */
-        private const int DX_PVDOPTEN = 5; /* Enable PVD with OPTEN */
-        private const int DX_PVDOPTNOCON = 6; /* Enable PVD with OPTNOCON */
-        private const int DX_PAMDENABLE = 7; /* Enable PAMD */
-        private const int DX_PAMDOPTEN = 8; /* Enable PAMD with OPTEN */
+        public const int DX_OPTEN = 1; /* Enable Operator Intercept with Connect */
+        public const int DX_OPTDIS = 2; /* Disable Operator Intercept */
+        public const int DX_OPTNOCON = 3; /* Enable Operator Intercept w/o Connect */
+        public const int DX_PVDENABLE = 4; /* Enable PVD */
+        public const int DX_PVDOPTEN = 5; /* Enable PVD with OPTEN */
+        public const int DX_PVDOPTNOCON = 6; /* Enable PVD with OPTNOCON */
+        public const int DX_PAMDENABLE = 7; /* Enable PAMD */
+        public const int DX_PAMDOPTEN = 8; /* Enable PAMD with OPTEN */
 
-        private const int RLS_SILENCE = 0x80; /* Sil Bit in Raw Line Status */
-        private const int RLS_DTMF = 0x40; /* DTMF Signal Bit in Raw Line Status */
-        private const int RLS_LCSENSE = 0x20; /* Loop Current Sense Bit in Raw Line Status */
-        private const int RLS_RING = 0x10; /* Ring Detect Bit in Raw Line Status */
-        private const int RLS_HOOK = 0x08; /* Hook Switch Status Bit in Raw Line Status */
-        private const int RLS_RINGBK = 0x04; /* Audible Ringback Detect Bit in Raw Line Status */
+        public const int RLS_SILENCE = 0x80; /* Sil Bit in Raw Line Status */
+        public const int RLS_DTMF = 0x40; /* DTMF Signal Bit in Raw Line Status */
+        public const int RLS_LCSENSE = 0x20; /* Loop Current Sense Bit in Raw Line Status */
+        public const int RLS_RING = 0x10; /* Ring Detect Bit in Raw Line Status */
+        public const int RLS_HOOK = 0x08; /* Hook Switch Status Bit in Raw Line Status */
+        public const int RLS_RINGBK = 0x04; /* Audible Ringback Detect Bit in Raw Line Status */
 
-        private const int SR_STASYNC = 0; /* Single threaded async model */
-        private const int SR_MTASYNC = 1; /* Multithreaded asynchronous model */
-        private const int SR_MTSYNC = 2; /* Multithreaded synchronous model */
+        public const int SR_STASYNC = 0; /* Single threaded async model */
+        public const int SR_MTASYNC = 1; /* Multithreaded asynchronous model */
+        public const int SR_MTSYNC = 2; /* Multithreaded synchronous model */
 
-        private const int IO_CONT = 0x01; /* Next TPT is contiguous in memory */
-        private const int IO_LINK = 0x02; /* Next TPT found thru tp_nextp ptr */
-        private const int IO_EOT = 0x04; /* End of the Termination Parameters */
-        private const int IO_DEV = 0x00; /* play/record from a file */
-        private const int IO_MEM = 0x08; /* play/record from memory */
-        private const int IO_UIO = 0x10; /* play/record using user I/O functions */
-        private const int IO_STREAM = 0x20; /* End of the Termination for R4 Streaming API */
-        private const int IO_CACHED = 0x40; /* play from cache */
-        private const int IO_USEOFFSET = 0x80; /* use io_offset and io_length for non-VOX */
-        private const int IO_UNIT_TIME = 0x200; /* io_offset and io_length in milliseconds */ 
+        public const int IO_CONT = 0x01; /* Next TPT is contiguous in memory */
+        public const int IO_LINK = 0x02; /* Next TPT found thru tp_nextp ptr */
+        public const int IO_EOT = 0x04; /* End of the Termination Parameters */
+        public const int IO_DEV = 0x00; /* play/record from a file */
+        public const int IO_MEM = 0x08; /* play/record from memory */
+        public const int IO_UIO = 0x10; /* play/record using user I/O functions */
+        public const int IO_STREAM = 0x20; /* End of the Termination for R4 Streaming API */
+        public const int IO_CACHED = 0x40; /* play from cache */
+        public const int IO_USEOFFSET = 0x80; /* use io_offset and io_length for non-VOX */
+        public const int IO_UNIT_TIME = 0x200; /* io_offset and io_length in milliseconds */ 
 
 
         // Defines for the TPT 
@@ -488,64 +492,64 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         /// <summary>
         /// Maximum Number of Digits Received
         /// </summary>
-        private const int DX_MAXDTMF = 1;
+        public const int DX_MAXDTMF = 1;
 
         /// <summary>
         /// Maximum Silence
         /// </summary>
-        private const int DX_MAXSIL = 2;
+        public const int DX_MAXSIL = 2;
 
         /// <summary>
         /// Maximum Non-Silence
         /// </summary>
-        private const int DX_MAXNOSIL = 3;
+        public const int DX_MAXNOSIL = 3;
 
         /// <summary>
         /// Loop Current Off
         /// </summary>
-        private const int DX_LCOFF = 4;
+        public const int DX_LCOFF = 4;
 
         /// <summary>
         /// Inter-Digit Delay
         /// </summary>
-        private const int DX_IDDTIME = 5;
+        public const int DX_IDDTIME = 5;
 
         /// <summary>
         /// Function Time
         /// </summary>
-        private const int DX_MAXTIME = 6;
+        public const int DX_MAXTIME = 6;
 
         /// <summary>
         /// Digit Mask Termination
         /// </summary>
-        private const int DX_DIGMASK = 7;
+        public const int DX_DIGMASK = 7;
         /// <summary>
         /// Pattern Match Silence On
         /// </summary>
-        private const int DX_PMOFF = 8;
+        public const int DX_PMOFF = 8;
         /// <summary>
         /// Pattern Match Silence Off
         /// </summary>
-        private const int DX_PMON = 9;
+        public const int DX_PMON = 9;
 
         /// <summary>
         /// Digit Type Termination
         /// </summary>
-        private const int DX_DIGTYPE = 11;
+        public const int DX_DIGTYPE = 11;
 
         /// <summary>
         /// Tone On/Off Termination
         /// </summary>
-        private const int DX_TONE = 12;
+        public const int DX_TONE = 12;
 
         /// <summary>
         /// Maximum bytes for ADSI data
         /// </summary>
-        private const int DX_MAXDATA = 13;
+        public const int DX_MAXDATA = 13;
 
-        private const int EVFL_SENDSELF = 0x01; /* Send event to self process */
-        private const int EVFL_SENDOTHERS = 0x02; /* Send event to other processes */
-        private const int EVFL_SENDALL = 0x03; /* Send event to all processes */
+        public const int EVFL_SENDSELF = 0x01; /* Send event to self process */
+        public const int EVFL_SENDOTHERS = 0x02; /* Send event to other processes */
+        public const int EVFL_SENDALL = 0x03; /* Send event to all processes */
 
         /*
          * Defines for TPT Termination Flags
@@ -574,54 +578,54 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         /*
          * Masked DTMF termination/initiation equates
          */
-        private const int DM_D = 0x0001;    /* Mask for DTMF d. */
-        private const int DM_1 = 0x0002;    /* Mask for DTMF 1. */
-        private const int DM_2 = 0x0004;    /* Mask for DTMF 2. */
-        private const int DM_3 = 0x0008;    /* Mask for DTMF 3. */
-        private const int DM_4 = 0x0010;    /* Mask for DTMF 4. */
-        private const int DM_5 = 0x0020;    /* Mask for DTMF 5. */
-        private const int DM_6 = 0x0040;    /* Mask for DTMF 6. */
-        private const int DM_7 = 0x0080;    /* Mask for DTMF 7. */
-        private const int DM_8 = 0x0100;    /* Mask for DTMF 8. */
-        private const int DM_9 = 0x0200;    /* Mask for DTMF 9. */
-        private const int DM_0 = 0x0400;    /* Mask for DTMF 0. */
-        private const int DM_S = 0x0800;    /* Mask for DTMF *. */
-        private const int DM_P = 0x1000;    /* Mask for DTMF #. */
-        private const int DM_A = 0x2000;    /* Mask for DTMF a. */
-        private const int DM_B = 0x4000;    /* Mask for DTMF b. */
-        private const int DM_C = 0x8000;    /* Mask for DTMF c. */
+        public const int DM_D = 0x0001;    /* Mask for DTMF d. */
+        public const int DM_1 = 0x0002;    /* Mask for DTMF 1. */
+        public const int DM_2 = 0x0004;    /* Mask for DTMF 2. */
+        public const int DM_3 = 0x0008;    /* Mask for DTMF 3. */
+        public const int DM_4 = 0x0010;    /* Mask for DTMF 4. */
+        public const int DM_5 = 0x0020;    /* Mask for DTMF 5. */
+        public const int DM_6 = 0x0040;    /* Mask for DTMF 6. */
+        public const int DM_7 = 0x0080;    /* Mask for DTMF 7. */
+        public const int DM_8 = 0x0100;    /* Mask for DTMF 8. */
+        public const int DM_9 = 0x0200;    /* Mask for DTMF 9. */
+        public const int DM_0 = 0x0400;    /* Mask for DTMF 0. */
+        public const int DM_S = 0x0800;    /* Mask for DTMF *. */
+        public const int DM_P = 0x1000;    /* Mask for DTMF #. */
+        public const int DM_A = 0x2000;    /* Mask for DTMF a. */
+        public const int DM_B = 0x4000;    /* Mask for DTMF b. */
+        public const int DM_C = 0x8000;    /* Mask for DTMF c. */
 
 
         // Channel Mode values 
-        private const int MD_ADPCM = 0x0000; /* ADPCM data (the default) */
-        private const int MD_PCM = 0x0100; /* Mu-Law PCM data */
-        private const int MD_FFT = 0x0200; /* FFT data (debugging) */
-        private const int MD_GAIN = 0x0000; /* AGC on */
-        private const int MD_NOGAIN = 0x1000; /* AGC off */
-        private const int PM_TONE = 0x0001; /* Tone initiated play/record */
-        private const int RM_TONE = 0x0001;
-        private const int PM_SR6 = 0x2000; /* 6KHz sampling rate (digitization) */
-        private const int PM_SR8 = 0x4000; /* 8KHz sampling rate (digitization) */
-        private const int RM_SR6 = 0x2000;
-        private const int RM_SR8 = 0x4000;
-        private const int PM_ALAW = 0x0020; /* Play A-Law data */
-        private const int RM_ALAW = 0x0020; /* Record data using A-Law */
-        private const int PM_DTINIT = 0x0002; /* Play with DTMF init */
-        private const int RM_DTINIT = 0x0002; /* Record with DTMF init */
-        private const int PM_DTINITSET = 0x0010 | 0x0002; /* Play with DTMF init set */
-        private const int RM_DTINITSET = 0x0010; /* Record with DTMF init set */
-        private const int R2_COMPELDIG = 0x0400; /* R2MF Compelled signalling */
+        public const int MD_ADPCM = 0x0000; /* ADPCM data (the default) */
+        public const int MD_PCM = 0x0100; /* Mu-Law PCM data */
+        public const int MD_FFT = 0x0200; /* FFT data (debugging) */
+        public const int MD_GAIN = 0x0000; /* AGC on */
+        public const int MD_NOGAIN = 0x1000; /* AGC off */
+        public const int PM_TONE = 0x0001; /* Tone initiated play/record */
+        public const int RM_TONE = 0x0001;
+        public const int PM_SR6 = 0x2000; /* 6KHz sampling rate (digitization) */
+        public const int PM_SR8 = 0x4000; /* 8KHz sampling rate (digitization) */
+        public const int RM_SR6 = 0x2000;
+        public const int RM_SR8 = 0x4000;
+        public const int PM_ALAW = 0x0020; /* Play A-Law data */
+        public const int RM_ALAW = 0x0020; /* Record data using A-Law */
+        public const int PM_DTINIT = 0x0002; /* Play with DTMF init */
+        public const int RM_DTINIT = 0x0002; /* Record with DTMF init */
+        public const int PM_DTINITSET = 0x0010 | 0x0002; /* Play with DTMF init set */
+        public const int RM_DTINITSET = 0x0010; /* Record with DTMF init set */
+        public const int R2_COMPELDIG = 0x0400; /* R2MF Compelled signalling */
 
 
-        private const int PAMD_ACCU = 3;
+        public const int PAMD_ACCU = 3;
 
-        private const int SR_USERCONTEXT = 0x06;
-        private const int SR_MODELTYPE = 0x05;
-        private const int SR_POLLMODE = 0;
+        public const int SR_USERCONTEXT = 0x06;
+        public const int SR_MODELTYPE = 0x05;
+        public const int SR_POLLMODE = 0;
 
-        private const int SRL_DEVICE = 0;
+        public const int SRL_DEVICE = 0;
 
-        private struct CT_DEVINFO
+        public struct CT_DEVINFO
         {
             public int ct_prodid;
             public byte ct_devfamily;
@@ -632,7 +636,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
             public byte[] ct_rfu;
         }
 
-        private struct DX_EBLK
+        public struct DX_EBLK
         {
             public ushort ev_event; /* Event that occured */
 
@@ -643,156 +647,156 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         }
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_clrtpt(ref DV_TPT tptp, int size);
+        public static extern int dx_clrtpt(ref DV_TPT tptp, int size);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_recf(int chDev, string fNamep, ref DV_TPT tptp, int mode);
+        public static extern int dx_recf(int chDev, string fNamep, ref DV_TPT tptp, int mode);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_fileerrno();
+        public static extern int dx_fileerrno();
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_getevt(int chdev, ref DX_EBLK eblkp, int timeout);
+        public static extern int dx_getevt(int chdev, ref DX_EBLK eblkp, int timeout);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_getdig(int chdev, ref DV_TPT tptp, out DV_DIGIT digitp, ushort mode);
+        public static extern int dx_getdig(int chdev, ref DV_TPT tptp, out DV_DIGIT digitp, ushort mode);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_wtring(int ChDev, int numRings, int HookState, int timeout);
+        public static extern int dx_wtring(int ChDev, int numRings, int HookState, int timeout);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_initcallp(int dev);
+        public static extern int dx_initcallp(int dev);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_setparm(int dev, int par, int val);
+        public static extern int dx_setparm(int dev, int par, int val);
 
         [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int sr_getevtdev(uint evt_handle);
+        public static extern int sr_getevtdev(uint evt_handle);
 
 
         [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int sr_getevttype(uint evt_handle);
+        public static extern int sr_getevttype(uint evt_handle);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_setevtmsk(int dev, int mask);
+        public static extern int dx_setevtmsk(int dev, int mask);
 
         [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int sr_dishdlr(int dev, uint evt_type, dx_eventhandler handler);
+        public static extern int sr_dishdlr(int dev, uint evt_type, dx_eventhandler handler);
 
         [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int sr_enbhdlr(int dev, uint evt_type, dx_eventhandler handler);
+        public static extern int sr_enbhdlr(int dev, uint evt_type, dx_eventhandler handler);
 
         [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private  static extern int sr_waitevtEx(ref int handlep, int count, int tmout, ref int handler);
+        public  static extern int sr_waitevtEx(ref int handlep, int count, int tmout, ref int handler);
 
         [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int sr_waitevt(int tmout);
+        public static extern int sr_waitevt(int tmout);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_clrcap(ref DX_CAP dx_cap);
+        public static extern int dx_clrcap(ref DX_CAP dx_cap);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_dial(int chdev, string dialstring, ref DX_CAP dx_cap, int flag);
+        public static extern int dx_dial(int chdev, string dialstring, ref DX_CAP dx_cap, int flag);
 
-        private const uint TN_LEADING = 0x02;
-        private const uint TN_TRAILING = 0x04;
+        public const uint TN_LEADING = 0x02;
+        public const uint TN_TRAILING = 0x04;
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_blddt(uint tid, uint freq1, uint fq1dev, uint freq2, uint fq2dev,
+        public static extern int dx_blddt(uint tid, uint freq1, uint fq1dev, uint freq2, uint fq2dev,
             uint mode);
 
 
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_blddtcad( uint tid, uint freq1, uint fq1dev, uint freq2, uint fq2dev, 
+        public static extern int dx_blddtcad( uint tid, uint freq1, uint fq1dev, uint freq2, uint fq2dev, 
             uint ontime, uint ontdev, uint offtime, uint offtdev, uint repcnt);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_addtone(int chdev, byte digit, byte digitType);
+        public static extern int dx_addtone(int chdev, byte digit, byte digitType);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_deltones(int chdev);
+        public static extern int dx_deltones(int chdev);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_distone(int chdev, int toneid, int evt_mask);
+        public static extern int dx_distone(int chdev, int toneid, int evt_mask);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_adjsv( int chdev, ushort tabletype, ushort action, ushort adjsize );
+        public static extern int dx_adjsv( int chdev, ushort tabletype, ushort action, ushort adjsize );
 
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_enbtone(int chdev, int toneid, int evt_mask);
+        public static extern int dx_enbtone(int chdev, int toneid, int evt_mask);
         
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_play(int ChDev, ref DX_IOTT iottp, ref DV_TPT tptp, ushort mode);
+        public static extern int dx_play(int ChDev, ref DX_IOTT iottp, ref DV_TPT tptp, ushort mode);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_playiottdata(int ChDev, ref DX_IOTT iottp, ref DV_TPT tptp, ref DX_XPB xpbp, ushort mode);
+        public static extern int dx_playiottdata(int ChDev, ref DX_IOTT iottp, ref DV_TPT tptp, ref DX_XPB xpbp, ushort mode);
         
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_reciottdata(int ChDev, ref DX_IOTT iottp, ref DV_TPT tptp, ref DX_XPB xpbp, ushort mode);
+        public static extern int dx_reciottdata(int ChDev, ref DX_IOTT iottp, ref DV_TPT tptp, ref DX_XPB xpbp, ushort mode);
                 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_clrdigbuf(int chdev);
+        public static extern int dx_clrdigbuf(int chdev);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_fileopen([In] [MarshalAs(UnmanagedType.LPStr)] string filep, int flags, int pmode);
+        public static extern int dx_fileopen([In] [MarshalAs(UnmanagedType.LPStr)] string filep, int flags, int pmode);
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_fileopen([In] [MarshalAs(UnmanagedType.LPStr)] string filep, int flags);
-
-        [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_fileclose(int handle);
-
-
-
-
-
-
+        public static extern int dx_fileopen([In] [MarshalAs(UnmanagedType.LPStr)] string filep, int flags);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_sethook(int chdev, int hookstate, int flag);
+        public static extern int dx_fileclose(int handle);
+
+
+
+
+
+
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_getctinfo(int chdev, ref CT_DEVINFO ct_devinfop);
+        public static extern int dx_sethook(int chdev, int hookstate, int flag);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int ag_getctinfo(int chdev, ref CT_DEVINFO ct_devinfop);
+        public static extern int dx_getctinfo(int chdev, ref CT_DEVINFO ct_devinfop);
+
+        [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int ag_getctinfo(int chdev, ref CT_DEVINFO ct_devinfop);
 
         [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int sr_getboardcnt(string class_namep, ref int boardcntp);
+        public static extern int sr_getboardcnt(string class_namep, ref int boardcntp);
 
         [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern String ATDV_ERRMSGP(int chdev);
+        public static extern string ATDV_ERRMSGP(int chdev);
 
         [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int ATDV_LASTERR(int chdev);
+        public static extern int ATDV_LASTERR(int chdev);
 
         [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int ATDV_SUBDEVS(int bddev);
+        public static extern int ATDV_SUBDEVS(int bddev);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_stopch(int chdev, int flag);
+        public static extern int dx_stopch(int chdev, int flag);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_close(int chdev, int flag);
+        public static extern int dx_close(int chdev, int flag);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_open(string chdevname, int flag);
+        public static extern int dx_open(string chdevname, int flag);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_unlisten(int chdev);
+        public static extern int dx_unlisten(int chdev);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int ag_unlisten(int chdev);
+        public static extern int ag_unlisten(int chdev);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_chgfreq(int tonetype, int fq1, int dv1, int fq2, int dv2);
+        public static extern int dx_chgfreq(int tonetype, int fq1, int dv1, int fq2, int dv2);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_chgdur(int typetype, int on, int ondv, int off, int offdv);
+        public static extern int dx_chgdur(int typetype, int on, int ondv, int off, int offdv);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int dx_chgrepcnt(int tonetype, int repcount);
+        public static extern int dx_chgrepcnt(int tonetype, int repcount);
 
         //----------------------------
 

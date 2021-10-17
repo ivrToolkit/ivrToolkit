@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
@@ -401,17 +402,14 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
                 return value;
             }
 
-            var fi =
-                typeof(AnalogPlugin).GetField(tidName, BindingFlags.Static | BindingFlags.NonPublic);
-            if (fi != null)
+            try
             {
-                var obj = fi.GetValue(null);
-                if (obj is Int32)
-                {
-                    return (int)obj;
-                }
+                return (int)Enum.Parse<DialogicDef.ToneTypes>(tidName, true);
             }
-            throw new Exception("tid name is not found: " + tidName);
+            catch (Exception)
+            {
+                throw new Exception("tid name is not found: " + tidName);
+            }
         }
 
         private void InitCallProgress(int devh)

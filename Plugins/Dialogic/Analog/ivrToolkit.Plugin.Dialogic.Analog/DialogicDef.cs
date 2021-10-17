@@ -232,6 +232,37 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
             SC_HALFDUP = 0x01
         }
 
+        public enum ToneTypes
+        {
+            /*
+             * Tone ID types
+             */
+            TID_FIRST = 250,
+            TID_DIAL_LCL = 250,
+            TID_DIAL_INTL = 251,
+            TID_DIAL_XTRA = 252,
+            TID_BUSY1 = 253,
+            TID_RNGBK1 = 254,
+            TID_BUSY2 = 255,
+            TID_RNGBK2 = 256,
+
+            TID_DISCONNECT = 257,
+            TID_FAX1 = 258,
+            TID_FAX2 = 259,
+            TID_LAST = 259, /* last in springware */
+
+            TID_SIT_NC = 260,
+            TID_SIT_IC = 261,
+            TID_SIT_VC = 262,
+
+            TID_SIT_RO = 263,
+            TID_SIT_ANY = 264,
+
+            TID_SIT_NC_INTERLATA = 265,
+            TID_SIT_RO_INTERLATA = 266,
+            TID_SIT_IO = 267
+        }
+
         public const ushort SV_SPEEDTBL = 0x01;    /* Modify Speed */
         public const ushort SV_VOLUMETBL = 0x02;   /* Modify Volume */
 
@@ -354,34 +385,6 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
             public ushort ca_noanswer; /* time before no answer after 1st ring (deflt=30s) */
             public ushort ca_maxintering; /* Max inter ring delay before connect (8 sec) */
         }
-        /*
-         * Tone ID types
-         */
-        public const int TID_FIRST = 250;
-        public const int TID_DIAL_LCL = 250;
-        public const int TID_DIAL_INTL = 251;
-        public const int TID_DIAL_XTRA = 252;
-        public const int TID_BUSY1 = 253;
-        public const int TID_RNGBK1 = 254;
-        public const int TID_BUSY2 = 255;
-        public const int TID_RNGBK2 = 256;
-
-        public const int TID_DISCONNECT = 257;
-        public const int TID_FAX1 = 258;
-        public const int TID_FAX2 = 259;
-        public const int TID_LAST = 259;  /* last in springware */
-
-        public const int TID_SIT_NC = 260;
-        public const int TID_SIT_IC = 261;
-        public const int TID_SIT_VC = 262;
-
-        public const int TID_SIT_RO = 263;
-        public const int TID_SIT_ANY = 264;
-
-        public const int TID_SIT_NC_INTERLATA = 265;
-        public const int TID_SIT_RO_INTERLATA = 266;
-        public const int TID_SIT_IO = 267;
-
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int dx_eventhandler(uint parm);

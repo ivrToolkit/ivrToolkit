@@ -40,7 +40,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
 
         private void InitForGc()
         {
-            var result = GcLibDef.gc_Start(null);
+            var result = GcLibDef.gc_Start(IntPtr.Zero);
             _logger.LogDebug("gc_start: {0}", result);
             if (result != 0)
             {
@@ -145,9 +145,8 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         private Handles OpenDeviceWithGc(string devname)
         {
             _logger.LogDebug("OpenDeviceWithGc({0})", devname);
-            var linebag = new DialogicDef.LINEBAG();
             var devh = 0;
-            var result = GcLibDef.gc_OpenEx(ref devh, devname, DialogicDef.EV_SYNC, linebag);
+            var result = GcLibDef.gc_OpenEx(ref devh, devname, DialogicDef.EV_SYNC, IntPtr.Zero);
 
             if (result != 0)
             {

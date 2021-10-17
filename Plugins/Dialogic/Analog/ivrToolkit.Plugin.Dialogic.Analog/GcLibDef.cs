@@ -1729,16 +1729,16 @@ List of possible value for update condition argument in gc_SetConfigData()
 //int GC_CDECL gc_Open(LINEDEV *linedevp, char *devicename, int rfu);
 
         [DllImport("libgc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int gc_OpenEx(ref int linedevp, string devicename, int mode, [MarshalAs(UnmanagedType.AsAny)] Object usrattr);
+        public static extern int gc_OpenEx(ref int linedevp, [MarshalAs(UnmanagedType.LPStr)] string devicename, int mode, IntPtr usrattr);
 
-//int GC_CDECL gc_QueryConfigData(int target_type, long target_id, GC_PARM * source_datap, 
-//                       long query_id, GC_PARM * response_datap);
-//int GC_CDECL gc_ReleaseCall(CRN crn);
-//int GC_CDECL gc_ReleaseCallEx(CRN crn, unsigned long mode);
-//int GC_CDECL gc_RejectModifyCall(CRN crn, unsigned long reason, unsigned long mode);
-//int GC_CDECL gc_ReqANI(CRN crn, char *anibuf, int req_type, unsigned long mode);
-//int GC_CDECL gc_ReqMoreInfo(CRN crn, int info_id, int info_len, int timeout, unsigned long mode);
-//int GC_CDECL gc_ReqModifyCall(CRN crn, GC_PARM_BLK *parmblkp, unsigned long mode);
+        //int GC_CDECL gc_QueryConfigData(int target_type, long target_id, GC_PARM * source_datap, 
+        //                       long query_id, GC_PARM * response_datap);
+        //int GC_CDECL gc_ReleaseCall(CRN crn);
+        //int GC_CDECL gc_ReleaseCallEx(CRN crn, unsigned long mode);
+        //int GC_CDECL gc_RejectModifyCall(CRN crn, unsigned long reason, unsigned long mode);
+        //int GC_CDECL gc_ReqANI(CRN crn, char *anibuf, int req_type, unsigned long mode);
+        //int GC_CDECL gc_ReqMoreInfo(CRN crn, int info_id, int info_len, int timeout, unsigned long mode);
+        //int GC_CDECL gc_ReqModifyCall(CRN crn, GC_PARM_BLK *parmblkp, unsigned long mode);
 
         [DllImport("libgc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int gc_ResetLineDev(int linedev, int flag);
@@ -1778,9 +1778,9 @@ List of possible value for update condition argument in gc_SetConfigData()
 //int GC_CDECL gc_SndMsg(LINEDEV linedev, CRN crn, int msg_type, GC_IE_BLK *sndmsgptr);
 
         [DllImport("libgc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int gc_Start([MarshalAs(UnmanagedType.AsAny)] Object usrattr);
+        public static extern int gc_Start(IntPtr startp);
 
-//int GC_CDECL gc_StartTrace(LINEDEV linedev, char *tracefilename);
+        //int GC_CDECL gc_StartTrace(LINEDEV linedev, char *tracefilename);
         [DllImport("libgc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int gc_Stop();
 

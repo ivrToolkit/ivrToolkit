@@ -13,7 +13,7 @@ License
 
 Documentation
 -------------
-http://www.ivrtoolkit.com/Documentation/
+http://ivrtoolkit.com/Documentation/GetStarted/Intro/
 
 Support 
 -------

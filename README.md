@@ -10,7 +10,7 @@ http://www.ivrToolkit.com
 License
 -------
 The IVR toolkit has been released under Apache-2.0 license.
-![GitHub](https://img.shields.io/github/license/ivrToolkit/ivrToolkit)
+[![GitHub](https://img.shields.io/github/license/ivrToolkit/ivrToolkit)](https://github.com/ivrToolkit/ivrToolkit/actions/workflows/dotnet-desktop.yml)
 
 Documentation
 -------------

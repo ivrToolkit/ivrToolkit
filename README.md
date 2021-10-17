@@ -9,7 +9,7 @@ http://www.ivrToolkit.com
 
 License
 -------
-The IVR toolkit has been released under Apache-2.0 license.
+[![GitHub](https://img.shields.io/badge/license-Apache--2.0-blue)](https://www.apache.org/licenses/LICENSE-2.0.txt)
 
 Documentation
 -------------

@@ -441,15 +441,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 var result = DXXXLIB_H.dx_close(_devh);
                 result.ThrowIfStandardRuntimeLibraryError(_devh);
 
-                /*
-                Due to the threading of this application never unregester until then.  Otherwise this could
-                prevent calls from getting through.
-                */
-                result = gclib_h.gc_Close(_boardDev);
-                result.ThrowIfGlobalCallError();
-
-                result = gclib_h.gc_Close(_gcDev);
-                result.ThrowIfGlobalCallError();
             }
             finally
             {
@@ -1120,6 +1111,17 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                                 break;
                         }
 
+                        break;
+                    /* Set ID for SIP message types handed by GCEV_EXTENSION
+                     * IPSET_MSG_SIP | This Set ID is used to set or get the SIP message type.
+                     */
+                    case gcip_defs_h.IPSET_MSG_SIP:
+                        _logger.LogInformation("IPSET_MSG_SIP: {0}", parmData.parm_ID);
+                        _logger.LogInformation("IPSET_MSG_SIP:: size = {0}", parmData.value_size);
+                        break;
+                    case gcip_defs_h.IPSET_SIP_MSGINFO:
+                        _logger.LogInformation("IPSET_SIP_MSGINFO: {0}", parmData.parm_ID);
+                        _logger.LogInformation("IPSET_SIP_MSGINFO:: size = {0}", parmData.value_size);
                         break;
                     default:
                         _logger.LogError("Got unknown set_ID({0}).", parmData.set_ID);

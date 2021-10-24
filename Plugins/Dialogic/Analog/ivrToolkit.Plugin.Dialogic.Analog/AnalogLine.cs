@@ -207,7 +207,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         {
             if (tone.ToneType == CustomToneType.Single)
             {
-                // TODO
+                // TODO - legacy todo statement
             }
             else if (tone.ToneType == CustomToneType.Dual)
             {
@@ -233,7 +233,21 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            _logger.LogDebug("Dispose()");
+            var result = DialogicDef.dx_close(_voiceh, 0);
+            if (result <= -1)
+            {
+                var err = DialogicDef.ATDV_ERRMSGP(_devh);
+                throw new VoiceException(err);
+            }
+            if (_voiceProperties.UseGc)
+            {
+                result = GcLibDef.gc_Close(_devh);
+                if (result != 0)
+                {
+                    ThrowError("Close().gc_Close");
+                }
+            }
         }
 
         void IIvrLineManagement.TriggerDispose()
@@ -534,29 +548,6 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
                 throw new VoiceException(err);
             }
             return result * 10;
-        }
-
-        /// <summary>
-        /// Closes the board line.
-        /// </summary>
-        /// <param name="devh">The handle for the Dialogic line.</param>
-        /// <param name="voiceh">The handle for the Dialogic Voice line.</param>
-        private void Close(int devh, int voiceh)
-        {
-            var result = DialogicDef.dx_close(voiceh, 0);
-            if (result <= -1)
-            {
-                var err = DialogicDef.ATDV_ERRMSGP(devh);
-                throw new VoiceException(err);
-            }
-            if (_voiceProperties.UseGc)
-            {
-                result = GcLibDef.gc_Close(devh);
-                if (result != 0)
-                {
-                    ThrowError("Close().gc_Close");
-                }
-            }
         }
 
         private void ThrowError(string from)

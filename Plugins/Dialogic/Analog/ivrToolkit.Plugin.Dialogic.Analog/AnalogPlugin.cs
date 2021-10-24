@@ -172,7 +172,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            _logger.LogDebug("Dispose()");
         }
 
     } // class

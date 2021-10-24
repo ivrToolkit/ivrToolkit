@@ -165,8 +165,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public byte num_boards;
         public IntPtr board_list;
 
-        // todo unsigned long should be CULong in .net 6 but we aren't there yet
-        public uint max_parm_data_size; // was ulong in c. currently works on windows only until switch to CULong
+        public uint max_parm_data_size;
 
         public enumIPCCLIBMediaMode media_operational_mode;
     }
@@ -218,7 +217,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         /* End VIRTBOARD_VERSION_SIP_REGISTRAR additions   */
 
         /* The following is added for VIRTBOARD_VERSION_TLS_SUPPORT support */
-        public IntPtr sip_tls_engine; // todo is this the correct way
+        public IntPtr sip_tls_engine;
         /* end VIRTBOARD_VERSION_TLS_SUPPORT additions */
 
         /* Begin PRACK related additions. */
@@ -233,7 +232,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         /* end VIRTBOARD_VERSION_SESSION_TIMER_SUPPORT additions */
 
         /* The following is added for VIRTBOARD_VERSION_SIP_STACK_CFG support */
-        public IntPtr sip_stack_cfg; // todo is this the correct way or should I be using IntPtr?
+        public IntPtr sip_stack_cfg;
         /* end VIRTBOARD_VERSION_SIP_STACK_CFG additions */
 
         /* Begin UPDATE related additions */

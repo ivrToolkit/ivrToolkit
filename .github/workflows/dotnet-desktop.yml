@@ -82,9 +82,3 @@ jobs:
     - name: Test
       run: dotnet test --no-restore --verbosity normal
     
-    - name: Publish Unit Test Results
-      uses: EnricoMi/publish-unit-test-result-action/composite@v1
-      if: always()
-      with:
-        files: ./**.xml
-        

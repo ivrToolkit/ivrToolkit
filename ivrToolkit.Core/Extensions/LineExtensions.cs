@@ -389,7 +389,7 @@ namespace ivrToolkit.Core.Extensions
                 }
                 else if (command == "F") // file
                 {
-                    // TODO these are not system files
+                    // TODO these are not system files - legacy todo statement
                     line.PlayFile(data);
                 }
                 else if (command == "M") // money

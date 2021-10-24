@@ -585,7 +585,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         [MarshalAs(UnmanagedType.LPStr)] public string gcMsg;
         public int ccLibId;
         [MarshalAs(UnmanagedType.LPStr)] public string ccLibName;
-        public int ccValue; // todo was long
+        public int ccValue;
         [MarshalAs(UnmanagedType.LPStr)] public string ccMsg;
         [MarshalAs(UnmanagedType.LPStr)] public string additionalInfo;
     }

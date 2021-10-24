@@ -5,9 +5,6 @@ using System.Runtime.InteropServices;
 
 namespace ivrToolkit.Core.Util
 {
-    // todo This is kinda pointless if it is only done at the end of the program.
-    // todo need a way to have blocks of pointers that can be released
-    // todo or maybe I just instantiate one of these classes per block and keep the instance until I need to dispose of it?
     public class UnmanagedMemoryService : IDisposable
     {
         private readonly ILogger<UnmanagedMemoryService> _logger;

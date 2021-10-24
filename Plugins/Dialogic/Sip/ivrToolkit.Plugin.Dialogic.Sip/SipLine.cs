@@ -931,7 +931,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
 
             result = WaitForEvent(gclib_h.GCEV_SERVICERESP, 100); // wait for 10 seconds 
-            _logger.LogDebug("Result for gc_ReqService is {0}", result); // todo cleanup
+            _logger.LogDebug("Result for gc_ReqService is {0}", result);
         }
 
         private void SetAuthenticationInfo()
@@ -2290,12 +2290,5 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _disposeTriggerActivated = false;
             throw new DisposingException();
         }
-
-        private void ThrowDisposedException()
-        {
-            _logger.LogDebug("ThrowDisposedException()");
-            throw new DisposedException($"Line {_lineNumber} has already been disposed");
-        }
-
     }
 }

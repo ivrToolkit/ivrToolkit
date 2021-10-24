@@ -60,7 +60,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private void LogIpmBoard()
         {
             var boardCount = 0;
-            var result = srllib_h.sr_getboardcnt("IPM", ref boardCount);
+            srllib_h.sr_getboardcnt("IPM", ref boardCount);
             _logger.LogInformation("    ipm board count={0}.", boardCount);
             for (var i = 1; i <= boardCount; i++)
             {
@@ -68,8 +68,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
                 var handle = 0;
 
-                // todo another example where the c code uses ASYNC but never waits for an event! how does this work?
-                result = gclib_h.gc_OpenEx(ref handle, boardName, dtilib_h.EV_ASYNC, IntPtr.Zero);
+                var result = gclib_h.gc_OpenEx(ref handle, boardName, dtilib_h.EV_ASYNC, IntPtr.Zero);
                 // can only get detail if gc started
                 if (result != -1)
                 {
@@ -78,7 +77,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
                     var subDevCount = srllib_h.ATDV_SUBDEVS(handle);
                     _logger.LogInformation("        ipm board {0}(handle={1}) has {2} sub-devs.", i, handle, subDevCount);
-                    result = gclib_h.gc_Close(handle);
+                    gclib_h.gc_Close(handle);
                 }
             }
         }
@@ -86,13 +85,13 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private void LogIptBoard()
         {
             var boardCount = 0;
-            var result = srllib_h.sr_getboardcnt(gcip_defs_h.DEV_CLASS_IPT, ref boardCount);
+            srllib_h.sr_getboardcnt(gcip_defs_h.DEV_CLASS_IPT, ref boardCount);
             _logger.LogInformation("    ipt board count={0}.", boardCount);
             for (var i = 1; i <= boardCount; i++)
             {
                 var boardName = $":N_iptB{i}:P_IP";
                 var handle = 0;
-                result = gclib_h.gc_OpenEx(ref handle, boardName, dtilib_h.EV_ASYNC, IntPtr.Zero);
+                var result = gclib_h.gc_OpenEx(ref handle, boardName, dtilib_h.EV_ASYNC, IntPtr.Zero);
 
                 // can only get detail if gc started
                 if (result != -1)
@@ -102,7 +101,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
                     var subDevCount = srllib_h.ATDV_SUBDEVS(handle);
                     _logger.LogInformation("        ipt board {0}(handle={1}) has {2} sub-devs.", i, handle, subDevCount);
-                    result = gclib_h.gc_Close(handle);
+                    gclib_h.gc_Close(handle);
                 }
 
             }
@@ -111,7 +110,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private void LogDcbBoard()
         {
             var boardCount = 0;
-            var result = srllib_h.sr_getboardcnt(dcblib_h.DEV_CLASS_DCB, ref boardCount);
+            srllib_h.sr_getboardcnt(dcblib_h.DEV_CLASS_DCB, ref boardCount);
             _logger.LogInformation("    dcb board count={0}.", boardCount);
             for (var i = 1; i <= boardCount; i++)
             {
@@ -124,18 +123,18 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     var devName = $"{boardName}D{j}";
                     var devHandle = dcblib_h.dcb_open(devName, 0);
                     var dspResourceCount = 0;
-                    result = dcblib_h.dcb_dsprescount(devHandle, ref dspResourceCount);
+                    dcblib_h.dcb_dsprescount(devHandle, ref dspResourceCount);
                     _logger.LogInformation("            DSP {0} has {1} conference resource.", devName, dspResourceCount);
-                    result = dcblib_h.dcb_close(devHandle);
+                    dcblib_h.dcb_close(devHandle);
                 }
-                result = dcblib_h.dcb_close(handle);
+                dcblib_h.dcb_close(handle);
             }
         }
 
         private void LogMsiBoard()
         {
             var boardCount = 0;
-            var result = srllib_h.sr_getboardcnt(msilib_h.DEV_CLASS_MSI, ref boardCount);
+            srllib_h.sr_getboardcnt(msilib_h.DEV_CLASS_MSI, ref boardCount);
             _logger.LogInformation("    msi board count={0}.", boardCount);
             for (var i = 1; i <= boardCount; i++)
             {
@@ -151,7 +150,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private void LogDtiBoard()
         {
             var boardCount = 0;
-            var result = srllib_h.sr_getboardcnt(dtilib_h.DEV_CLASS_DTI, ref boardCount);
+            srllib_h.sr_getboardcnt(dtilib_h.DEV_CLASS_DTI, ref boardCount);
             _logger.LogInformation("    dti board count={0}.", boardCount);
             for (var i = 1; i <= boardCount; i++)
             {
@@ -168,7 +167,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             var featureTable = new FEATURE_TABLE();
             var boardCount = 0;
-            var result = srllib_h.sr_getboardcnt(DXXXLIB_H.DEV_CLASS_VOICE, ref boardCount);
+            srllib_h.sr_getboardcnt(DXXXLIB_H.DEV_CLASS_VOICE, ref boardCount);
             _logger.LogInformation("    voice board count={0}.", boardCount);
 
             for (var i = 1; i <= boardCount; i++)
@@ -182,16 +181,16 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 {
                     var devName = $"dxxxB{i}C{j}";
                     var devHandle = DXXXLIB_H.dx_open(devName, 0);
-                    result = DXXXLIB_H.dx_getfeaturelist(devHandle, ref featureTable);
+                    DXXXLIB_H.dx_getfeaturelist(devHandle, ref featureTable);
 
                     _logger.LogInformation("            {0} {1}support fax, {2}support T38 fax, {3}support CSP.", devName,
                         (featureTable.ft_fax & DXXXLIB_H.FT_FAX) != 0 ? "" : "NOT ",
                         (featureTable.ft_fax & DXXXLIB_H.FT_FAX_T38UDP) != 0 ? "" : "NOT ",
                         (featureTable.ft_e2p_brd_cfg & DXXXLIB_H.FT_CSP) != 0 ? "" : "NOT ");
 
-                    result = DXXXLIB_H.dx_close(devHandle);
+                     DXXXLIB_H.dx_close(devHandle);
                 }
-                result = DXXXLIB_H.dx_close(handle);
+                DXXXLIB_H.dx_close(handle);
             }
         }
     }

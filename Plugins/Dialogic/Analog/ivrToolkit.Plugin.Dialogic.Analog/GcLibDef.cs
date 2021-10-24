@@ -176,29 +176,6 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
             [MarshalAs(UnmanagedType.LPStr)] public string start_proc_name; /* Name of start procedure */
         }
 
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        public struct GC_CCLIB_STATUS
-        {
-            public int num_avllibraries;
-            public int num_configuredlibraries;
-            public int num_failedlibraries;
-            public int num_stublibraries;
-
-            /*
-    -- these are an array of strings, each string terminated with a NULL
-    -- e.g. avl_libraries[0] = "GC_ICAPI_LIB"
-    --        avl_libraries[1] = "GC_ISDN_LIB"
-    --        avl_libraries[2] = "GC_ANAPI_LIB"
-    */
-            // TODO I don;t know how to marshal these!
-            //public char** avllibraries;
-            //public char** configuredlibraries;
-            //public char** failedlibraries;
-            //public char** stublibraries;
-        }
-
-
 /*
  * Data structure types
  */
@@ -691,37 +668,6 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         public const int GCACK_SERVICE_ISDN = 0x2;
         public const int GCACK_SERVICE_PROC = 0x3;
         public const int GCACK_SERVICE_INFO = 0x4;
-
-
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        public struct GC_CALLACK_BLK
-        {
-            public uint type; /* type of a structure inside following union */
-            public long rfu; /* will be used for common functionality */
-
-            // TODO I don't know what a unitn is
-            //union {
-            //    struct {
-            //        int accept;
-            //    } dnis;
-            //    struct {
-            //        int acceptance;
-            //        /* 0x0000 proceding with the same B chan */
-            //        /* 0x0001 proceding with the new B chan */
-            //        /* 0x0002 setup ACK */
-            //        LINEDEV linedev;
-            //    } isdn;
-            //    struct {          
-            //        int info_len;
-            //        int info_type; 
-            //    } info;
-            //    struct {
-            //        long gc_private[4];
-            //    } gc_private;
-            //} service;               /* what kind of service is requested */
-            //                         /* related to type field */
-        }
 
         // TODO this was initially a union so probably is done incorrectly
         public struct GC_PARM

@@ -143,11 +143,8 @@ namespace ivrToolkit.Core
 
             try
             {
-                if (_status != LineStatusTypes.OnHook)
-                {
-                    Hangup();
-                }
-
+                _status = LineStatusTypes.OnHook;
+                _lineImplementation.Hangup();
                 _lineImplementation.Dispose();
             }
             finally

@@ -41,7 +41,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Unit.Tests", "Unit.Tests", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{9042AFE7-8249-4A73-85E0-3FCC1648B6DE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ivrToolkit.Core.Tests", "Tests\Unit.Tests\ivrToolkit.Core.Tests\ivrToolkit.Core.Tests.csproj", "{A5B92646-A00D-48C2-BE99-B3C2B59597CC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ivrToolkit.Core.Tests", "Tests\Unit.Tests\ivrToolkit.Core.Tests\ivrToolkit.Core.Tests.csproj", "{A5B92646-A00D-48C2-BE99-B3C2B59597CC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyFirstApp", "Examples\MyFirstApp\MyFirstApp.csproj", "{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -199,6 +201,22 @@ Global
 		{A5B92646-A00D-48C2-BE99-B3C2B59597CC}.Release|Win32.Build.0 = Release|Any CPU
 		{A5B92646-A00D-48C2-BE99-B3C2B59597CC}.Release|x86.ActiveCfg = Release|Any CPU
 		{A5B92646-A00D-48C2-BE99-B3C2B59597CC}.Release|x86.Build.0 = Release|Any CPU
+		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Debug|Win32.Build.0 = Debug|Any CPU
+		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Debug|x86.Build.0 = Debug|Any CPU
+		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Release|Win32.ActiveCfg = Release|Any CPU
+		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Release|Win32.Build.0 = Release|Any CPU
+		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Release|x86.ActiveCfg = Release|Any CPU
+		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -215,6 +233,7 @@ Global
 		{0A66F8E5-1524-424D-85F4-F7BD26EE6C14} = {C68DB211-E713-4265-A2F3-F573383C2C84}
 		{71DEF086-181B-4E3A-9941-111FA291E6D8} = {9042AFE7-8249-4A73-85E0-3FCC1648B6DE}
 		{A5B92646-A00D-48C2-BE99-B3C2B59597CC} = {71DEF086-181B-4E3A-9941-111FA291E6D8}
+		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB} = {C68DB211-E713-4265-A2F3-F573383C2C84}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A5C71D1A-0ABE-437B-89FB-59EE74035D64}

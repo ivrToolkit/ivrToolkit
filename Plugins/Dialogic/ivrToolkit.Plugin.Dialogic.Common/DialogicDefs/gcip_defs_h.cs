@@ -455,7 +455,11 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public const int IPPARM_SIP_HDR_REMOVE = 0x14;
         public const int IPPARM_SIP_VIA_HDR_REPLACE = 0x15;
 
-
+        /* Set ID for SIP message types handed by GCEV_EXTENSION
+         * IPSET_MSG_SIP | This Set ID is used to set or get the SIP message type.
+         */
+        public const int IPSET_MSG_SIP = BASE_SETID + 35;
+        public const int IPPARM_MSG_SIP_RESPONSE_CODE = 1;
     }
 
 

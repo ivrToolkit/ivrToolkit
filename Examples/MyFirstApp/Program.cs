@@ -16,8 +16,11 @@ namespace MyFirstApp
 
         public static IHostBuilder CreateHostBuilder(string[] args)
         {
+            // Make the working directory the location of the EXE file
             Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
             return Host.CreateDefaultBuilder(args)
+
+                // set this up as a windows service
                 .UseWindowsService()
                 .ConfigureServices((_, services) =>
                 {

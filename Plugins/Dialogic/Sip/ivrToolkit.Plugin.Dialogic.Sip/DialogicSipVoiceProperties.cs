@@ -14,11 +14,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         /// </summary>
         public uint SipChannelOffset => uint.Parse(TheProperties.GetProperty("sip.channel_offset", "0"));
 
-        /// <summary>
-        /// The SIP port used for H323 signaling
-        /// </summary>
-        public ushort SipH323SignalingPort => ushort.Parse(TheProperties.GetProperty("sip.h323_signaling_port", "0"));
-
         public ushort MaxCalls => ushort.Parse(TheProperties.GetProperty("sip.max_calls", "1"));
 
         /// <summary>
@@ -66,10 +61,5 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         /// </summary>
         public string SipConctact => TheProperties.GetProperty("sip.contact", "");
 
-        /// <summary>
-        /// 
-        /// </summary>
-        // todo this looks the same as the sip_signaling_port. Verify! legacy had it hard coded to 5060
-        public int SipHmpSipPort => int.Parse(TheProperties.GetProperty("sip.hmp_sip_port", "0")); 
     }
 }

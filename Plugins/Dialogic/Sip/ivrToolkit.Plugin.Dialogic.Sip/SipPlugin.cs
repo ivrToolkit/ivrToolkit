@@ -82,7 +82,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             deviceInformation.LogDeviceInformation();
 
             // some profile options need to be read in
-            var h323SignalingPort = _voiceProperties.SipH323SignalingPort;
             var sipSignalingPort = _voiceProperties.SipSignalingPort;
             var maxCalls = _voiceProperties.MaxCalls;
 
@@ -92,7 +91,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             ipVirtboard[0].localIP.ip_ver = gcip_defs_h.IPVER4; // must be set to IPVER4
             ipVirtboard[0].localIP.u_ipaddr.ipv4 = gcip_defs_h.IP_CFG_DEFAULT; // or specify host NIC IP address
 
-            ipVirtboard[0].h323_signaling_port = h323SignalingPort; // or application defined port for H.323 
             ipVirtboard[0].sip_signaling_port = sipSignalingPort; // or application defined port for SIP
             ipVirtboard[0].sup_serv_mask = gcip_defs_h.IP_SUP_SERV_CALL_XFER; // Enable SIP Transfer Feature
             ipVirtboard[0].sip_msginfo_mask = gcip_defs_h.IP_SIP_MSGINFO_ENABLE; // Enable SIP header

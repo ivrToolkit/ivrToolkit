@@ -324,7 +324,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 gcip_defs_h.IPPARM_SIP_HDR, dataSize, pSipHeader2);
             result.ThrowIfGlobalCallError();
 
-            sipHeader = $"Contact: {_voiceProperties.SipConctact}<sip:{ani}:{_voiceProperties.SipHmpSipPort}>"; //Contact header
+            sipHeader = $"Contact: {_voiceProperties.SipConctact}<sip:{ani}:{_voiceProperties.SipSignalingPort}>"; //Contact header
             _logger.LogDebug("SipHeader is: {0}", sipHeader);
             dataSize = (uint)(sipHeader.Length + 1);
             var pSipHeader3 = Marshal.StringToHGlobalAnsi(sipHeader);
@@ -939,12 +939,14 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _logger.LogDebug("SetAuthenticationInfo() - proxy = {0}, alias = {1}, Password ****, Realm = {2}, identity = {3}", proxy,
                 alias, realm, identity);
 
-            var auth = new IP_AUTHENTICATION();
-            auth.version = gcip_h.IP_AUTHENTICATION_VERSION;
-            auth.realm = realm;
-            auth.identity = identity;
-            auth.username = alias;
-            auth.password = password;
+            var auth = new IP_AUTHENTICATION
+            {
+                version = gcip_h.IP_AUTHENTICATION_VERSION,
+                realm = realm,
+                identity = identity,
+                username = alias,
+                password = password
+            };
 
             var gcParmBlkPtr = IntPtr.Zero;
             var dataSize = (byte)Marshal.SizeOf<IP_AUTHENTICATION>();

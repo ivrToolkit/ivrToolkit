@@ -216,7 +216,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             SetAuthenticationInfo();
             MakeCallAsync(ani, dnis);
-            var result = WaitForEvent(gclib_h.GCEV_ALERTING, 100); // 10 seconds
+            var result = WaitForEvent(gclib_h.GCEV_ALERTING, 400); // 40 seconds - 10 seconds was sometimes too short
 
             string message;
             switch (result)

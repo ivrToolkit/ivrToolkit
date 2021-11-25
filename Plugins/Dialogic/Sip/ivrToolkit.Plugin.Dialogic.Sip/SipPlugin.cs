@@ -42,13 +42,13 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 return;
             }
             _logger.LogDebug("Dispose()");
+            _disposed = true;
 
             try
             {
                 var result = gclib_h.gc_Stop();
                 result.ThrowIfGlobalCallError();
 
-                _disposed = false;
             }
             finally
             {

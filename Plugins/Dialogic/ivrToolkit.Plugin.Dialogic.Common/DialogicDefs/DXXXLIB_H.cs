@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 
 // ReSharper disable CommentTypo
 
@@ -85,7 +86,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public static extern int dx_getevt(int chdev, ref DX_EBLK eblkp, int timeout);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int dx_getdig(int chdev, ref DV_TPT tptp, out DV_DIGIT digitp, ushort mode);
+        public static extern int dx_getdig(int chdev, ref DV_TPT tptp, IntPtr DV_DIGIT, ushort mode);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int dx_clrdigbuf(int chdev);
@@ -395,6 +396,11 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public ushort wDataFormat;
         public uint nSamplesPerSec;
         public ushort wBitsPerSample;
+
+        public override string ToString()
+        {
+            return $"DX_XPB({wFileFormat},{wDataFormat},{nSamplesPerSec},{wBitsPerSample})";
+        }
     }
 
     /*

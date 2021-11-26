@@ -97,7 +97,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             // asynchronously start waiting for a call to come in
             result = WaitForEventIndefinitely(gclib_h.GCEV_ANSWERED);
-            if (result == -1)
+            if (result == SYNC_WAIT_ERROR)
             {
                 throw new VoiceException("WaitRings threw an exception");
             }
@@ -476,7 +476,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         /// <param name="timeoutMilli">Number of milliseconds before timeout</param>
         private void RecordToFile(string filename, string terminators, DX_XPB xpb, int timeoutMilli)
         {
-
+            _logger.LogDebug("RecordToFile({0}, {1}, {2}, {3})", filename, terminators, xpb, timeoutMilli);
+            CheckCallState();
             FlushDigitBuffer();
 
             /* set up DV_TPT */
@@ -523,51 +524,50 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 throw new VoiceException(err);
             }
 
-            var handler = 0;
-
-            while (true)
+            try
             {
-                var handles = new[] { _devh };
-                // This code has a timeout so that if the user hangs up while recording there name it can be detected.
-                srllib_h.sr_waitevtEx(handles, 1, 5000, ref handler);
-
-                //Check if the call is still connected
-                CheckCallState();
-
-                var type = srllib_h.sr_getevttype((uint)handler);
-                //Ignore events that are not of they type we want.
-                if (type != DXXXLIB_H.TDX_RECORD)
+                var waitResult = WaitForEventIndefinitely(DXXXLIB_H.TDX_RECORD);
+                switch (waitResult)
                 {
-                    continue;
+                    case SYNC_WAIT_SUCCESS:
+                        _logger.LogDebug("The RecordToFile method received the TDX_RECORD event");
+                        break;
+                    case SYNC_WAIT_ERROR:
+                        throw new VoiceException("The RecordToFile method failed waiting for the TDX_RECORD event");
                 }
-
-                if (DXXXLIB_H.dx_fileclose(iott.io_fhandle) == -1)
-                {
-                    var errPtr = srllib_h.ATDV_ERRMSGP(_devh);
-                    var err = errPtr.IntPtrToString();
-                    throw new VoiceException(err);
-                }
-
-                var reason = DXXXLIB_H.ATDX_TERMMSK(_devh);
-                _logger.LogDebug("Type = TDX_RECORD, Reason = {0} = {1}", reason, GetReasonDescription(reason));
-                if ((reason & DXTABLES_H.TM_ERROR) == DXTABLES_H.TM_ERROR)
-                {
-                    throw new VoiceException("TM_ERROR");
-                }
-
-                if ((reason & DXTABLES_H.TM_USRSTOP) == DXTABLES_H.TM_USRSTOP)
-                {
-                    throw new DisposingException();
-                }
-
-                if ((reason & DXTABLES_H.TM_LCOFF) == DXTABLES_H.TM_LCOFF)
-                {
-                    throw new HangupException();
-                }
-
-                FlushDigitBuffer();
-                return;
             }
+            catch (HangupException)
+            {
+                DXXXLIB_H.dx_fileclose(iott.io_fhandle);
+                _logger.LogDebug(
+                    "Hangup Exception : The file handle has been closed because the call has been hung up.");
+                throw;
+            }
+            if (DXXXLIB_H.dx_fileclose(iott.io_fhandle) == -1)
+            {
+                var errPtr = srllib_h.ATDV_ERRMSGP(_devh);
+                var err = errPtr.IntPtrToString();
+                throw new VoiceException(err);
+            }
+
+            var reason = DXXXLIB_H.ATDX_TERMMSK(_devh);
+            _logger.LogDebug("Type = TDX_RECORD, Reason = {0} = {1}", reason, GetReasonDescription(reason));
+            if ((reason & DXTABLES_H.TM_ERROR) == DXTABLES_H.TM_ERROR)
+            {
+                throw new VoiceException("TM_ERROR");
+            }
+
+            if ((reason & DXTABLES_H.TM_USRSTOP) == DXTABLES_H.TM_USRSTOP)
+            {
+                throw new DisposingException();
+            }
+
+            if ((reason & DXTABLES_H.TM_LCOFF) == DXTABLES_H.TM_LCOFF)
+            {
+                throw new HangupException();
+            }
+
+            FlushDigitBuffer();
         }
 
         public string GetDigits(int numberOfDigits, string terminators)
@@ -1170,12 +1170,27 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         }
 
 
+        private string TranslateEventId(int eventId)
+        {
+            switch (eventId)
+            {
+                case DXXXLIB_H.TDX_PLAY:
+                    return "TDX_PLAY";
+                case DXXXLIB_H.TDX_RECORD:
+                    return "TDX_RECORD";
+                case DXXXLIB_H.TDX_GETDIG:
+                    return "TDX_GETDIG";
+                default:
+                    return gcmsg_h.GCEV_MSG(eventId);
+            }
+        }
+
         private int WaitForEventIndefinitely(int waitForEvent)
         {
-            _logger.LogDebug("*** Waiting for event: {0}, waitInterval = indefinitely", gcmsg_h.GCEV_MSG(waitForEvent));
+            _logger.LogDebug("*** Waiting for event: {0}: {1}, waitInterval = indefinitely", waitForEvent, TranslateEventId(waitForEvent));
 
             int result;
-            while ((result = WaitForEvent(gclib_h.GCEV_ANSWERED, 50, false)) ==
+            while ((result = WaitForEvent(waitForEvent, 50, false)) ==
                    SYNC_WAIT_EXPIRED) // wait 50 * 1/10 of second = 5 seconds
             {
                 if (result == -SYNC_WAIT_EXPIRED) _logger.LogTrace("Wait for call exhausted. Will try again");
@@ -1187,13 +1202,18 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         private int WaitForEvent(int waitForEvent, int waitInterval, bool showDebug = true)
         {
-            if (showDebug) _logger.LogDebug("*** Waiting for event: {0}, waitInterval = {1}", gcmsg_h.GCEV_MSG(waitForEvent), waitInterval);
+            var handles = new[] { _gcDev, _boardDev, _devh };
+            return WaitForEvent(waitForEvent, waitInterval, handles, showDebug);
+        }
+
+        private int WaitForEvent(int waitForEvent, int waitInterval, int[] handles, bool showDebug = true)
+        {
+            if (showDebug) _logger.LogDebug("*** Waiting for event: {0}: {1}, waitInterval = {2}", waitForEvent, TranslateEventId(waitForEvent), waitInterval);
 
             var eventThrown = -1;
             var count = 0;
             var eventHandle = 0;
 
-            var handles = new[] { _gcDev, _boardDev, _devh };
             do
             {
                 var result = srllib_h.sr_waitevtEx(handles, handles.Length, 100, ref eventHandle);
@@ -1313,10 +1333,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 {
                     HandleGcEvents(metaEvt);
                 }
-            }
-            else
-            {
-                HandleOtherEvents();
             }
 
             return metaEvt.evttype;
@@ -1464,25 +1480,28 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 case gclib_h.GCEV_CONNECTED:
                     _logger.LogDebug("GCEV_CONNECTED - we do nothing with this event");
                     break;
-                case gclib_h.GCEV_DROPCALL:
-                    _logger.LogDebug("GCEV_DROPCALL");
-                    ReleaseCall();
-                    break;
+
+                #region Handle hangup detection
                 case gclib_h.GCEV_DISCONNECTED:
                     _logger.LogDebug("GCEV_DISCONNECTED");
-                    //LogWarningMessage(metaEvt);
-                    DropCallAsync();
+                    DropCall(); // will block for gcev_dropcall
                     break;
+                case gclib_h.GCEV_DROPCALL:
+                    _logger.LogDebug("GCEV_DROPCALL");
+                    ReleaseCall(); // will block for gcev_releasecall
+                    break;
+                case gclib_h.GCEV_RELEASECALL:
+                    _logger.LogDebug("GCEV_RELEASECALL - set crn = 0");
+                    _callReferenceNumber = 0;
+                    throw new HangupException();
+                #endregion
+
                 case gclib_h.GCEV_EXTENSIONCMPLT:
                     _logger.LogDebug("GCEV_EXTENSIONCMPLT - we do nothing with this event");
                     break;
                 case gclib_h.GCEV_EXTENSION:
                     _logger.LogDebug("GCEV_EXTENSION");
                     ProcessExtension(metaEvt);
-                    break;
-                case gclib_h.GCEV_RELEASECALL:
-                    _logger.LogDebug("GCEV_RELEASECALL - set crn = 0");
-                    _callReferenceNumber = 0;
                     break;
                 case gclib_h.GCEV_SETCONFIGDATA:
                     _logger.LogDebug("GCEV_SETCONFIGDATA - we do nothing with this event");
@@ -1491,7 +1510,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     _logger.LogDebug("GCEV_PROCEEDING - gc_makeCall is proceeding");
                     break;
                 case gclib_h.GCEV_TASKFAIL:
-                    _logger.LogDebug("GCEV_TASKFAIL");
+                    _logger.LogWarning("GCEV_TASKFAIL");
                     LogWarningMessage(metaEvt);
                     break;
                 default:
@@ -1524,6 +1543,19 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
         }
 
+        private void DropCall()
+        {
+            _logger.LogDebug("DropCall() - {0}", _callReferenceNumber);
+
+            if (_callReferenceNumber == 0) return; // line is idle
+
+            var result = gclib_h.gc_DropCall(_callReferenceNumber, gclib_h.GC_NORMAL_CLEARING, DXXXLIB_H.EV_ASYNC);
+            result.ThrowIfGlobalCallError();
+
+            // don't include _devh right now because we want to finish the drop call first
+            result = WaitForEvent(gclib_h.GCEV_DROPCALL, 100, new []{ _gcDev, _boardDev}); // 10 seconds
+        }
+
         /**
         * Release a call.
         */
@@ -1531,76 +1563,12 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             _logger.LogDebug("ReleaseCall()");
             var result = gclib_h.gc_ReleaseCallEx(_callReferenceNumber, DXXXLIB_H.EV_ASYNC);
-            try
-            {
-                result.ThrowIfGlobalCallError();
-            }
-            catch (GlobalCallErrorException e)
-            {
-                _logger.LogWarning(e, null);
-            }
+            result.ThrowIfGlobalCallError();
+
+            // don't include _devh right now because we want to finish the drop call first
+            result = WaitForEvent(gclib_h.GCEV_RELEASECALL, 100, new[] { _gcDev, _boardDev }); // 10 seconds
         }
 
-        private void HandleOtherEvents()
-        {
-            _logger.LogDebug("HandleOtherEvents()");
-            //if (nullptr == pch) return -1;
-
-            //switch (evt_code)
-            //{
-            //    case TDX_PLAY:
-            //        pch->_logger.LogDebug("got voice event : TDX_PLAY");
-            //        pch->process_voice_done();
-            //        break;
-            //    case TDX_RECORD:
-            //        pch->_logger.LogDebug("got voice event : TDX_RECORD");
-            //        pch->process_voice_done();
-            //        break;
-            //    case TDX_CST:
-            //        pch->_logger.LogDebug("got voice event : TDX_CST");
-            //        if (void * evt_datap = nullptr; DE_DIGITS == static_cast<DX_CST*>(evt_datap)->cst_event) {
-            //        pch->_logger.LogDebug("DE_DIGITS: [%c]", static_cast<char>(static_cast<DX_CST*>(evt_datap)->cst_data));
-            //    }
-            //        break;
-
-            //    default:
-            //        pch->printError("unexcepted R4 event(0x%x)", evt_code);
-            //        break;
-            //}
-        }
-
-        private void DropCallAsync()
-        {
-            _logger.LogDebug("DropCallAsync() - {0}", _callReferenceNumber);
-
-            if (_callReferenceNumber == 0) return; // line is idle
-
-
-            //var state = DXXXLIB_H.ATDX_STATE(_devh);
-            //if (_logger.IsEnabled(LogLevel.Debug))
-            //{
-            //    _logger.LogDebug("state: {0}", GetChannelStateDescription(state));
-            //}
-
-            //if (state == DXXXLIB_H.CS_IDLE)
-            //{
-            //    //_logger.LogWarning("As an expermiment I am going to skip trying to drop call when the state is idle");
-            //    //return;
-            //}
-
-            var result = gclib_h.gc_DropCall(_callReferenceNumber, gclib_h.GC_NORMAL_CLEARING, DXXXLIB_H.EV_ASYNC);
-            // todo - this seems to fail when called from the GCEV_DISCONNECTED event yet manual says to call this still? Why the error?
-            try
-            {
-
-                result.ThrowIfGlobalCallError();
-            }
-            catch (GlobalCallErrorException e)
-            {
-                // for now I will let this go while I find out more about the proper way to hangup and drop.
-                _logger.LogWarning(e, null);
-            }
-        }
 
         /**
         * Acknowlage a call.
@@ -1848,6 +1816,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private void PlaySipFile(string filename, string terminators)
         {
             _logger.LogDebug("PlaySipFile({0}, {1})", filename, terminators);
+            CheckCallState();
 
             /* set up DV_TPT */
             var tpt = GetTerminationConditions(10, terminators, 0);
@@ -1883,25 +1852,14 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
                 err += " File: |" + filename + "|";
 
-                //I don't think this is needed when we get an error opening a file
-                //dx_fileclose(iott.io_fhandle);
-
                 throw new VoiceException(err);
             }
 
-            /*
-             * It appears as if digits or something else is still in the buffer and the play file is getting skipped.
-             * This did nothing.
-             */
-            ClearEventBuffer(_devh);
-            /*
-             * This might have been the fix for the digits problem.
-             */
-            //ClearDigits(devh);
+            // todo there should be no reason to clear the event buffer. therefor I set messages to warn
+            ClearEventBuffer(_devh); 
 
             var state = DXXXLIB_H.ATDX_STATE(_devh);
             _logger.LogDebug("About to play: {0} state: {1}", filename, state);
-            //Double Check this code tomorrow.
             if (!File.Exists(filename))
             {
                 var err = $"File {filename} does not exist so it cannot be played, call will be droped.";
@@ -1919,67 +1877,51 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 DXXXLIB_H.dx_fileclose(iott.io_fhandle);
                 throw new VoiceException(message);
             }
-            /*
-             * Clear Digits Buffer 2
-             * This might have been the fix for the digits problem.
-             * I am unsure if I need to do this after I play a file or if doing it (Clear Digits Buffer 1) before play file is sufficent.
-             * Further testing tomorrow will resolve this question.
-             */
-            //ClearDigits(devh);
 
-            var handler = 0;
-
-            while (true)
+            try
             {
-                var handles = new[] { _devh };
-                // This code has a timeout so that if the user hangs up while playing a file it can be detected.
-                srllib_h.sr_waitevtEx(handles, handles.Length, 5000, ref handler);
-
-                //Check if the call is still connected
-                try
+                var waitResult = WaitForEventIndefinitely(DXXXLIB_H.TDX_PLAY);
+                switch (waitResult)
                 {
-                    CheckCallState();
-                }
-                catch (HangupException)
-                {
-                    DXXXLIB_H.dx_fileclose(iott.io_fhandle);
-                    _logger.LogDebug(
-                        "Hangup Exception : The file handle has been closed because the call has been hung up.");
-                    throw new HangupException("Hangup Exception call has been hungup.");
+                    case SYNC_WAIT_SUCCESS:
+                        _logger.LogDebug("The PlaySipFile method received the TDX_PLAY event");
+                        break;
+                    case SYNC_WAIT_ERROR:
+                        throw new VoiceException("The PlaySipFile method failed waiting for the TDX_PLAY event");
                 }
 
-                var type = srllib_h.sr_getevttype((uint)handler);
-                //Ignore events (including timeout events) that are not of they type we want.
-                //Double Check this code tomorrow.
-                if (type != DXXXLIB_H.TDX_PLAY)
-                {
-                    continue;
-                }
 
-                // make sure the file is closed
-                var result = DXXXLIB_H.dx_fileclose(iott.io_fhandle);
-                result.ThrowIfStandardRuntimeLibraryError(_devh);
 
-                var reason = DXXXLIB_H.ATDX_TERMMSK(_devh);
+            }
+            catch (HangupException)
+            {
+                DXXXLIB_H.dx_fileclose(iott.io_fhandle);
+                _logger.LogDebug(
+                    "Hangup Exception : The file handle has been closed because the call has been hung up.");
+                throw;
+            }
 
-                _logger.LogDebug("Type = TDX_PLAY, Reason = {0} = {1}", reason, GetReasonDescription(reason));
-                if ((reason & DXTABLES_H.TM_ERROR) == DXTABLES_H.TM_ERROR)
-                {
-                    throw new VoiceException("TM_ERROR");
-                }
+            // make sure the file is closed
+            var result = DXXXLIB_H.dx_fileclose(iott.io_fhandle);
+            result.ThrowIfStandardRuntimeLibraryError(_devh);
 
-                if ((reason & DXTABLES_H.TM_USRSTOP) == DXTABLES_H.TM_USRSTOP)
-                {
-                    throw new DisposingException();
-                }
+            var reason = DXXXLIB_H.ATDX_TERMMSK(_devh);
 
-                if ((reason & DXTABLES_H.TM_LCOFF) == DXTABLES_H.TM_LCOFF)
-                {
-                    throw new HangupException();
-                }
+            _logger.LogDebug("Type = TDX_PLAY, Reason = {0} = {1}", reason, GetReasonDescription(reason));
+            if ((reason & DXTABLES_H.TM_ERROR) == DXTABLES_H.TM_ERROR)
+            {
+                throw new VoiceException("TM_ERROR");
+            }
 
-                return;
-            } // while
+            if ((reason & DXTABLES_H.TM_USRSTOP) == DXTABLES_H.TM_USRSTOP)
+            {
+                throw new DisposingException();
+            }
+
+            if ((reason & DXTABLES_H.TM_LCOFF) == DXTABLES_H.TM_LCOFF)
+            {
+                throw new HangupException();
+            }
         }
 
         /*
@@ -1994,11 +1936,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             var callState = GetCallState();
             _logger.LogDebug("CheckCallState: Call State {0}", GetCallStateDescription(callState));
-            if (callState != gclib_h.GCST_CONNECTED)
-            {
-                _logger.LogDebug("CheckCallState: The call has been hang up.");
-                throw new HangupException();
-            }
         }
 
         private int GetCallState()
@@ -2082,7 +2019,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                  */
                 var type = srllib_h.sr_getevttype((uint)handler);
                 var reason = DXXXLIB_H.ATDX_TERMMSK(devh);
-                _logger.LogDebug("ClearEventBuffer: Type = {0}, Reason = {1} = {2}", GetEventTypeDescription(type),
+                _logger.LogWarning("ClearEventBuffer: Type = {0}, Reason = {1} = {2}", GetEventTypeDescription(type),
                     reason, GetReasonDescription(reason));
             } while (true);
         }
@@ -2159,6 +2096,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             _logger.LogDebug("NumberOfDigits: {0} terminators: {1} timeout: {2}",
                 numberOfDigits, terminators, timeout);
+            CheckCallState();
 
             var state = DXXXLIB_H.ATDX_STATE(devh);
             if (_logger.IsEnabled(LogLevel.Debug))
@@ -2175,12 +2113,15 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             var tpt = GetTerminationConditions(numberOfDigits, terminators, timeout);
 
-            DV_DIGIT digit;
+            var digit = new DV_DIGIT();
+            var digitPtr = _unmanagedMemoryService.Create(digit);
+
+
 
             // Note: async does not work becaues digit is marshalled out immediately after dx_getdig is complete
             // not when event is found. Would have to use DV_DIGIT* and unsafe code. or another way?
             //var result = dx_getdig(devh, ref tpt[0], out digit, EV_SYNC);
-            var result = DXXXLIB_H.dx_getdig(devh, ref tpt[0], out digit, DXXXLIB_H.EV_SYNC);
+            var result = DXXXLIB_H.dx_getdig(devh, ref tpt[0], digitPtr, DXXXLIB_H.EV_ASYNC);
             if (result == -1)
             {
                 var err = srllib_h.ATDV_ERRMSGP(devh);
@@ -2188,9 +2129,22 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 throw new VoiceException(message);
             }
 
-            CheckCallState();
+            var waitResult = WaitForEventIndefinitely(DXXXLIB_H.TDX_GETDIG);
+            switch (waitResult)
+            {
+                case SYNC_WAIT_SUCCESS:
+                    _logger.LogDebug("The GetDigits method received the TDX_GETDIG event");
+                    break;
+                case SYNC_WAIT_ERROR:
+                    throw new VoiceException("The GetDigits method failed waiting for the TDX_GETDIG event");
+            }
+
+            digit = Marshal.PtrToStructure<DV_DIGIT>(digitPtr);
+            Marshal.FreeHGlobal(digitPtr);
 
             var reason = DXXXLIB_H.ATDX_TERMMSK(devh);
+            CheckCallState();
+
             _logger.LogDebug("Type = TDX_GETDIG, Reason = {0} = {1}", reason, GetReasonDescription(reason));
 
             if ((reason & DXTABLES_H.TM_ERROR) == DXTABLES_H.TM_ERROR)
@@ -2223,7 +2177,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 }
             }
 
-
+            // todo should not be needed!
             ClearEventBuffer(devh);
 
             return answer;

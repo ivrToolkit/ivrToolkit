@@ -92,6 +92,9 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public static extern int dx_clrdigbuf(int chdev);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int ATDX_CPTERM(int SrlDevice);
+
+        [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int ATDX_CONNTYPE(int SrlDevice);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]

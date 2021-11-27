@@ -96,7 +96,22 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
 
             // asynchronously start waiting for a call to come in
-            result = WaitForEventIndefinitely(gclib_h.GCEV_ANSWERED);
+            result = WaitForEvent(gclib_h.GCEV_ANSWERED, 1000); // 1 minute
+            switch (result)
+            {
+                case SYNC_WAIT_SUCCESS:
+                    _logger.LogDebug("The WaitRings method received the GCEV_ANSWERED event");
+                    break;
+                case SYNC_WAIT_EXPIRED:
+                    var message = "The WaitRings method timed out waiting for the GCEV_ANSWERED event";
+                    _logger.LogError(message);
+                    throw new VoiceException(message);
+                case SYNC_WAIT_ERROR:
+                    message = "The WaitRings method failed waiting for the GCEV_ANSWERED event";
+                    _logger.LogError(message);
+                    throw new VoiceException(message);
+            }
+
             if (result == SYNC_WAIT_ERROR)
             {
                 throw new VoiceException("WaitRings threw an exception");
@@ -129,11 +144,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             switch (result)
             {
-                case SYNC_WAIT_EXPIRED:
-                    _logger.LogWarning("The hangup method did not receive the dropcall event");
-                    break;
                 case SYNC_WAIT_SUCCESS:
                     _logger.LogDebug("The hangup method received the dropcall event");
+                    break;
+                case SYNC_WAIT_EXPIRED:
+                    _logger.LogWarning("The hangup method did not receive the dropcall event");
                     break;
                 case SYNC_WAIT_ERROR:
                     _logger.LogError("The hangup method failed waiting for the dropcall event");
@@ -145,11 +160,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             switch (result)
             {
-                case SYNC_WAIT_EXPIRED:
-                    _logger.LogWarning("The hangup method did not receive the releaseCall event");
-                    break;
                 case SYNC_WAIT_SUCCESS:
                     _logger.LogDebug("The hangup method received the releaseCall event");
+                    break;
+                case SYNC_WAIT_EXPIRED:
+                    _logger.LogWarning("The hangup method did not receive the releaseCall event");
                     break;
                 case SYNC_WAIT_ERROR:
                     _logger.LogError("The hangup method failed waiting for the releaseCall event");
@@ -216,28 +231,29 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             SetAuthenticationInfo();
             MakeCallAsync(ani, dnis);
-            var result = WaitForEvent(gclib_h.GCEV_ALERTING, 400); // 40 seconds - 10 seconds was sometimes too short
 
-            string message;
+            _logger.LogDebug("DialWithCpa: Syncronous Make call Completed starting call process analysis");
+
+            var result = DXXXLIB_H.dx_dial(devh, "", ref cap, DXCALLP_H.DX_CALLP | DXXXLIB_H.EV_ASYNC);
+            result.ThrowIfStandardRuntimeLibraryError(devh);
+
+            result = WaitForEvent(DXXXLIB_H.TDX_CALLP, 1000); // 60 seconds
             switch (result)
             {
+                case SYNC_WAIT_SUCCESS:
+                    _logger.LogDebug("The DialWithCpa method received the TDX_CALLP event");
+                    break;
                 case SYNC_WAIT_EXPIRED:
-                    message = "The MakeCallAsync method timed out waiting for the GCEV_ALERTING event";
+                    var message = "The DialWithCpa method timed out waiting for the TDX_CALLP event";
                     _logger.LogError(message);
                     throw new VoiceException(message);
-                case SYNC_WAIT_SUCCESS:
-                    _logger.LogDebug("The MakeCallAsync method received the GCEV_ALERTING event");
-                    break;
                 case SYNC_WAIT_ERROR:
-                    message = "The MakeCallAsync method failed waiting for the GCEV_ALERTING event";
+                    message = "The DialWithCpa method failed waiting for the TDX_CALLP event";
                     _logger.LogError(message);
                     throw new VoiceException(message);
             }
 
-            _logger.LogDebug("DialWithCpa: Syncronous Make call Completed starting call process analysis");
-
-            result = DXXXLIB_H.dx_dial(devh, "", ref cap, DXCALLP_H.DX_CALLP | DXXXLIB_H.EV_SYNC);
-            result.ThrowIfStandardRuntimeLibraryError(devh);
+            result = DXXXLIB_H.ATDX_CPTERM(devh);
 
             _logger.LogDebug("Call Progress Analysius Result {0}", result);
             switch (result)
@@ -259,15 +275,17 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                         case DXCALLP_H.CON_LPC:
                             _logger.LogDebug("Connection due to loop current");
                             break;
-                        case DXCALLP_H.CON_PAMD:
+                        case DXCALLP_H.CON_PAMD: // ca_intflg = 8 PAMD + OPTEN
                             _logger.LogDebug("Connection due to Positive Answering Machine Detection");
-                            break;
+                            return CallAnalysis.AnsweringMachine;
                         case DXCALLP_H.CON_PVD:
                             _logger.LogDebug("Connection due to Positive Voice Detection");
                             break;
                     }
 
+                    // TODO this code doesn't work with SIP
                     var len = GetSalutationLength(devh);
+                    _logger.LogDebug("Salutation length is: {0}", len);
                     if (len > answeringMachineLengthInMilliseconds)
                     {
                         return CallAnalysis.AnsweringMachine;
@@ -364,6 +382,25 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             result = gclib_h.gc_MakeCall(_gcDev, ref _callReferenceNumber, dnis, ref gcMkBlk, 30, DXXXLIB_H.EV_ASYNC);
             result.ThrowIfGlobalCallError();
             gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
+
+            result = WaitForEvent(gclib_h.GCEV_ALERTING, 400); // 40 seconds - 10 seconds was sometimes too short
+
+            string message;
+            switch (result)
+            {
+                case SYNC_WAIT_EXPIRED:
+                    message = "The MakeCallAsync method timed out waiting for the GCEV_ALERTING event";
+                    _logger.LogError(message);
+                    throw new VoiceException(message);
+                case SYNC_WAIT_SUCCESS:
+                    _logger.LogDebug("The MakeCallAsync method received the GCEV_ALERTING event");
+                    break;
+                case SYNC_WAIT_ERROR:
+                    message = "The MakeCallAsync method failed waiting for the GCEV_ALERTING event";
+                    _logger.LogError(message);
+                    throw new VoiceException(message);
+            }
+
         }
 
         /// <summary>
@@ -404,12 +441,23 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 if (obj is ushort)
                 {
                     var value = ushort.Parse(_voiceProperties.GetProperty("cap." + capName));
+                    _logger.LogDebug("value = {0}", value);
                     info.SetValue(boxed, value);
                 }
                 else if (obj is byte)
                 {
                     var value = byte.Parse(_voiceProperties.GetProperty("cap." + capName));
+                    _logger.LogDebug("value = {0}", value);
                     info.SetValue(boxed, value);
+                }
+            }
+
+            if (_logger.IsEnabled(LogLevel.Trace))
+            {
+                var fields = capType.GetFields();
+                foreach (var field in fields)
+                {
+                    _logger.LogDebug($"{field.Name} = {field.GetValue(boxed)}");
                 }
             }
 
@@ -526,14 +574,20 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             try
             {
-                var waitResult = WaitForEventIndefinitely(DXXXLIB_H.TDX_RECORD);
+                var waitResult = WaitForEvent(DXXXLIB_H.TDX_RECORD, 3000); // 3 minutes
                 switch (waitResult)
                 {
                     case SYNC_WAIT_SUCCESS:
                         _logger.LogDebug("The RecordToFile method received the TDX_RECORD event");
                         break;
+                    case SYNC_WAIT_EXPIRED:
+                        var message = "The RecordToFile method timed out waiting for the TDX_RECORD event";
+                        _logger.LogError(message);
+                        throw new VoiceException(message);
                     case SYNC_WAIT_ERROR:
-                        throw new VoiceException("The RecordToFile method failed waiting for the TDX_RECORD event");
+                        message = "The RecordToFile method failed waiting for the TDX_RECORD event";
+                        _logger.LogError(message);
+                        throw new VoiceException(message);
                 }
             }
             catch (HangupException)
@@ -624,9 +678,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             _logger.LogDebug("DeleteCustomTones()");
             //Dialogic.DeleteTones(LineNumber);
-            //Dialogic.InitCallProgress(LineNumber);
             //Dialogic.DeleteTones(_devh);
-            //Dialogic.InitCallProgress(_devh);
             AddSpecialCustomTones();
         }
 
@@ -1180,35 +1232,22 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     return "TDX_RECORD";
                 case DXXXLIB_H.TDX_GETDIG:
                     return "TDX_GETDIG";
+                case DXXXLIB_H.TDX_CALLP:
+                    return "TDX_CALLP";
                 default:
                     return gcmsg_h.GCEV_MSG(eventId);
             }
         }
 
-        private int WaitForEventIndefinitely(int waitForEvent)
-        {
-            _logger.LogDebug("*** Waiting for event: {0}: {1}, waitInterval = indefinitely", waitForEvent, TranslateEventId(waitForEvent));
-
-            int result;
-            while ((result = WaitForEvent(waitForEvent, 50, false)) ==
-                   SYNC_WAIT_EXPIRED) // wait 50 * 1/10 of second = 5 seconds
-            {
-                if (result == -SYNC_WAIT_EXPIRED) _logger.LogTrace("Wait for call exhausted. Will try again");
-                CheckDisposing();
-            }
-
-            return result;
-        }
-
-        private int WaitForEvent(int waitForEvent, int waitInterval, bool showDebug = true)
+        private int WaitForEvent(int waitForEvent, int waitInterval)
         {
             var handles = new[] { _gcDev, _boardDev, _devh };
-            return WaitForEvent(waitForEvent, waitInterval, handles, showDebug);
+            return WaitForEvent(waitForEvent, waitInterval, handles);
         }
 
-        private int WaitForEvent(int waitForEvent, int waitInterval, int[] handles, bool showDebug = true)
+        private int WaitForEvent(int waitForEvent, int waitInterval, int[] handles)
         {
-            if (showDebug) _logger.LogDebug("*** Waiting for event: {0}: {1}, waitInterval = {2}", waitForEvent, TranslateEventId(waitForEvent), waitInterval);
+            _logger.LogDebug("*** Waiting for event: {0}: {1}, waitInterval = {2}", waitForEvent, TranslateEventId(waitForEvent), waitInterval);
 
             var eventThrown = -1;
             var count = 0;
@@ -1318,7 +1357,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             _logger.LogDebug(
                 "evt_code = {0}:{1}, evt_dev = {2}, evt_flags = {3}, board_dev = {4}, evt_type = {5}, line_dev = {6} ",
-                metaEvt.evttype, gcmsg_h.GCEV_MSG(metaEvt.evttype), metaEvt.evtdev, metaEvt.flags, _boardDev,
+                metaEvt.evttype, TranslateEventId(metaEvt.evttype), metaEvt.evtdev, metaEvt.flags, _boardDev,
                 metaEvt.evttype,
                 metaEvt.linedev);
 
@@ -1880,18 +1919,21 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             try
             {
-                var waitResult = WaitForEventIndefinitely(DXXXLIB_H.TDX_PLAY);
+                var waitResult = WaitForEvent(DXXXLIB_H.TDX_PLAY, 1000); // 1 minute
                 switch (waitResult)
                 {
                     case SYNC_WAIT_SUCCESS:
                         _logger.LogDebug("The PlaySipFile method received the TDX_PLAY event");
                         break;
+                    case SYNC_WAIT_EXPIRED:
+                        var message = "The PlaySipFile method timed out waiting for the TDX_PLAY event";
+                        _logger.LogError(message);
+                        throw new VoiceException(message);
                     case SYNC_WAIT_ERROR:
-                        throw new VoiceException("The PlaySipFile method failed waiting for the TDX_PLAY event");
+                        message = "The PlaySipFile method failed waiting for the TDX_PLAY event";
+                        _logger.LogError(message);
+                        throw new VoiceException(message);
                 }
-
-
-
             }
             catch (HangupException)
             {
@@ -2129,14 +2171,20 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 throw new VoiceException(message);
             }
 
-            var waitResult = WaitForEventIndefinitely(DXXXLIB_H.TDX_GETDIG);
+            var waitResult = WaitForEvent(DXXXLIB_H.TDX_GETDIG, 1000); // 1 minute
             switch (waitResult)
             {
                 case SYNC_WAIT_SUCCESS:
                     _logger.LogDebug("The GetDigits method received the TDX_GETDIG event");
                     break;
+                case SYNC_WAIT_EXPIRED:
+                    var message = "The GetDigits method timed out waiting for the TDX_GETDIG event";
+                    _logger.LogError(message);
+                    throw new VoiceException(message);
                 case SYNC_WAIT_ERROR:
-                    throw new VoiceException("The GetDigits method failed waiting for the TDX_GETDIG event");
+                    message = "The GetDigits method failed waiting for the TDX_GETDIG event";
+                    _logger.LogError(message);
+                    throw new VoiceException(message);
             }
 
             digit = Marshal.PtrToStructure<DV_DIGIT>(digitPtr);

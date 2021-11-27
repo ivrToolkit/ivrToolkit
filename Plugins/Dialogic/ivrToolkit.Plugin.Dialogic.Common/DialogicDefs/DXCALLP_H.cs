@@ -7,6 +7,18 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
     {
         public const int DX_CALLP = 1;   /* Turn on Call Analysis */
         /*
+         * Defines for Call Analysis modes (ca_intflg field)
+         */
+        public const int DX_OPTEN = 1; /* Enable Operator Intercept with Connect */
+        public const int DX_OPTDIS = 2; /* Disable Operator Intercept */
+        public const int DX_OPTNOCON = 3; /* Enable Operator Intercept w/o Connect */
+        public const int DX_PVDENABLE = 4; /* Enable PVD */
+        public const int DX_PVDOPTEN = 5; /* Enable PVD with OPTEN */
+        public const int DX_PVDOPTNOCON = 6; /* Enable PVD with OPTNOCON */
+        public const int DX_PAMDENABLE = 7; /* Enable PAMD */
+        public const int DX_PAMDOPTEN = 8; /* Enable PAMD with OPTEN */
+
+        /*
          * Call Analysis Errors as returned by ATDX_CPERROR()
          */
         public const int CR_BUSY = 7; /* Line busy */
@@ -27,6 +39,17 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public const int CON_PVD = 3;  /* Positive Voice Detect */
         public const int CON_PAMD = 4;  /* Positive Answering Machine Detect */
         public const int CON_DIGITAL = 5; /* connect to pbx */
+
+        /*
+         * PAMD equates
+         */
+        public const int PAMD_FULL = 1; /* FULL decision on PAMD */
+        public const int PAMD_QUICK = 2; /* QUICK decision on PAMD */
+        public const int PAMD_ACCU = 3; /* ACCU decision on PAMD */
+        public const int PAMD_ACCURACY = PAMD_ACCU; /* Accuracy decision on PAMD */
+
+        public const int PAMD_QUAL1TMP = 11; /* Qualification template 1 for PAMD */
+        public const int PAMD_QUAL2TMP = 12; /* Qualification template 1 for PAMD */
 
     }
 

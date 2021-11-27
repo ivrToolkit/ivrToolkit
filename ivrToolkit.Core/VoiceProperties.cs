@@ -7,6 +7,7 @@
 
 using ivrToolkit.Core.Util;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 
 namespace ivrToolkit.Core
 {
@@ -50,9 +51,6 @@ namespace ivrToolkit.Core
         /// </summary>
         public int PromptBlankAttempts => int.Parse(TheProperties.GetProperty("prompt.blankAttempts", "5"));
 
-
-
-
         /// <summary>
         /// Gets a property given the name parameter. Only use this method if there is no VoiceProperties helper method.
         /// </summary>
@@ -62,6 +60,7 @@ namespace ivrToolkit.Core
         {
             return TheProperties.GetProperty(name);
         }
+
         /// <summary>
         /// Gets a property given the name parameter. Only use this method if there is no VoiceProperties helper method.
         /// </summary>
@@ -72,23 +71,35 @@ namespace ivrToolkit.Core
         {
             return TheProperties.GetProperty(name, def);
         }
+
         /// <summary>
-        /// Gets a list of property names that matches the prefix.
+        /// Gets a list of property names that matches the prefix. Strips off the prefix from the property names
         /// </summary>
         /// <param name="prefix">The string to match on.</param>
-        /// <returns>A string array of parameter names where the property name begins with the prefix</returns>
+        /// <returns>A string array of parameter names(less the prefix) where the property name begins with the prefix</returns>
         public string[] GetKeyPrefixMatch(string prefix)
         {
             return TheProperties.GetKeyPrefixMatch(prefix);
         }
+
         /// <summary>
-        /// Gets a list of property values where the property name matches the prefix.
+        /// Gets a list of property values where the key name matches the prefix.
         /// </summary>
         /// <param name="prefix">The string to match on.</param>
         /// <returns>A string array of values where the property name begins with the prefix</returns>
         public string[] GetPrefixMatch(string prefix)
         {
-            return TheProperties.GetPrefixMatch(prefix);
+            return TheProperties.GetValuePrefixMatch(prefix);
+        }
+
+        /// <summary>
+        /// Gets a list of key/value pairs where the property name matches the prefix. Strips off the prefix from the keys
+        /// </summary>
+        /// <param name="prefix">The string to match on.</param>
+        /// <returns>A string array of key/value pairs where the property name begins with the prefix</returns>
+        public KeyValuePair<string, string>[] GetPairPrefixMatch(string prefix)
+        {
+            return TheProperties.GetPairPrefixMatch(prefix);
         }
 
 

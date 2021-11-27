@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Core.Util
@@ -20,25 +21,71 @@ namespace ivrToolkit.Core.Util
     {
         private readonly Dictionary<string, string> _stuff = new();
         private readonly ILogger<Properties> _logger;
+        private readonly string _fileName;
+        private FileSystemWatcher _watcher;
 
         /// <summary>
         /// Opens up a java style property file.
         /// </summary>
         /// <param name="loggerFactory">Used for debugging</param>
-        /// <param name="fileName">The name of the file to open.</param>
-        public Properties(ILoggerFactory loggerFactory, string fileName)
+        /// <param name="fullFileName">The name of the file to open.</param>
+        public Properties(ILoggerFactory loggerFactory, string fullFileName)
         {
+            _fileName = fullFileName;
             _logger = loggerFactory.CreateLogger<Properties>();
-            _logger.LogDebug("ctr(ILoggerFactory, {0})", fileName);
+            _logger.LogDebug("ctr(ILoggerFactory, {0})", fullFileName);
 
-            var lines = File.ReadAllLines(fileName);
-            foreach (var line in lines) {
-                if (!line.Trim().StartsWith("#")) {
-                    var index = line.IndexOf("=", StringComparison.Ordinal);
-                    if (index != -1) {
-                        var key = line.Substring(0, index).Trim().ToLower();
-                        var value = line.Substring(index + 1).Trim();
-                        _stuff.Add(key, value);
+            var directory = Path.GetDirectoryName(fullFileName);
+            var fileName = Path.GetFileName(fullFileName);
+
+            _watcher = new FileSystemWatcher(directory, fileName);
+
+            _watcher.NotifyFilter = NotifyFilters.Attributes
+                                 | NotifyFilters.CreationTime
+                                 | NotifyFilters.DirectoryName
+                                 | NotifyFilters.FileName
+                                 | NotifyFilters.LastAccess
+                                 | NotifyFilters.LastWrite
+                                 | NotifyFilters.Security
+                                 | NotifyFilters.Size;
+
+            _watcher.Changed += OnChanged;
+            _watcher.EnableRaisingEvents = true;
+
+            Load();
+        }
+
+        private void OnChanged(object sender, FileSystemEventArgs e)
+        {
+            Thread.Sleep(1000);
+            Load();
+        }
+
+        private void Load()
+        {
+            lock(this)
+            {
+                _logger.LogDebug("Loading profile: {0}", _fileName);
+
+                _stuff.Clear();
+                var lines = File.ReadAllLines(_fileName);
+                foreach (var line in lines)
+                {
+                    if (!line.Trim().StartsWith("#"))
+                    {
+                        var index = line.IndexOf("=", StringComparison.Ordinal);
+                        if (index != -1)
+                        {
+                            var key = line.Substring(0, index).Trim().ToLower();
+                            var value = line.Substring(index + 1).Trim();
+
+                            index = value.IndexOf("#", StringComparison.Ordinal);
+                            if (index != -1)
+                            {
+                                value = value.Substring(0, index).Trim();
+                            }
+                            _stuff.Add(key, value);
+                        }
                     }
                 }
             }
@@ -51,12 +98,17 @@ namespace ivrToolkit.Core.Util
         /// <returns>The value store for the key</returns>
         public string GetProperty(string key)
         {
-            _logger.LogDebug("GetProperty({0})", key);
-            try
+            lock (this)
             {
-                return _stuff[key.ToLower()];
-            } catch (KeyNotFoundException) {
-                return null;
+                _logger.LogTrace("GetProperty({0})", key);
+                try
+                {
+                    return _stuff[key.ToLower()];
+                }
+                catch (KeyNotFoundException)
+                {
+                    return null;
+                }
             }
         }
 
@@ -68,36 +120,61 @@ namespace ivrToolkit.Core.Util
         /// <returns>The value of the property or the default if the property was not found.</returns>
         public string GetProperty(string key, string def)
         {
-            try
+            lock (this)
             {
-                return _stuff[key.ToLower()];
-            }
-            catch (KeyNotFoundException)
-            {
-                return def;
+                try
+                {
+                    return _stuff[key.ToLower()];
+                }
+                catch (KeyNotFoundException)
+                {
+                    return def;
+                }
             }
         }
+
         /// <summary>
-        /// Gets a list of property names that matches the prefix.
+        /// Gets a list of property names that matches the prefix. Strips off the prefix from the property names
         /// </summary>
         /// <param name="prefix">The string to match on.</param>
-        /// <returns>A string array of parameter names where the property name begins with the prefix</returns>
+        /// <returns>A string array of parameter names(less the prefix) where the property name begins with the prefix</returns>
         public string[] GetKeyPrefixMatch(string prefix)
         {
-            return (from a in _stuff
-                    where a.Key.StartsWith(prefix)
-                    select a.Key.Substring(prefix.Length).Trim()).ToArray();
+            lock (this)
+            {
+                return (from a in _stuff
+                        where a.Key.StartsWith(prefix)
+                        select a.Key.Substring(prefix.Length).Trim()).ToArray();
+            }
         }
+
         /// <summary>
-        /// Gets a list of property values where the property name matches the prefix.
+        /// Gets a list of property values where the key name matches the prefix.
         /// </summary>
         /// <param name="prefix">The string to match on.</param>
         /// <returns>A string array of values where the property name begins with the prefix</returns>
-        public string[] GetPrefixMatch(string prefix)
+        public string[] GetValuePrefixMatch(string prefix)
         {
-            return (from a in _stuff
-                    where a.Key.StartsWith(prefix)
-                    select a.Value).ToArray();
+            lock (this) {
+                return (from a in _stuff
+                        where a.Key.StartsWith(prefix)
+                        select a.Value).ToArray();
+            }
+        }
+
+        /// <summary>
+        /// Gets a list of key/value pairs where the property name matches the prefix. Strips off the prefix from the keys
+        /// </summary>
+        /// <param name="prefix">The string to match on.</param>
+        /// <returns>A string array of key/value pairs where the property name begins with the prefix</returns>
+        public KeyValuePair<string, string>[] GetPairPrefixMatch(string prefix)
+        {
+            lock (this)
+            {
+                return (from a in _stuff
+                        where a.Key.StartsWith(prefix)
+                        select new KeyValuePair<string, string>(a.Key.Substring(prefix.Length).Trim(), a.Value)).ToArray();
+            }
         }
     }
 }

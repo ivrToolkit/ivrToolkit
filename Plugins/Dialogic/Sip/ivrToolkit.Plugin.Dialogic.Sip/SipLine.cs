@@ -45,7 +45,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private bool _waitCallSet;
         private readonly ILoggerFactory _loggerFactory;
         private bool _disposeTriggerActivated;
-
+        private bool _capDisplayed;
 
         public SipLine(ILoggerFactory loggerFactory, DialogicSipVoiceProperties voiceProperties, int lineNumber)
         {
@@ -420,40 +420,42 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private DX_CAP GetCap()
         {
             _logger.LogDebug("GetCap()");
-            var cap = new DX_CAP();
-
-            DXXXLIB_H.dx_clrcap(ref cap);
+            var dxCap = new DX_CAP();
 
             var capType = typeof(DX_CAP);
 
-            object boxed = cap;
+            object boxed = dxCap;
 
-            var caps = _voiceProperties.GetKeyPrefixMatch("cap.");
-            foreach (var capName in caps)
+            var caps = _voiceProperties.GetPairPrefixMatch("cap.");
+            foreach (var cap in caps)
             {
-                var info = capType.GetField(capName);
-                if (info == null)
+                var fieldInfo = capType.GetField(cap.Key);
+                if (fieldInfo == null)
                 {
-                    throw new Exception("Could not find dx_cap." + capName);
+                    throw new Exception($"cap.{cap.Key} does not exist in DX_CAP");
                 }
 
-                var obj = info.GetValue(cap);
+                var obj = fieldInfo.GetValue(dxCap);
                 if (obj is ushort)
                 {
-                    var value = ushort.Parse(_voiceProperties.GetProperty("cap." + capName));
-                    _logger.LogDebug("value = {0}", value);
-                    info.SetValue(boxed, value);
+                    var value = ushort.Parse(cap.Value);
+                    fieldInfo.SetValue(boxed, value);
+                }
+                else if (obj is short)
+                {
+                    var value = short.Parse(cap.Value);
+                    fieldInfo.SetValue(boxed, value);
                 }
                 else if (obj is byte)
                 {
-                    var value = byte.Parse(_voiceProperties.GetProperty("cap." + capName));
-                    _logger.LogDebug("value = {0}", value);
-                    info.SetValue(boxed, value);
+                    var value = byte.Parse(cap.Value);
+                    fieldInfo.SetValue(boxed, value);
                 }
             }
 
-            if (_logger.IsEnabled(LogLevel.Trace))
+            if (_logger.IsEnabled(LogLevel.Debug) && !_capDisplayed)
             {
+                _capDisplayed = true;
                 var fields = capType.GetFields();
                 foreach (var field in fields)
                 {

@@ -23,6 +23,7 @@ namespace ivrToolkit.Core.Util
         private readonly ILogger<Properties> _logger;
         private readonly string _fileName;
         private FileSystemWatcher _watcher;
+        private DateTime _lastRead;
 
         /// <summary>
         /// Opens up a java style property file.
@@ -40,14 +41,7 @@ namespace ivrToolkit.Core.Util
 
             _watcher = new FileSystemWatcher(directory, fileName);
 
-            _watcher.NotifyFilter = NotifyFilters.Attributes
-                                 | NotifyFilters.CreationTime
-                                 | NotifyFilters.DirectoryName
-                                 | NotifyFilters.FileName
-                                 | NotifyFilters.LastAccess
-                                 | NotifyFilters.LastWrite
-                                 | NotifyFilters.Security
-                                 | NotifyFilters.Size;
+            _watcher.NotifyFilter = NotifyFilters.LastWrite;
 
             _watcher.Changed += OnChanged;
             _watcher.EnableRaisingEvents = true;
@@ -57,8 +51,15 @@ namespace ivrToolkit.Core.Util
 
         private void OnChanged(object sender, FileSystemEventArgs e)
         {
-            Thread.Sleep(1000);
-            Load();
+            // stop known issue of event firing twice
+            DateTime lastWriteTime = File.GetLastWriteTime(_fileName);
+            if (lastWriteTime != _lastRead)
+            {
+                _lastRead = lastWriteTime;
+                Thread.Sleep(1000);
+                Load();
+            }
+
         }
 
         private void Load()

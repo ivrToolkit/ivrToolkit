@@ -52,12 +52,11 @@ namespace ivrToolkit.Core.Util
         private void OnChanged(object sender, FileSystemEventArgs e)
         {
             // stop known issue of event firing twice
-            DateTime lastWriteTime = File.GetLastWriteTime(_fileName);
-            if (lastWriteTime != _lastRead)
+            if ((DateTime.Now-_lastRead).TotalMilliseconds > 1000)
             {
-                _lastRead = lastWriteTime;
                 Thread.Sleep(1000);
                 Load();
+                _lastRead = DateTime.Now;
             }
 
         }
@@ -66,28 +65,35 @@ namespace ivrToolkit.Core.Util
         {
             lock(this)
             {
-                _logger.LogDebug("Loading profile: {0}", _fileName);
-
-                _stuff.Clear();
-                var lines = File.ReadAllLines(_fileName);
-                foreach (var line in lines)
+                try
                 {
-                    if (!line.Trim().StartsWith("#"))
-                    {
-                        var index = line.IndexOf("=", StringComparison.Ordinal);
-                        if (index != -1)
-                        {
-                            var key = line.Substring(0, index).Trim().ToLower();
-                            var value = line.Substring(index + 1).Trim();
+                    _logger.LogDebug("Loading profile: {0}", _fileName);
 
-                            index = value.IndexOf("#", StringComparison.Ordinal);
+                    _stuff.Clear();
+                    var lines = File.ReadAllLines(_fileName);
+                    foreach (var line in lines)
+                    {
+                        if (!line.Trim().StartsWith("#"))
+                        {
+                            var index = line.IndexOf("=", StringComparison.Ordinal);
                             if (index != -1)
                             {
-                                value = value.Substring(0, index).Trim();
+                                var key = line.Substring(0, index).Trim().ToLower();
+                                var value = line.Substring(index + 1).Trim();
+
+                                index = value.IndexOf("#", StringComparison.Ordinal);
+                                if (index != -1)
+                                {
+                                    value = value.Substring(0, index).Trim();
+                                }
+                                _stuff.Add(key, value);
                             }
-                            _stuff.Add(key, value);
                         }
                     }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, e.Message);
                 }
             }
         }
@@ -180,6 +186,7 @@ namespace ivrToolkit.Core.Util
 
         public void Dispose()
         {
+            _logger.LogDebug("Dispose()");
             _watcher?.Dispose();
         }
     }

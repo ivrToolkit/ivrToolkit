@@ -96,18 +96,14 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
 
             // asynchronously start waiting for a call to come in
-            result = WaitForEvent(gclib_h.GCEV_ANSWERED, 1000); // 1 minute
+            result = WaitForEventIndefinitely(gclib_h.GCEV_ANSWERED);
             switch (result)
             {
                 case SYNC_WAIT_SUCCESS:
                     _logger.LogDebug("The WaitRings method received the GCEV_ANSWERED event");
                     break;
-                case SYNC_WAIT_EXPIRED:
-                    var message = "The WaitRings method timed out waiting for the GCEV_ANSWERED event";
-                    _logger.LogError(message);
-                    throw new VoiceException(message);
                 case SYNC_WAIT_ERROR:
-                    message = "The WaitRings method failed waiting for the GCEV_ANSWERED event";
+                    var message = "The WaitRings method failed waiting for the GCEV_ANSWERED event";
                     _logger.LogError(message);
                     throw new VoiceException(message);
             }
@@ -140,7 +136,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 _logger.LogWarning(e, null);
             }
 
-            result = WaitForEvent(gclib_h.GCEV_DROPCALL, 50); // 5 second wait
+            result = WaitForEvent(gclib_h.GCEV_DROPCALL, 5); // 5 second wait
 
             switch (result)
             {
@@ -156,7 +152,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
 
             // okay, now lets wait for the release call event
-            result = WaitForEvent(gclib_h.GCEV_RELEASECALL, 50); // 5 second wait
+            result = WaitForEvent(gclib_h.GCEV_RELEASECALL, 5); // 5 second wait
 
             switch (result)
             {
@@ -237,7 +233,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = DXXXLIB_H.dx_dial(devh, "", ref cap, DXCALLP_H.DX_CALLP | DXXXLIB_H.EV_ASYNC);
             result.ThrowIfStandardRuntimeLibraryError(devh);
 
-            result = WaitForEvent(DXXXLIB_H.TDX_CALLP, 1000); // 60 seconds
+            result = WaitForEvent(DXXXLIB_H.TDX_CALLP, 60); // 60 seconds
             switch (result)
             {
                 case SYNC_WAIT_SUCCESS:
@@ -383,7 +379,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             result.ThrowIfGlobalCallError();
             gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
 
-            result = WaitForEvent(gclib_h.GCEV_ALERTING, 400); // 40 seconds - 10 seconds was sometimes too short
+            result = WaitForEvent(gclib_h.GCEV_ALERTING, 40); // 40 seconds - 10 seconds was sometimes too short
 
             string message;
             switch (result)
@@ -576,7 +572,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             try
             {
-                var waitResult = WaitForEvent(DXXXLIB_H.TDX_RECORD, 3000); // 3 minutes
+                var waitResult = WaitForEvent(DXXXLIB_H.TDX_RECORD, 180); // 3 minutes
                 switch (waitResult)
                 {
                     case SYNC_WAIT_SUCCESS:
@@ -975,7 +971,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _logger.LogDebug("Register() - called gc_ReqService asynchronously");
             gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
 
-            result = WaitForEvent(gclib_h.GCEV_SERVICERESP, 100); // wait for 10 seconds 
+            result = WaitForEvent(gclib_h.GCEV_SERVICERESP, 10); // wait for 10 seconds 
             _logger.LogDebug("Result for gc_ReqService is {0}", result);
         }
 
@@ -1039,7 +1035,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
 
-            result = WaitForEvent(gclib_h.GCEV_SETCONFIGDATA, 100); // wait for 10 seconds
+            result = WaitForEvent(gclib_h.GCEV_SETCONFIGDATA, 10); // wait for 10 seconds
             switch (result)
             {
                 case SYNC_WAIT_EXPIRED:
@@ -1241,15 +1237,30 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
         }
 
-        private int WaitForEvent(int waitForEvent, int waitInterval)
+
+        private int WaitForEventIndefinitely(int waitForEvent)
         {
-            var handles = new[] { _gcDev, _boardDev, _devh };
-            return WaitForEvent(waitForEvent, waitInterval, handles);
+            _logger.LogDebug("*** Waiting for event: {0}: {1}, waitInterval = indefinitely", waitForEvent, TranslateEventId(waitForEvent));
+
+            int result;
+            while ((result = WaitForEvent(waitForEvent, 5, false)) == SYNC_WAIT_EXPIRED) // wait  5 seconds
+            {
+                if (result == -SYNC_WAIT_EXPIRED) _logger.LogTrace("Wait for call exhausted. Will try again");
+                CheckDisposing();
+            }
+
+            return result;
         }
 
-        private int WaitForEvent(int waitForEvent, int waitInterval, int[] handles)
+        private int WaitForEvent(int waitForEvent, int waitSeconds, bool showDebug = true)
         {
-            _logger.LogDebug("*** Waiting for event: {0}: {1}, waitInterval = {2}", waitForEvent, TranslateEventId(waitForEvent), waitInterval);
+            var handles = new[] { _gcDev, _boardDev, _devh };
+            return WaitForEvent(waitForEvent, waitSeconds, handles, showDebug);
+        }
+
+        private int WaitForEvent(int waitForEvent, int waitSeconds, int[] handles, bool showDebug = true)
+        {
+            if (showDebug) _logger.LogDebug("*** Waiting for event: {0}: {1}, waitInterval = {2}", waitForEvent, TranslateEventId(waitForEvent), waitSeconds);
 
             var eventThrown = -1;
             var count = 0;
@@ -1257,7 +1268,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             do
             {
-                var result = srllib_h.sr_waitevtEx(handles, handles.Length, 100, ref eventHandle);
+                var result = srllib_h.sr_waitevtEx(handles, handles.Length, 1000, ref eventHandle);
                 var timedOut = IsTimeout(result, _devh);
                 if (!timedOut)
                 {
@@ -1267,14 +1278,14 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 CheckDisposing();
 
                 count++;
-            } while (LoopAgain(eventThrown, waitForEvent, count, waitInterval));
+            } while (LoopAgain(eventThrown, waitForEvent, count, waitSeconds));
 
             if (eventThrown == waitForEvent)
             {
                 return SYNC_WAIT_SUCCESS;
             }
 
-            if (HasExpired(count, waitInterval))
+            if (HasExpired(count, waitSeconds))
             {
                 return SYNC_WAIT_EXPIRED;
             }
@@ -1594,7 +1605,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             result.ThrowIfGlobalCallError();
 
             // don't include _devh right now because we want to finish the drop call first
-            result = WaitForEvent(gclib_h.GCEV_DROPCALL, 100, new []{ _gcDev, _boardDev}); // 10 seconds
+            result = WaitForEvent(gclib_h.GCEV_DROPCALL, 10, new []{ _gcDev, _boardDev}); // 10 seconds
         }
 
         /**
@@ -1607,7 +1618,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             result.ThrowIfGlobalCallError();
 
             // don't include _devh right now because we want to finish the drop call first
-            result = WaitForEvent(gclib_h.GCEV_RELEASECALL, 100, new[] { _gcDev, _boardDev }); // 10 seconds
+            result = WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, new[] { _gcDev, _boardDev }); // 10 seconds
         }
 
 
@@ -1921,7 +1932,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             try
             {
-                var waitResult = WaitForEvent(DXXXLIB_H.TDX_PLAY, 1000); // 1 minute
+                var waitResult = WaitForEvent(DXXXLIB_H.TDX_PLAY, 60); // 1 minute
                 switch (waitResult)
                 {
                     case SYNC_WAIT_SUCCESS:
@@ -2173,7 +2184,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 throw new VoiceException(message);
             }
 
-            var waitResult = WaitForEvent(DXXXLIB_H.TDX_GETDIG, 1000); // 1 minute
+            var waitResult = WaitForEvent(DXXXLIB_H.TDX_GETDIG, 60); // 1 minute
             switch (waitResult)
             {
                 case SYNC_WAIT_SUCCESS:

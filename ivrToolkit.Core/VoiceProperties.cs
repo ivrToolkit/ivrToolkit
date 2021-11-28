@@ -7,6 +7,7 @@
 
 using ivrToolkit.Core.Util;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 
 namespace ivrToolkit.Core
@@ -14,7 +15,7 @@ namespace ivrToolkit.Core
     /// <summary>
     /// Holds the voice.properties in a static Properties class.
     /// </summary>
-    public class VoiceProperties
+    public class VoiceProperties : IDisposable
     {
         protected readonly Properties TheProperties;
         private readonly ILogger<VoiceProperties> _logger;
@@ -102,7 +103,10 @@ namespace ivrToolkit.Core
             return TheProperties.GetPairPrefixMatch(prefix);
         }
 
-
+        public void Dispose()
+        {
+            TheProperties?.Dispose();
+        }
     } // class
 
     // class

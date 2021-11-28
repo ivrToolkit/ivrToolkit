@@ -17,7 +17,7 @@ namespace ivrToolkit.Core.Util
     /// Reads in a java style property file. format is key = value.
     /// A # key in the first character of the line denotes a comment
     /// </summary>
-    public class Properties
+    public class Properties : IDisposable
     {
         private readonly Dictionary<string, string> _stuff = new();
         private readonly ILogger<Properties> _logger;
@@ -175,6 +175,11 @@ namespace ivrToolkit.Core.Util
                         where a.Key.StartsWith(prefix)
                         select new KeyValuePair<string, string>(a.Key.Substring(prefix.Length).Trim(), a.Value)).ToArray();
             }
+        }
+
+        public void Dispose()
+        {
+            _watcher?.Dispose();
         }
     }
 }

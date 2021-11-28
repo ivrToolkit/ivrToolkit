@@ -49,55 +49,6 @@ namespace ivrToolkit.Core.Util
             Load();
         }
 
-        private void OnChanged(object sender, FileSystemEventArgs e)
-        {
-            // stop known issue of event firing twice
-            if ((DateTime.Now-_lastRead).TotalMilliseconds > 1000)
-            {
-                Thread.Sleep(1000);
-                Load();
-                _lastRead = DateTime.Now;
-            }
-
-        }
-
-        private void Load()
-        {
-            lock(this)
-            {
-                try
-                {
-                    _logger.LogDebug("Loading profile: {0}", _fileName);
-
-                    _stuff.Clear();
-                    var lines = File.ReadAllLines(_fileName);
-                    foreach (var line in lines)
-                    {
-                        if (!line.Trim().StartsWith("#"))
-                        {
-                            var index = line.IndexOf("=", StringComparison.Ordinal);
-                            if (index != -1)
-                            {
-                                var key = line.Substring(0, index).Trim().ToLower();
-                                var value = line.Substring(index + 1).Trim();
-
-                                index = value.IndexOf("#", StringComparison.Ordinal);
-                                if (index != -1)
-                                {
-                                    value = value.Substring(0, index).Trim();
-                                }
-                                _stuff.Add(key, value);
-                            }
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, e.Message);
-                }
-            }
-        }
-
         /// <summary>
         /// Gets the string value of a property. Case insensitive.
         /// </summary>
@@ -162,7 +113,8 @@ namespace ivrToolkit.Core.Util
         /// <returns>A string array of values where the property name begins with the prefix</returns>
         public string[] GetValuePrefixMatch(string prefix)
         {
-            lock (this) {
+            lock (this)
+            {
                 return (from a in _stuff
                         where a.Key.StartsWith(prefix)
                         select a.Value).ToArray();
@@ -189,5 +141,70 @@ namespace ivrToolkit.Core.Util
             _logger.LogDebug("Dispose()");
             _watcher?.Dispose();
         }
+
+        /// <summary>
+        /// converts value to boolean
+        /// </summary>
+        /// <param name="value">the value to convert to bool</param>
+        /// <returns>true if value equals 'true' or 'on'. Otherwise returns false. case insensitive.</returns>
+        protected bool ToBool(string value)
+        {
+            _logger.LogDebug("ToBool({0})", value);
+            if (value.ToLower() == "true" || value.ToLower() == "on")
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private void OnChanged(object sender, FileSystemEventArgs e)
+        {
+            // stop known issue of event firing twice
+            if ((DateTime.Now-_lastRead).TotalMilliseconds > 1000)
+            {
+                Thread.Sleep(1000);
+                Load();
+                _lastRead = DateTime.Now;
+            }
+
+        }
+
+        private void Load()
+        {
+            lock(this)
+            {
+                try
+                {
+                    _logger.LogDebug("Loading profile: {0}", _fileName);
+
+                    _stuff.Clear();
+                    var lines = File.ReadAllLines(_fileName);
+                    foreach (var line in lines)
+                    {
+                        if (!line.Trim().StartsWith("#"))
+                        {
+                            var index = line.IndexOf("=", StringComparison.Ordinal);
+                            if (index != -1)
+                            {
+                                var key = line.Substring(0, index).Trim().ToLower();
+                                var value = line.Substring(index + 1).Trim();
+
+                                index = value.IndexOf("#", StringComparison.Ordinal);
+                                if (index != -1)
+                                {
+                                    value = value.Substring(0, index).Trim();
+                                }
+                                _stuff.Add(key, value);
+                            }
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, e.Message);
+                }
+            }
+        }
+
     }
 }

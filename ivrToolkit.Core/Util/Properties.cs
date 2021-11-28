@@ -146,15 +146,13 @@ namespace ivrToolkit.Core.Util
         /// converts value to boolean
         /// </summary>
         /// <param name="value">the value to convert to bool</param>
-        /// <returns>true if value equals 'true' or 'on'. Otherwise returns false. case insensitive.</returns>
+        /// <returns>true if value equals 'true','on' or 'yes'. Otherwise returns false. case insensitive.</returns>
         protected bool ToBool(string value)
         {
             _logger.LogDebug("ToBool({0})", value);
-            if (value.ToLower() == "true" || value.ToLower() == "on")
-            {
-                return true;
-            }
-            return false;
+            return value.Equals("true", StringComparison.OrdinalIgnoreCase) || 
+                value.Equals("on", StringComparison.OrdinalIgnoreCase) || 
+                value.Equals("yes", StringComparison.OrdinalIgnoreCase);
         }
 
         private void OnChanged(object sender, FileSystemEventArgs e)

@@ -74,7 +74,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             _logger.LogDebug("Start()");
 
-            _unmanagedMemoryService = new UnmanagedMemoryService(_loggerFactory);
+            _unmanagedMemoryService = new UnmanagedMemoryService(_loggerFactory, $"Lifetime of {nameof(SipPlugin)}");
 
             // show some info
             var deviceInformation = new DeviceInformation(_loggerFactory);

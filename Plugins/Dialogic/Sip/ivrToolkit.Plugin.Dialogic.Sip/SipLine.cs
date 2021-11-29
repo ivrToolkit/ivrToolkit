@@ -236,7 +236,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var dnis = number + "@" + _voiceProperties.SipProxyIp;
 
             SetAuthenticationInfo();
-            MakeCallAsync(ani, dnis);
+            MakeCall(ani, dnis);
 
             _logger.LogDebug("DialWithCpa: Syncronous Make call Completed starting call process analysis");
 
@@ -322,13 +322,10 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         * The call header sets the USER_DISPLAY.
         * The USER_DISPLAY is blocekd by carriers (Fido, Telus, etc.)
         * The USER_DISPLAY can also be set using the PBX.
-        * As far as I can tell invoking the gc_makecall functuion in SYNC mode is
-        * not supported.  Dialogic has not been able to provide me with any examples
-        * of this function working in SIP with SYNC mode.
         */
-        private void MakeCallAsync(string ani, string dnis)
+        private void MakeCall(string ani, string dnis)
         {
-            _logger.LogDebug("MakeCallAsync({0}, {1})", ani, dnis);
+            _logger.LogDebug("MakeCall({0}, {1})", ani, dnis);
 
             var gcParmBlkp = IntPtr.Zero;
             var sipHeader = $"User-Agent: {_voiceProperties.SipUserAgent}";
@@ -1521,7 +1518,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             switch (metaEvt.evttype)
             {
                 case gclib_h.GCEV_ALERTING:
-                    _logger.LogDebug("GCEV_ALERTING - we do nothing with this event");
+                    _logger.LogDebug("GCEV_ALERTING - handled by call to WaitForEvent");
                     break;
                 case gclib_h.GCEV_OPENEX:
                     _logger.LogDebug("GCEV_OPENEX - This no longer does anything and should never get here!");
@@ -1548,7 +1545,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     AnswerCallAsync();
                     break;
                 case gclib_h.GCEV_ANSWERED:
-                    _logger.LogDebug("GCEV_ANSWERED - we do nothing with this event");
+                    _logger.LogDebug("GCEV_ANSWERED - handled by call to WaitForEvent");
                     break;
                 case gclib_h.GCEV_CALLSTATUS:
                     _logger.LogDebug("GCEV_CALLSTATUS - we do nothing with this event");
@@ -1580,14 +1577,17 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     ProcessExtension(metaEvt);
                     break;
                 case gclib_h.GCEV_SETCONFIGDATA:
-                    _logger.LogDebug("GCEV_SETCONFIGDATA - we do nothing with this event");
+                    _logger.LogDebug("GCEV_SETCONFIGDATA - handled by call to WaitForEvent");
                     break;
                 case gclib_h.GCEV_PROCEEDING:
-                    _logger.LogDebug("GCEV_PROCEEDING - gc_makeCall is proceeding");
+                    _logger.LogDebug("GCEV_PROCEEDING - we do nothing with this event");
                     break;
                 case gclib_h.GCEV_TASKFAIL:
                     _logger.LogWarning("GCEV_TASKFAIL");
                     LogWarningMessage(metaEvt);
+                    break;
+                case gclib_h.GCEV_ATTACH:
+                    _logger.LogDebug("GCEV_ATTACH - we do nothing with this event");
                     break;
                 default:
                     _logger.LogInformation("gc_Unknown type - {0}", metaEvt.evttype);

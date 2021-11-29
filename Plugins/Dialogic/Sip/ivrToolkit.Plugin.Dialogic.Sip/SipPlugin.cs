@@ -105,23 +105,23 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             ipcclibStartData.max_parm_data_size = 4096;
 
             ipcclibStartData.num_boards = 1;
-            ipcclibStartData.board_list = _unmanagedMemoryService.Create(ipVirtboard[0]);
+            ipcclibStartData.board_list = _unmanagedMemoryService.Create(nameof(IP_VIRTBOARD), ipVirtboard[0]);
 
             CCLIB_START_STRUCT[] ccLibStartStructs =
             {
                 new() {cclib_name = "GC_DM3CC_LIB", cclib_data = IntPtr.Zero},
-                new() {cclib_name = "GC_H3R_LIB", cclib_data = _unmanagedMemoryService.Create(ipcclibStartData)},
+                new() {cclib_name = "GC_H3R_LIB", cclib_data = _unmanagedMemoryService.Create(nameof(IPCCLIB_START_DATA), ipcclibStartData)},
                 new() {cclib_name = "GC_IPM_LIB", cclib_data = IntPtr.Zero}
             };
 
             var gclibStart = new GC_START_STRUCT
             {
                 num_cclibs = ccLibStartStructs.Length,
-                cclib_list = _unmanagedMemoryService.Create(ccLibStartStructs)
+                cclib_list = _unmanagedMemoryService.Create(nameof(CCLIB_START_STRUCT), ccLibStartStructs)
             };
 
             _logger.LogDebug("Calling gclib_h.gc_Start()...");
-            var result = gclib_h.gc_Start(_unmanagedMemoryService.Create(gclibStart));
+            var result = gclib_h.gc_Start(_unmanagedMemoryService.Create(nameof(GC_START_STRUCT), gclibStart));
             result.ThrowIfGlobalCallError();
 
             // show some info

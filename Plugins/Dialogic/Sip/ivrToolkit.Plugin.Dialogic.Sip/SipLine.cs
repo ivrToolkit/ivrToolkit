@@ -370,7 +370,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var gcMkBlk = new GC_MAKECALL_BLK
             {
                 cclib = IntPtr.Zero,
-                gclib = _unmanagedMemoryService.Create(gclibMkBlk)
+                gclib = _unmanagedMemoryService.Create(nameof(GC_MAKECALL_BLK), gclibMkBlk)
             };
 
             SetCodec(gclib_h.GCTGT_GCLIB_CHAN);
@@ -483,7 +483,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             try
             {
                 _waitCallSet = false;
-
                 var result = DXXXLIB_H.dx_close(_devh);
                 result.ThrowIfStandardRuntimeLibraryError(_devh);
 
@@ -948,7 +947,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             result = gclib_h.gc_util_insert_parm_ref(ref gcParmBlkPtr, gcip_defs_h.IPSET_REG_INFO,
                 gcip_defs_h.IPPARM_REG_ADDRESS,
-                dataSize, _unmanagedMemoryService.Create(ipRegisterAddress));
+                dataSize, _unmanagedMemoryService.Create(nameof(IP_REGISTER_ADDRESS), ipRegisterAddress));
             result.ThrowIfGlobalCallError();
 
             dataSize = (byte)(contact.Length + 1);
@@ -1002,7 +1001,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var dataSize = (byte)Marshal.SizeOf<IP_AUTHENTICATION>();
 
             var result = gclib_h.gc_util_insert_parm_ref(ref gcParmBlkPtr, gcip_defs_h.IPSET_CONFIG,
-                gcip_defs_h.IPPARM_AUTHENTICATION_CONFIGURE, dataSize, _unmanagedMemoryService.Create(auth));
+                gcip_defs_h.IPPARM_AUTHENTICATION_CONFIGURE, dataSize, _unmanagedMemoryService.Create(nameof(IP_AUTHENTICATION), auth));
             result.ThrowIfGlobalCallError();
 
             result = gclib_h.gc_SetAuthenticationInfo(gclib_h.GCTGT_CCLIB_NETIF, _boardDev, gcParmBlkPtr);
@@ -1575,7 +1574,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             var callStatusInfo = new GC_INFO();
 
-            var ptr = _unmanagedMemoryService.Create(callStatusInfo);
+            var ptr = _unmanagedMemoryService.Create($"{nameof(GC_INFO)} for LogWarningMessage", callStatusInfo);
 
             var result = gclib_h.gc_ResultInfo(ref metaEvt, ptr);
             try
@@ -1583,7 +1582,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 result.ThrowIfGlobalCallError();
 
                 callStatusInfo = Marshal.PtrToStructure<GC_INFO>(ptr);
-                Marshal.FreeHGlobal(ptr);
+                _unmanagedMemoryService.Free(ptr);
 
                 var ex = new GlobalCallErrorException(callStatusInfo);
                 _logger.LogWarning(ex.Message);
@@ -1719,7 +1718,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var parmblkp = IntPtr.Zero;
             for (var i = 0; i < 3; i++)
             {
-                var ipCapPtr = _unmanagedMemoryService.Create(ipCap[i]);
+                var ipCapPtr = _unmanagedMemoryService.Create($"ipCap[{i}]", ipCap[i]);
                 result = gclib_h.gc_util_insert_parm_ref(ref parmblkp, gccfgparm_h.GCSET_CHAN_CAPABILITY,
                     gcip_defs_h.IPPARM_LOCAL_CAPABILITY,
                     (byte)Marshal.SizeOf<IP_CAPABILITY>(), ipCapPtr);
@@ -2169,7 +2168,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var tpt = GetTerminationConditions(numberOfDigits, terminators, timeout);
 
             var digit = new DV_DIGIT();
-            var digitPtr = _unmanagedMemoryService.Create(digit);
+            var digitPtr = _unmanagedMemoryService.Create(nameof(DV_DIGIT), digit);
 
 
 
@@ -2184,7 +2183,16 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 throw new VoiceException(message);
             }
 
-            var waitResult = WaitForEvent(DXXXLIB_H.TDX_GETDIG, 60); // 1 minute
+            int waitResult;
+            try
+            {
+                waitResult = WaitForEvent(DXXXLIB_H.TDX_GETDIG, 60); // 1 minute
+            }
+            catch (Exception)
+            {
+                _unmanagedMemoryService.Free(digitPtr);
+                throw;
+            }
             switch (waitResult)
             {
                 case SYNC_WAIT_SUCCESS:
@@ -2193,15 +2201,17 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 case SYNC_WAIT_EXPIRED:
                     var message = "The GetDigits method timed out waiting for the TDX_GETDIG event";
                     _logger.LogError(message);
+                    _unmanagedMemoryService.Free(digitPtr);
                     throw new VoiceException(message);
                 case SYNC_WAIT_ERROR:
                     message = "The GetDigits method failed waiting for the TDX_GETDIG event";
                     _logger.LogError(message);
+                    _unmanagedMemoryService.Free(digitPtr);
                     throw new VoiceException(message);
             }
 
             digit = Marshal.PtrToStructure<DV_DIGIT>(digitPtr);
-            Marshal.FreeHGlobal(digitPtr);
+            _unmanagedMemoryService.Free(digitPtr);
 
             var reason = DXXXLIB_H.ATDX_TERMMSK(devh);
             CheckCallState();

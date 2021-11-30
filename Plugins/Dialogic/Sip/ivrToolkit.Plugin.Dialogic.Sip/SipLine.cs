@@ -394,14 +394,14 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             switch (result)
             {
                 case SYNC_WAIT_EXPIRED:
-                    message = "The MakeCallAsync method timed out waiting for the GCEV_ALERTING event";
+                    message = "The MakeCall method timed out waiting for the GCEV_ALERTING event";
                     _logger.LogError(message);
                     throw new VoiceException(message);
                 case SYNC_WAIT_SUCCESS:
-                    _logger.LogDebug("The MakeCallAsync method received the GCEV_ALERTING event");
+                    _logger.LogDebug("The MakeCall method received the GCEV_ALERTING event");
                     break;
                 case SYNC_WAIT_ERROR:
-                    message = "The MakeCallAsync method failed waiting for the GCEV_ALERTING event";
+                    message = "The MakeCall method failed waiting for the GCEV_ALERTING event";
                     _logger.LogError(message);
                     throw new VoiceException(message);
             }

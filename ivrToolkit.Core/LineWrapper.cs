@@ -48,7 +48,7 @@ namespace ivrToolkit.Core
 
         public void CheckDispose()
         {
-            _logger.LogDebug("CheckDispose()");
+            _logger.LogTrace("CheckDispose()");
             CheckDisposed();
             CheckDisposing();
         }

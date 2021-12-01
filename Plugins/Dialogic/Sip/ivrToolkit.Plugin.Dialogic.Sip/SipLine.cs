@@ -130,7 +130,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = DXXXLIB_H.dx_stopch(_devh, DXXXLIB_H.EV_SYNC);
             result.ThrowIfStandardRuntimeLibraryError(_devh);
 
-            if (_callReferenceNumber == 0) return;
+            if (_callReferenceNumber == 0) return; // line is not in use
 
             _logger.LogDebug(
                 "gclib_h.gc_DropCall(_callReferenceNumber, gclib_h.GC_NORMAL_CLEARING, DXXXLIB_H.EV_ASYNC);");
@@ -160,24 +160,30 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     break;
             }
 
-            // okay, now lets wait for the release call event
-            result = WaitForEvent(gclib_h.GCEV_RELEASECALL, 5); // 5 second wait
-
-            switch (result)
+            try
             {
-                case SYNC_WAIT_SUCCESS:
-                    _logger.LogDebug("The hangup method received the releaseCall event");
-                    break;
-                case SYNC_WAIT_EXPIRED:
-                    _logger.LogWarning("The hangup method did not receive the releaseCall event");
-                    break;
-                case SYNC_WAIT_ERROR:
-                    _logger.LogError("The hangup method failed waiting for the releaseCall event");
-                    break;
+                // okay, now lets wait for the release call event
+                result = WaitForEvent(gclib_h.GCEV_RELEASECALL, 5); // Should fire a hangup exception
+
+                switch (result)
+                {
+                    case SYNC_WAIT_SUCCESS:
+                        // this should never happen!
+                        _logger.LogError("The hangup method received the releaseCall event but it should have immediately fired a hangup exception");
+                        break;
+                    case SYNC_WAIT_EXPIRED:
+                        _logger.LogWarning("The hangup method did not receive the releaseCall event");
+                        break;
+                    case SYNC_WAIT_ERROR:
+                        _logger.LogError("The hangup method failed waiting for the releaseCall event");
+                        break;
+                }
+            }
+            catch (HangupException)
+            {
+                _logger.LogDebug("The hangup method completed as expected.");
             }
 
-            _callReferenceNumber = 0;
-            _logger.LogDebug("CRN has been set back to 0");
         }
 
         public void TakeOffHook()
@@ -642,14 +648,21 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             _logger.LogDebug("FlushDigitBuffer()");
 
-            // add "T" so that I can get all the characters.
-            var all = GetDigits(_devh, DXDIGIT_H.DG_MAXDIGS, "T", 100);
-            // strip off timeout terminator if there is once
-            if (all.EndsWith("T"))
+            var all = "";
+            try
             {
-                all = all.Substring(0, all.Length - 1);
+                // add "T" so that I can get all the characters.
+                all = GetDigits(_devh, DXDIGIT_H.DG_MAXDIGS, "T", 100);
+                // strip off timeout terminator if there is once
+                if (all.EndsWith("T"))
+                {
+                    all = all.Substring(0, all.Length - 1);
+                }
             }
-
+            catch (GetDigitsTimeoutException)
+            {
+                // surpress this error
+            }
             return all;
         }
 

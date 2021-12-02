@@ -107,7 +107,7 @@ namespace ivrToolkit.Core
 
         public void Dispose()
         {
-            _ivrPlugin.Dispose();
+            _logger.LogDebug("Dispose()");
         }
     }
 }

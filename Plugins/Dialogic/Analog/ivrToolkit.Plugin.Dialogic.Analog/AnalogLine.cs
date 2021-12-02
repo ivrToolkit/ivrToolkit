@@ -428,7 +428,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
 
         private void InitCallProgress(int devh)
         {
-            var toneParams = _voiceProperties.GetPrefixMatch("cpa.tone.");
+            var toneParams = _voiceProperties.GetValuePrefixMatch("cpa.tone.");
 
             foreach (var tone in toneParams)
             {

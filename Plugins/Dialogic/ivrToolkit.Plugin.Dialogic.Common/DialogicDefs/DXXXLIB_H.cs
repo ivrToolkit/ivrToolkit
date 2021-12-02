@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 
 // ReSharper disable CommentTypo
 
@@ -85,10 +86,13 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public static extern int dx_getevt(int chdev, ref DX_EBLK eblkp, int timeout);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int dx_getdig(int chdev, ref DV_TPT tptp, out DV_DIGIT digitp, ushort mode);
+        public static extern int dx_getdig(int chdev, ref DV_TPT tptp, IntPtr DV_DIGIT, ushort mode);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int dx_clrdigbuf(int chdev);
+
+        [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int ATDX_CPTERM(int SrlDevice);
 
         [DllImport("LIBDXXMT.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int ATDX_CONNTYPE(int SrlDevice);
@@ -395,6 +399,11 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public ushort wDataFormat;
         public uint nSamplesPerSec;
         public ushort wBitsPerSample;
+
+        public override string ToString()
+        {
+            return $"DX_XPB({wFileFormat},{wDataFormat},{nSamplesPerSec},{wBitsPerSample})";
+        }
     }
 
     /*
@@ -416,5 +425,19 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public uint ft_record_ext;
         public ushort ft_device;
         public ushort ft_rfu;
+    }
+
+    /*
+     * DX_CST
+     *
+     * Call Status Transition Structure
+     * [NOTE: All user-accessible structures must be defined so as to be
+     *        unaffected by structure packing.]
+     */
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+    public struct DX_CST
+    {
+        public ushort cst_event;
+        public ushort cst_data;
     }
 }

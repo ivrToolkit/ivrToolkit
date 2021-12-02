@@ -48,7 +48,7 @@ namespace ivrToolkit.Core
 
         public void CheckDispose()
         {
-            _logger.LogDebug("CheckDispose()");
+            _logger.LogTrace("CheckDispose()");
             CheckDisposed();
             CheckDisposing();
         }
@@ -136,10 +136,10 @@ namespace ivrToolkit.Core
         {
             if (_disposed)
             {
-                _logger.LogDebug("TriggerDispose() - Line is already disposed");
+                _logger.LogDebug("Dispose() - Line is already disposed");
                 return;
             }
-            _logger.LogDebug("TriggerDispose() - Disposing of the line");
+            _logger.LogDebug("Dispose() - Disposing of the line");
 
             try
             {

@@ -2159,7 +2159,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         private string CstDescription(int type)
         {
-            _logger.LogDebug("CstDescription({0})", type);
             switch (type)
             {
                 case DXXXLIB_H.DE_DIGITS:

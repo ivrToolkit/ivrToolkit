@@ -1253,28 +1253,15 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
         }
 
-
         private string TranslateEventId(int eventId)
         {
-            switch (eventId)
-            {
-                case DXXXLIB_H.TDX_PLAY:
-                    return "TDX_PLAY";
-                case DXXXLIB_H.TDX_RECORD:
-                    return "TDX_RECORD";
-                case DXXXLIB_H.TDX_GETDIG:
-                    return "TDX_GETDIG";
-                case DXXXLIB_H.TDX_CALLP:
-                    return "TDX_CALLP";
-                default:
-                    return gcmsg_h.GCEV_MSG(eventId);
-            }
+            return GetEventTypeDescription(eventId)?? gcmsg_h.GCEV_MSG(eventId);
         }
 
 
         private int WaitForEventIndefinitely(int waitForEvent)
         {
-            _logger.LogDebug("*** Waiting for event: {0}: {1}, waitInterval = indefinitely", waitForEvent, TranslateEventId(waitForEvent));
+            _logger.LogDebug("*** Waiting for event: {0}: {1}, waitSeconds = indefinitely", waitForEvent, TranslateEventId(waitForEvent));
 
             int result;
             while ((result = WaitForEvent(waitForEvent, 5, false)) == SYNC_WAIT_EXPIRED) // wait  5 seconds
@@ -1294,7 +1281,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         private int WaitForEvent(int waitForEvent, int waitSeconds, int[] handles, bool showDebug = true)
         {
-            if (showDebug) _logger.LogDebug("*** Waiting for event: {0}: {1}, waitInterval = {2}", waitForEvent, TranslateEventId(waitForEvent), waitSeconds);
+            if (showDebug) _logger.LogDebug("*** Waiting for event: {0}: {1}, waitSeconds = {2}", waitForEvent, TranslateEventId(waitForEvent), waitSeconds);
 
             var eventThrown = -1;
             var count = 0;
@@ -1348,17 +1335,16 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             return true; // was false but I can't get the error!!!!
         }
 
-        // each waitInterval represents 1/10 of a second
-        private bool HasExpired(int count, int waitInterval)
+        private bool HasExpired(int count, int waitSeconds)
         {
-            _logger.LogTrace("HasExpired({0}, {1})", count, waitInterval);
+            _logger.LogTrace("HasExpired({0}, {1})", count, waitSeconds);
 
-            if (waitInterval == SYNC_WAIT_INFINITE)
+            if (waitSeconds == SYNC_WAIT_INFINITE)
             {
                 return false;
             }
 
-            if (count > waitInterval)
+            if (count > waitSeconds)
             {
                 return true;
             }
@@ -1366,11 +1352,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             return false;
         }
 
-
-        // each waitInterval represents 1/10 of a second
-        private bool LoopAgain(int eventThrown, int waitForEvent, int count, int waitInterval)
+        private bool LoopAgain(int eventThrown, int waitForEvent, int count, int waitSeconds)
         {
-            _logger.LogTrace("LoopAgain({0}, {1}, {2}, {3})", eventThrown, waitForEvent, count, waitInterval);
+            _logger.LogTrace("LoopAgain({0}, {1}, {2}, {3})", eventThrown, waitForEvent, count, waitSeconds);
 
             var hasEventThrown = false;
             var hasExpired = false;
@@ -1380,7 +1364,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 hasEventThrown = true;
             }
 
-            if (HasExpired(count, waitInterval))
+            if (HasExpired(count, waitSeconds))
             {
                 hasExpired = true;
             }
@@ -1403,9 +1387,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             result.ThrowIfGlobalCallError();
 
             _logger.LogDebug(
-                "evt_code = {0}:{1}, evt_dev = {2}, evt_flags = {3}, board_dev = {4}, evt_type = {5}, line_dev = {6} ",
+                "evt_type = {0}:{1}, evt_dev = {2}, evt_flags = {3}, board_dev = {4}, line_dev = {5} ",
                 metaEvt.evttype, TranslateEventId(metaEvt.evttype), metaEvt.evtdev, metaEvt.flags, _boardDev,
-                metaEvt.evttype,
                 metaEvt.linedev);
 
             if ((metaEvt.flags & gclib_h.GCME_GC_EVENT) == gclib_h.GCME_GC_EVENT)
@@ -1419,9 +1402,26 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 {
                     HandleGcEvents(metaEvt);
                 }
+            } else
+            {
+                HandleOtherEvents((uint)eventHandle, metaEvt);
             }
 
             return metaEvt.evttype;
+        }
+
+        private void HandleOtherEvents(uint eventHandle, METAEVENT metaEvt)
+        {
+            switch (metaEvt.evttype)
+            {
+                case DXXXLIB_H.TDX_CST: // a call status transition event.
+                    var ptr = srllib_h.sr_getevtdatap(eventHandle);
+
+                    var dxCst = Marshal.PtrToStructure<DX_CST>(ptr);
+                    _logger.LogDebug("Call status transition event = {0}: {1}", dxCst.cst_event, CstDescription(dxCst.cst_event));
+                    break;
+
+            }
         }
 
         private void HandleRegisterStuff(METAEVENT metaEvt)
@@ -1526,8 +1526,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         private void HandleGcEvents(METAEVENT metaEvt)
         {
-            _logger.LogDebug("HandleGcEvents()");
-
             switch (metaEvt.evttype)
             {
                 case gclib_h.GCEV_ALERTING:
@@ -1541,7 +1539,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     break;
                 case gclib_h.GCEV_OFFERED:
                     _logger.LogDebug("GCEV_OFFERED");
-
 
                     var result = gclib_h.gc_GetCRN(ref _callReferenceNumber, ref metaEvt);
                     _logger.LogDebug("crn = {0}", _callReferenceNumber);
@@ -2117,7 +2114,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                  */
                 var type = srllib_h.sr_getevttype((uint)handler);
                 var reason = DXXXLIB_H.ATDX_TERMMSK(devh);
-                _logger.LogWarning("ClearEventBuffer: Type = {0}, Reason = {1} = {2}", GetEventTypeDescription(type),
+                _logger.LogWarning("ClearEventBuffer: Type = {0} = {1}, Reason = {2} = {3}", type, GetEventTypeDescription(type),
                     reason, GetReasonDescription(reason));
             } while (true);
         }
@@ -2157,7 +2154,47 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     return "TDX_UNKNOWN";
             }
 
-            return type.ToString();
+            return null;
+        }
+
+        private string CstDescription(int type)
+        {
+            _logger.LogDebug("CstDescription({0})", type);
+            switch (type)
+            {
+                case DXXXLIB_H.DE_DIGITS:
+                    return "Digit Received";
+                case DXXXLIB_H.DE_DIGOFF:
+                    return "Digit tone off event";
+                case DXXXLIB_H.DE_LCOF:
+                    return "Loop current off";
+                case DXXXLIB_H.DE_LCON:
+                    return "Loop current on";
+                case DXXXLIB_H.DE_LCREV:
+                    return "Loop current reversal";
+                case DXXXLIB_H.DE_RINGS:
+                    return "Rings received";
+                case DXXXLIB_H.DE_RNGOFF:
+                    return "Ring off event";
+                case DXXXLIB_H.DE_SILOF:
+                    return "Silenec off";
+                case DXXXLIB_H.DE_SILON:
+                    return "Silence on";
+                case DXXXLIB_H.DE_STOPRINGS:
+                    return "Stop ring detect state";
+                case DXXXLIB_H.DE_TONEOFF:
+                    return "Tone OFF Event Received";
+                case DXXXLIB_H.DE_TONEON:
+                    return "Tone ON Event Received";
+                case DXXXLIB_H.DE_UNDERRUN:
+                    return "R4 Streaming to Board API FW underrun event. Improves streaming data to board";
+                case DXXXLIB_H.DE_VAD:
+                    return "Voice Energy detected";
+                case DXXXLIB_H.DE_WINK:
+                    return "Wink received";
+            }
+
+            return "unknown";
         }
 
         private string GetReasonDescription(int reason)

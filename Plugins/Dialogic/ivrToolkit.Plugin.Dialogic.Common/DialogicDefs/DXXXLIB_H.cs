@@ -426,4 +426,18 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public ushort ft_device;
         public ushort ft_rfu;
     }
+
+    /*
+     * DX_CST
+     *
+     * Call Status Transition Structure
+     * [NOTE: All user-accessible structures must be defined so as to be
+     *        unaffected by structure packing.]
+     */
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+    public struct DX_CST
+    {
+        public ushort cst_event;
+        public ushort cst_data;
+    }
 }

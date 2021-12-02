@@ -24,6 +24,12 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int sr_getevttype(uint evt_handle);
 
+
+        [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr sr_getevtdatap(uint evt_handle);
+
+
+
         [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr ATDV_ERRMSGP(int ddd);
 

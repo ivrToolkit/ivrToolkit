@@ -28,7 +28,7 @@ namespace ivrToolkit.Core.Util
 
         public IntPtr Create<T>(string label, T[] structObjects)
         {
-            _logger.LogDebug("create<T>({0}, T[]) - scpope: {1}", label, _scopeName);
+            _logger.LogDebug("create<T>({0}, T[]) - scope: {1}", label, _scopeName);
             var structSize = Marshal.SizeOf<T>();
             var pUnmanagedMemory = Marshal.AllocHGlobal(structSize * structObjects.Length);
             var currentPosition = pUnmanagedMemory;
@@ -44,7 +44,7 @@ namespace ivrToolkit.Core.Util
 
         public IntPtr Create<T>(string label, T structObject)
         {
-            _logger.LogDebug("create<T>({0}, T) - scpope: {1}", label, _scopeName);
+            _logger.LogDebug("create<T>({0}, T) - scope: {1}", label, _scopeName);
             var structSize = Marshal.SizeOf<T>();
             var pUnmanagedMemory = Marshal.AllocHGlobal(structSize);
             Marshal.StructureToPtr(structObject, pUnmanagedMemory, false);
@@ -55,7 +55,7 @@ namespace ivrToolkit.Core.Util
 
         public IntPtr Create<T>(string label, T structObject, int sizeOverride)
         {
-            _logger.LogDebug("create<T>({0}, T, {1}) - scpope: {2}", label, sizeOverride, _scopeName);
+            _logger.LogDebug("create<T>({0}, T, {1}) - scope: {2}", label, sizeOverride, _scopeName);
             var structSize = sizeOverride;
             var pUnmanagedMemory = Marshal.AllocHGlobal(structSize);
             Marshal.StructureToPtr(structObject, pUnmanagedMemory, true);
@@ -66,7 +66,7 @@ namespace ivrToolkit.Core.Util
 
         public IntPtr StringToHGlobalAnsi(string label, string text)
         {
-            _logger.LogDebug("StringToHGlobalAnsi({0}, string) - scpope: {1}", label, _scopeName);
+            _logger.LogDebug("StringToHGlobalAnsi({0}, string) - scope: {1}", label, _scopeName);
             var pUnmanagedMemory = Marshal.StringToHGlobalAnsi(text);
 
             _pointers.Add(new PtrLabel { Ptr = pUnmanagedMemory, Label = label });
@@ -74,7 +74,7 @@ namespace ivrToolkit.Core.Util
         }
         public void Push(string label, IntPtr ptr)
         {
-            _logger.LogDebug("Push({0}, IntPtr) - scpope: {1}", label, _scopeName);
+            _logger.LogDebug("Push({0}, IntPtr) - scope: {1}", label, _scopeName);
             _pointers.Add(new PtrLabel { Ptr = ptr, Label = label });
         }
 
@@ -93,7 +93,7 @@ namespace ivrToolkit.Core.Util
 
         public void Free(IntPtr ptr)
         {
-            _logger.LogDebug("Free {0} - scpope: {1}", ptr, _scopeName);
+            _logger.LogDebug("Free {0} - scope: {1}", ptr, _scopeName);
 
             var ptrLabel = _pointers.FirstOrDefault(x => x.Ptr == ptr);
 

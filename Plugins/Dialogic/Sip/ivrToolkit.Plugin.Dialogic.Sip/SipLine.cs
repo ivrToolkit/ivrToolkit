@@ -93,6 +93,12 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             _logger.LogDebug("WaitRings({0})", rings);
 
+            // a hangup can interupt a TDX_PLAY,TDX_RECORD or TDX_GETDIG. I try and clear the buffer then but the event doesn't always happen in time
+            // so this is one more attempt to clear _devh events. Not that it really matters because I don't action on those events anyways. 
+            ClearEventBuffer(_devh, 1000);
+
+            ClearDigits(_devh); // make sure we are starting with an empty digit buffer
+
             _unmanagedMemoryServicePerCall.Dispose();
 
             var crnPtr = IntPtr.Zero;
@@ -203,6 +209,12 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             _logger.LogDebug("Dial({0}, {1})", number, answeringMachineLengthInMilliseconds);
             _unmanagedMemoryServicePerCall.Dispose();
+
+            // a hangup can interupt a TDX_PLAY,TDX_RECORD or TDX_GETDIG. I try and clear the buffer then but the event doesn't always happen in time
+            // so this is one more attempt to clear _devh events. Not that it really matters because I don't action on those events anyways. 
+            ClearEventBuffer(_devh);
+
+            ClearDigits(_devh); // make sure we are starting with an empty digit buffer
 
             var dialToneTid = _voiceProperties.DialTone.Tid;
 
@@ -2028,9 +2040,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 throw new VoiceException(err);
             }
 
-            // todo there should be no reason to clear the event buffer. therefor I set messages to warn
-            ClearEventBuffer(_devh); 
-
             var state = DXXXLIB_H.ATDX_STATE(_devh);
             _logger.LogDebug("About to play: {0} state: {1}", filename, state);
             if (!File.Exists(filename))
@@ -2320,12 +2329,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 _logger.LogDebug("state: {0}", GetChannelStateDescription(state));
             }
 
-            /*
-             * If number of digits is 99 this will fail on SIP.
-             * An invalid tpt error will be thrown.
-             * I hacked this in place just to keep going with development.
-             */
-            if (numberOfDigits >= 15) numberOfDigits = 15;
+            // don't go over the max number of digits
+            if (numberOfDigits >= DXDIGIT_H.DG_MAXDIGS) numberOfDigits = DXDIGIT_H.DG_MAXDIGS;
 
             var tpt = GetTerminationConditions(numberOfDigits, terminators, timeout);
 
@@ -2401,9 +2406,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 throw new HangupException();
             }
 
-
             var answer = digit.dg_value;
-            ClearDigits(devh); // not sure if this is necessary and perhaps only needed for getDigitsTimeoutException?
             if ((reason & DXTABLES_H.TM_IDDTIME) == DXTABLES_H.TM_IDDTIME)
             {
                 if (terminators.IndexOf("t", StringComparison.Ordinal) != -1)
@@ -2415,9 +2418,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     throw new GetDigitsTimeoutException();
                 }
             }
-
-            // todo should not be needed!
-            ClearEventBuffer(devh);
 
             return answer;
         }

@@ -460,6 +460,58 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
          */
         public const int IPSET_MSG_SIP = BASE_SETID + 35;
         public const int IPPARM_MSG_SIP_RESPONSE_CODE = 1;
+
+        public const int IPPARM_MSGTYPE = 0x00;
+
+
+
+        /*
+         * IP_MSGTYPE_SIP_SUBSCRIBE           | SIP Subscribe message.
+         * IP_MSGTYPE_SIP_SUBSCRIBE_ACCEPT    | Response to SIP Subscribe message with a 200 OK.
+         * IP_MSGTYPE_SIP_SUBSCRIBE_REJECT    | Response to SIP Subscribe message with a failure.
+         * IP_MSGTYPE_SIP_SUBSCRIBE_EXPIRE    | Expiration of Subscribe
+         * IP_MSGTYPE_SIP_NOTIFY              | SIP Notify message.
+         * IP_MSGTYPE_SIP_NOTIFY_ACCEPT       | Response to SIP Notify message with a 200 OK.
+         * IP_MSGTYPE_SIP_NOTIFY_REJECT       | Response to SIP Notify message with a failure.
+         * IP_MSGTYPE_SIP_INFO                | SIP Info message
+         * IP_MSGTYPE_SIP_INFO_ACCEPT         | Response to SIP Info message with a 200 OK.
+         * IP_MSGTYPE_SIP_INFO_REJECT         | Response to SIP Info message with a failure.
+         * IP_MSGTYPE_SIP_REINVITE_ACCEPT     | Response to SIP Re-INVITE message (RFC-4579)
+         * IP_MSGTYPE_SIP_REINVITE_REJECT     | Response to SIP Re-INVITE message (RFC-4579)
+         */
+        public const int IP_MSGTYPE_SIP_SUBSCRIBE = 0x1;
+        public const int IP_MSGTYPE_SIP_SUBSCRIBE_ACCEPT = 0x2;
+        public const int IP_MSGTYPE_SIP_SUBSCRIBE_REJECT = 0x3;
+        public const int IP_MSGTYPE_SIP_SUBSCRIBE_EXPIRE = 0x4;
+        public const int IP_MSGTYPE_SIP_NOTIFY = 0x5;
+        public const int IP_MSGTYPE_SIP_NOTIFY_ACCEPT = 0x6;
+        public const int IP_MSGTYPE_SIP_NOTIFY_REJECT = 0x7;
+        public const int IP_MSGTYPE_SIP_INFO = 0x8;
+        public const int IP_MSGTYPE_SIP_INFO_OK = 0x9;
+        public const int IP_MSGTYPE_SIP_INFO_FAILED = 0xa;
+        /* Options support  */
+        public const int IP_MSGTYPE_SIP_OPTIONS = 0xb;
+        public const int IP_MSGTYPE_SIP_OPTIONS_OK = 0xc;
+        public const int IP_MSGTYPE_SIP_OPTIONS_FAILED = 0xd;
+
+        /* Re-INVITE support */
+        public const int IP_MSGTYPE_SIP_CANCEL = 0xe;
+
+        /* UPDATE support */
+        public const int IP_MSGTYPE_SIP_UPDATE = 0xf;
+        public const int IP_MSGTYPE_SIP_UPDATE_OK = 0x10;
+        public const int IP_MSGTYPE_SIP_UPDATE_FAILED = 0x11;
+
+        /* MESSAGE support */
+        public const int IP_MSGTYPE_SIP_MESSAGE = 0x12;
+        public const int IP_MSGTYPE_SIP_MESSAGE_OK = 0x13;
+        public const int IP_MSGTYPE_SIP_MESSAGE_FAILED = 0x14;
+
+        /* RFC4579 support */
+        public const int IP_MSGTYPE_SIP_REINVITE_ACCEPT = 0x15;
+        public const int IP_MSGTYPE_SIP_REINVITE_REJECT = 0x16;
+
+
     }
 
 

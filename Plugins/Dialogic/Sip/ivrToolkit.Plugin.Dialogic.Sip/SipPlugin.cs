@@ -72,7 +72,10 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         private void Start()
         {
-            _logger.LogDebug("Start()");
+            var sipSignalingPort = _voiceProperties.SipSignalingPort;
+            var maxCalls = _voiceProperties.MaxCalls;
+
+            _logger.LogDebug("Start() - sipSignalingPort = {0}, maxCalls = {1}", sipSignalingPort, maxCalls);
 
             _unmanagedMemoryService = new UnmanagedMemoryService(_loggerFactory, $"Lifetime of {nameof(SipPlugin)}");
 
@@ -80,10 +83,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var deviceInformation = new DeviceInformation(_loggerFactory);
             deviceInformation.LogCclibsStatus();
             deviceInformation.LogDeviceInformation();
-
-            // some profile options need to be read in
-            var sipSignalingPort = _voiceProperties.SipSignalingPort;
-            var maxCalls = _voiceProperties.MaxCalls;
 
             // define the virt boards
             var ipVirtboard = new[] { gcip_h.CreateAndInitIpVirtboard() };
@@ -97,7 +96,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             ipVirtboard[0].reserved = IntPtr.Zero; // must be set to NULL
 
             ipVirtboard[0].sip_max_calls = maxCalls;
-            ipVirtboard[0].h323_max_calls = maxCalls;
+            ipVirtboard[0].h323_max_calls = 0;
             ipVirtboard[0].total_max_calls = maxCalls;
 
 

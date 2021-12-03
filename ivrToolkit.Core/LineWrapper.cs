@@ -181,10 +181,21 @@ namespace ivrToolkit.Core
         public void RecordToFile(string filename, int timeoutMilliseconds)
         {
             _logger.LogDebug("RecordToFile({0}, {1})", filename, timeoutMilliseconds);
-
             CheckDispose();
 
-            _lineImplementation.RecordToFile(filename, timeoutMilliseconds);
+            try
+            {
+                _lineImplementation.RecordToFile(filename, timeoutMilliseconds);
+            }
+            catch (DisposingException)
+            {
+                ThrowDisposingException();
+            }
+            catch (HangupException)
+            {
+                _status = LineStatusTypes.OnHook;
+                throw;
+            }
         }
 
 

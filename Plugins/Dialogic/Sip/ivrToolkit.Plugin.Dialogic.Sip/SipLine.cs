@@ -608,6 +608,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
             result.ThrowIfStandardRuntimeLibraryError(_dxDev);
             _disposeTriggerActivated = true;
+            _eventWaiter.DisposeTriggerActivated = true;
         }
 
         #endregion
@@ -1189,7 +1190,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     var ptr = srllib_h.sr_getevtdatap(eventHandle);
 
                     var dxCst = Marshal.PtrToStructure<DX_CST>(ptr);
-                    _logger.LogDebug("Call status transition event = {0}: {1}", dxCst.cst_event, CstDescription(dxCst.cst_event));
+                    _logger.LogDebug("Call status transition event = {0}: {1}", dxCst.cst_event, dxCst.cst_event.CstDescription());
                     break;
 
             }
@@ -1706,7 +1707,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             if (_callReferenceNumber == 0) return;
 
             var callState = GetCallState();
-            _logger.LogDebug("CheckCallState: Call State {0}", GetCallStateDescription(callState));
+            _logger.LogDebug("CheckCallState: Call State {0}", callState.CallStateDescription());
         }
 
         private int GetCallState()
@@ -1718,48 +1719,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = gclib_h.gc_GetCallState(_callReferenceNumber, ref callState);
             result.ThrowIfGlobalCallError();
             return callState;
-        }
-
-        private string GetCallStateDescription(int callState)
-        {
-            _logger.LogDebug("GetCallStateDescription({0})", callState);
-            switch (callState)
-            {
-                case gclib_h.GCST_NULL:
-                    return "GCST_NULL";
-                case gclib_h.GCST_ACCEPTED:
-                    return "GCST_ACCEPTED";
-                case gclib_h.GCST_ALERTING:
-                    return "GCST_ALERTING";
-                case gclib_h.GCST_CONNECTED:
-                    return "GCST_CONNECTED";
-                case gclib_h.GCST_OFFERED:
-                    return "GCST_OFFERED";
-                case gclib_h.GCST_DIALING:
-                    return "GCST_DIALING";
-                case gclib_h.GCST_IDLE:
-                    return "GCST_IDLE";
-                case gclib_h.GCST_DISCONNECTED:
-                    return "GCST_DISCONNECTED";
-                case gclib_h.GCST_DIALTONE:
-                    return "GCST_DIALTONE";
-                case gclib_h.GCST_ONHOLDPENDINGTRANSFER:
-                    return "GCST_ONHOLDPENDINGTRANSFER";
-                case gclib_h.GCST_ONHOLD:
-                    return "GCST_ONHOLD";
-                case gclib_h.GCST_DETECTED:
-                    return "GCST_DETECTED";
-                case gclib_h.GCST_PROCEEDING:
-                    return "GCST_PROCEEDING";
-                case gclib_h.GCST_SENDMOREINFO:
-                    return "GCST_SENDMOREINFO";
-                case gclib_h.GCST_GETMOREINFO:
-                    return "GCST_GETMOREINFO";
-                case gclib_h.GCST_CALLROUTING:
-                    return "GCST_CALLROUTING";
-            }
-
-            return callState.ToString();
         }
 
         /*
@@ -1790,86 +1749,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                  */
                 var type = srllib_h.sr_getevttype((uint)handler);
                 var reason = DXXXLIB_H.ATDX_TERMMSK(devh);
-                _logger.LogDebug("ClearEventBuffer: Type = {0} = {1}, Reason = {2} = {3}", type, GetEventTypeDescription(type),
+                _logger.LogDebug("ClearEventBuffer: Type = {0} = {1}, Reason = {2} = {3}", type, type.EventTypeDescription(),
                     reason, GetReasonDescription(reason));
             } while (true);
-        }
-
-        private string GetEventTypeDescription(int type)
-        {
-            _logger.LogDebug("GetEventTypeDescription({0})", type);
-            switch (type)
-            {
-                case DXXXLIB_H.TDX_PLAY:
-                    return "Play Completed";
-                case DXXXLIB_H.TDX_RECORD:
-                    return "Record Complete";
-                case DXXXLIB_H.TDX_GETDIG:
-                    return "Get Digits Completed";
-                case DXXXLIB_H.TDX_DIAL:
-                    return "Dial Completed";
-                case DXXXLIB_H.TDX_CALLP:
-                    return "Call Progress Completed";
-                case DXXXLIB_H.TDX_CST:
-                    return "CST Event Received";
-                case DXXXLIB_H.TDX_SETHOOK:
-                    return "SetHook Completed";
-                case DXXXLIB_H.TDX_WINK:
-                    return "Wink Completed";
-                case DXXXLIB_H.TDX_ERROR:
-                    return "Error Event";
-                case DXXXLIB_H.TDX_PLAYTONE:
-                    return "Play Tone Completed";
-                case DXXXLIB_H.TDX_GETR2MF:
-                    return "Get R2MF completed";
-                case DXXXLIB_H.TDX_BARGEIN:
-                    return "Barge in completed";
-                case DXXXLIB_H.TDX_NOSTOP:
-                    return "No Stop needed to be Issued";
-                case DXXXLIB_H.TDX_UNKNOWN:
-                    return "TDX_UNKNOWN";
-            }
-
-            return null;
-        }
-
-        private string CstDescription(int type)
-        {
-            switch (type)
-            {
-                case DXXXLIB_H.DE_DIGITS:
-                    return "Digit Received";
-                case DXXXLIB_H.DE_DIGOFF:
-                    return "Digit tone off event";
-                case DXXXLIB_H.DE_LCOF:
-                    return "Loop current off";
-                case DXXXLIB_H.DE_LCON:
-                    return "Loop current on";
-                case DXXXLIB_H.DE_LCREV:
-                    return "Loop current reversal";
-                case DXXXLIB_H.DE_RINGS:
-                    return "Rings received";
-                case DXXXLIB_H.DE_RNGOFF:
-                    return "Ring off event";
-                case DXXXLIB_H.DE_SILOF:
-                    return "Silenec off";
-                case DXXXLIB_H.DE_SILON:
-                    return "Silence on";
-                case DXXXLIB_H.DE_STOPRINGS:
-                    return "Stop ring detect state";
-                case DXXXLIB_H.DE_TONEOFF:
-                    return "Tone OFF Event Received";
-                case DXXXLIB_H.DE_TONEON:
-                    return "Tone ON Event Received";
-                case DXXXLIB_H.DE_UNDERRUN:
-                    return "R4 Streaming to Board API FW underrun event. Improves streaming data to board";
-                case DXXXLIB_H.DE_VAD:
-                    return "Voice Energy detected";
-                case DXXXLIB_H.DE_WINK:
-                    return "Wink received";
-            }
-
-            return "unknown";
         }
 
         private string GetReasonDescription(int reason)
@@ -1911,7 +1793,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var state = DXXXLIB_H.ATDX_STATE(devh);
             if (_logger.IsEnabled(LogLevel.Debug))
             {
-                _logger.LogDebug("state: {0}", GetChannelStateDescription(state));
+                _logger.LogDebug("state: {0}", state.ChannelStateDescription());
             }
 
             // don't go over the max number of digits
@@ -2015,51 +1897,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             result.ThrowIfStandardRuntimeLibraryError(devh);
         }
 
-
-        private string GetChannelStateDescription(int channelState)
-        {
-            _logger.LogDebug("GetChannelStateDescription({0})", channelState);
-
-            switch (channelState)
-            {
-                case DXXXLIB_H.CS_IDLE:
-                    return "Channel is idle";
-                case DXXXLIB_H.CS_PLAY:
-                    return "Channel is playing back";
-                case DXXXLIB_H.CS_RECD:
-                    return "Channel is recording";
-                case DXXXLIB_H.CS_DIAL:
-                    return "Channel is dialing";
-                case DXXXLIB_H.CS_GTDIG:
-                    return "Channel is getting digits";
-                case DXXXLIB_H.CS_TONE:
-                    return "Channel is generating a tone";
-                case DXXXLIB_H.CS_STOPD:
-                    return "Operation has terminated";
-                case DXXXLIB_H.CS_SENDFAX:
-                    return "Channel is sending a fax";
-                case DXXXLIB_H.CS_RECVFAX:
-                    return "Channel is receiving a fax";
-                case DXXXLIB_H.CS_FAXIO:
-                    return "Channel is between fax pages";
-                case DXXXLIB_H.CS_HOOK:
-                    return "A change in hookstate is in progress";
-                case DXXXLIB_H.CS_WINK:
-                    return "A wink operation is in progress";
-                case DXXXLIB_H.CS_CALL:
-                    return "Channel is Call Progress Mode";
-                case DXXXLIB_H.CS_GETR2MF:
-                    return "Channel is Getting R2MF";
-                case DXXXLIB_H.CS_RINGS:
-                    return "Call status Rings state";
-                case DXXXLIB_H.CS_BLOCKED:
-                    return "Channel is blocked";
-                case DXXXLIB_H.CS_RECDPREPARE:
-                    return "Channel is preparing record and driver has not yet sent record";
-            }
-
-            return $"Unknown channel: {channelState}";
-        }
 
         private void CheckDisposing()
         {

@@ -40,10 +40,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common
         {
             set
             {
-                lock (this)
-                {
-                    _disposeTriggerActivated = value;
-                }
+                _disposeTriggerActivated = value;
             }
         }
 
@@ -55,7 +52,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common
 
         public EventWaitEnum WaitForEventIndefinitely(int waitForEvent, int[] handles)
         {
-            _logger.LogDebug("*** Waiting for event: {0}: {1}, waitSeconds = indefinitely", waitForEvent, TranslateEventId(waitForEvent));
+            _logger.LogDebug("*** Waiting for event: {0}: {1}, waitSeconds = indefinitely", waitForEvent, waitForEvent.EventTypeDescription());
 
             EventWaitEnum result;
             while ((result = WaitForEvent(waitForEvent, 5, handles, false)) == EventWaitEnum.Expired) // wait  5 seconds
@@ -69,7 +66,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common
 
         public EventWaitEnum WaitForEvent(int waitForEvent, int waitSeconds, int[] handles, bool showDebug = true)
         {
-            if (showDebug) _logger.LogDebug("*** Waiting for event: {0}: {1}, waitSeconds = {2}", waitForEvent, TranslateEventId(waitForEvent), waitSeconds);
+            if (showDebug) _logger.LogDebug("*** Waiting for event: {0}: {1}, waitSeconds = {2}", waitForEvent, waitForEvent.EventTypeDescription(), waitSeconds);
 
             var eventThrown = -1;
             var count = 0;
@@ -113,7 +110,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common
 
             _logger.LogDebug(
                 "evt_type = {0}:{1}, evt_dev = {2}, evt_flags = {3},  line_dev = {4} ",
-                metaEvt.evttype, TranslateEventId(metaEvt.evttype), metaEvt.evtdev, metaEvt.flags,
+                metaEvt.evttype, metaEvt.evttype.EventTypeDescription(), metaEvt.evtdev, metaEvt.flags,
                 metaEvt.linedev);
 
             EventHandler<MetaEventArgs> raiseEvent = OnMetaEvent;
@@ -165,10 +162,6 @@ namespace ivrToolkit.Plugin.Dialogic.Common
             }
 
             return true;
-        }
-        private string TranslateEventId(int eventId)
-        {
-            return eventId.EventTypeDescription() ?? gcmsg_h.GCEV_MSG(eventId);
         }
 
         private void CheckDisposing()

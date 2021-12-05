@@ -127,6 +127,19 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             deviceInformation.LogDeviceInformationAfterGcStart();
         }
 
-    }
+        private void Continue()
+        {
+            //var boardResult = gclib_h.gc_OpenEx(ref _boardDev, ":N_iptB1:P_IP", DXXXLIB_H.EV_SYNC, IntPtr.Zero);
+            //_logger.LogDebug(
+            //    "get _boardDev: result = {0} = gc_openEx([ref]{1}, :N_iptB1:P_IP, EV_SYNC, IntPtr.Zero)...", boardResult,
+            //    _boardDev);
+            //boardResult.ThrowIfGlobalCallError();
+            //SetupGlobalCallParameterBlock();
 
+            //// See my comments in the method. the old c code never worked either
+            //Register();
+
+        }
+
+    }
 }

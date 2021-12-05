@@ -7,6 +7,7 @@ using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.Util;
+using ivrToolkit.Plugin.Dialogic.Common;
 using ivrToolkit.Plugin.Dialogic.Common.DialogicDefs;
 using ivrToolkit.Plugin.Dialogic.Common.Exceptions;
 using ivrToolkit.Plugin.Dialogic.Common.Extensions;
@@ -19,10 +20,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 {
     public class SipLine : IIvrBaseLine, IIvrLineManagement
     {
-        private const int SYNC_WAIT_INFINITE = -1;
-        private const int SYNC_WAIT_EXPIRED = -2;
-        private const int SYNC_WAIT_ERROR = -1;
-        private const int SYNC_WAIT_SUCCESS = 1;
         private readonly int _lineNumber;
         private readonly ILogger<SipLine> _logger;
 
@@ -34,15 +31,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         private readonly DialogicSipVoiceProperties _voiceProperties;
 
-        private static object _lockObject = new object();
-        private static int _boardDev; // for board device = ":N_iptB1:P_IP"
-
         private int _callReferenceNumber;
         private DX_XPB _currentXpb;
         private int _dxDev; // for device name = "dxxxB{boardId}C{channelId}"
 
-        private int
-            _gcDev; // for device name = ":P_SIP:N_iptB1T{_lineNumber}:M_ipmB1C{id}:V_dxxxB{boardId}C{channelId}"
+        private int _gcDev; // for device name = ":P_SIP:N_iptB1T{_lineNumber}:M_ipmB1C{id}:V_dxxxB{boardId}C{channelId}"
 
         private int _ipmDev;
         private IntPtr _ipXslot;
@@ -53,6 +46,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private readonly ILoggerFactory _loggerFactory;
         private bool _disposeTriggerActivated;
         private bool _capDisplayed;
+        private EventWaiter _eventWaiter;
 
         public IIvrLineManagement Management => this;
 
@@ -68,6 +62,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _loggerFactory = loggerFactory;
             _logger.LogDebug("ctr(ILoggerFactory, VoiceProperties, {0})", lineNumber);
 
+            _eventWaiter = new EventWaiter(_loggerFactory);
+            _eventWaiter.OnMetaEvent += MetaEvent;
+
             Start();
         }
 
@@ -77,22 +74,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             _unmanagedMemoryService = new UnmanagedMemoryService(_loggerFactory, $"Lifetime of {nameof(SipLine)}");
             _unmanagedMemoryServicePerCall = new UnmanagedMemoryService(_loggerFactory, "Per Call");
-
-            lock (_lockObject)
-            {
-                if (_boardDev == 0)
-                {
-                    var boardResult = gclib_h.gc_OpenEx(ref _boardDev, ":N_iptB1:P_IP", DXXXLIB_H.EV_SYNC, IntPtr.Zero);
-                    _logger.LogDebug(
-                        "get _boardDev: result = {0} = gc_openEx([ref]{1}, :N_iptB1:P_IP, EV_SYNC, IntPtr.Zero)...", boardResult,
-                        _boardDev);
-                    boardResult.ThrowIfGlobalCallError();
-                    SetupGlobalCallParameterBlock();
-
-                    // See my comments in the method. the old c code never worked either
-                    Register();
-                }
-            }
 
             Open();
             SetDefaultFileType();
@@ -245,21 +226,16 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
 
             // asynchronously start waiting for a call to come in
-            result = WaitForEventIndefinitely(gclib_h.GCEV_ANSWERED);
-            switch (result)
+            var eventWaitEnum = _eventWaiter.WaitForEventIndefinitely(gclib_h.GCEV_ANSWERED, new[] { _dxDev, _gcDev });
+            switch (eventWaitEnum)
             {
-                case SYNC_WAIT_SUCCESS:
+                case EventWaitEnum.Success:
                     _logger.LogDebug("The WaitRings method received the GCEV_ANSWERED event");
                     break;
-                case SYNC_WAIT_ERROR:
+                case EventWaitEnum.Error:
                     var message = "The WaitRings method failed waiting for the GCEV_ANSWERED event";
                     _logger.LogError(message);
                     throw new VoiceException(message);
-            }
-
-            if (result == SYNC_WAIT_ERROR)
-            {
-                throw new VoiceException("WaitRings threw an exception");
             }
         }
 
@@ -285,17 +261,17 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 _logger.LogWarning(e, null);
             }
 
-            result = WaitForEvent(gclib_h.GCEV_DROPCALL, 5); // 5 second wait
+            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 5, new[] { _dxDev, _gcDev });
 
-            switch (result)
+            switch (eventWaitEnum)
             {
-                case SYNC_WAIT_SUCCESS:
+                case EventWaitEnum.Success:
                     _logger.LogDebug("The hangup method received the dropcall event");
                     break;
-                case SYNC_WAIT_EXPIRED:
+                case EventWaitEnum.Expired:
                     _logger.LogWarning("The hangup method did not receive the dropcall event");
                     break;
-                case SYNC_WAIT_ERROR:
+                case EventWaitEnum.Error:
                     _logger.LogError("The hangup method failed waiting for the dropcall event");
                     break;
             }
@@ -303,18 +279,18 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             try
             {
                 // okay, now lets wait for the release call event
-                result = WaitForEvent(gclib_h.GCEV_RELEASECALL, 5); // Should fire a hangup exception
+                eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 5, new[] { _dxDev, _gcDev }); // Should fire a hangup exception
 
-                switch (result)
+                switch (eventWaitEnum)
                 {
-                    case SYNC_WAIT_SUCCESS:
+                    case EventWaitEnum.Success:
                         // this should never happen!
                         _logger.LogError("The hangup method received the releaseCall event but it should have immediately fired a hangup exception");
                         break;
-                    case SYNC_WAIT_EXPIRED:
+                    case EventWaitEnum.Expired:
                         _logger.LogWarning("The hangup method did not receive the releaseCall event");
                         break;
-                    case SYNC_WAIT_ERROR:
+                    case EventWaitEnum.Error:
                         _logger.LogError("The hangup method failed waiting for the releaseCall event");
                         break;
                 }
@@ -394,17 +370,17 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = DXXXLIB_H.dx_dial(devh, "", ref cap, DXCALLP_H.DX_CALLP | DXXXLIB_H.EV_ASYNC);
             result.ThrowIfStandardRuntimeLibraryError(devh);
 
-            result = WaitForEvent(DXXXLIB_H.TDX_CALLP, 60); // 60 seconds
-            switch (result)
+            var eventWaitEnum = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_CALLP, 60, new[] { _dxDev, _gcDev }); // 60 seconds
+            switch (eventWaitEnum)
             {
-                case SYNC_WAIT_SUCCESS:
+                case EventWaitEnum.Success:
                     _logger.LogDebug("The DialWithCpa method received the TDX_CALLP event");
                     break;
-                case SYNC_WAIT_EXPIRED:
+                case EventWaitEnum.Expired:
                     var message = "The DialWithCpa method timed out waiting for the TDX_CALLP event";
                     _logger.LogError(message);
                     throw new VoiceException(message);
-                case SYNC_WAIT_ERROR:
+                case EventWaitEnum.Error:
                     message = "The DialWithCpa method failed waiting for the TDX_CALLP event";
                     _logger.LogError(message);
                     throw new VoiceException(message);
@@ -539,19 +515,19 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
             _unmanagedMemoryServicePerCall.Free(pGclib);
 
-            result = WaitForEvent(gclib_h.GCEV_ALERTING, 40); // 40 seconds - 10 seconds was sometimes too short
+            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_ALERTING, 40, new[] { _dxDev, _gcDev }); // 40 seconds - 10 seconds was sometimes too short
 
             string message;
-            switch (result)
+            switch (eventWaitEnum)
             {
-                case SYNC_WAIT_EXPIRED:
+                case EventWaitEnum.Expired:
                     message = "The MakeCall method timed out waiting for the GCEV_ALERTING event";
                     _logger.LogError(message);
                     throw new VoiceException(message);
-                case SYNC_WAIT_SUCCESS:
+                case EventWaitEnum.Success:
                     _logger.LogDebug("The MakeCall method received the GCEV_ALERTING event");
                     break;
-                case SYNC_WAIT_ERROR:
+                case EventWaitEnum.Error:
                     message = "The MakeCall method failed waiting for the GCEV_ALERTING event";
                     _logger.LogError(message);
                     throw new VoiceException(message);
@@ -733,17 +709,17 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             try
             {
-                var waitResult = WaitForEvent(DXXXLIB_H.TDX_RECORD, 180); // 3 minutes
+                var waitResult = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_RECORD, 180, new[] { _dxDev, _gcDev }); // 3 minutes
                 switch (waitResult)
                 {
-                    case SYNC_WAIT_SUCCESS:
+                    case EventWaitEnum.Success:
                         _logger.LogDebug("The RecordToFile method received the TDX_RECORD event");
                         break;
-                    case SYNC_WAIT_EXPIRED:
+                    case EventWaitEnum.Expired:
                         var message = "The RecordToFile method timed out waiting for the TDX_RECORD event";
                         _logger.LogError(message);
                         throw new VoiceException(message);
-                    case SYNC_WAIT_ERROR:
+                    case EventWaitEnum.Error:
                         message = "The RecordToFile method failed waiting for the TDX_RECORD event";
                         _logger.LogError(message);
                         throw new VoiceException(message);
@@ -942,167 +918,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             return 0;
         }
 
-        private void Register()
-        {
-            _logger.LogDebug("Register() - Registering line: {0}", _lineNumber);
-
-            var proxy = _voiceProperties.SipProxyIp;
-            var local = _voiceProperties.SipLocalIp;
-            var alias = _voiceProperties.SipAlias;
-
-            var regServer = $"{proxy}"; // Request-URI
-            var regClient = $"{alias}@{proxy}"; // To header field
-            var contact = $"sip:{alias}@{local}"; // Contact header field
-
-            _logger.LogDebug("Register() - regServer = {0}, regClient = {1}, contact = {2}", regServer,
-                regClient, contact);
-
-            SetAuthenticationInfo();
-
-            var gcParmBlkPtr = IntPtr.Zero;
-
-            var result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gccfgparm_h.GCSET_SERVREQ,
-                gccfgparm_h.PARM_REQTYPE, sizeof(byte), gcip_defs_h.IP_REQTYPE_REGISTRATION);
-            result.ThrowIfGlobalCallError();
-
-            result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gccfgparm_h.GCSET_SERVREQ, gccfgparm_h.PARM_ACK,
-                sizeof(byte), gcip_defs_h.IP_REQTYPE_REGISTRATION);
-            result.ThrowIfGlobalCallError();
-
-            result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gcip_defs_h.IPSET_PROTOCOL,
-                gcip_defs_h.IPPARM_PROTOCOL_BITMASK, sizeof(byte), gcip_defs_h.IP_PROTOCOL_SIP);
-            result.ThrowIfGlobalCallError();
-
-            result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gcip_defs_h.IPSET_REG_INFO,
-                gcip_defs_h.IPPARM_OPERATION_REGISTER, sizeof(byte), gcip_defs_h.IP_REG_SET_INFO);
-            result.ThrowIfGlobalCallError();
-
-            var ipRegisterAddress = new IP_REGISTER_ADDRESS
-            {
-                reg_client = regClient,
-                reg_server = regServer,
-                time_to_live = 3600,
-                max_hops = 30
-            };
-
-            var dataSize = (byte)Marshal.SizeOf<IP_REGISTER_ADDRESS>();
-
-            var pData = _unmanagedMemoryService.Create(nameof(IP_REGISTER_ADDRESS), ipRegisterAddress);
-
-            result = gclib_h.gc_util_insert_parm_ref(ref gcParmBlkPtr, gcip_defs_h.IPSET_REG_INFO,
-                gcip_defs_h.IPPARM_REG_ADDRESS,
-                dataSize, pData);
-            result.ThrowIfGlobalCallError();
-
-            dataSize = (byte)(contact.Length + 1);
-
-            var pContact = _unmanagedMemoryService.StringToHGlobalAnsi("pContact", contact);
-
-            result = gclib_h.gc_util_insert_parm_ref(ref gcParmBlkPtr, gcip_defs_h.IPSET_LOCAL_ALIAS,
-                gcip_defs_h.IPPARM_ADDRESS_TRANSPARENT, dataSize, pContact);
-            result.ThrowIfGlobalCallError();
-
-            uint serviceId = 1;
-
-            var respDataPp = IntPtr.Zero;
-
-            _logger.LogDebug("Register() - about to call gc_ReqService asynchronously");
-            result = gclib_h.gc_ReqService(gclib_h.GCTGT_CCLIB_NETIF, _boardDev, ref serviceId, gcParmBlkPtr,
-                ref respDataPp,
-                DXXXLIB_H.EV_ASYNC);
-            result.ThrowIfGlobalCallError();
-            _logger.LogDebug("Register() - called gc_ReqService asynchronously");
-            gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
-
-            result = WaitForEvent(gclib_h.GCEV_SERVICERESP, 10); // wait for 10 seconds 
-            _logger.LogDebug("Result for gc_ReqService is {0}", result);
-
-            _unmanagedMemoryService.Free(pContact);
-            _unmanagedMemoryService.Free(pData);
-
-        }
-
-        private void SetAuthenticationInfo()
-        {
-            _logger.LogDebug("SetAuthenticationInfo()");
-            var proxy = _voiceProperties.SipProxyIp;
-            var alias = _voiceProperties.SipAlias;
-
-            var password = _voiceProperties.SipPassword;
-            var realm = _voiceProperties.SipRealm;
-
-            var identity = $"sip:{alias}@{proxy}";
-
-            _logger.LogDebug("SetAuthenticationInfo() - proxy = {0}, alias = {1}, Password ****, Realm = {2}, identity = {3}", proxy,
-                alias, realm, identity);
-
-            var auth = new IP_AUTHENTICATION
-            {
-                version = gcip_h.IP_AUTHENTICATION_VERSION,
-                realm = realm,
-                identity = identity,
-                username = alias,
-                password = password
-            };
-
-            var gcParmBlkPtr = IntPtr.Zero;
-            var dataSize = (byte)Marshal.SizeOf<IP_AUTHENTICATION>();
-
-            var pData = _unmanagedMemoryService.Create(nameof(IP_AUTHENTICATION), auth);
-
-            var result = gclib_h.gc_util_insert_parm_ref(ref gcParmBlkPtr, gcip_defs_h.IPSET_CONFIG,
-                gcip_defs_h.IPPARM_AUTHENTICATION_CONFIGURE, dataSize, pData);
-            result.ThrowIfGlobalCallError();
-
-            result = gclib_h.gc_SetAuthenticationInfo(gclib_h.GCTGT_CCLIB_NETIF, _boardDev, gcParmBlkPtr);
-            result.ThrowIfGlobalCallError();
-
-            gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
-            _unmanagedMemoryService.Free(pData);
-        }
-
-        private void SetupGlobalCallParameterBlock()
-        {
-            _logger.LogDebug("SetupGlobalCallParameterBlock() - _boardDev = {0}", _boardDev);
-            var gcParmBlkPtr = IntPtr.Zero;
-
-            //setting T.38 fax server operating mode: IP MANUAL mode
-            var result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gcip_defs_h.IPSET_CONFIG,
-                gcip_defs_h.IPPARM_OPERATING_MODE, sizeof(int), gcip_defs_h.IP_MANUAL_MODE);
-            result.ThrowIfGlobalCallError();
-
-            //Enabling and Disabling Unsolicited Notification Events
-            result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gcip_defs_h.IPSET_EXTENSIONEVT_MSK,
-                gclib_h.GCACT_ADDMSK, sizeof(int),
-                gcip_defs_h.EXTENSIONEVT_DTMF_ALPHANUMERIC | gcip_defs_h.EXTENSIONEVT_SIGNALING_STATUS |
-                gcip_defs_h.EXTENSIONEVT_STREAMING_STATUS | gcip_defs_h.EXTENSIONEVT_T38_STATUS);
-            result.ThrowIfGlobalCallError();
-
-            var requestId = 0;
-            result = gclib_h.gc_SetConfigData(gclib_h.GCTGT_CCLIB_NETIF, _boardDev, gcParmBlkPtr, 0,
-                gclib_h.GCUPDATE_IMMEDIATE, ref requestId, DXXXLIB_H.EV_ASYNC);
-            result.ThrowIfGlobalCallError();
-
-            gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
-
-            result = WaitForEvent(gclib_h.GCEV_SETCONFIGDATA, 10); // wait for 10 seconds
-            switch (result)
-            {
-                case SYNC_WAIT_EXPIRED:
-                    _logger.LogError("gc_SetConfigData has expired");
-                    break;
-                case SYNC_WAIT_SUCCESS:
-                    _logger.LogDebug("gc_SetConfigData was a success");
-                    break;
-                case SYNC_WAIT_ERROR:
-                    _logger.LogError("gc_SetConfigData has failed");
-                    break;
-            }
-        }
-
         /**
-    * Process a metaevent extension block.
-    */
+        * Process a metaevent extension block.
+        */
         private void ProcessExtension(METAEVENT metaEvt)
         {
             // todo this mess needs to be written better :)
@@ -1343,161 +1161,24 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
         }
 
-        private string TranslateEventId(int eventId)
+        private void MetaEvent(object sender, MetaEventArgs e)
         {
-            return GetEventTypeDescription(eventId)?? gcmsg_h.GCEV_MSG(eventId);
-        }
-
-
-        private int WaitForEventIndefinitely(int waitForEvent)
-        {
-            _logger.LogDebug("*** Waiting for event: {0}: {1}, waitSeconds = indefinitely", waitForEvent, TranslateEventId(waitForEvent));
-
-            int result;
-            while ((result = WaitForEvent(waitForEvent, 5, false)) == SYNC_WAIT_EXPIRED) // wait  5 seconds
-            {
-                if (result == -SYNC_WAIT_EXPIRED) _logger.LogTrace("Wait for call exhausted. Will try again");
-                CheckDisposing();
-            }
-
-            return result;
-        }
-
-        private int WaitForEvent(int waitForEvent, int waitSeconds, bool showDebug = true)
-        {
-            var handles = new[] { _gcDev, _boardDev, _dxDev };
-            return WaitForEvent(waitForEvent, waitSeconds, handles, showDebug);
-        }
-
-        private int WaitForEvent(int waitForEvent, int waitSeconds, int[] handles, bool showDebug = true)
-        {
-            if (showDebug) _logger.LogDebug("*** Waiting for event: {0}: {1}, waitSeconds = {2}", waitForEvent, TranslateEventId(waitForEvent), waitSeconds);
-
-            var eventThrown = -1;
-            var count = 0;
-            var eventHandle = 0;
-
-            do
-            {
-                var result = srllib_h.sr_waitevtEx(handles, handles.Length, 1000, ref eventHandle);
-                var timedOut = IsTimeout(result, _dxDev);
-                if (!timedOut)
-                {
-                    eventThrown = ProcessEvent(eventHandle);
-                    if (eventThrown == waitForEvent) break;
-                }
-                CheckDisposing();
-
-                count++;
-            } while (LoopAgain(eventThrown, waitForEvent, count, waitSeconds));
-
-            if (eventThrown == waitForEvent)
-            {
-                return SYNC_WAIT_SUCCESS;
-            }
-
-            if (HasExpired(count, waitSeconds))
-            {
-                return SYNC_WAIT_EXPIRED;
-            }
-
-            return SYNC_WAIT_ERROR;
-        }
-
-        // SR_waitEvtEx() returns -1 for both an error and a timeout so need to check for an error.
-        private bool IsTimeout(int error, int devHandle)
-        {
-            _logger.LogTrace("IsTimeout({0}, {1})", error, devHandle);
-
-            if (error != -1) return false;
-
-            // here is where we need to tell if -1 is a timeout or not
-            var result = srllib_h.ATDV_LASTERR(devHandle);
-            if (result == -1) throw new VoiceException($"Unable to get failure for: {devHandle}");
-
-            if (result == srllib_h.ESR_NOERR) return true; // no error so it must have timed out.
-
-            // i am getting an error of 1 sometimes for some reason so I am going to do another check just to make sure
-            var eventType = srllib_h.sr_getevttype((uint)devHandle);
-            if (eventType == srllib_h.SR_TMOUTEVT) return true;
-
-            _logger.LogError("WTH: error is: {0}", result);
-            return true; // was false but I can't get the error!!!!
-        }
-
-        private bool HasExpired(int count, int waitSeconds)
-        {
-            _logger.LogTrace("HasExpired({0}, {1})", count, waitSeconds);
-
-            if (waitSeconds == SYNC_WAIT_INFINITE)
-            {
-                return false;
-            }
-
-            if (count > waitSeconds)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        private bool LoopAgain(int eventThrown, int waitForEvent, int count, int waitSeconds)
-        {
-            _logger.LogTrace("LoopAgain({0}, {1}, {2}, {3})", eventThrown, waitForEvent, count, waitSeconds);
-
-            var hasEventThrown = false;
-            var hasExpired = false;
-
-            if (eventThrown == waitForEvent)
-            {
-                hasEventThrown = true;
-            }
-
-            if (HasExpired(count, waitSeconds))
-            {
-                hasExpired = true;
-            }
-
-            if (hasEventThrown || hasExpired)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        private int ProcessEvent(int eventHandle)
-        {
-            _logger.LogDebug("ProcessEvent({0})", eventHandle);
-
-            var metaEvt = new METAEVENT();
-
-            var result = gclib_h.gc_GetMetaEventEx(ref metaEvt, eventHandle);
-            result.ThrowIfGlobalCallError();
+            var eventHandle = e.EventHandle;
+            var metaEvt = e.MetaEvent;
 
             _logger.LogDebug(
-                "evt_type = {0}:{1}, evt_dev = {2}, evt_flags = {3}, board_dev = {4}, line_dev = {5} ",
-                metaEvt.evttype, TranslateEventId(metaEvt.evttype), metaEvt.evtdev, metaEvt.flags, _boardDev,
+                "evt_type = {0}:{1}, evt_dev = {2}, evt_flags = {3},  line_dev = {4} ",
+                metaEvt.evttype, metaEvt.evttype.EventTypeDescription(), metaEvt.evtdev, metaEvt.flags,
                 metaEvt.linedev);
 
             if ((metaEvt.flags & gclib_h.GCME_GC_EVENT) == gclib_h.GCME_GC_EVENT)
             {
-                //for register
-                if (metaEvt.evtdev == _boardDev && metaEvt.evttype == gclib_h.GCEV_SERVICERESP)
-                {
-                    HandleRegisterStuff(metaEvt);
-                }
-                else
-                {
-                    HandleGcEvents(metaEvt);
-                }
-            } else
+                HandleGcEvents(metaEvt);
+            }
+            else
             {
                 HandleOtherEvents((uint)eventHandle, metaEvt);
             }
-
-            return metaEvt.evttype;
         }
 
         private void HandleOtherEvents(uint eventHandle, METAEVENT metaEvt)
@@ -1514,104 +1195,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
         }
 
-        private void HandleRegisterStuff(METAEVENT metaEvt)
-        {
-            _logger.LogDebug("HandleRegisterStuff(METAEVENT metaEvt)");
-            var gcParmBlkp = metaEvt.extevtdatap;
-            var parmDatap = IntPtr.Zero;
-
-            parmDatap = gcip_h.gc_util_next_parm(gcParmBlkp, parmDatap);
-
-            while (parmDatap != IntPtr.Zero)
-            {
-                var parmData = Marshal.PtrToStructure<GC_PARM_DATA>(parmDatap);
-
-                switch (parmData.set_ID)
-                {
-                    case gcip_defs_h.IPSET_REG_INFO:
-                        switch (parmData.parm_ID)
-                        {
-                            case gcip_defs_h.IPPARM_REG_STATUS:
-                            {
-                                var value = GetValueFromPtr(parmDatap + 5, parmData.value_size);
-                                switch (value)
-                                {
-                                    case gcip_defs_h.IP_REG_CONFIRMED:
-                                        _logger.LogDebug("    IPSET_REG_INFO/IPPARM_REG_STATUS: IP_REG_CONFIRMED");
-                                        break;
-                                    case gcip_defs_h.IP_REG_REJECTED:
-                                        _logger.LogDebug("    IPSET_REG_INFO/IPPARM_REG_STATUS: IP_REG_REJECTED");
-                                        break;
-                                }
-
-                                break;
-                            }
-                            case gcip_defs_h.IPPARM_REG_SERVICEID:
-                            {
-                                var value = GetValueFromPtr(parmDatap + 5, parmData.value_size);
-                                _logger.LogDebug("    IPSET_REG_INFO/IPPARM_REG_SERVICEID: 0x{0:X}", value);
-                                break;
-                            }
-                            default:
-                                _logger.LogDebug(
-                                    "    Missed one: set_ID = IPSET_REG_INFO, parm_ID = {1:X}, bytes = {2}",
-                                    parmData.parm_ID, parmData.value_size);
-                                break;
-                        }
-
-                        break;
-                    case gcip_defs_h.IPSET_PROTOCOL:
-                        var value2 = GetValueFromPtr(parmDatap + 5, parmData.value_size);
-                        _logger.LogDebug("    IPSET_PROTOCOL value: {0}", value2);
-                        break;
-                    case gcip_defs_h.IPSET_LOCAL_ALIAS:
-                    {
-                        var localAlias = GetStringFromPtr(parmDatap + 5, parmData.value_size);
-                        _logger.LogDebug("    IPSET_LOCAL_ALIAS value: {0}", localAlias);
-                        break;
-                    }
-                    case gcip_defs_h.IPSET_SIP_MSGINFO:
-                    {
-                        var msgInfo = GetStringFromPtr(parmDatap + 5, parmData.value_size);
-                        _logger.LogDebug("    IPSET_SIP_MSGINFO value: {0}", msgInfo);
-                        break;
-                    }
-                    default:
-                        _logger.LogDebug("    Missed one: set_ID = {0:X}, parm_ID = {1:X}, bytes = {2}",
-                            parmData.set_ID, parmData.parm_ID, parmData.value_size);
-                        break;
-                }
-
-                parmDatap = gcip_h.gc_util_next_parm(gcParmBlkp, parmDatap);
-            }
-
-            _logger.LogDebug("HandleRegisterStuff(METAEVENT metaEvt) - done!");
-        }
-
         private string GetStringFromPtr(IntPtr ptr, int size)
         {
             return Marshal.PtrToStringAnsi(ptr, size);
-        }
-
-        private int GetValueFromPtr(IntPtr ptr, byte size)
-        {
-            int value;
-            switch (size)
-            {
-                case 1:
-                    value = Marshal.ReadByte(ptr);
-                    break;
-                case 2:
-                    value = Marshal.ReadInt16(ptr);
-                    break;
-                case 4:
-                    value = Marshal.ReadInt32(ptr);
-                    break;
-                default:
-                    throw new VoiceException($"Unable to get value from ptr. Size is {size}");
-            }
-
-            return value;
         }
 
         private void HandleGcEvents(METAEVENT metaEvt)
@@ -1729,7 +1315,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             result.ThrowIfGlobalCallError();
 
             // don't include _dxDev right now because we want to finish the drop call first
-            result = WaitForEvent(gclib_h.GCEV_DROPCALL, 10, new []{ _gcDev, _boardDev}); // 10 seconds
+            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, new []{ _gcDev }); // 10 seconds
+            _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, new []{ _gcDev }) = {0}", eventWaitEnum);
         }
 
         /**
@@ -1742,7 +1329,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             result.ThrowIfGlobalCallError();
 
             // don't include _dxDev right now because we want to finish the drop call first
-            result = WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, new[] { _gcDev, _boardDev }); // 10 seconds
+            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, new[] { _gcDev }); // 10 seconds
+            _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, new[] { _gcDev }) = {0}", eventWaitEnum);
         }
 
 
@@ -2059,17 +1647,17 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             try
             {
-                var waitResult = WaitForEvent(DXXXLIB_H.TDX_PLAY, 60); // 1 minute
+                var waitResult = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_PLAY, 60, new[] { _dxDev, _gcDev }); // 1 minute
                 switch (waitResult)
                 {
-                    case SYNC_WAIT_SUCCESS:
+                    case EventWaitEnum.Success:
                         _logger.LogDebug("The PlaySipFile method received the TDX_PLAY event");
                         break;
-                    case SYNC_WAIT_EXPIRED:
+                    case EventWaitEnum.Expired:
                         var message = "The PlaySipFile method timed out waiting for the TDX_PLAY event";
                         _logger.LogError(message);
                         throw new VoiceException(message);
-                    case SYNC_WAIT_ERROR:
+                    case EventWaitEnum.Error:
                         message = "The PlaySipFile method failed waiting for the TDX_PLAY event";
                         _logger.LogError(message);
                         throw new VoiceException(message);
@@ -2347,10 +1935,10 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 throw new VoiceException(message);
             }
 
-            int waitResult;
+            EventWaitEnum waitResult;
             try
             {
-                waitResult = WaitForEvent(DXXXLIB_H.TDX_GETDIG, 60); // 1 minute
+                waitResult = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_GETDIG, 60, new[] { _dxDev, _gcDev }); // 1 minute
             }
             catch (HangupException)
             {
@@ -2365,15 +1953,15 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             switch (waitResult)
             {
-                case SYNC_WAIT_SUCCESS:
+                case EventWaitEnum.Success:
                     _logger.LogDebug("The GetDigits method received the TDX_GETDIG event");
                     break;
-                case SYNC_WAIT_EXPIRED:
+                case EventWaitEnum.Expired:
                     var message = "The GetDigits method timed out waiting for the TDX_GETDIG event";
                     _logger.LogError(message);
                     _unmanagedMemoryServicePerCall.Free(digitPtr);
                     throw new VoiceException(message);
-                case SYNC_WAIT_ERROR:
+                case EventWaitEnum.Error:
                     message = "The GetDigits method failed waiting for the TDX_GETDIG event";
                     _logger.LogError(message);
                     _unmanagedMemoryServicePerCall.Free(digitPtr);

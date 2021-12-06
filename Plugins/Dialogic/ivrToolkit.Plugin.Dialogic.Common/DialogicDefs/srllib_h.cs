@@ -33,6 +33,11 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr ATDV_ERRMSGP(int ddd);
 
+        [DllImport("libsrlmt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int sr_putevt(int dev, uint evt, int len, IntPtr datap, int err);
+
+
+
         /* 
          * EVENT MANAGEMENT
          */

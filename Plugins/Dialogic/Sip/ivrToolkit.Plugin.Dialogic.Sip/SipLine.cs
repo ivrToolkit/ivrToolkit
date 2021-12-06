@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
 using System.Runtime.InteropServices;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
@@ -44,9 +43,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private IntPtr _voxXslot;
         private bool _waitCallSet;
         private readonly ILoggerFactory _loggerFactory;
-        private bool _disposeTriggerActivated;
         private bool _capDisplayed;
-        private EventWaiter _eventWaiter;
+        private readonly EventWaiter _eventWaiter;
 
         public IIvrLineManagement Management => this;
 
@@ -607,7 +605,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
             result.ThrowIfStandardRuntimeLibraryError(_dxDev);
-            _disposeTriggerActivated = true;
             _eventWaiter.DisposeTriggerActivated = true;
         }
 
@@ -1018,14 +1015,14 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                                 _logger.LogDebug("IPPARM_LOCAL: size = {0}", parmData.value_size);
                                 var ptr = parmDatap + 5;
                                 var ipAddr = Marshal.PtrToStructure<RTP_ADDR>(ptr);
-                                _logger.LogDebug("  IPPARM_LOCAL: address:{0}, port {1}", GetIp(ipAddr.u_ipaddr.ipv4),
+                                _logger.LogDebug("  IPPARM_LOCAL: address:{0}, port {1}", ipAddr.u_ipaddr.ipv4.ToString(),
                                     ipAddr.port);
                                 break;
                             case gcip_defs_h.IPPARM_REMOTE:
                                 _logger.LogDebug("IPPARM_REMOTE: size = {0}", parmData.value_size);
                                 var ptr2 = parmDatap + 5;
                                 var ipAddr2 = Marshal.PtrToStructure<RTP_ADDR>(ptr2);
-                                _logger.LogDebug("  IPPARM_REMOTE: address:{0}, port {1}", GetIp(ipAddr2.u_ipaddr.ipv4),
+                                _logger.LogDebug("  IPPARM_REMOTE: address:{0}, port {1}", ipAddr2.u_ipaddr.ipv4.ToIp(),
                                     ipAddr2.port);
                                 break;
                             default:
@@ -1058,7 +1055,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                                 break;
                             case gcip_defs_h.IPPARM_MSG_SIP_RESPONSE_CODE:
                                 _logger.LogDebug(" value_size = {0}, value_buf = {1}", parmData.value_size, parmData.value_buf);
-                                var responseCode = parmData.value_buf;
                                 break;
                         }
                         _logger.LogInformation("  IPSET_MSG_SIP:: size = {0}", parmData.value_size);
@@ -1066,7 +1062,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     case gcip_defs_h.IPSET_SIP_MSGINFO:
                         _logger.LogInformation("IPSET_SIP_MSGINFO:");
                         var str = GetStringFromPtr(parmDatap + 5, parmData.value_size);
-                        _logger.LogDebug("  {0}: {1}", GetSipMsgInfo(parmData.parm_ID), str);
+                        _logger.LogDebug("  {0}: {1}", parmData.parm_ID.SipMsgInfo(), str);
                         break;
                     default:
                         _logger.LogError("Got unknown set_ID({0}).", parmData.set_ID);
@@ -1077,70 +1073,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
         }
 
-        private string GetSipMsgInfo(ushort parm_ID)
-        {
-            switch (parm_ID)
-            {
-                case gcip_defs_h.IPPARM_REQUEST_URI:
-                    return "IPPARM_REQUEST_URI";
-                case gcip_defs_h.IPPARM_CONTACT_URI:
-                    return "IPPARM_CONTACT_URI";
-                case gcip_defs_h.IPPARM_FROM_DISPLAY:
-                    return "IPPARM_FROM_DISPLAY";
-                case gcip_defs_h.IPPARM_TO_DISPLAY:
-                    return "IPPARM_TO_DISPLAY";
-                case gcip_defs_h.IPPARM_CONTACT_DISPLAY:
-                    return "IPPARM_CONTACT_DISPLAY";
-                case gcip_defs_h.IPPARM_REFERRED_BY:
-                    return "IPPARM_REFERRED_BY";
-                case gcip_defs_h.IPPARM_REPLACES:
-                    return "IPPARM_REPLACES";
-                case gcip_defs_h.IPPARM_CONTENT_DISPOSITION:
-                    return "IPPARM_CONTENT_DISPOSITION";
-                case gcip_defs_h.IPPARM_CONTENT_ENCODING:
-                    return "IPPARM_CONTENT_ENCODING";
-                case gcip_defs_h.IPPARM_CONTENT_LENGTH:
-                    return "IPPARM_CONTENT_LENGTH";
-                case gcip_defs_h.IPPARM_CONTENT_TYPE:
-                    return "IPPARM_CONTENT_TYPE";
-                case gcip_defs_h.IPPARM_REFER_TO:
-                    return "IPPARM_REFER_TO";
-                case gcip_defs_h.IPPARM_DIVERSION_URI:
-                    return "IPPARM_DIVERSION_URI";
-                case gcip_defs_h.IPPARM_EVENT_HDR:
-                    return "IPPARM_EVENT_HDR";
-                case gcip_defs_h.IPPARM_EXPIRES_HDR:
-                    return "IPPARM_EXPIRES_HDR";
-                case gcip_defs_h.IPPARM_CALLID_HDR:
-                    return "IPPARM_CALLID_HDR";
-                case gcip_defs_h.IPPARM_SIP_HDR:
-                    return "IPPARM_SIP_HDR";
-                case gcip_defs_h.IPPARM_FROM:
-                    return "IPPARM_FROM";
-                case gcip_defs_h.IPPARM_TO:
-                    return "IPPARM_TO";
-                case gcip_defs_h.IPPARM_SIP_HDR_REMOVE:
-                    return "IPPARM_SIP_HDR_REMOVE";
-                case gcip_defs_h.IPPARM_SIP_VIA_HDR_REPLACE:
-                    return "IPPARM_SIP_VIA_HDR_REPLACE";
-            }
-            return $"unknown {parm_ID}";
-        }
-
-        private string GetIp(uint ip)
-        {
-            try
-            {
-                //var netorderIp = IPAddress.HostToNetworkOrder(shit);
-                var ipAddress = new IPAddress(ip);
-                return ipAddress.ToString();
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Unable to convert to an IP");
-                return ip.ToString();
-            }
-        }
 
         /**
         * Process a codec request.
@@ -1277,7 +1209,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     _logger.LogDebug("GCEV_ATTACH - we do nothing with this event");
                     break;
                 default:
-                    _logger.LogInformation("gc_Unknown type - {0}", metaEvt.evttype);
+                    _logger.LogInformation("NotExpecting event - {0}: {1}", metaEvt.evttype, metaEvt.evttype.EventTypeDescription());
                     break;
             }
         }
@@ -1317,7 +1249,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             // don't include _dxDev right now because we want to finish the drop call first
             var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, new []{ _gcDev }); // 10 seconds
-            _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, new []{ _gcDev }) = {0}", eventWaitEnum);
+            _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, _gcDev ) = {0}", eventWaitEnum);
         }
 
         /**
@@ -1331,7 +1263,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             // don't include _dxDev right now because we want to finish the drop call first
             var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, new[] { _gcDev }); // 10 seconds
-            _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, new[] { _gcDev }) = {0}", eventWaitEnum);
+            _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, _gcDev ) = {0}", eventWaitEnum);
         }
 
 
@@ -1895,19 +1827,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             var result = DXXXLIB_H.dx_clrdigbuf(devh);
             result.ThrowIfStandardRuntimeLibraryError(devh);
-        }
-
-
-        private void CheckDisposing()
-        {
-            if (_disposeTriggerActivated) ThrowDisposingException();
-        }
-
-        private void ThrowDisposingException()
-        {
-            _logger.LogDebug("ThrowDisposingException()");
-            _disposeTriggerActivated = false;
-            throw new DisposingException();
         }
     }
 }

@@ -29,7 +29,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common
 
     public class EventWaiter
     {
-        public const int SYNC_WAIT_INFINITE = -1;
+        public const int SyncWaitInfinite = -1;
 
         private ILogger<EventWaiter> _logger;
         private bool _disposeTriggerActivated;
@@ -38,10 +38,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common
 
         public bool DisposeTriggerActivated
         {
-            set
-            {
-                _disposeTriggerActivated = value;
-            }
+            set => _disposeTriggerActivated = value;
         }
 
         public EventWaiter(ILoggerFactory loggerFactory)
@@ -126,7 +123,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common
         {
             _logger.LogTrace("HasExpired({0}, {1})", count, waitSeconds);
 
-            if (waitSeconds == SYNC_WAIT_INFINITE)
+            if (waitSeconds == SyncWaitInfinite)
             {
                 return false;
             }

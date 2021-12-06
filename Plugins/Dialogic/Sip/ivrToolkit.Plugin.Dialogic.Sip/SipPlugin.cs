@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 using ivrToolkit.Core;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
@@ -8,6 +9,7 @@ using ivrToolkit.Core.Util;
 using ivrToolkit.Plugin.Dialogic.Common;
 using ivrToolkit.Plugin.Dialogic.Common.DialogicDefs;
 using ivrToolkit.Plugin.Dialogic.Common.Extensions;
+using ivrToolkit.Plugin.Dialogic.Common.Listeners;
 using Microsoft.Extensions.Logging;
 
 // ReSharper disable StringLiteralTypo
@@ -21,9 +23,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private readonly DialogicSipVoiceProperties _voiceProperties;
         private UnmanagedMemoryService _unmanagedMemoryService;
         private readonly ILogger<SipPlugin> _logger;
-        private readonly EventWaiter _eventWaiter;
         private bool _disposed;
         private int _boardDev;
+        private BoardEventListener _boardEventListener;
         public VoiceProperties VoiceProperties => _voiceProperties;
 
         public SipPlugin(ILoggerFactory loggerFactory, DialogicSipVoiceProperties voiceProperties)
@@ -35,9 +37,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _voiceProperties = voiceProperties;
             _logger = loggerFactory.CreateLogger<SipPlugin>();
             _logger.LogDebug("ctr()");
-
-            _eventWaiter = new EventWaiter(_loggerFactory);
-            _eventWaiter.OnMetaEvent += MetaEvent;
 
             Start();
         }
@@ -51,12 +50,19 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             StartSip();
             OpenBoard();
+
+            // Thread to list for board events
+            _boardEventListener = new BoardEventListener(_loggerFactory, new[] { _boardDev });
+            var thread = new Thread(_boardEventListener.Run);
+            thread.Start();
+
             SetupGlobalCallParameterBlock();
             SetAuthenticationInfo();
             Register();
 
             // show some info
             deviceInformation.LogDeviceInformationAfterGcStart();
+
         }
  
         public IIvrLine GetLine(int lineNumber)
@@ -64,7 +70,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _logger.LogDebug("GetLine({0})", lineNumber);
             lineNumber.ThrowIfLessThanOrEqualTo(0, nameof(lineNumber));
 
-            if (_disposed) throw new VoiceException("You cannot get a line from a disposed plugin");
+            if (_disposed) throw new DisposedException("You cannot get a line from a disposed plugin");
 
             var line = new SipLine(_loggerFactory, _voiceProperties, lineNumber);
             return new LineWrapper(_loggerFactory, lineNumber, line);
@@ -80,8 +86,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _logger.LogDebug("Dispose()");
             _disposed = true;
 
+
             try
             {
+                _boardEventListener?.Dispose();
+
                 var result = gclib_h.gc_Stop();
                 result.ThrowIfGlobalCallError();
 
@@ -170,6 +179,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 gcip_defs_h.EXTENSIONEVT_STREAMING_STATUS | gcip_defs_h.EXTENSIONEVT_T38_STATUS);
             result.ThrowIfGlobalCallError();
 
+            _boardEventListener.SetEventToWaitFor(gclib_h.GCEV_SETCONFIGDATA);
+
             var requestId = 0;
             result = gclib_h.gc_SetConfigData(gclib_h.GCTGT_CCLIB_NETIF, _boardDev, gcParmBlkPtr, 0,
                 gclib_h.GCUPDATE_IMMEDIATE, ref requestId, DXXXLIB_H.EV_ASYNC);
@@ -177,7 +188,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
 
-            var eventWait = _eventWaiter.WaitForEvent(gclib_h.GCEV_SETCONFIGDATA, 10, new[] { _boardDev }); // wait for 10 seconds
+            var eventWait = _boardEventListener.WaitForEvent(10); // wait for 10 seconds
             switch (eventWait)
             {
                 case EventWaitEnum.Expired:
@@ -294,6 +305,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             var respDataPp = IntPtr.Zero;
 
+            _boardEventListener.SetEventToWaitFor(gclib_h.GCEV_SERVICERESP);
             _logger.LogDebug("Register() - about to call gc_ReqService asynchronously");
             result = gclib_h.gc_ReqService(gclib_h.GCTGT_CCLIB_NETIF, _boardDev, ref serviceId, gcParmBlkPtr,
                 ref respDataPp,
@@ -302,126 +314,13 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _logger.LogDebug("Register() - called gc_ReqService asynchronously");
             gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
 
-            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_SERVICERESP, 10, new[] { _boardDev }); // wait for 10 seconds 
+            var eventWaitEnum = _boardEventListener.WaitForEvent(10); // wait for 10 seconds 
             _logger.LogDebug("Result for gc_ReqService is {0}", eventWaitEnum);
 
             _unmanagedMemoryService.Free(pContact);
             _unmanagedMemoryService.Free(pData);
 
         }
-        private void MetaEvent(object sender, MetaEventArgs e)
-        {
-            var metaEvt = e.MetaEvent;
-            _logger.LogDebug(
-                "evt_type = {0}:{1}, evt_dev = {2}, evt_flags = {3},  line_dev = {4} ",
-                metaEvt.evttype, metaEvt.evttype.EventTypeDescription(), metaEvt.evtdev, metaEvt.flags,
-                metaEvt.linedev);
 
-            //for register
-            if (metaEvt.evttype == gclib_h.GCEV_SERVICERESP)
-            {
-                HandleRegisterStuff(metaEvt);
-            }
-        }
-
-        private void HandleRegisterStuff(METAEVENT metaEvt)
-        {
-            _logger.LogDebug("HandleRegisterStuff(METAEVENT metaEvt)");
-            var gcParmBlkp = metaEvt.extevtdatap;
-            var parmDatap = IntPtr.Zero;
-
-            parmDatap = gcip_h.gc_util_next_parm(gcParmBlkp, parmDatap);
-
-            while (parmDatap != IntPtr.Zero)
-            {
-                var parmData = Marshal.PtrToStructure<GC_PARM_DATA>(parmDatap);
-
-                switch (parmData.set_ID)
-                {
-                    case gcip_defs_h.IPSET_REG_INFO:
-                        switch (parmData.parm_ID)
-                        {
-                            case gcip_defs_h.IPPARM_REG_STATUS:
-                                {
-                                    var value = GetValueFromPtr(parmDatap + 5, parmData.value_size);
-                                    switch (value)
-                                    {
-                                        case gcip_defs_h.IP_REG_CONFIRMED:
-                                            _logger.LogDebug("    IPSET_REG_INFO/IPPARM_REG_STATUS: IP_REG_CONFIRMED");
-                                            break;
-                                        case gcip_defs_h.IP_REG_REJECTED:
-                                            _logger.LogDebug("    IPSET_REG_INFO/IPPARM_REG_STATUS: IP_REG_REJECTED");
-                                            break;
-                                    }
-
-                                    break;
-                                }
-                            case gcip_defs_h.IPPARM_REG_SERVICEID:
-                                {
-                                    var value = GetValueFromPtr(parmDatap + 5, parmData.value_size);
-                                    _logger.LogDebug("    IPSET_REG_INFO/IPPARM_REG_SERVICEID: 0x{0:X}", value);
-                                    break;
-                                }
-                            default:
-                                _logger.LogDebug(
-                                    "    Missed one: set_ID = IPSET_REG_INFO, parm_ID = {1:X}, bytes = {2}",
-                                    parmData.parm_ID, parmData.value_size);
-                                break;
-                        }
-
-                        break;
-                    case gcip_defs_h.IPSET_PROTOCOL:
-                        var value2 = GetValueFromPtr(parmDatap + 5, parmData.value_size);
-                        _logger.LogDebug("    IPSET_PROTOCOL value: {0}", value2);
-                        break;
-                    case gcip_defs_h.IPSET_LOCAL_ALIAS:
-                        {
-                            var localAlias = GetStringFromPtr(parmDatap + 5, parmData.value_size);
-                            _logger.LogDebug("    IPSET_LOCAL_ALIAS value: {0}", localAlias);
-                            break;
-                        }
-                    case gcip_defs_h.IPSET_SIP_MSGINFO:
-                        {
-                            var msgInfo = GetStringFromPtr(parmDatap + 5, parmData.value_size);
-                            _logger.LogDebug("    IPSET_SIP_MSGINFO value: {0}", msgInfo);
-                            break;
-                        }
-                    default:
-                        _logger.LogDebug("    Missed one: set_ID = {0:X}, parm_ID = {1:X}, bytes = {2}",
-                            parmData.set_ID, parmData.parm_ID, parmData.value_size);
-                        break;
-                }
-
-                parmDatap = gcip_h.gc_util_next_parm(gcParmBlkp, parmDatap);
-            }
-
-            _logger.LogDebug("HandleRegisterStuff(METAEVENT metaEvt) - done!");
-        }
-
-        private string GetStringFromPtr(IntPtr ptr, int size)
-        {
-            return Marshal.PtrToStringAnsi(ptr, size);
-        }
-
-        private int GetValueFromPtr(IntPtr ptr, byte size)
-        {
-            int value;
-            switch (size)
-            {
-                case 1:
-                    value = Marshal.ReadByte(ptr);
-                    break;
-                case 2:
-                    value = Marshal.ReadInt16(ptr);
-                    break;
-                case 4:
-                    value = Marshal.ReadInt32(ptr);
-                    break;
-                default:
-                    throw new VoiceException($"Unable to get value from ptr. Size is {size}");
-            }
-
-            return value;
-        }
     }
 }

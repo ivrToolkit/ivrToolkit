@@ -16,7 +16,8 @@ namespace ivrToolkit.Plugin.Dialogic.Common.Listeners
         private bool _disposed;
         private int _eventToWaitFor;
 
-        private AutoResetEvent _autoResetEvent;
+        private readonly AutoResetEvent _autoResetEvent = new(false);
+
 
         private const int DisposingEvent = 1;
 
@@ -124,7 +125,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.Listeners
         {
             _logger.LogDebug("SetEventToWaitFor({0}:{1})", eventToWaitFor, eventToWaitFor.EventTypeDescription());
             _eventToWaitFor = eventToWaitFor;
-            _autoResetEvent = new AutoResetEvent(false);
+            _autoResetEvent.Reset();
         }
 
         public EventWaitEnum WaitForEvent(int waitSeconds)
@@ -133,7 +134,10 @@ namespace ivrToolkit.Plugin.Dialogic.Common.Listeners
             var result = _autoResetEvent.WaitOne(TimeSpan.FromSeconds(waitSeconds));
             _eventToWaitFor = 0;
             if (_disposed) throw new DisposingException();
-            return result? EventWaitEnum.Success : EventWaitEnum.Expired;
+
+            var waitEnum = result ? EventWaitEnum.Success : EventWaitEnum.Expired;
+            _logger.LogDebug("WaitForEvent - {0}, ", waitEnum);
+            return waitEnum;
         }
 
         protected abstract void HandleEvent(METAEVENT metaEvt);

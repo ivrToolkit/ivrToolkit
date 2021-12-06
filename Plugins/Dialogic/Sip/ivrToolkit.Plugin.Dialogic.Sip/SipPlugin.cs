@@ -51,7 +51,9 @@ public class SipPlugin : IIvrPlugin
         OpenBoard();
 
         // todo replace this with a factory to choose ThreadedEventListener vs SynchronousEventListener
-        _boardEventListener = new ThreadedEventListener(_loggerFactory, new[] { _boardDev });
+        _boardEventListener = new SynchronousEventListener(_loggerFactory, new[] { _boardDev });
+        //_boardEventListener = new ThreadedEventListener(_loggerFactory, new[] { _boardDev });
+
         _boardEventListener.OnMetaEvent += _boardEventListener_OnMetaEvent;
         _boardEventListener.Start();
 

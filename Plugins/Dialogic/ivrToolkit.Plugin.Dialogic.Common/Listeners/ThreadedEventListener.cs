@@ -9,10 +9,10 @@ using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Plugin.Dialogic.Common.Listeners
 {
-    public abstract class BaseEventListener : IDisposable
+    public class ThreadedEventListener : IEventListener
     {
         private readonly int[] _handles;
-        private readonly ILogger<BoardEventListener> _logger;
+        private readonly ILogger<ThreadedEventListener> _logger;
         private bool _disposed;
         private int _eventToWaitFor;
 
@@ -20,12 +20,21 @@ namespace ivrToolkit.Plugin.Dialogic.Common.Listeners
 
 
         private const int DisposingEvent = 1;
+        public event EventHandler<MetaEventArgs> OnMetaEvent;
 
-        protected BaseEventListener(ILoggerFactory loggerFactory, int[] handles)
+        public ThreadedEventListener(ILoggerFactory loggerFactory, int[] handles)
         {
             _handles = handles;
-            _logger = loggerFactory.CreateLogger<BoardEventListener>();
+            _logger = loggerFactory.CreateLogger<ThreadedEventListener>();
             _logger.LogDebug("Ctr(ILoggerFactory, {0})", _handles);
+
+        }
+
+        public void Start()
+        {
+            _logger.LogDebug("Start");
+            var thread = new Thread(Run);
+            thread.Start();
         }
 
         public void Run()
@@ -47,7 +56,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.Listeners
                                 _logger.LogDebug("Disposing event. Run() Completed");
                                 return;
                             }
-                            FireEvent(metaEvent.Event);
+                            FireEvent(metaEvent.Event, metaEvent.EventHandle);
                             break;
                         case EventWaitEnum.Error:
                             _logger.LogError("EventListener failed");
@@ -64,21 +73,18 @@ namespace ivrToolkit.Plugin.Dialogic.Common.Listeners
             _logger.LogDebug("Run() - completed");
         }
 
-        private void FireEvent(METAEVENT metaEvt)
+        private void FireEvent(METAEVENT metaEvt, int eventHandle)
         {
-            _logger.LogDebug(
-                "evt_type = {0}:{1}, evt_dev = {2}, evt_flags = {3},  line_dev = {4} ",
-                metaEvt.evttype, metaEvt.evttype.EventTypeDescription(), metaEvt.evtdev, metaEvt.flags,
-                metaEvt.linedev);
+            var raiseEvent = OnMetaEvent;
+            raiseEvent?.Invoke(this, new MetaEventArgs(eventHandle, metaEvt));
 
             if (_eventToWaitFor == metaEvt.evttype)
             {
                 _autoResetEvent.Set();
             }
-            HandleEvent(metaEvt);
         }
 
-        public MetaEvent WaitForAnyEvent(int waitMilliSeconds, int[] handles, bool showDebug = true)
+        private MetaEvent WaitForAnyEvent(int waitMilliSeconds, int[] handles, bool showDebug = true)
         {
             if (showDebug) _logger.LogDebug("*** Waiting for any event: waitMilliSeconds = {0}", waitMilliSeconds);
             var eventHandle = 0;
@@ -108,7 +114,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.Listeners
                 }
             }
 
-            return new MetaEvent { WaitEnum = EventWaitEnum.Success, Event = metaEvt};
+            return new MetaEvent { WaitEnum = EventWaitEnum.Success, Event = metaEvt, EventHandle = eventHandle};
         }
 
         public void Dispose()
@@ -136,10 +142,9 @@ namespace ivrToolkit.Plugin.Dialogic.Common.Listeners
             if (_disposed) throw new DisposingException();
 
             var waitEnum = result ? EventWaitEnum.Success : EventWaitEnum.Expired;
-            _logger.LogDebug("WaitForEvent - {0}, ", waitEnum);
+            _logger.LogDebug("WaitForEvent - {0}", waitEnum);
             return waitEnum;
         }
 
-        protected abstract void HandleEvent(METAEVENT metaEvt);
     }
 }

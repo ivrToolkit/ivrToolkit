@@ -98,7 +98,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common
 
         private int FireEvent(int eventHandle)
         {
-            _logger.LogDebug("ProcessEvent({0})", eventHandle);
+            _logger.LogDebug("FireEvent({0})", eventHandle);
 
             var metaEvt = new METAEVENT();
 

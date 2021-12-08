@@ -1,0 +1,13 @@
+﻿<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>ivrToolkit</id>
+    <title>ivrToolkit</title>
+    <version>6.0.4</version>
+    <authors>Troy Makaro</authors>
+    <owners>MakaroSoft Computer Monitoring Inc.</owners>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <description>ivrToolkit</description>
+    <releaseNotes></releaseNotes>
+  </metadata>
+</package>

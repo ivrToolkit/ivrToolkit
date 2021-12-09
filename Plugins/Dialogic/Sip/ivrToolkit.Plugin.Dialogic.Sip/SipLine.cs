@@ -1015,7 +1015,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                                 _logger.LogDebug("IPPARM_LOCAL: size = {0}", parmData.value_size);
                                 var ptr = parmDatap + 5;
                                 var ipAddr = Marshal.PtrToStructure<RTP_ADDR>(ptr);
-                                _logger.LogDebug("  IPPARM_LOCAL: address:{0}, port {1}", ipAddr.u_ipaddr.ipv4.ToString(),
+                                _logger.LogDebug("  IPPARM_LOCAL: address:{0}, port {1}", ipAddr.u_ipaddr.ipv4.ToIp(),
                                     ipAddr.port);
                                 break;
                             case gcip_defs_h.IPPARM_REMOTE:

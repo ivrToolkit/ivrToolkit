@@ -45,7 +45,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common
         /// <summary>
         /// if true then the dial method will check for dial tone after picking up the receiver/dialing the number.
         /// </summary>
-        public bool PreTestDialTone => ToBool(GetProperty("dial.preTestDialTone", "true"));
+        public bool PreTestDialTone => ToBool(GetProperty("dial.preTestDialTone", "false"));
 
 
 

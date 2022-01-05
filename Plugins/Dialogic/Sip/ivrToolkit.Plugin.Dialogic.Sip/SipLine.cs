@@ -242,7 +242,14 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _logger.LogDebug("Hangup(); - crn = {0}", _callReferenceNumber);
 
             var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
-            result.ThrowIfStandardRuntimeLibraryError(_dxDev);
+            try
+            {
+                result.ThrowIfStandardRuntimeLibraryError(_dxDev);
+            }
+            catch (Exception e)
+            {
+                _logger.LogWarning(e, "Hangup() - dx_stopch");
+            }
 
             if (_callReferenceNumber == 0) return; // line is not in use
 
@@ -256,28 +263,14 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             catch (GlobalCallErrorException e)
             {
                 // for now I will let this go while I find out more about the proper way to hangup and drop.
-                _logger.LogWarning(e, null);
+                _logger.LogWarning(e, "Hangup() - gc_DropCall");
             }
 
-            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 5, new[] { _dxDev, _gcDev });
-
-            switch (eventWaitEnum)
-            {
-                case EventWaitEnum.Success:
-                    _logger.LogDebug("The hangup method received the dropcall event");
-                    break;
-                case EventWaitEnum.Expired:
-                    _logger.LogWarning("The hangup method did not receive the dropcall event");
-                    break;
-                case EventWaitEnum.Error:
-                    _logger.LogError("The hangup method failed waiting for the dropcall event");
-                    break;
-            }
-
+            // note:When the GCEV_DROPCALL is caught it automatically calls ReleaseCall and waits for GCEV_RELEASECALL. Thus the call we want to wait for is GCEV_RELEASECALL.
             try
             {
                 // okay, now lets wait for the release call event
-                eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 5, new[] { _dxDev, _gcDev }); // Should fire a hangup exception
+                var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 5, new[] { _dxDev, _gcDev }); // Should fire a hangup exception
 
                 switch (eventWaitEnum)
                 {

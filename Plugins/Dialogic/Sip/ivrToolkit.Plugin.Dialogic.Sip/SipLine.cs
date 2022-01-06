@@ -354,7 +354,19 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var ani = _voiceProperties.SipAlias + "@" + _voiceProperties.SipProxyIp;
             var dnis = number + "@" + _voiceProperties.SipProxyIp;
 
-            MakeCall(ani, dnis);
+            try
+            {
+                MakeCall(ani, dnis);
+            }
+            catch (HangupException)
+            {
+                _logger.LogDebug("Got a hangup while trying to dial out! I've seen this when calling and invalid number such as (222)222-2222");
+                // it takes approximately 7 seconds to get a hangup on invalid numbers such as 2222222222
+                // but it takes an extra 40 seconds(cap.ca_cnosig=4000) to check call progress analysis and I'm not
+                //    sure if it will come back with anything other than NoRingback anyways. Therefor I am making the an option and off by default.
+                if (!_voiceProperties.CheckCpaOnHangupDuringDial) return CallAnalysis.NoRingback;
+            }
+
 
             _logger.LogDebug("DialWithCpa: Syncronous Make call Completed starting call process analysis");
 

@@ -360,35 +360,43 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             catch (HangupException)
             {
-                _logger.LogDebug("Got a hangup while trying to dial out! I've seen this when calling and invalid number such as (222)222-2222");
                 // it takes approximately 7 seconds to get a hangup on invalid numbers such as 2222222222
                 // but it takes an extra 40 seconds(cap.ca_cnosig=4000) to check call progress analysis and I'm not
                 //    sure if it will come back with anything other than NoRingback anyways. Therefor I am making the an option and off by default.
                 if (!_voiceProperties.CheckCpaOnHangupDuringDial) return CallAnalysis.NoRingback;
             }
 
-
-            _logger.LogDebug("DialWithCpa: Syncronous Make call Completed starting call process analysis");
+            // check the CPA
+            var startTime = DateTimeOffset.Now;
 
             var result = DXXXLIB_H.dx_dial(devh, "", ref cap, DXCALLP_H.DX_CALLP | DXXXLIB_H.EV_ASYNC);
             result.ThrowIfStandardRuntimeLibraryError(devh);
-
-            var eventWaitEnum = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_CALLP, 60, new[] { _dxDev, _gcDev }); // 60 seconds
-            switch (eventWaitEnum)
+            try
             {
-                case EventWaitEnum.Success:
-                    _logger.LogDebug("The DialWithCpa method received the TDX_CALLP event");
-                    break;
-                case EventWaitEnum.Expired:
-                    var message = "The DialWithCpa method timed out waiting for the TDX_CALLP event";
-                    _logger.LogError(message);
-                    throw new VoiceException(message);
-                case EventWaitEnum.Error:
-                    message = "The DialWithCpa method failed waiting for the TDX_CALLP event";
-                    _logger.LogError(message);
-                    throw new VoiceException(message);
+                var eventWaitEnum = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_CALLP, 60, new[] { _dxDev, _gcDev }); // 60 seconds
+                switch (eventWaitEnum)
+                {
+                    case EventWaitEnum.Success:
+                        _logger.LogDebug("Check CPA duration = {0} seconds. Received TDX_CALLP", (DateTimeOffset.Now - startTime).TotalSeconds);
+                        break;
+                    case EventWaitEnum.Expired:
+                        var message = $"Check CPA duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Timed out waiting for TDX_CALLP";
+                        _logger.LogError(message);
+                        throw new VoiceException(message);
+                    case EventWaitEnum.Error:
+                        message = $"Check CPA duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Failed waiting for TDX_CALLP";
+                        _logger.LogError(message);
+                        throw new VoiceException(message);
+                }
+            }
+            catch (HangupException)
+            {
+                // and I've seen this happen and I don't why but the person doing the testing was using a voip phone from India.
+                _logger.LogDebug("Check CPA duration = {0} seconds. Received HangupException", (DateTimeOffset.Now - startTime).TotalSeconds);
+                return CallAnalysis.NoRingback;
             }
 
+            // get the CPA result
             result = DXXXLIB_H.ATDX_CPTERM(devh);
 
             _logger.LogDebug("Call Progress Analysius Result {0}", result);
@@ -455,6 +463,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         */
         private void MakeCall(string ani, string dnis)
         {
+            var startTime = DateTimeOffset.Now;
             _logger.LogDebug("MakeCall({0}, {1})", ani, dnis);
 
             var gcParmBlkp = IntPtr.Zero;
@@ -518,24 +527,31 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
             _unmanagedMemoryServicePerCall.Free(pGclib);
 
-            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_ALERTING, 40, new[] { _dxDev, _gcDev }); // 40 seconds - 10 seconds was sometimes too short
-
-            string message;
-            switch (eventWaitEnum)
+            try
             {
-                case EventWaitEnum.Expired:
-                    message = "The MakeCall method timed out waiting for the GCEV_ALERTING event";
-                    _logger.LogError(message);
-                    throw new VoiceException(message);
-                case EventWaitEnum.Success:
-                    _logger.LogDebug("The MakeCall method received the GCEV_ALERTING event");
-                    break;
-                case EventWaitEnum.Error:
-                    message = "The MakeCall method failed waiting for the GCEV_ALERTING event";
-                    _logger.LogError(message);
-                    throw new VoiceException(message);
-            }
+                var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_ALERTING, 40, new[] { _dxDev, _gcDev }); // 40 seconds - 10 seconds was sometimes too short
 
+                string message;
+                switch (eventWaitEnum)
+                {
+                    case EventWaitEnum.Expired:
+                        message = $"MakeCall() duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Timeout waiting for GCEV_ALERTING";
+                        _logger.LogError(message);
+                        throw new VoiceException(message);
+                    case EventWaitEnum.Success:
+                        _logger.LogDebug("MakeCall() duration = {0} seconds.", (DateTimeOffset.Now - startTime).TotalSeconds);
+                        break;
+                    case EventWaitEnum.Error:
+                        message = $"MakeCall() duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Failed waiting GCEV_ALERTING";
+                        _logger.LogError(message);
+                        throw new VoiceException(message);
+                }
+            }
+            catch (HangupException)
+            {
+                _logger.LogDebug("MakeCall() duration = {0} seconds. HangupException caught", (DateTimeOffset.Now - startTime).TotalSeconds);
+                throw;
+            }
         }
 
         /// <summary>

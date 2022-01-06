@@ -78,6 +78,11 @@ namespace ivrToolkit.Plugin.Dialogic.Common
             }
         }
 
+        /// <summary>
+        /// Check Call Progress Analysis if an hangup is detected during the dial. Default is false.
+        /// </summary>
+        public bool CheckCpaOnHangupDuringDial => ToBool(GetProperty("dial.checkCpaOnHangupError", "false"));
+
         public new void Dispose()
         {
             _logger.LogDebug("Dispose()");

@@ -52,8 +52,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         public int LineNumber => _lineNumber;
 
-        private bool _inCallProgressAnalysis;
-
         public SipLine(ILoggerFactory loggerFactory, DialogicSipVoiceProperties voiceProperties, int lineNumber)
         {
             _voiceProperties = voiceProperties;
@@ -369,7 +367,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
 
             // check the CPA
-            _inCallProgressAnalysis = true;
             var startTime = DateTimeOffset.Now;
 
             var result = DXXXLIB_H.dx_dial(devh, "", ref cap, DXCALLP_H.DX_CALLP | DXXXLIB_H.EV_ASYNC);
@@ -392,9 +389,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                         throw new VoiceException(message);
                 }
             }
-            finally
+            catch (HangupException)
             {
-                _inCallProgressAnalysis = false;
+                // and I've seen this happen and I don't why but the person doing the testing was using a voip phone from India.
+                _logger.LogDebug("Check CPA duration = {0} seconds. Received HangupException", (DateTimeOffset.Now - startTime).TotalSeconds);
+                return CallAnalysis.NoRingback;
             }
 
             // get the CPA result
@@ -1207,11 +1206,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 case gclib_h.GCEV_RELEASECALL:
                     _logger.LogDebug("GCEV_RELEASECALL - set crn = 0");
                     _callReferenceNumber = 0;
-
-                    // need to let call analysis finish
-                    if (!_inCallProgressAnalysis) throw new HangupException();
-
-                    break;
+                    throw new HangupException();
                 #endregion
 
                 case gclib_h.GCEV_EXTENSIONCMPLT:

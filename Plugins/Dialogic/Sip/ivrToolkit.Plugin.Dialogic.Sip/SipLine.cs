@@ -52,6 +52,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         public int LineNumber => _lineNumber;
 
+        private bool _inCallProgressAnalysis;
+
         public SipLine(ILoggerFactory loggerFactory, DialogicSipVoiceProperties voiceProperties, int lineNumber)
         {
             _voiceProperties = voiceProperties;
@@ -367,6 +369,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
 
             // check the CPA
+            _inCallProgressAnalysis = true;
             var startTime = DateTimeOffset.Now;
 
             var result = DXXXLIB_H.dx_dial(devh, "", ref cap, DXCALLP_H.DX_CALLP | DXXXLIB_H.EV_ASYNC);
@@ -389,11 +392,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                         throw new VoiceException(message);
                 }
             }
-            catch (HangupException)
+            finally
             {
-                // and I've seen this happen and I don't why but the person doing the testing was using a voip phone from India.
-                _logger.LogDebug("Check CPA duration = {0} seconds. Received HangupException", (DateTimeOffset.Now - startTime).TotalSeconds);
-                return CallAnalysis.NoRingback;
+                _inCallProgressAnalysis = false;
             }
 
             // get the CPA result
@@ -1206,7 +1207,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 case gclib_h.GCEV_RELEASECALL:
                     _logger.LogDebug("GCEV_RELEASECALL - set crn = 0");
                     _callReferenceNumber = 0;
-                    throw new HangupException();
+
+                    // need to let call analysis finish
+                    if (!_inCallProgressAnalysis) throw new HangupException();
+
+                    break;
                 #endregion
 
                 case gclib_h.GCEV_EXTENSIONCMPLT:
@@ -1269,7 +1274,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             result.ThrowIfGlobalCallError();
 
             // don't include _dxDev right now because we want to finish the drop call first
-            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, new []{ _gcDev }); // 10 seconds
+            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, new[] { _gcDev }); // 10 seconds
             _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, _gcDev ) = {0}", eventWaitEnum);
         }
 
@@ -1381,7 +1386,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             };
 
 
-            var pointers = new List<IntPtr>();  
+            var pointers = new List<IntPtr>();
             int result;
             var parmblkp = IntPtr.Zero;
             for (var i = 0; i < 3; i++)
@@ -1546,7 +1551,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var tpt = GetTerminationConditions(10, terminators, 0);
 
             var iott = new DX_IOTT
-                { io_type = DXTABLES_H.IO_DEV | DXTABLES_H.IO_EOT, io_bufp = null, io_offset = 0, io_length = -1 };
+            { io_type = DXTABLES_H.IO_DEV | DXTABLES_H.IO_EOT, io_bufp = null, io_offset = 0, io_length = -1 };
             /* set up DX_IOTT */
             if ((iott.io_fhandle = DXXXLIB_H.dx_fileopen(filename, fcntl_h._O_RDONLY | fcntl_h._O_BINARY)) == -1)
             {

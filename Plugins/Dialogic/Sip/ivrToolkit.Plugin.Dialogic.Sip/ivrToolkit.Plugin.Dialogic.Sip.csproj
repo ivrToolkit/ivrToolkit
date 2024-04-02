@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
     <Version>1.0.0</Version>
     <Description>A SIP implementation using Dialogic HMP V525. For use with ivrToolkit.Core</Description>
     <Copyright>Copyright 2013-2021 Troy Makaro</Copyright>

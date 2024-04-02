@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <UserSecretsId>dotnet-MyFirstApp-95F700BE-B887-4BEF-8FB3-1E31931C3DF0</UserSecretsId>
   </PropertyGroup>
 
@@ -10,11 +10,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ivrToolkit.Core" Version="5.0.0-beta-07" />
-    <PackageReference Include="ivrToolkit.Plugin.Dialogic.analog" Version="5.0.0-beta-07" />
-    <PackageReference Include="ivrToolkit.Plugin.Dialogic.Common" Version="5.0.0-beta-07" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="5.0.1" />
+    <PackageReference Include="ivrToolkit.Core" Version="8.0.0" />
+    <PackageReference Include="ivrToolkit.Plugin.Dialogic.analog" Version="8.0.0" />
+    <PackageReference Include="ivrToolkit.Plugin.Dialogic.Common" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>

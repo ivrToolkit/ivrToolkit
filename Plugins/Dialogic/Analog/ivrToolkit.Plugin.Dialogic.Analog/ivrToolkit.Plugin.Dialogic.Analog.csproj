@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
     <Version>5.0.0-alpha2</Version>
     <Description>An analog implementation using Dialogic System Release 6.0. For use with ivrToolkit.Core. Originally tested with Dialogic build 271</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>

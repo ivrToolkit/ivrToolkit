@@ -303,8 +303,22 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
              */
         }
 
-
         public CallAnalysis Dial(string number, int answeringMachineLengthInMilliseconds)
+        {
+            try
+            {
+                // I've decided that any exception thrown during the dial handshake will now return CallAnalysis.Error
+                return DialContinued(number, answeringMachineLengthInMilliseconds);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "An exception was caught while dialing");
+                ResetLineDev(); // attempt to recover
+                return CallAnalysis.Error;
+            }
+        }
+
+        private CallAnalysis DialContinued(string number, int answeringMachineLengthInMilliseconds)
         {
             _logger.LogDebug("Dial({0}, {1})", number, answeringMachineLengthInMilliseconds);
             _unmanagedMemoryServicePerCall.Dispose();
@@ -339,41 +353,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             _logger.LogDebug("about to dial: {0}", number);
             return DialWithCpa(_dxDev, number, answeringMachineLengthInMilliseconds);
-        }
-
-
-        private void ResetLineDev()
-        {
-            _logger.LogDebug("ResetLineDev()");
-            try
-            {
-                var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
-                result.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
-
-                result = gclib_h.gc_ResetLineDev(_gcDev, DXXXLIB_H.EV_ASYNC);
-                result.ThrowIfGlobalCallError();
-
-                var eventWaitEnum = _eventWaiter.WaitForThisEventOnly(gclib_h.GCEV_RESETLINEDEV, 60, new[] { _gcDev }); // 60 seconds
-                switch (eventWaitEnum)
-                {
-                    case EventWaitEnum.Error:
-                        _logger.LogError("Failed to Reset the line. Failed");
-                        break;
-                    case EventWaitEnum.Expired:
-                        _logger.LogError("Failed to Reset the line. Timeout waiting for GCEV_RESETLINEDEV");
-                        break;
-                    case EventWaitEnum.Success:
-                        _callReferenceNumber = 0;
-                        _disconnectionHappening = false;
-                        _waitCallSet = false;
-                        break;
-                }
-
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Failed to Reset the line");
-            }
         }
 
         /// <summary>
@@ -412,11 +391,13 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     case EventWaitEnum.Expired:
                         var message = $"Check CPA duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Timed out waiting for TDX_CALLP";
                         _logger.LogError(message);
-                        throw new VoiceException(message);
+                        ResetLineDev();
+                        return CallAnalysis.Error;
                     case EventWaitEnum.Error:
                         message = $"Check CPA duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Failed waiting for TDX_CALLP";
                         _logger.LogError(message);
-                        throw new VoiceException(message);
+                        ResetLineDev();
+                        return CallAnalysis.Error;
                 }
             } catch (TaskFailException) {
                 _logger.LogWarning("A TaskFail event came in during CPA");
@@ -573,6 +554,40 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
             _unmanagedMemoryServicePerCall.Free(pGclib);
             CheckCallState();
+        }
+
+        private void ResetLineDev()
+        {
+            _logger.LogDebug("ResetLineDev()");
+            try
+            {
+                var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
+                result.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
+
+                result = gclib_h.gc_ResetLineDev(_gcDev, DXXXLIB_H.EV_ASYNC);
+                result.ThrowIfGlobalCallError();
+
+                var eventWaitEnum = _eventWaiter.WaitForThisEventOnly(gclib_h.GCEV_RESETLINEDEV, 60, new[] { _gcDev }); // 60 seconds
+                switch (eventWaitEnum)
+                {
+                    case EventWaitEnum.Error:
+                        _logger.LogError("Failed to Reset the line. Failed");
+                        break;
+                    case EventWaitEnum.Expired:
+                        _logger.LogError("Failed to Reset the line. Timeout waiting for GCEV_RESETLINEDEV");
+                        break;
+                    case EventWaitEnum.Success:
+                        _callReferenceNumber = 0;
+                        _disconnectionHappening = false;
+                        _waitCallSet = false;
+                        break;
+                }
+
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to Reset the line");
+            }
         }
 
         /// <summary>

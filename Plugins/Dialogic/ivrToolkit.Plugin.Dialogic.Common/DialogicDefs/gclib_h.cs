@@ -110,6 +110,8 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public static extern int gc_MakeCall(int linedev, ref int crnp, string numberstr,
             ref GC_MAKECALL_BLK makecallp, int timeout, uint mode);
 
+        [DllImport("libgc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int gc_ResetLineDev(int linedev, uint mode);
 
 
 

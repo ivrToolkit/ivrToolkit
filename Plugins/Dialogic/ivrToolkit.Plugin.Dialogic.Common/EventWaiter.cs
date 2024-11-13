@@ -61,7 +61,12 @@ namespace ivrToolkit.Plugin.Dialogic.Common
             return result;
         }
 
-        public EventWaitEnum WaitForEvent(int waitForEvent, int waitSeconds, int[] handles, bool showDebug = true)
+        public EventWaitEnum WaitForThisEventOnly(int waitForEvent, int waitSeconds, int[] handles, bool showDebug = true)
+        {
+            return WaitForEvent(waitForEvent, waitSeconds, handles, showDebug, true);
+        }
+
+        public EventWaitEnum WaitForEvent(int waitForEvent, int waitSeconds, int[] handles, bool showDebug = true, bool waitExact = false)
         {
             if (showDebug) _logger.LogDebug("*** Waiting for event: {0}: {1}, waitSeconds = {2}", waitForEvent, waitForEvent.EventTypeDescription(), waitSeconds);
 
@@ -75,7 +80,25 @@ namespace ivrToolkit.Plugin.Dialogic.Common
                 var timedOut = result == -1;
                 if (!timedOut)
                 {
-                    eventThrown = FireEvent(eventHandle);
+                    var metaEvt = GetEvent(eventHandle);
+                    eventThrown = metaEvt.evttype;
+
+                    if (waitExact)
+                    {
+                        // wait for the exact event only. Will fire extension events too since they are only informational
+                        if (eventThrown == waitForEvent || eventThrown == gclib_h.GCEV_EXTENSION)
+                        {
+                            FireEvent(eventHandle, metaEvt);
+                        }
+                        else
+                        {
+                            _logger.LogDebug("Skipping event {0}:{1}", eventThrown, eventThrown.EventTypeDescription());
+                        }
+                    }
+                    else
+                    {
+                        FireEvent(eventHandle, metaEvt);
+                    }
                     if (eventThrown == waitForEvent) break;
                 }
                 CheckDisposing();
@@ -96,11 +119,19 @@ namespace ivrToolkit.Plugin.Dialogic.Common
             return EventWaitEnum.Error;
         }
 
-        private int FireEvent(int eventHandle)
+        private METAEVENT GetEvent(int eventHandle)
+        {
+            _logger.LogDebug("GetEvent({0})", eventHandle);
+            var metaEvt = new METAEVENT();
+
+            var result = gclib_h.gc_GetMetaEventEx(ref metaEvt, eventHandle);
+            result.ThrowIfGlobalCallError();
+            return metaEvt;
+        }
+
+        private void FireEvent(int eventHandle, METAEVENT metaEvt)
         {
             _logger.LogDebug("FireEvent({0})", eventHandle);
-
-            var metaEvt = new METAEVENT();
 
             var result = gclib_h.gc_GetMetaEventEx(ref metaEvt, eventHandle);
             result.ThrowIfGlobalCallError();
@@ -116,7 +147,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common
                 raiseEvent(this, new MetaEventArgs(eventHandle, metaEvt));
             }
 
-            return metaEvt.evttype;
+            return;
         }
 
         private bool HasExpired(int count, int waitSeconds)

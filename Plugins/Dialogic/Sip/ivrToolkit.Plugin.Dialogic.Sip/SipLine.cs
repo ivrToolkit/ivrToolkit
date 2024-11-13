@@ -53,6 +53,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         public int LineNumber => _lineNumber;
 
         private bool _inCallProgressAnalysis;
+        private bool _disconnectionHappening;
 
         public SipLine(ILoggerFactory loggerFactory, DialogicSipVoiceProperties voiceProperties, int lineNumber)
         {
@@ -254,19 +255,19 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
 
             if (_callReferenceNumber == 0) return; // line is not in use
+            CheckCallState();
+
+            if (_disconnectionHappening)
+            {
+                _logger.LogDebug("A disconnect is already in progress. Can't hangup twice");
+                return;
+            }
+            _disconnectionHappening = true;
 
             _logger.LogDebug(
                 "gclib_h.gc_DropCall(_callReferenceNumber, gclib_h.GC_NORMAL_CLEARING, DXXXLIB_H.EV_ASYNC);");
             result = gclib_h.gc_DropCall(_callReferenceNumber, gclib_h.GC_NORMAL_CLEARING, DXXXLIB_H.EV_ASYNC);
-            try
-            {
-                result.ThrowIfGlobalCallError();
-            }
-            catch (GlobalCallErrorException e)
-            {
-                // for now I will let this go while I find out more about the proper way to hangup and drop.
-                _logger.LogWarning(e, "Hangup() - gc_DropCall");
-            }
+            result.LogIfGlobalCallError(_logger);
 
             // note:When the GCEV_DROPCALL is caught it automatically calls ReleaseCall and waits for GCEV_RELEASECALL. Thus the call we want to wait for is GCEV_RELEASECALL.
             try
@@ -340,6 +341,41 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             return DialWithCpa(_dxDev, number, answeringMachineLengthInMilliseconds);
         }
 
+
+        private void ResetLineDev()
+        {
+            _logger.LogDebug("ResetLineDev()");
+            try
+            {
+                var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
+                result.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
+
+                result = gclib_h.gc_ResetLineDev(_gcDev, DXXXLIB_H.EV_ASYNC);
+                result.ThrowIfGlobalCallError();
+
+                var eventWaitEnum = _eventWaiter.WaitForThisEventOnly(gclib_h.GCEV_RESETLINEDEV, 60, new[] { _gcDev }); // 60 seconds
+                switch (eventWaitEnum)
+                {
+                    case EventWaitEnum.Error:
+                        _logger.LogError("Failed to Reset the line. Failed");
+                        break;
+                    case EventWaitEnum.Expired:
+                        _logger.LogError("Failed to Reset the line. Timeout waiting for GCEV_RESETLINEDEV");
+                        break;
+                    case EventWaitEnum.Success:
+                        _callReferenceNumber = 0;
+                        _disconnectionHappening = false;
+                        _waitCallSet = false;
+                        break;
+                }
+
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to Reset the line");
+            }
+        }
+
         /// <summary>
         /// Dials a phone number using call progress analysis.
         /// </summary>
@@ -356,17 +392,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var ani = _voiceProperties.SipAlias + "@" + _voiceProperties.SipProxyIp;
             var dnis = number + "@" + _voiceProperties.SipProxyIp;
 
-            try
-            {
-                MakeCall(ani, dnis);
-            }
-            catch (HangupException)
-            {
-                // it takes approximately 7 seconds to get a hangup on invalid numbers such as 2222222222
-                // but it takes an extra 40 seconds(cap.ca_cnosig=4000) to check call progress analysis and I'm not
-                //    sure if it will come back with anything other than NoRingback anyways. Therefor I am making the an option and off by default.
-                if (!_voiceProperties.CheckCpaOnHangupDuringDial) return CallAnalysis.NoRingback;
-            }
+            MakeCall(ani, dnis);
 
             // check the CPA
             _inCallProgressAnalysis = true;
@@ -374,6 +400,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             var result = DXXXLIB_H.dx_dial(devh, "", ref cap, DXCALLP_H.DX_CALLP | DXXXLIB_H.EV_ASYNC);
             result.ThrowIfStandardRuntimeLibraryError(devh);
+            CheckCallState();
             try
             {
                 var eventWaitEnum = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_CALLP, 60, new[] { _dxDev, _gcDev }); // 60 seconds
@@ -391,11 +418,15 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                         _logger.LogError(message);
                         throw new VoiceException(message);
                 }
+            } catch (TaskFailException) {
+                _logger.LogWarning("A TaskFail event came in during CPA");
+                return CallAnalysis.Error;
             }
             finally
             {
                 _inCallProgressAnalysis = false;
             }
+            CheckCallState();
 
             // get the CPA result
             result = DXXXLIB_H.ATDX_CPTERM(devh);
@@ -408,6 +439,16 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 case DXCALLP_H.CR_CEPT:
                     return CallAnalysis.OperatorIntercept;
                 case DXCALLP_H.CR_CNCT:
+                    var callState = GetCallState();
+                    if (callState != gclib_h.GCST_CONNECTED)
+                    {
+                        // i've seen cpa say "connected" but the call state was stuck on "alerting"
+                        // note, this may have been because I didn't start cpa until recieving the alerting event.
+                        //       I now start cpa immediately.
+                        _logger.LogWarning("Expected CONNECTED state but we are in {0}", callState.CallStateDescription());
+                        ResetLineDev();
+                        return CallAnalysis.Error;
+                    }
                     var connType = DXXXLIB_H.ATDX_CONNTYPE(devh);
                     switch (connType)
                     {
@@ -438,14 +479,17 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
                     return CallAnalysis.Connected;
                 case DXCALLP_H.CR_ERROR:
+                    ResetLineDev();
                     return CallAnalysis.Error;
                 case DXCALLP_H.CR_FAXTONE:
                     return CallAnalysis.FaxTone;
                 case DXCALLP_H.CR_NOANS:
                     return CallAnalysis.NoAnswer;
                 case DXCALLP_H.CR_NODIALTONE:
+                    ResetLineDev();
                     return CallAnalysis.NoDialTone;
                 case DXCALLP_H.CR_NORB:
+                    ResetLineDev();
                     return CallAnalysis.NoRingback;
                 case DXCALLP_H.CR_STOPD:
                     // calling method will check and throw the stopException
@@ -466,6 +510,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             var startTime = DateTimeOffset.Now;
             _logger.LogDebug("MakeCall({0}, {1})", ani, dnis);
+            CheckCallState();
 
             var gcParmBlkp = IntPtr.Zero;
             var sipHeader = $"User-Agent: {_voiceProperties.SipUserAgent}";
@@ -527,32 +572,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             result.ThrowIfGlobalCallError();
             gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
             _unmanagedMemoryServicePerCall.Free(pGclib);
-
-            try
-            {
-                var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_ALERTING, 40, new[] { _dxDev, _gcDev }); // 40 seconds - 10 seconds was sometimes too short
-
-                string message;
-                switch (eventWaitEnum)
-                {
-                    case EventWaitEnum.Expired:
-                        message = $"MakeCall() duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Timeout waiting for GCEV_ALERTING";
-                        _logger.LogError(message);
-                        throw new VoiceException(message);
-                    case EventWaitEnum.Success:
-                        _logger.LogDebug("MakeCall() duration = {0} seconds.", (DateTimeOffset.Now - startTime).TotalSeconds);
-                        break;
-                    case EventWaitEnum.Error:
-                        message = $"MakeCall() duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Failed waiting GCEV_ALERTING";
-                        _logger.LogError(message);
-                        throw new VoiceException(message);
-                }
-            }
-            catch (HangupException)
-            {
-                _logger.LogDebug("MakeCall() duration = {0} seconds. HangupException caught", (DateTimeOffset.Now - startTime).TotalSeconds);
-                throw;
-            }
+            CheckCallState();
         }
 
         /// <summary>
@@ -639,8 +659,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             try
             {
                 _waitCallSet = false;
-                var result = DXXXLIB_H.dx_close(_dxDev);
-                result.ThrowIfStandardRuntimeLibraryError(_dxDev);
+                var result = gclib_h.gc_Close(_gcDev);
+                result.LogIfStandardRuntimeLibraryError(_gcDev, _logger);
+
+                result = DXXXLIB_H.dx_close(_dxDev);
+                result.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
 
             }
             finally
@@ -1194,11 +1217,14 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 case gclib_h.GCEV_CONNECTED:
                     _logger.LogDebug("GCEV_CONNECTED - we do nothing with this event");
                     break;
+                case gclib_h.GCEV_RESETLINEDEV:
+                    _logger.LogDebug("GCEV_RESETLINEDEV - we do nothing with this event");
+                    break;
 
                 #region Handle hangup detection
                 case gclib_h.GCEV_DISCONNECTED:
                     _logger.LogDebug("GCEV_DISCONNECTED");
-                    DropCall(); // will block for gcev_dropcall
+                    DisconnectedEvent(); // will block for gcev_dropcall
                     break;
                 case gclib_h.GCEV_DROPCALL:
                     _logger.LogDebug("GCEV_DROPCALL");
@@ -1207,6 +1233,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 case gclib_h.GCEV_RELEASECALL:
                     _logger.LogDebug("GCEV_RELEASECALL - set crn = 0");
                     _callReferenceNumber = 0;
+                    _disconnectionHappening = false;
 
                     // need to let call analysis finish
                     if (!_inCallProgressAnalysis) throw new HangupException();
@@ -1230,7 +1257,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 case gclib_h.GCEV_TASKFAIL:
                     _logger.LogWarning("GCEV_TASKFAIL");
                     LogWarningMessage(metaEvt);
-                    break;
+                    ResetLineDev();
+                    // todo should I move the line reset here and handle
+                    throw new TaskFailException();
                 case gclib_h.GCEV_ATTACH:
                     _logger.LogDebug("GCEV_ATTACH - we do nothing with this event");
                     break;
@@ -1264,11 +1293,28 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
         }
 
-        private void DropCall()
+        // incoming disconnected event
+        private void DisconnectedEvent()
         {
-            _logger.LogDebug("DropCall() - {0}", _callReferenceNumber);
+            _logger.LogDebug("DisconnectedEvent() - {0}", _callReferenceNumber);
 
             if (_callReferenceNumber == 0) return; // line is idle
+
+            if (_disconnectionHappening)
+            {
+                _logger.LogDebug("A disconnect is already in progress. Can't hangup twice");
+                return;
+            }
+            _disconnectionHappening = true;
+
+            CheckCallState();
+
+            // we don't want to stop call progress analysis
+            if (!_inCallProgressAnalysis)
+            {
+                var stopResult = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
+                stopResult.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
+            }
 
             var result = gclib_h.gc_DropCall(_callReferenceNumber, gclib_h.GC_NORMAL_CLEARING, DXXXLIB_H.EV_ASYNC);
             result.ThrowIfGlobalCallError();
@@ -1853,6 +1899,12 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             var result = DXXXLIB_H.dx_clrdigbuf(devh);
             result.ThrowIfStandardRuntimeLibraryError(devh);
+        }
+
+        public void Reset()
+        {
+            Dispose();
+            Start();
         }
     }
 }

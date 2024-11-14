@@ -129,6 +129,34 @@ public static class DescriptionExtensions
         return callState.ToString();
     }
 
+    public static string CallProgressDescription(this int callProgress)
+    {
+        switch (callProgress)
+        {
+            case DXCALLP_H.CR_BUSY:
+                return "Line busy";
+            case DXCALLP_H.CR_NOANS:
+                return "No answer";
+            case DXCALLP_H.CR_NORB:
+                return "No ringback";
+            case DXCALLP_H.CR_CNCT:
+                return "Call connected";
+            case DXCALLP_H.CR_CEPT:
+                return "Operator intercept";
+            case DXCALLP_H.CR_STOPD:
+                return "Call analysis stopped";
+            case DXCALLP_H.CR_NODIALTONE:
+                return "No dialtone detected";
+            case DXCALLP_H.CR_FAXTONE:
+                return "Fax tone detected";
+            case DXCALLP_H.CR_ERROR:
+                return "Call analysis error";
+        }
+
+        return callProgress.ToString();
+    }
+
+
     public static string CstDescription(this ushort type)
     {
         switch (type)

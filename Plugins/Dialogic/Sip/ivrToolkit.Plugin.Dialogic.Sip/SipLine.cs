@@ -410,10 +410,10 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             CheckCallState();
 
             // get the CPA result
-            result = DXXXLIB_H.ATDX_CPTERM(devh);
+            var callProgressResult = DXXXLIB_H.ATDX_CPTERM(devh);
 
-            _logger.LogDebug("Call Progress Analysius Result {0}", result);
-            switch (result)
+            _logger.LogDebug("Call Progress Analysis Result {0}:{1}", callProgressResult, callProgressResult.CallProgressDescription());
+            switch (callProgressResult)
             {
                 case DXCALLP_H.CR_BUSY:
                     return CallAnalysis.Busy;
@@ -477,7 +477,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     return CallAnalysis.Stopped;
             }
 
-            throw new VoiceException("Unknown dail response: " + result);
+            throw new VoiceException("Unknown dail response: " + callProgressResult);
         }
 
         /**

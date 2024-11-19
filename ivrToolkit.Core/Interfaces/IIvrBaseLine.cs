@@ -99,5 +99,10 @@ namespace ivrToolkit.Core.Interfaces
         /// </summary>
         int Volume { get; set; }
 
+        /// <summary>
+        /// Disposes of the line and then recreates it.
+        /// </summary>
+        void Reset();
+
     }
 }

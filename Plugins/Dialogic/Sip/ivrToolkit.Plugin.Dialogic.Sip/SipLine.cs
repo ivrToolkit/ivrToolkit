@@ -305,54 +305,49 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         public CallAnalysis Dial(string number, int answeringMachineLengthInMilliseconds)
         {
+            _inCallProgressAnalysis = true;
             try
             {
-                // I've decided that any exception thrown during the dial handshake will now return CallAnalysis.Error
-                return DialContinued(number, answeringMachineLengthInMilliseconds);
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "An exception was caught while dialing");
-                ResetLineDev(); // attempt to recover
-                return CallAnalysis.Error;
-            }
-        }
+                _logger.LogDebug("Dial({0}, {1})", number, answeringMachineLengthInMilliseconds);
+                _unmanagedMemoryServicePerCall.Dispose();
 
-        private CallAnalysis DialContinued(string number, int answeringMachineLengthInMilliseconds)
-        {
-            _logger.LogDebug("Dial({0}, {1})", number, answeringMachineLengthInMilliseconds);
-            _unmanagedMemoryServicePerCall.Dispose();
+                // a hangup can interupt a TDX_PLAY,TDX_RECORD or TDX_GETDIG. I try and clear the buffer then but the event doesn't always happen in time
+                // so this is one more attempt to clear _dxDev events. Not that it really matters because I don't action on those events anyways. 
+                ClearEventBuffer(_dxDev);
 
-            // a hangup can interupt a TDX_PLAY,TDX_RECORD or TDX_GETDIG. I try and clear the buffer then but the event doesn't always happen in time
-            // so this is one more attempt to clear _dxDev events. Not that it really matters because I don't action on those events anyways. 
-            ClearEventBuffer(_dxDev);
+                ClearDigits(_dxDev); // make sure we are starting with an empty digit buffer
 
-            ClearDigits(_dxDev); // make sure we are starting with an empty digit buffer
+                var dialToneTid = _voiceProperties.DialTone.Tid;
 
-            var dialToneTid = _voiceProperties.DialTone.Tid;
+                var dialToneEnabled = false;
 
-            var dialToneEnabled = false;
-
-            if (_voiceProperties.PreTestDialTone)
-            {
-                _logger.LogDebug("We are pre-testing the dial tone");
-                dialToneEnabled = true;
-                EnableTone(_dxDev, dialToneTid);
-                var tid = ListenForCustomTones(_dxDev, 2);
-
-                if (tid == 0)
+                if (_voiceProperties.PreTestDialTone)
                 {
-                    _logger.LogDebug("No tone was detected");
-                    DisableTone(_dxDev, dialToneTid);
-                    Hangup();
-                    return CallAnalysis.NoDialTone;
+                    _logger.LogDebug("We are pre-testing the dial tone");
+                    dialToneEnabled = true;
+                    EnableTone(_dxDev, dialToneTid);
+                    var tid = ListenForCustomTones(_dxDev, 2);
+
+                    if (tid == 0)
+                    {
+                        _logger.LogDebug("No tone was detected");
+                        DisableTone(_dxDev, dialToneTid);
+                        Hangup();
+                        return CallAnalysis.NoDialTone;
+                    }
                 }
+
+                if (dialToneEnabled) DisableTone(_dxDev, dialToneTid);
+
+                _logger.LogDebug("about to dial: {0}", number);
+                return DialWithCpa(_dxDev, number, answeringMachineLengthInMilliseconds);
+
+            }
+            finally
+            {
+                _inCallProgressAnalysis = false;
             }
 
-            if (dialToneEnabled) DisableTone(_dxDev, dialToneTid);
-
-            _logger.LogDebug("about to dial: {0}", number);
-            return DialWithCpa(_dxDev, number, answeringMachineLengthInMilliseconds);
         }
 
         /// <summary>
@@ -374,38 +369,28 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             MakeCall(ani, dnis);
 
             // check the CPA
-            _inCallProgressAnalysis = true;
             var startTime = DateTimeOffset.Now;
 
             var result = DXXXLIB_H.dx_dial(devh, "", ref cap, DXCALLP_H.DX_CALLP | DXXXLIB_H.EV_ASYNC);
             result.ThrowIfStandardRuntimeLibraryError(devh);
             CheckCallState();
-            try
+
+            var eventWaitEnum = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_CALLP, 60, new[] { _dxDev, _gcDev }); // 60 seconds
+            switch (eventWaitEnum)
             {
-                var eventWaitEnum = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_CALLP, 60, new[] { _dxDev, _gcDev }); // 60 seconds
-                switch (eventWaitEnum)
-                {
-                    case EventWaitEnum.Success:
-                        _logger.LogDebug("Check CPA duration = {0} seconds. Received TDX_CALLP", (DateTimeOffset.Now - startTime).TotalSeconds);
-                        break;
-                    case EventWaitEnum.Expired:
-                        var message = $"Check CPA duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Timed out waiting for TDX_CALLP";
-                        _logger.LogError(message);
-                        ResetLineDev();
-                        return CallAnalysis.Error;
-                    case EventWaitEnum.Error:
-                        message = $"Check CPA duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Failed waiting for TDX_CALLP";
-                        _logger.LogError(message);
-                        ResetLineDev();
-                        return CallAnalysis.Error;
-                }
-            } catch (TaskFailException) {
-                _logger.LogWarning("A TaskFail event came in during CPA");
-                return CallAnalysis.Error;
-            }
-            finally
-            {
-                _inCallProgressAnalysis = false;
+                case EventWaitEnum.Success:
+                    _logger.LogDebug("Check CPA duration = {0} seconds. Received TDX_CALLP", (DateTimeOffset.Now - startTime).TotalSeconds);
+                    break;
+                case EventWaitEnum.Expired:
+                    var message = $"Check CPA duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Timed out waiting for TDX_CALLP";
+                    _logger.LogError(message);
+                    ResetLineDev();
+                    return CallAnalysis.Error;
+                case EventWaitEnum.Error:
+                    message = $"Check CPA duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Failed waiting for TDX_CALLP";
+                    _logger.LogError(message);
+                    ResetLineDev();
+                    return CallAnalysis.Error;
             }
             CheckCallState();
 
@@ -561,13 +546,16 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _logger.LogDebug("ResetLineDev()");
             try
             {
-                var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
-                result.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
+                if (!_inCallProgressAnalysis)
+                {
+                    var result2 = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
+                    result2.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
+                }
 
-                result = gclib_h.gc_ResetLineDev(_gcDev, DXXXLIB_H.EV_ASYNC);
+                var result = gclib_h.gc_ResetLineDev(_gcDev, DXXXLIB_H.EV_ASYNC);
                 result.ThrowIfGlobalCallError();
 
-                var eventWaitEnum = _eventWaiter.WaitForThisEventOnly(gclib_h.GCEV_RESETLINEDEV, 60, new[] { _gcDev }); // 60 seconds
+                var eventWaitEnum = _eventWaiter.WaitForThisEventOnly(gclib_h.GCEV_RESETLINEDEV, 60, new[] { _dxDev, _gcDev }); // 60 seconds
                 switch (eventWaitEnum)
                 {
                     case EventWaitEnum.Error:
@@ -1304,7 +1292,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             catch (GlobalCallErrorException e)
             {
                 // for now we will just log an error if we get one
-                _logger.LogError(e, null);
+                _logger.LogError(e, "Was not expecting this!");
             }
         }
 
@@ -1335,8 +1323,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             result.ThrowIfGlobalCallError();
 
             // don't include _dxDev right now because we want to finish the drop call first
-            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, new[] { _gcDev }); // 10 seconds
-            _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, _gcDev ) = {0}", eventWaitEnum);
+            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, new[] { _dxDev, _gcDev }); // 10 seconds
+            _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, _dxDev, _gcDev ) = {0}", eventWaitEnum);
         }
 
         /**
@@ -1349,8 +1337,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             result.ThrowIfGlobalCallError();
 
             // don't include _dxDev right now because we want to finish the drop call first
-            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, new[] { _gcDev }); // 10 seconds
-            _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, _gcDev ) = {0}", eventWaitEnum);
+            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, new[] { _dxDev, _gcDev }); // 10 seconds
+            _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, _dxDev, _gcDev ) = {0}", eventWaitEnum);
         }
 
 

@@ -1,8 +1,11 @@
 ﻿using ivrToolkit.Core.Exceptions;
+using ivrToolkit.Core.Util;
 using ivrToolkit.Plugin.Dialogic.Common.DialogicDefs;
+using ivrToolkit.Plugin.Dialogic.Common.Exceptions;
 using ivrToolkit.Plugin.Dialogic.Common.Extensions;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Runtime.InteropServices;
 
 namespace ivrToolkit.Plugin.Dialogic.Common
 {
@@ -32,6 +35,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common
         public const int SyncWaitInfinite = -1;
 
         private ILogger<EventWaiter> _logger;
+        private ILoggerFactory _loggerFactory;
         private bool _disposeTriggerActivated;
 
         public event EventHandler<MetaEventArgs> OnMetaEvent;
@@ -44,6 +48,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common
         public EventWaiter(ILoggerFactory loggerFactory)
         {
             _logger = loggerFactory.CreateLogger<EventWaiter>();
+            _loggerFactory = loggerFactory;
             _logger.LogDebug("Ctr()");
         }
 
@@ -92,7 +97,13 @@ namespace ivrToolkit.Plugin.Dialogic.Common
                         }
                         else
                         {
+                            var message = "";
                             _logger.LogDebug("Skipping event {0}:{1}", eventThrown, eventThrown.EventTypeDescription());
+                            if (eventThrown == gclib_h.GCEV_TASKFAIL)
+                            {
+                                message = $" - {GetTaskFailMessage(metaEvt)}";
+                            }
+                            _logger.LogDebug("Skipping event {0}:{1}{2}", eventThrown, eventThrown.EventTypeDescription(), message);
                         }
                     }
                     else
@@ -117,6 +128,34 @@ namespace ivrToolkit.Plugin.Dialogic.Common
             }
 
             return EventWaitEnum.Error;
+        }
+
+        private string GetTaskFailMessage(METAEVENT metaEvt)
+        {
+            var callStatusInfo = new GC_INFO();
+            UnmanagedMemoryService unmanagedMemory = new UnmanagedMemoryService(_loggerFactory, "One Time");
+            var ptr = unmanagedMemory.Create($"{nameof(GC_INFO)} for GetTaskFailMessage", callStatusInfo);
+
+            var result = gclib_h.gc_ResultInfo(ref metaEvt, ptr);
+            try
+            {
+                result.ThrowIfGlobalCallError();
+
+                callStatusInfo = Marshal.PtrToStructure<GC_INFO>(ptr);
+
+                var ex = new GlobalCallErrorException(callStatusInfo);
+                return ex.Message;
+            }
+            catch (GlobalCallErrorException e)
+            {
+                // for now we will just log an error if we get one
+                _logger.LogError(e, "Was not expecting this!");
+                return $"WTH? - {e.Message}";
+            }
+            finally
+            {
+                unmanagedMemory.Free(ptr);
+            }
         }
 
         private METAEVENT GetEvent(int eventHandle)

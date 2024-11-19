@@ -1085,6 +1085,11 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
 
         }
 
+        public void Reset()
+        {
+            throw new NotImplementedException();
+        }
+
 
 
 

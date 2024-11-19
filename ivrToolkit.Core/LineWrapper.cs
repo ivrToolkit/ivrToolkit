@@ -303,5 +303,15 @@ namespace ivrToolkit.Core
             throw new DisposedException($"Line {_lineNumber} has already been disposed");
         }
 
+        public void Reset()
+        {
+            if (_disposed)
+            {
+                _logger.LogDebug("Reset() - Line is already disposed");
+                return;
+            }
+            _logger.LogDebug("Reset() - Disposing and recreate the line from scratch");
+            _lineImplementation.Reset();
+        }
     }
 }

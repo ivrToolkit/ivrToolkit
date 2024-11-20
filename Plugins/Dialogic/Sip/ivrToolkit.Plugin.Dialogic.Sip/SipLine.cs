@@ -55,6 +55,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private bool _inCallProgressAnalysis;
         private bool _disconnectionHappening;
 
+        private static readonly object _lockObject = new object();
+
         public SipLine(ILoggerFactory loggerFactory, DialogicSipVoiceProperties voiceProperties, int lineNumber)
         {
             _voiceProperties = voiceProperties;
@@ -856,13 +858,22 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 _volume = value;
             }
         }
-
         public void DeleteCustomTones()
         {
+            // Note from Dialogic Voice API:
+            // When using this function in a multi-threaded application, use critical sections or a semaphore
+            // around the function call to ensure a thread-safe application.Failure to do so will result in “Bad
+            // Tone Template ID” errors.
+
+            // and I have had "Bad Tone Template ID" errors.
+
             _logger.LogDebug("DeleteCustomTones()");
-            //Dialogic.DeleteTones(LineNumber);
-            //Dialogic.DeleteTones(_dxDev);
-            AddSpecialCustomTones();
+            lock (_lockObject)
+            {
+                //Dialogic.DeleteTones(LineNumber);
+                //Dialogic.DeleteTones(_dxDev);
+                AddSpecialCustomTones();
+            }
         }
 
         private void AddSpecialCustomTones()

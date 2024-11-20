@@ -80,7 +80,12 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             Open();
             SetDefaultFileType();
-            DeleteCustomTones(); // uses dx_deltones() so I have to readd call progress tones. I also readd special tones
+
+            // I don't think anyone uses this with SIP.
+            if (_voiceProperties.PreTestDialTone)
+            {
+                AddCustomTone(_voiceProperties.DialTone); // adds it and then disables it
+            }
         }
 
         private void Open()
@@ -858,8 +863,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 _volume = value;
             }
         }
-        public void DeleteCustomTones()
+
+        public void AddCustomTone(CustomTone tone)
         {
+            _logger.LogDebug("AddCustomTone()");
+
             // Note from Dialogic Voice API:
             // When using this function in a multi-threaded application, use critical sections or a semaphore
             // around the function call to ensure a thread-safe application.Failure to do so will result in “Bad
@@ -867,44 +875,26 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             // and I have had "Bad Tone Template ID" errors.
 
-            _logger.LogDebug("DeleteCustomTones()");
             lock (_lockObject)
             {
-                //Dialogic.DeleteTones(LineNumber);
-                //Dialogic.DeleteTones(_dxDev);
-                AddSpecialCustomTones();
+                if (tone.ToneType == CustomToneType.Single)
+                {
+                    // TODO
+                }
+                else if (tone.ToneType == CustomToneType.Dual)
+                {
+                    AddDualTone(_dxDev, tone.Tid, tone.Freq1, tone.Frq1Dev, tone.Freq2, tone.Frq2Dev, tone.Mode);
+                }
+                else if (tone.ToneType == CustomToneType.DualWithCadence)
+                {
+                    AddDualToneWithCadence(_dxDev, tone.Tid, tone.Freq1, tone.Frq1Dev, tone.Freq2, tone.Frq2Dev, tone.Ontime,
+                        tone.Ontdev, tone.Offtime,
+                        tone.Offtdev, tone.Repcnt);
+                }
+
+                DisableTone(_dxDev, tone.Tid);
             }
         }
-
-        private void AddSpecialCustomTones()
-        {
-            _logger.LogDebug("AddSpecialCustomTones()");
-            AddCustomTone(_voiceProperties.DialTone);
-        }
-
-
-        public void AddCustomTone(CustomTone tone)
-        {
-            _logger.LogDebug("AddCustomTone()");
-
-            if (tone.ToneType == CustomToneType.Single)
-            {
-                // TODO
-            }
-            else if (tone.ToneType == CustomToneType.Dual)
-            {
-                AddDualTone(_dxDev, tone.Tid, tone.Freq1, tone.Frq1Dev, tone.Freq2, tone.Frq2Dev, tone.Mode);
-            }
-            else if (tone.ToneType == CustomToneType.DualWithCadence)
-            {
-                AddDualToneWithCadence(_dxDev, tone.Tid, tone.Freq1, tone.Frq1Dev, tone.Freq2, tone.Frq2Dev, tone.Ontime,
-                    tone.Ontdev, tone.Offtime,
-                    tone.Offtdev, tone.Repcnt);
-            }
-
-            DisableTone(_dxDev, tone.Tid);
-        }
-
 
         private void AddDualTone(int devh, int tid, int freq1, int fq1Dev, int freq2, int fq2Dev,
             ToneDetection mode)

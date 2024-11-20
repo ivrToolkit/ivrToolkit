@@ -661,7 +661,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             try
             {
-                _waitCallSet = false;
                 var result = gclib_h.gc_Close(_gcDev);
                 result.LogIfStandardRuntimeLibraryError(_gcDev, _logger);
 
@@ -671,6 +670,13 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             finally
             {
+                _waitCallSet = false;
+                _inCallProgressAnalysis = false;
+                _disconnectionHappening = false;
+                _capDisplayed = false;
+                _callReferenceNumber = 0;
+
+
                 _unmanagedMemoryServicePerCall?.Dispose();
                 _unmanagedMemoryServicePerCall = null;
                 _unmanagedMemoryService?.Dispose();
@@ -1906,6 +1912,15 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         public void Reset()
         {
+            _logger.LogDebug("Reset()");
+            try
+            {
+                ResetLineDev();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to reset the line");
+            }
             Dispose();
             Start();
         }

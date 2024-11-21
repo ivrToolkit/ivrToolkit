@@ -222,7 +222,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var crnPtr = IntPtr.Zero;
 
 
-            CheckCallState();
+            DisplayCallState();
             int result;
 
             if (!_waitCallSet)
@@ -250,6 +250,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         public void Hangup()
         {
             _logger.LogDebug("Hangup(); - crn = {0}", _callReferenceNumber);
+            if (_callReferenceNumber == 0) return; // line is not in use
 
             var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
             try
@@ -261,8 +262,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 _logger.LogWarning(e, "Hangup() - dx_stopch");
             }
 
-            if (_callReferenceNumber == 0) return; // line is not in use
-            CheckCallState();
+            DisplayCallState();
 
             if (_disconnectionHappening)
             {
@@ -380,7 +380,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             var result = DXXXLIB_H.dx_dial(devh, "", ref cap, DXCALLP_H.DX_CALLP | DXXXLIB_H.EV_ASYNC);
             result.ThrowIfStandardRuntimeLibraryError(devh);
-            CheckCallState();
+            DisplayCallState();
 
             var eventWaitEnum = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_CALLP, 60, new[] { _dxDev, _gcDev }); // 60 seconds
             switch (eventWaitEnum)
@@ -399,7 +399,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     ResetLineDev();
                     return CallAnalysis.Error;
             }
-            CheckCallState();
+            DisplayCallState();
 
             // get the CPA result
             var callProgressResult = DXXXLIB_H.ATDX_CPTERM(devh);
@@ -417,10 +417,13 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     {
                         // i've seen cpa say "connected" but the call state was stuck on "alerting"
                         // note, this may have been because I didn't start cpa until recieving the alerting event.
-                        //       I now start cpa immediately.
+                        //       I now start cpa immediately. Note: Old cpp SIP version did this too.
                         _logger.LogWarning("Expected CONNECTED state but we are in {0}", callState.CallStateDescription());
                         ResetLineDev();
-                        return CallAnalysis.Error;
+                        // the old cpp SIP version never used to check state here but it would catch it on playfile or getdigits and
+                        // hangup, so I now hangup to be the same as the old version. Ultimately, I would like to get confirmation
+                        // from dialogic as to why this state happens.
+                        throw new HangupException();
                     }
                     var connType = DXXXLIB_H.ATDX_CONNTYPE(devh);
                     switch (connType)
@@ -483,7 +486,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             var startTime = DateTimeOffset.Now;
             _logger.LogDebug("MakeCall({0}, {1})", ani, dnis);
-            CheckCallState();
+            DisplayCallState();
 
             var gcParmBlkp = IntPtr.Zero;
             var sipHeader = $"User-Agent: {_voiceProperties.SipUserAgent}";
@@ -545,7 +548,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             result.ThrowIfGlobalCallError();
             gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
             _unmanagedMemoryServicePerCall.Free(pGclib);
-            CheckCallState();
+            DisplayCallState();
         }
 
         private void ResetLineDev()
@@ -719,7 +722,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private void RecordToFile(string filename, string terminators, DX_XPB xpb, int timeoutMilli)
         {
             _logger.LogDebug("RecordToFile({0}, {1}, {2}, {3})", filename, terminators, xpb, timeoutMilli);
-            CheckCallState();
+            DisplayCallState();
             FlushDigitBuffer();
 
             /* set up DV_TPT */
@@ -1317,7 +1320,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             _disconnectionHappening = true;
 
-            CheckCallState();
+            DisplayCallState();
 
             // we don't want to stop call progress analysis
             if (!_inCallProgressAnalysis)
@@ -1329,7 +1332,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = gclib_h.gc_DropCall(_callReferenceNumber, gclib_h.GC_NORMAL_CLEARING, DXXXLIB_H.EV_ASYNC);
             result.ThrowIfGlobalCallError();
 
-            // don't include _dxDev right now because we want to finish the drop call first
             var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, new[] { _dxDev, _gcDev }); // 10 seconds
             _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, _dxDev, _gcDev ) = {0}", eventWaitEnum);
         }
@@ -1343,7 +1345,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = gclib_h.gc_ReleaseCallEx(_callReferenceNumber, DXXXLIB_H.EV_ASYNC);
             result.ThrowIfGlobalCallError();
 
-            // don't include _dxDev right now because we want to finish the drop call first
             var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, new[] { _dxDev, _gcDev }); // 10 seconds
             _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, _dxDev, _gcDev ) = {0}", eventWaitEnum);
         }
@@ -1601,7 +1602,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private void PlaySipFile(string filename, string terminators)
         {
             _logger.LogDebug("PlaySipFile({0}, {1})", filename, terminators);
-            CheckCallState();
+            DisplayCallState();
 
             /* set up DV_TPT */
             var tpt = GetTerminationConditions(10, terminators, 0);
@@ -1711,17 +1712,15 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         }
 
         /*
-         * Checks the call state.
-         * If the call is no longer connected (call_state == 4) 
-         * then drop the call.
+         * Displays the call state.
          */
-        private void CheckCallState()
+        private void DisplayCallState()
         {
-            _logger.LogDebug("CheckCallState() - crn = {0}", _callReferenceNumber);
+            _logger.LogDebug("DisplayCallState() - crn = {0}", _callReferenceNumber);
             if (_callReferenceNumber == 0) return;
 
             var callState = GetCallState();
-            _logger.LogDebug("CheckCallState: Call State {0}", callState.CallStateDescription());
+            _logger.LogDebug("DisplayCallState: Call State {0}", callState.CallStateDescription());
         }
 
         private int GetCallState()
@@ -1802,7 +1801,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             _logger.LogDebug("NumberOfDigits: {0} terminators: {1} timeout: {2}",
                 numberOfDigits, terminators, timeout);
-            CheckCallState();
+            DisplayCallState();
 
             var state = DXXXLIB_H.ATDX_STATE(devh);
             if (_logger.IsEnabled(LogLevel.Debug))
@@ -1868,7 +1867,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _unmanagedMemoryServicePerCall.Free(digitPtr);
 
             var reason = DXXXLIB_H.ATDX_TERMMSK(devh);
-            CheckCallState();
+            DisplayCallState();
 
             _logger.LogDebug("Type = TDX_GETDIG, Reason = {0} = {1}", reason, GetReasonDescription(reason));
 

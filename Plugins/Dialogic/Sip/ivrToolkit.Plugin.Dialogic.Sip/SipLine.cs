@@ -1259,7 +1259,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     break;
                 case gclib_h.GCEV_EXTENSION:
                     _logger.LogDebug("GCEV_EXTENSION");
-                    ProcessExtension(metaEvt);
+                    //ProcessExtension(metaEvt);
                     break;
                 case gclib_h.GCEV_SETCONFIGDATA:
                     _logger.LogDebug("GCEV_SETCONFIGDATA - handled by call to WaitForEvent");

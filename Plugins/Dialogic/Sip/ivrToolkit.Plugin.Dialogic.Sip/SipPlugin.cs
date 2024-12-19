@@ -339,11 +339,11 @@ public class SipPlugin : IIvrPlugin
         {
             case gclib_h.GCEV_SERVICERESP:
                 _logger.LogDebug("GCEV_SERVICERESP");
-                HandleRegisterStuff(metaEvt);
+                //HandleRegisterStuff(metaEvt);
                 break;
             case gclib_h.GCEV_EXTENSION:
                 _logger.LogDebug("GCEV_EXTENSION");
-                ProcessExtension(metaEvt); // todo some or all of this may not be for board events.
+                //ProcessExtension(metaEvt); // todo some or all of this may not be for board events.
                 break;
         }
     }

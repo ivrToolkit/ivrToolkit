@@ -21,22 +21,29 @@ namespace ivrToolkit.Plugin.Dialogic.Common.Extensions
         }
         public static void ThrowIfGlobalCallError(this int returnCode)
         {
+            if (returnCode != -1) return; // no error
+
             var gcErrorInfo = new GC_INFO();
 
             var structSize = Marshal.SizeOf<GC_INFO>();
             var pUnmanagedMemory = Marshal.AllocHGlobal(structSize);
-            Marshal.StructureToPtr(gcErrorInfo, pUnmanagedMemory, false);
 
-            if (returnCode == -1)
+            try
             {
+                Marshal.StructureToPtr(gcErrorInfo, pUnmanagedMemory, false);
+
                 var result = gclib_h.gc_ErrorInfo(pUnmanagedMemory);
                 if (result == -1) throw new GlobalCallErrorException();
 
                 gcErrorInfo = Marshal.PtrToStructure<GC_INFO>(pUnmanagedMemory);
-                Marshal.FreeHGlobal(pUnmanagedMemory);
 
                 throw new GlobalCallErrorException(gcErrorInfo);
             }
+            finally
+            {
+                Marshal.FreeHGlobal(pUnmanagedMemory);
+            }
+
         }
 
         public static void ThrowIfStandardRuntimeLibraryError(this int returnCode, int devh)

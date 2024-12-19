@@ -1288,22 +1288,30 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             var ptr = _unmanagedMemoryService.Create($"{nameof(GC_INFO)} for LogWarningMessage", callStatusInfo);
 
-            var result = gclib_h.gc_ResultInfo(ref metaEvt, ptr);
             try
             {
-                result.ThrowIfGlobalCallError();
+                var result = gclib_h.gc_ResultInfo(ref metaEvt, ptr);
+                try
+                {
+                    result.ThrowIfGlobalCallError();
 
-                callStatusInfo = Marshal.PtrToStructure<GC_INFO>(ptr);
-                _unmanagedMemoryService.Free(ptr);
+                    callStatusInfo = Marshal.PtrToStructure<GC_INFO>(ptr);
 
-                var ex = new GlobalCallErrorException(callStatusInfo);
-                _logger.LogWarning(ex.Message);
+                    var ex = new GlobalCallErrorException(callStatusInfo);
+                    _logger.LogWarning(ex.Message);
+                }
+                catch (GlobalCallErrorException e)
+                {
+                    // for now we will just log an error if we get one
+                    _logger.LogError(e, "Was not expecting this!");
+                }
+
             }
-            catch (GlobalCallErrorException e)
+            finally
             {
-                // for now we will just log an error if we get one
-                _logger.LogError(e, "Was not expecting this!");
+                _unmanagedMemoryService.Free(ptr);
             }
+
         }
 
         // incoming disconnected event
@@ -1442,37 +1450,43 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 }
             };
 
-
             var pointers = new List<IntPtr>();
             int result;
             var parmblkp = IntPtr.Zero;
-            for (var i = 0; i < 3; i++)
+
+            try
             {
-                var ipCapPtr = _unmanagedMemoryServicePerCall.Create($"ipCap[{i}]", ipCap[i]);
-                pointers.Add(ipCapPtr);
-                result = gclib_h.gc_util_insert_parm_ref(ref parmblkp, gccfgparm_h.GCSET_CHAN_CAPABILITY,
-                    gcip_defs_h.IPPARM_LOCAL_CAPABILITY,
-                    (byte)Marshal.SizeOf<IP_CAPABILITY>(), ipCapPtr);
-                result.ThrowIfGlobalCallError();
+                for (var i = 0; i < 3; i++)
+                {
+                    var ipCapPtr = _unmanagedMemoryServicePerCall.Create($"ipCap[{i}]", ipCap[i]);
+                    pointers.Add(ipCapPtr);
+                    result = gclib_h.gc_util_insert_parm_ref(ref parmblkp, gccfgparm_h.GCSET_CHAN_CAPABILITY,
+                        gcip_defs_h.IPPARM_LOCAL_CAPABILITY,
+                        (byte)Marshal.SizeOf<IP_CAPABILITY>(), ipCapPtr);
+                    result.ThrowIfGlobalCallError();
+                }
+
+                if (crnOrChan == gclib_h.GCTGT_GCLIB_CRN)
+                {
+                    result = gclib_h.gc_SetUserInfo(gclib_h.GCTGT_GCLIB_CRN, _callReferenceNumber, parmblkp,
+                        gclib_h.GC_SINGLECALL);
+                    result.ThrowIfGlobalCallError();
+                }
+                else
+                {
+                    result = gclib_h.gc_SetUserInfo(gclib_h.GCTGT_GCLIB_CHAN, _gcDev, parmblkp, gclib_h.GC_SINGLECALL);
+                    result.ThrowIfGlobalCallError();
+                }
+            }
+            finally
+            {
+                gclib_h.gc_util_delete_parm_blk(parmblkp);
+                foreach (var ptr in pointers)
+                {
+                    _unmanagedMemoryServicePerCall.Free(ptr);
+                }
             }
 
-            if (crnOrChan == gclib_h.GCTGT_GCLIB_CRN)
-            {
-                result = gclib_h.gc_SetUserInfo(gclib_h.GCTGT_GCLIB_CRN, _callReferenceNumber, parmblkp,
-                    gclib_h.GC_SINGLECALL);
-                result.ThrowIfGlobalCallError();
-            }
-            else
-            {
-                result = gclib_h.gc_SetUserInfo(gclib_h.GCTGT_GCLIB_CHAN, _gcDev, parmblkp, gclib_h.GC_SINGLECALL);
-                result.ThrowIfGlobalCallError();
-            }
-
-            gclib_h.gc_util_delete_parm_blk(parmblkp);
-            foreach (var ptr in pointers)
-            {
-                _unmanagedMemoryServicePerCall.Free(ptr);
-            }
         }
 
         private DV_TPT[] GetTerminationConditions(int numberOfDigits, string terminators, int timeoutInMilliseconds)

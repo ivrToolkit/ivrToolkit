@@ -662,7 +662,8 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
     public struct GC_PARM_BLK
     {
         public ushort parm_data_size; /* Size of parm_data_buf in bytes */
-        public byte byte1;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+        public byte[] parm_data_buf;
     }
 
 

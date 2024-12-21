@@ -991,10 +991,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             {
                 var parmData = Marshal.PtrToStructure<GC_PARM_DATA>(parmDatap);
 
+                _logger.LogDebug("{description}:", parmData.set_ID.SetIdDescription());
+
                 switch (parmData.set_ID)
                 {
                     case gcip_defs_h.IPSET_SWITCH_CODEC:
-                        _logger.LogDebug("IPSET_SWITCH_CODEC:");
                         switch (parmData.parm_ID)
                         {
                             case gcip_defs_h.IPPARM_AUDIO_REQUESTED:
@@ -1011,25 +1012,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
                         break;
                     case gcip_defs_h.IPSET_MEDIA_STATE:
-                        _logger.LogDebug("IPSET_MEDIA_STATE:");
-                        switch (parmData.parm_ID)
-                        {
-                            case gcip_defs_h.IPPARM_TX_CONNECTED:
-                                _logger.LogDebug("  IPPARM_TX_CONNECTED");
-                                break;
-                            case gcip_defs_h.IPPARM_TX_DISCONNECTED:
-                                _logger.LogDebug("  IPPARM_TX_DISCONNECTED");
-                                break;
-                            case gcip_defs_h.IPPARM_RX_CONNECTED:
-                                _logger.LogDebug("  IPPARM_RX_CONNECTED");
-                                break;
-                            case gcip_defs_h.IPPARM_RX_DISCONNECTED:
-                                _logger.LogDebug("  IPPARM_RX_DISCONNECTED");
-                                break;
-                            default:
-                                _logger.LogError("  Got unknown extension parmID {0}", parmData.parm_ID);
-                                break;
-                        }
+                        _logger.LogDebug("  {description}", parmData.parm_ID.IpMediaStateDescription());
 
                         if (parmData.value_size == Marshal.SizeOf<IP_CAPABILITY>())
                         {
@@ -1044,40 +1027,20 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
                         break;
                     case gcip_defs_h.IPSET_IPPROTOCOL_STATE:
-                        _logger.LogDebug("IPSET_IPPROTOCOL_STATE:");
-                        switch (parmData.parm_ID)
-                        {
-                            case gcip_defs_h.IPPARM_SIGNALING_CONNECTED:
-                                _logger.LogDebug("  IPPARM_SIGNALING_CONNECTED");
-                                break;
-                            case gcip_defs_h.IPPARM_SIGNALING_DISCONNECTED:
-                                _logger.LogDebug("  IPPARM_SIGNALING_DISCONNECTED");
-                                break;
-                            case gcip_defs_h.IPPARM_CONTROL_CONNECTED:
-                                _logger.LogDebug("  IPPARM_CONTROL_CONNECTED");
-                                break;
-                            case gcip_defs_h.IPPARM_CONTROL_DISCONNECTED:
-                                _logger.LogDebug("  IPPARM_CONTROL_DISCONNECTED");
-                                break;
-                            default:
-                                _logger.LogError("  Got unknown extension parmID {0}", parmData.parm_ID);
-                                break;
-                        }
-
+                        _logger.LogDebug("  {description}", parmData.parm_ID.IpProtoolStateDescription());
                         break;
                     case gcip_defs_h.IPSET_RTP_ADDRESS:
-                        _logger.LogDebug("IPSET_RTP_ADDRESS:");
                         switch (parmData.parm_ID)
                         {
                             case gcip_defs_h.IPPARM_LOCAL:
-                                _logger.LogDebug("IPPARM_LOCAL: size = {0}", parmData.value_size);
+                                _logger.LogDebug("  IPPARM_LOCAL: size = {0}", parmData.value_size);
                                 var ptr = parmDatap + 5;
                                 var ipAddr = Marshal.PtrToStructure<RTP_ADDR>(ptr);
                                 _logger.LogDebug("  IPPARM_LOCAL: address:{0}, port {1}", ipAddr.u_ipaddr.ipv4.ToIp(),
                                     ipAddr.port);
                                 break;
                             case gcip_defs_h.IPPARM_REMOTE:
-                                _logger.LogDebug("IPPARM_REMOTE: size = {0}", parmData.value_size);
+                                _logger.LogDebug("  IPPARM_REMOTE: size = {0}", parmData.value_size);
                                 var ptr2 = parmDatap + 5;
                                 var ipAddr2 = Marshal.PtrToStructure<RTP_ADDR>(ptr2);
                                 _logger.LogDebug("  IPPARM_REMOTE: address:{0}, port {1}", ipAddr2.u_ipaddr.ipv4.ToIp(),
@@ -1093,42 +1056,34 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                      * IPSET_MSG_SIP | This Set ID is used to set or get the SIP message type.
                      */
                     case gcip_defs_h.IPSET_MSG_SIP:
-                        _logger.LogInformation("IPSET_MSG_SIP: {0}", parmData.parm_ID);
                         switch (parmData.parm_ID)
                         {
                             case gcip_defs_h.IPPARM_MSGTYPE:
-                                var messType = parmData.value_buf;
-                                _logger.LogDebug("  value_size = {0}, value_buf = {1}", parmData.value_size, parmData.value_buf);
+                                var ptr = parmDatap + 5;
+                                var messType = Marshal.ReadInt32(ptr);
 
-                                // TODO I don;t think this is done properly at all.
-                                switch (messType)
-                                {
-                                    case gcip_defs_h.IP_MSGTYPE_SIP_INFO_OK:
-                                        _logger.LogDebug("  IP_MSGTYPE_SIP_INFO_OK");
-                                        break;
-                                    case gcip_defs_h.IP_MSGTYPE_SIP_INFO_FAILED:
-                                        _logger.LogDebug("  IP_MSGTYPE_SIP_INFO_FAILED");
-                                        break;
-                                }
+                                var description = messType.IpMsgTypeDescription();
+                                _logger.LogDebug("  {description}", description);
+                                _logger.LogDebug("  value_size = {0}, value_buf = {1}", parmData.value_size, parmData.value_buf);
                                 break;
                             case gcip_defs_h.IPPARM_MSG_SIP_RESPONSE_CODE:
                                 _logger.LogDebug(" value_size = {0}, value_buf = {1}", parmData.value_size, parmData.value_buf);
+                                break;
+                            default:
+                                _logger.LogError("  Got unknown extension parmID {0}", parmData.parm_ID);
                                 break;
                         }
                         _logger.LogInformation("  IPSET_MSG_SIP:: size = {0}", parmData.value_size);
                         break;
                     case gcip_defs_h.IPSET_SIP_MSGINFO:
-                        _logger.LogInformation("IPSET_SIP_MSGINFO:");
                         var str = GetStringFromPtr(parmDatap + 5, parmData.value_size);
                         _logger.LogDebug("  {0}: {1}", parmData.parm_ID.SipMsgInfo(), str);
-                        break;
-                    default:
-                        _logger.LogError("Got unknown set_ID({0}).", parmData.set_ID);
                         break;
                 }
 
                 parmDatap = gcip_h.gc_util_next_parm(gcParmBlkp, parmDatap);
             }
+            gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
         }
 
 
@@ -1174,6 +1129,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         private void HandleOtherEvents(uint eventHandle, METAEVENT metaEvt)
         {
+            _logger.LogDebug("HandleOtherEvents() - {0}: {1}", metaEvt.evttype, metaEvt.evttype.EventTypeDescription());
             switch (metaEvt.evttype)
             {
                 case DXXXLIB_H.TDX_CST: // a call status transition event.
@@ -1182,7 +1138,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     var dxCst = Marshal.PtrToStructure<DX_CST>(ptr);
                     _logger.LogDebug("Call status transition event = {0}: {1}", dxCst.cst_event, dxCst.cst_event.CstDescription());
                     break;
-
             }
         }
 
@@ -1193,6 +1148,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         private void HandleGcEvents(METAEVENT metaEvt)
         {
+            _logger.LogDebug("HandleGcEvents() - {0}: {1}", metaEvt.evttype, metaEvt.evttype.EventTypeDescription());
             switch (metaEvt.evttype)
             {
                 case gclib_h.GCEV_ALERTING:
@@ -1259,7 +1215,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     break;
                 case gclib_h.GCEV_EXTENSION:
                     _logger.LogDebug("GCEV_EXTENSION");
-                    //ProcessExtension(metaEvt);
+                    ProcessExtension(metaEvt);
                     break;
                 case gclib_h.GCEV_SETCONFIGDATA:
                     _logger.LogDebug("GCEV_SETCONFIGDATA - handled by call to WaitForEvent");
@@ -1277,7 +1233,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     _logger.LogDebug("GCEV_ATTACH - we do nothing with this event");
                     break;
                 default:
-                    _logger.LogInformation("NotExpecting event - {0}: {1}", metaEvt.evttype, metaEvt.evttype.EventTypeDescription());
+                    _logger.LogWarning("NotExpecting event - {0}: {1}", metaEvt.evttype, metaEvt.evttype.EventTypeDescription());
                     break;
             }
         }

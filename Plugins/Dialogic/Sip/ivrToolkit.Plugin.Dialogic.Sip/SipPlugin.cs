@@ -130,7 +130,7 @@ public class SipPlugin : IIvrPlugin
 
         ipVirtboard[0].sip_signaling_port = sipSignalingPort; // or application defined port for SIP
         ipVirtboard[0].sup_serv_mask = gcip_defs_h.IP_SUP_SERV_CALL_XFER; // Enable SIP Transfer Feature
-        ipVirtboard[0].sip_msginfo_mask = gcip_defs_h.IP_SIP_MSGINFO_ENABLE; // Enable SIP header
+        ipVirtboard[0].sip_msginfo_mask = gcip_defs_h.IP_SIP_MSGINFO_ENABLE | gcip_defs_h.IP_SIP_MIME_ENABLE; // Enable SIP header
         ipVirtboard[0].reserved = IntPtr.Zero; // must be set to NULL
 
         ipVirtboard[0].sip_max_calls = maxCalls;
@@ -339,11 +339,11 @@ public class SipPlugin : IIvrPlugin
         {
             case gclib_h.GCEV_SERVICERESP:
                 _logger.LogDebug("GCEV_SERVICERESP");
-                //HandleRegisterStuff(metaEvt);
+                HandleRegisterStuff(metaEvt);
                 break;
             case gclib_h.GCEV_EXTENSION:
                 _logger.LogDebug("GCEV_EXTENSION");
-                //ProcessExtension(metaEvt); // todo some or all of this may not be for board events.
+                ProcessExtension(metaEvt); // todo some or all of this may not be for board events.
                 break;
         }
     }
@@ -470,19 +470,12 @@ public class SipPlugin : IIvrPlugin
                     switch (parmData.parm_ID)
                     {
                         case gcip_defs_h.IPPARM_MSGTYPE:
-                            var messType = parmData.value_buf;
-                            _logger.LogDebug("  value_size = {0}, value_buf = {1}", parmData.value_size, parmData.value_buf);
+                            var ptr = parmDatap + 5;
+                            var messType = Marshal.ReadInt32(ptr);
 
-                            // TODO I don;t think this is done properly at all.
-                            switch (messType)
-                            {
-                                case gcip_defs_h.IP_MSGTYPE_SIP_INFO_OK:
-                                    _logger.LogDebug("  IP_MSGTYPE_SIP_INFO_OK");
-                                    break;
-                                case gcip_defs_h.IP_MSGTYPE_SIP_INFO_FAILED:
-                                    _logger.LogDebug("  IP_MSGTYPE_SIP_INFO_FAILED");
-                                    break;
-                            }
+                            var description = messType.IpMsgTypeDescription();
+                            _logger.LogDebug("  {description}", description);
+                            _logger.LogDebug("  value_size = {0}, value_buf = {1}", parmData.value_size, parmData.value_buf);
                             break;
                         case gcip_defs_h.IPPARM_MSG_SIP_RESPONSE_CODE:
                             _logger.LogDebug(" value_size = {0}, value_buf = {1}", parmData.value_size, parmData.value_buf);
@@ -502,6 +495,7 @@ public class SipPlugin : IIvrPlugin
 
             parmDatap = gcip_h.gc_util_next_parm(gcParmBlkp, parmDatap);
         }
+        gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
     }
 
     private void HandleRegisterStuff(METAEVENT metaEvt)
@@ -574,6 +568,7 @@ public class SipPlugin : IIvrPlugin
 
             parmDatap = gcip_h.gc_util_next_parm(gcParmBlkp, parmDatap);
         }
+        gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
 
         _logger.LogDebug("HandleRegisterStuff(METAEVENT metaEvt) - done!");
     }

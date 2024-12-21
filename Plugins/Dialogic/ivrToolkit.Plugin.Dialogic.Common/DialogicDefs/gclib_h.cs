@@ -596,7 +596,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         GC_PARM_DATA data structure used in GC_PARM_BLK
     */
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
-    public struct GC_PARM_DATA
+    public struct GC_PARM_DATA_HIDE
     {
         public ushort set_ID; /* Set ID (two bytes long)*/
         public ushort parm_ID; /* Parameter ID (two bytes long) */
@@ -604,6 +604,15 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public byte value_buf; /* Address to the parm value buffer */
     }
 
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+    public struct GC_PARM_DATA
+    {
+        public ushort set_ID; // Set ID (two bytes long)
+        public ushort parm_ID; //Parameter ID (two bytes long)
+        public byte value_size; // Size of value_buf in bytes
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+        public byte[] value_buf; // Address to the parm value buffer
+    }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
     public struct GCLIB_WAITCALL_BLK

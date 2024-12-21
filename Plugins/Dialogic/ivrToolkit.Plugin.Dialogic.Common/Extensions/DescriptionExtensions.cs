@@ -195,6 +195,117 @@ public static class DescriptionExtensions
 
         return "unknown";
     }
+
+    public static string IpMediaStateDescription(this ushort mediaStateParam)
+    {
+        switch (mediaStateParam)
+        {
+            case gcip_defs_h.IPPARM_TX_CONNECTED:
+                return "IPPARM_TX_CONNECTED";
+            case gcip_defs_h.IPPARM_TX_DISCONNECTED:
+                return "IPPARM_TX_DISCONNECTED";
+            case gcip_defs_h.IPPARM_RX_CONNECTED:
+                return "IPPARM_RX_CONNECTED";
+            case gcip_defs_h.IPPARM_RX_DISCONNECTED:
+                return "IPPARM_RX_DISCONNECTED";
+            default:
+                return $"Unknown mediaStateParam {mediaStateParam}";
+        }
+    }
+
+    public static string SetIdDescription(this ushort setId)
+    {
+        switch (setId)
+        {
+            case gcip_defs_h.IPSET_SWITCH_CODEC:
+                return "IPSET_SWITCH_CODEC";
+            case gcip_defs_h.IPSET_MEDIA_STATE:
+                return "IPSET_MEDIA_STATE";
+            case gcip_defs_h.IPSET_IPPROTOCOL_STATE:
+                return "IPSET_IPPROTOCOL_STATE";
+            case gcip_defs_h.IPSET_RTP_ADDRESS:
+                return "IPSET_RTP_ADDRESS";
+            case gcip_defs_h.IPSET_MSG_SIP:
+                return "IPSET_MSG_SIP";
+            case gcip_defs_h.IPSET_SIP_MSGINFO:
+                return "IPSET_SIP_MSGINFO";
+            default:
+                return $"Unknown set_ID({setId})";
+        }
+    }
+
+    public static string IpProtoolStateDescription (this ushort protocalStateParam)
+    {
+        switch (protocalStateParam)
+        {
+            case gcip_defs_h.IPPARM_SIGNALING_CONNECTED:
+                return "IPPARM_SIGNALING_CONNECTED";
+            case gcip_defs_h.IPPARM_SIGNALING_DISCONNECTED:
+                return "IPPARM_SIGNALING_DISCONNECTED";
+            case gcip_defs_h.IPPARM_CONTROL_CONNECTED:
+                return "IPPARM_CONTROL_CONNECTED";
+            case gcip_defs_h.IPPARM_CONTROL_DISCONNECTED:
+                return "IPPARM_CONTROL_DISCONNECTED";
+            case gcip_defs_h.IPPARM_EST_CONTROL_FAILED:
+                return "IPPARM_EST_CONTROL_FAILED";
+            default:
+                return $"Unknown protocalStateParam {protocalStateParam}";
+        }
+    }
+
+    public static string IpMsgTypeDescription(this int messageType)
+    {
+        switch (messageType)
+        {
+            case gcip_defs_h.IP_MSGTYPE_SIP_CANCEL:
+                return "IP_MSGTYPE_SIP_CANCEL";
+            case gcip_defs_h.IP_MSGTYPE_SIP_INFO:
+                return "IP_MSGTYPE_SIP_INFO";
+            case gcip_defs_h.IP_MSGTYPE_SIP_INFO_FAILED:
+                return "IP_MSGTYPE_SIP_INFO_FAILED";
+            case gcip_defs_h.IP_MSGTYPE_SIP_INFO_OK:
+                return "IP_MSGTYPE_SIP_INFO_OK";
+            case gcip_defs_h.IP_MSGTYPE_SIP_MESSAGE:
+                return "IP_MSGTYPE_SIP_MESSAGE";
+            case gcip_defs_h.IP_MSGTYPE_SIP_MESSAGE_FAILED:
+                return "IP_MSGTYPE_SIP_MESSAGE_FAILED";
+            case gcip_defs_h.IP_MSGTYPE_SIP_MESSAGE_OK:
+                return "IP_MSGTYPE_SIP_MESSAGE_OK";
+            case gcip_defs_h.IP_MSGTYPE_SIP_NOTIFY:
+                return "IP_MSGTYPE_SIP_NOTIFY";
+            case gcip_defs_h.IP_MSGTYPE_SIP_NOTIFY_ACCEPT:
+                return "IP_MSGTYPE_SIP_NOTIFY_ACCEPT";
+            case gcip_defs_h.IP_MSGTYPE_SIP_NOTIFY_REJECT:
+                return "IP_MSGTYPE_SIP_NOTIFY_REJECT";
+            case gcip_defs_h.IP_MSGTYPE_SIP_OPTIONS:
+                return "IP_MSGTYPE_SIP_OPTIONS";
+            case gcip_defs_h.IP_MSGTYPE_SIP_OPTIONS_FAILED:
+                return "IP_MSGTYPE_SIP_OPTIONS_FAILED";
+            case gcip_defs_h.IP_MSGTYPE_SIP_OPTIONS_OK:
+                return "IP_MSGTYPE_SIP_OPTIONS_OK";
+            case gcip_defs_h.IP_MSGTYPE_SIP_REINVITE_ACCEPT:
+                return "IP_MSGTYPE_SIP_REINVITE_ACCEPT";
+            case gcip_defs_h.IP_MSGTYPE_SIP_REINVITE_REJECT:
+                return "IP_MSGTYPE_SIP_REINVITE_REJECT";
+            case gcip_defs_h.IP_MSGTYPE_SIP_SUBSCRIBE:
+                return "IP_MSGTYPE_SIP_SUBSCRIBE";
+            case gcip_defs_h.IP_MSGTYPE_SIP_SUBSCRIBE_ACCEPT:
+                return "IP_MSGTYPE_SIP_SUBSCRIBE_ACCEPT";
+            case gcip_defs_h.IP_MSGTYPE_SIP_SUBSCRIBE_REJECT:
+                return "IP_MSGTYPE_SIP_SUBSCRIBE_REJECT";
+            case gcip_defs_h.IP_MSGTYPE_SIP_SUBSCRIBE_EXPIRE:
+                return "IP_MSGTYPE_SIP_SUBSCRIBE_EXPIRE";
+            case gcip_defs_h.IP_MSGTYPE_SIP_UPDATE:
+                return "IP_MSGTYPE_SIP_UPDATE";
+            case gcip_defs_h.IP_MSGTYPE_SIP_UPDATE_OK:
+                return "IP_MSGTYPE_SIP_UPDATE_OK";
+            case gcip_defs_h.IP_MSGTYPE_SIP_UPDATE_FAILED:
+                return "IP_MSGTYPE_SIP_UPDATE_FAILED";
+
+        }
+        return $"Unknown IP_MSGTYPE_SIP {messageType}";
+    }
+
     public static string SipMsgInfo(this ushort parmId)
     {
         switch (parmId)

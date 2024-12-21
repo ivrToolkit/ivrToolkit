@@ -220,7 +220,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             ClearDigits(_dxDev); // make sure we are starting with an empty digit buffer
 
-            _unmanagedMemoryServicePerCall.Dispose();
+            _unmanagedMemoryServicePerCall.Dispose(); // there is unlikely anything to free. This is just a fail safe.
 
             var crnPtr = IntPtr.Zero;
 
@@ -319,7 +319,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             try
             {
                 _logger.LogDebug("Dial({0}, {1})", number, answeringMachineLengthInMilliseconds);
-                _unmanagedMemoryServicePerCall.Dispose();
+                _unmanagedMemoryServicePerCall.Dispose(); // there is unlikely anything to release, this is just a failsafe.
 
                 // a hangup can interupt a TDX_PLAY,TDX_RECORD or TDX_GETDIG. I try and clear the buffer then but the event doesn't always happen in time
                 // so this is one more attempt to clear _dxDev events. Not that it really matters because I don't action on those events anyways. 
@@ -492,66 +492,80 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             DisplayCallState();
 
             var gcParmBlkp = IntPtr.Zero;
-            var sipHeader = $"User-Agent: {_voiceProperties.SipUserAgent}";
-            _logger.LogDebug("SipHeader is: {0}", sipHeader);
+            InsertSipHeader(ref gcParmBlkp, $"User-Agent: {_voiceProperties.SipUserAgent}");
+            InsertSipHeader(ref gcParmBlkp, $"From: {_voiceProperties.SipFrom}<sip:{ani}>");
+            InsertSipHeader(ref gcParmBlkp, $"Contact: {_voiceProperties.SipConctact}<sip:{ani}:{_voiceProperties.SipSignalingPort}>");
+            SetUserInfo(ref gcParmBlkp); // set user info and delete the parameter block
 
-            var dataSize = (uint)(sipHeader.Length + 1);
-            var pSipHeader1 = _unmanagedMemoryServicePerCall.StringToHGlobalAnsi("pSipHeader1", sipHeader);
-            var result = gclib_h.gc_util_insert_parm_ref_ex(ref gcParmBlkp, gcip_defs_h.IPSET_SIP_MSGINFO,
-                gcip_defs_h.IPPARM_SIP_HDR, dataSize, pSipHeader1);
-            result.ThrowIfGlobalCallError();
-
-            sipHeader = $"From: {_voiceProperties.SipFrom}<sip:{ani}>"; //From header
-            _logger.LogDebug("SipHeader is: {0}", sipHeader);
-            dataSize = (uint)(sipHeader.Length + 1);
-            var pSipHeader2 = _unmanagedMemoryServicePerCall.StringToHGlobalAnsi("pSipHeader2", sipHeader);
-            result = gclib_h.gc_util_insert_parm_ref_ex(ref gcParmBlkp, gcip_defs_h.IPSET_SIP_MSGINFO,
-                gcip_defs_h.IPPARM_SIP_HDR, dataSize, pSipHeader2);
-            result.ThrowIfGlobalCallError();
-
-            sipHeader = $"Contact: {_voiceProperties.SipConctact}<sip:{ani}:{_voiceProperties.SipSignalingPort}>"; //Contact header
-            _logger.LogDebug("SipHeader is: {0}", sipHeader);
-            dataSize = (uint)(sipHeader.Length + 1);
-            var pSipHeader3 = _unmanagedMemoryServicePerCall.StringToHGlobalAnsi("pSipHeader3", sipHeader);
-            result = gclib_h.gc_util_insert_parm_ref_ex(ref gcParmBlkp, gcip_defs_h.IPSET_SIP_MSGINFO,
-                gcip_defs_h.IPPARM_SIP_HDR, dataSize, pSipHeader3);
-            result.ThrowIfGlobalCallError();
-
-
-            result = gclib_h.gc_SetUserInfo(gclib_h.GCTGT_GCLIB_CHAN, _gcDev, gcParmBlkp, gclib_h.GC_SINGLECALL);
-            result.ThrowIfGlobalCallError();
-            gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
-
-            _unmanagedMemoryServicePerCall.Free(pSipHeader1);
-            _unmanagedMemoryServicePerCall.Free(pSipHeader2);
-            _unmanagedMemoryServicePerCall.Free(pSipHeader3);
-
-            gcParmBlkp = IntPtr.Zero;
-            result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkp, gcip_defs_h.IPSET_PROTOCOL,
-                gcip_defs_h.IPPARM_PROTOCOL_BITMASK, sizeof(int), gcip_defs_h.IP_PROTOCOL_SIP);
-            result.ThrowIfGlobalCallError();
-
-            var gclibMkBlk = new GCLIB_MAKECALL_BLK();
-
-            gclibMkBlk.origination.address = ani;
-            gclibMkBlk.origination.address_type = gclib_h.GCADDRTYPE_TRANSPARENT;
-
-            gclibMkBlk.ext_datap = gcParmBlkp;
-
-            var pGclib = _unmanagedMemoryServicePerCall.Create(nameof(GC_MAKECALL_BLK), gclibMkBlk);
-            var gcMkBlk = new GC_MAKECALL_BLK
+            var result = 0;
+            try
             {
-                cclib = IntPtr.Zero,
-                gclib = pGclib
-            };
+                gcParmBlkp = IntPtr.Zero;
+                result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkp, gcip_defs_h.IPSET_PROTOCOL,
+                    gcip_defs_h.IPPARM_PROTOCOL_BITMASK, sizeof(int), gcip_defs_h.IP_PROTOCOL_SIP);
+                result.ThrowIfGlobalCallError();
+            }
+            catch
+            {
+                if (gcParmBlkp != IntPtr.Zero) gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
+                throw;
+            }
 
-            SetCodec(gclib_h.GCTGT_GCLIB_CHAN);
+            var gclibMakeCallBlk = new GCLIB_MAKECALL_BLK();
+            gclibMakeCallBlk.origination.address = ani;
+            gclibMakeCallBlk.origination.address_type = gclib_h.GCADDRTYPE_TRANSPARENT;
+            gclibMakeCallBlk.ext_datap = gcParmBlkp;
 
-            result = gclib_h.gc_MakeCall(_gcDev, ref _callReferenceNumber, dnis, ref gcMkBlk, 30, DXXXLIB_H.EV_ASYNC);
-            result.ThrowIfGlobalCallError();
-            gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
-            _unmanagedMemoryServicePerCall.Free(pGclib);
-            DisplayCallState();
+
+            var gclibMkBlkPtr = _unmanagedMemoryServicePerCall.Create(nameof(GC_MAKECALL_BLK), gclibMakeCallBlk);
+            try
+            {
+                var gcMakeCallBlk = new GC_MAKECALL_BLK
+                {
+                    cclib = IntPtr.Zero,
+                    gclib = gclibMkBlkPtr
+                };
+
+                SetCodec(gclib_h.GCTGT_GCLIB_CHAN);
+
+                result = gclib_h.gc_MakeCall(_gcDev, ref _callReferenceNumber, dnis, ref gcMakeCallBlk, 30, DXXXLIB_H.EV_ASYNC);
+                result.ThrowIfGlobalCallError();
+            }
+            finally
+            {
+                if (gcParmBlkp != IntPtr.Zero) gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
+                _unmanagedMemoryServicePerCall.Free(gclibMkBlkPtr);
+                DisplayCallState();
+            }
+        }
+
+        private void SetUserInfo(ref IntPtr gcParmBlkp)
+        {
+            try
+            {
+                var result = gclib_h.gc_SetUserInfo(gclib_h.GCTGT_GCLIB_CHAN, _gcDev, gcParmBlkp, gclib_h.GC_SINGLECALL);
+                result.ThrowIfGlobalCallError();
+            }
+            finally
+            {
+                if (gcParmBlkp != IntPtr.Zero) gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
+            }
+        }
+
+        private void InsertSipHeader(ref IntPtr gcParmBlkp, string header)
+        {
+            _logger.LogDebug("SipHeader is: {0}", header);
+            var pSipHeader = _unmanagedMemoryServicePerCall.StringToHGlobalAnsi("pSipHeader", header);
+            try
+            {
+                var result = gclib_h.gc_util_insert_parm_ref_ex(ref gcParmBlkp, gcip_defs_h.IPSET_SIP_MSGINFO, 
+                    gcip_defs_h.IPPARM_SIP_HDR, (uint)(header.Length + 1), pSipHeader);
+                result.ThrowIfGlobalCallError();
+            }
+            finally
+            {
+                _unmanagedMemoryServicePerCall.Free(pSipHeader);
+            }
         }
 
         private void ResetLineDev()
@@ -1323,7 +1337,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             finally
             {
-                gclib_h.gc_util_delete_parm_blk(parmblkp);
+                if (parmblkp != IntPtr.Zero) gclib_h.gc_util_delete_parm_blk(parmblkp);
                 foreach (var ptr in pointers)
                 {
                     _unmanagedMemoryServicePerCall.Free(ptr);
@@ -1684,6 +1698,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             {
                 var err = srllib_h.ATDV_ERRMSGP(devh);
                 var message = err.IntPtrToString();
+                _unmanagedMemoryServicePerCall.Free(digitPtr);
                 throw new VoiceException(message);
             }
 

@@ -73,7 +73,9 @@ namespace ivrToolkit.Plugin.Dialogic.Common
 
         public EventWaitEnum WaitForEvent(int waitForEvent, int waitSeconds, int[] handles, bool showDebug = true, bool waitExact = false)
         {
-            if (showDebug) _logger.LogDebug("*** Waiting for event: {0}: {1}, waitSeconds = {2}", waitForEvent, waitForEvent.EventTypeDescription(), waitSeconds);
+            if (showDebug) _logger.LogDebug("*** Waiting for event: {0}: {1}, waitSeconds = {2}, handles = {3}, waitExact = {4}", 
+                waitForEvent, waitForEvent.EventTypeDescription(), 
+                waitSeconds, string.Join(",", handles), waitExact);
 
             var eventThrown = -1;
             var count = 0;

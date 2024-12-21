@@ -45,6 +45,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private readonly ILoggerFactory _loggerFactory;
         private bool _capDisplayed;
         private readonly EventWaiter _eventWaiter;
+        private ProcessExtension _processExtension;
 
         public IIvrLineManagement Management => this;
 
@@ -67,6 +68,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             _eventWaiter = new EventWaiter(_loggerFactory);
             _eventWaiter.OnMetaEvent += MetaEvent;
+
+            _processExtension = new ProcessExtension(loggerFactory);
 
             Start();
         }
@@ -974,118 +977,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             return 0;
         }
 
-        /**
-        * Process a metaevent extension block.
-        */
-        private void ProcessExtension(METAEVENT metaEvt)
-        {
-            // todo this mess needs to be written better :)
-            _logger.LogDebug("ProcessExtension(METAEVENT metaEvt)");
-
-            var gcParmBlkp = metaEvt.extevtdatap + 1;
-            var parmDatap = IntPtr.Zero;
-
-            parmDatap = gcip_h.gc_util_next_parm(gcParmBlkp, parmDatap);
-
-            while (parmDatap != IntPtr.Zero)
-            {
-                var parmData = Marshal.PtrToStructure<GC_PARM_DATA>(parmDatap);
-
-                _logger.LogDebug("{description}:", parmData.set_ID.SetIdDescription());
-
-                switch (parmData.set_ID)
-                {
-                    case gcip_defs_h.IPSET_SWITCH_CODEC:
-                        switch (parmData.parm_ID)
-                        {
-                            case gcip_defs_h.IPPARM_AUDIO_REQUESTED:
-                                _logger.LogDebug("  IPPARM_AUDIO_REQUESTED:");
-                                ResponseCodecRequest(true);
-                                break;
-                            case gcip_defs_h.IPPARM_READY:
-                                _logger.LogDebug("  IPPARM_READY:");
-                                break;
-                            default:
-                                _logger.LogError("  Got unknown extension parmID {0}", parmData.parm_ID);
-                                break;
-                        }
-
-                        break;
-                    case gcip_defs_h.IPSET_MEDIA_STATE:
-                        _logger.LogDebug("  {description}", parmData.parm_ID.IpMediaStateDescription());
-
-                        if (parmData.value_size == Marshal.SizeOf<IP_CAPABILITY>())
-                        {
-                            var ptr = parmDatap + 5;
-                            var ipCapp = Marshal.PtrToStructure<IP_CAPABILITY>(ptr);
-
-                            _logger.LogDebug(
-                                "    stream codec infomation for TX: capability({0}), dir({1}), frames_per_pkt({2}), VAD({3})",
-                                ipCapp.capability, ipCapp.direction, ipCapp.extra.audio.frames_per_pkt,
-                                ipCapp.extra.audio.VAD);
-                        }
-
-                        break;
-                    case gcip_defs_h.IPSET_IPPROTOCOL_STATE:
-                        _logger.LogDebug("  {description}", parmData.parm_ID.IpProtoolStateDescription());
-                        break;
-                    case gcip_defs_h.IPSET_RTP_ADDRESS:
-                        switch (parmData.parm_ID)
-                        {
-                            case gcip_defs_h.IPPARM_LOCAL:
-                                _logger.LogDebug("  IPPARM_LOCAL: size = {0}", parmData.value_size);
-                                var ptr = parmDatap + 5;
-                                var ipAddr = Marshal.PtrToStructure<RTP_ADDR>(ptr);
-                                _logger.LogDebug("  IPPARM_LOCAL: address:{0}, port {1}", ipAddr.u_ipaddr.ipv4.ToIp(),
-                                    ipAddr.port);
-                                break;
-                            case gcip_defs_h.IPPARM_REMOTE:
-                                _logger.LogDebug("  IPPARM_REMOTE: size = {0}", parmData.value_size);
-                                var ptr2 = parmDatap + 5;
-                                var ipAddr2 = Marshal.PtrToStructure<RTP_ADDR>(ptr2);
-                                _logger.LogDebug("  IPPARM_REMOTE: address:{0}, port {1}", ipAddr2.u_ipaddr.ipv4.ToIp(),
-                                    ipAddr2.port);
-                                break;
-                            default:
-                                _logger.LogError("  Got unknown extension parmID {0}", parmData.parm_ID);
-                                break;
-                        }
-
-                        break;
-                    /* Set ID for SIP message types handed by GCEV_EXTENSION
-                     * IPSET_MSG_SIP | This Set ID is used to set or get the SIP message type.
-                     */
-                    case gcip_defs_h.IPSET_MSG_SIP:
-                        switch (parmData.parm_ID)
-                        {
-                            case gcip_defs_h.IPPARM_MSGTYPE:
-                                var ptr = parmDatap + 5;
-                                var messType = Marshal.ReadInt32(ptr);
-
-                                var description = messType.IpMsgTypeDescription();
-                                _logger.LogDebug("  {description}", description);
-                                _logger.LogDebug("  value_size = {0}, value_buf = {1}", parmData.value_size, parmData.value_buf);
-                                break;
-                            case gcip_defs_h.IPPARM_MSG_SIP_RESPONSE_CODE:
-                                _logger.LogDebug(" value_size = {0}, value_buf = {1}", parmData.value_size, parmData.value_buf);
-                                break;
-                            default:
-                                _logger.LogError("  Got unknown extension parmID {0}", parmData.parm_ID);
-                                break;
-                        }
-                        _logger.LogInformation("  IPSET_MSG_SIP:: size = {0}", parmData.value_size);
-                        break;
-                    case gcip_defs_h.IPSET_SIP_MSGINFO:
-                        var str = GetStringFromPtr(parmDatap + 5, parmData.value_size);
-                        _logger.LogDebug("  {0}: {1}", parmData.parm_ID.SipMsgInfo(), str);
-                        break;
-                }
-
-                parmDatap = gcip_h.gc_util_next_parm(gcParmBlkp, parmDatap);
-            }
-            gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
-        }
-
 
         /**
         * Process a codec request.
@@ -1141,10 +1032,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
         }
 
-        private string GetStringFromPtr(IntPtr ptr, int size)
-        {
-            return Marshal.PtrToStringAnsi(ptr, size);
-        }
 
         private void HandleGcEvents(METAEVENT metaEvt)
         {
@@ -1215,7 +1102,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     break;
                 case gclib_h.GCEV_EXTENSION:
                     _logger.LogDebug("GCEV_EXTENSION");
-                    ProcessExtension(metaEvt);
+                    _processExtension.HandleExtension(metaEvt);
                     break;
                 case gclib_h.GCEV_SETCONFIGDATA:
                     _logger.LogDebug("GCEV_SETCONFIGDATA - handled by call to WaitForEvent");

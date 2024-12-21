@@ -596,6 +596,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         GC_PARM_DATA data structure used in GC_PARM_BLK
     */
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+    [Obsolete("This was the original structure I was using")]
     public struct GC_PARM_DATA_HIDE
     {
         public ushort set_ID; /* Set ID (two bytes long)*/

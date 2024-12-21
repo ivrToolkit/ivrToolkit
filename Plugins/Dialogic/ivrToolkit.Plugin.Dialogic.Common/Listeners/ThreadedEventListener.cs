@@ -11,6 +11,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.Listeners
 {
     public class ThreadedEventListener : IEventListener
     {
+        private readonly DialogicVoiceProperties _voiceProperties;
         private readonly int[] _handles;
         private readonly ILogger<ThreadedEventListener> _logger;
         private bool _disposed;
@@ -22,12 +23,12 @@ namespace ivrToolkit.Plugin.Dialogic.Common.Listeners
         private const int DisposingEvent = 1;
         public event EventHandler<MetaEventArgs> OnMetaEvent;
 
-        public ThreadedEventListener(ILoggerFactory loggerFactory, int[] handles)
+        public ThreadedEventListener(ILoggerFactory loggerFactory, DialogicVoiceProperties voiceProperties, int[] handles)
         {
+            _voiceProperties = voiceProperties;
             _handles = handles;
             _logger = loggerFactory.CreateLogger<ThreadedEventListener>();
             _logger.LogDebug("Ctr(ILoggerFactory, {0})", _handles);
-
         }
 
         public void Start()
@@ -41,11 +42,14 @@ namespace ivrToolkit.Plugin.Dialogic.Common.Listeners
         {
             _logger.LogDebug("Run()");
 
+            var waitMilliseconds = _voiceProperties.BackgroundEventListenerTimeoutMilli;
+
             try
             {
                 while (!_disposed)
                 {
-                    var metaEvent = WaitForAnyEvent(-1, _handles);
+                    var metaEvent = WaitForAnyEvent(waitMilliseconds, _handles); // default is 5 minutes. It used to be -1 but
+                                        // I wanted to see a heartbeat
                     switch (metaEvent.WaitEnum)
                     {
                         case EventWaitEnum.Success:
@@ -86,11 +90,13 @@ namespace ivrToolkit.Plugin.Dialogic.Common.Listeners
 
         private MetaEvent WaitForAnyEvent(int waitMilliSeconds, int[] handles, bool showDebug = true)
         {
-            if (showDebug) _logger.LogDebug("*** Waiting for any event: waitMilliSeconds = {0}", waitMilliSeconds);
+            if (showDebug) _logger.LogDebug("*** Waiting for any event: waitMilliSeconds = {0} handles = {1}", waitMilliSeconds,
+                string.Join(", ", handles));
             var eventHandle = 0;
 
             var result = srllib_h.sr_waitevtEx(handles, handles.Length, waitMilliSeconds, ref eventHandle);
-            if (result == -1) return new MetaEvent { WaitEnum = EventWaitEnum.Error };
+
+            if (result == -1) return new MetaEvent { WaitEnum = EventWaitEnum.Expired };
 
             var metaEvt = new METAEVENT();
             result = gclib_h.gc_GetMetaEventEx(ref metaEvt, eventHandle);

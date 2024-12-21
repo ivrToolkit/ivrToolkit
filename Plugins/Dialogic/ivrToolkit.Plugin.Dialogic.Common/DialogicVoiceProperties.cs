@@ -27,6 +27,11 @@ namespace ivrToolkit.Plugin.Dialogic.Common
         public bool UseGc => ToBool(GetProperty("voice.useGC", "false"));
 
         /// <summary>
+        /// Resets the event listener for the board every 5 minutes. It used to be -1 but this will show a debug log entry every x milliseconds.
+        /// </summary>
+        public int BackgroundEventListenerTimeoutMilli => int.Parse(GetProperty("voice.backgroundEventListenerTimeoutMilli", "300000"));
+
+        /// <summary>
         /// Dial tone detection.  Default is 'L' for Leading.
         /// </summary>
         public string DialToneType => GetProperty("dial.cpa.dialTone.type", "L");

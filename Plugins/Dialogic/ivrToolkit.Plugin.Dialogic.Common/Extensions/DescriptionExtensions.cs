@@ -196,9 +196,9 @@ public static class DescriptionExtensions
         return "unknown";
     }
 
-    public static string IpMediaStateDescription(this ushort mediaStateParam)
+    public static string IpSetMediaStateDescription(this ushort parmId)
     {
-        switch (mediaStateParam)
+        switch (parmId)
         {
             case gcip_defs_h.IPPARM_TX_CONNECTED:
                 return "IPPARM_TX_CONNECTED";
@@ -209,7 +209,7 @@ public static class DescriptionExtensions
             case gcip_defs_h.IPPARM_RX_DISCONNECTED:
                 return "IPPARM_RX_DISCONNECTED";
             default:
-                return $"Unknown mediaStateParam {mediaStateParam}";
+                return $"Unknown mediaStateParam {parmId}";
         }
     }
 
@@ -234,9 +234,9 @@ public static class DescriptionExtensions
         }
     }
 
-    public static string IpProtoolStateDescription (this ushort protocalStateParam)
+    public static string IpSetIpProtoolStateDescription (this ushort parmId)
     {
-        switch (protocalStateParam)
+        switch (parmId)
         {
             case gcip_defs_h.IPPARM_SIGNALING_CONNECTED:
                 return "IPPARM_SIGNALING_CONNECTED";
@@ -249,7 +249,45 @@ public static class DescriptionExtensions
             case gcip_defs_h.IPPARM_EST_CONTROL_FAILED:
                 return "IPPARM_EST_CONTROL_FAILED";
             default:
-                return $"Unknown protocalStateParam {protocalStateParam}";
+                return $"Unknown protocalStateParam {parmId}";
+        }
+    }
+
+    public static string IpSetRptAddressDescription(this ushort parmId)
+    {
+        switch (parmId)
+        {
+            case gcip_defs_h.IPPARM_LOCAL:
+                return "IPPARM_LOCAL";
+            case gcip_defs_h.IPPARM_REMOTE:
+                return "IPPARM_REMOTE";
+            default:
+                return $"Unknown parmID {parmId}";
+        }
+    }
+    public static string IpSetMsgSipDescription(this ushort parmId)
+    {
+        switch (parmId)
+        {
+            case gcip_defs_h.IPPARM_MSGTYPE:
+                return "IPPARM_MSGTYPE";
+            case gcip_defs_h.IPPARM_MSG_SIP_RESPONSE_CODE:
+                return "IPPARM_MSG_SIP_RESPONSE_CODE";
+            default:
+                return $"Unknown parmID {parmId}";
+        }
+    }
+
+    public static string IpSetSwitchCodeDescription(this ushort parmId)
+    {
+        switch (parmId)
+        {
+            case gcip_defs_h.IPPARM_AUDIO_REQUESTED:
+                return "IPPARM_AUDIO_REQUESTED";
+            case gcip_defs_h.IPPARM_READY:
+                return "IPPARM_READY";
+            default:
+                return $"Unknown parmID {parmId}";
         }
     }
 

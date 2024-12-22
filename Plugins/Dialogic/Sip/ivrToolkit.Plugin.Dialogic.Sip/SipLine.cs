@@ -1112,6 +1112,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 #endregion
 
                 case gclib_h.GCEV_EXTENSIONCMPLT:
+                    // i've never received this event before
                     _logger.LogDebug("GCEV_EXTENSIONCMPLT - we do nothing with this event");
                     break;
                 case gclib_h.GCEV_EXTENSION:

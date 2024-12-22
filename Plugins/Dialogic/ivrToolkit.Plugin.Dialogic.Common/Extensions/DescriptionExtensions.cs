@@ -196,6 +196,42 @@ public static class DescriptionExtensions
         return "unknown";
     }
 
+    public static string IpExtIdDescription(this byte extId)
+    {
+        switch (extId)
+        {
+            case gcip_defs_h.IPEXTID_SENDMSG:
+                return "IPEXTID_SENDMSG";
+            case gcip_defs_h.IPEXTID_GETINFO:
+                return "IPEXTID_GETINFO";
+            case gcip_defs_h.IPEXTID_MEDIAINFO:
+                return "IPEXTID_MEDIAINFO";
+            case gcip_defs_h.IPEXTID_SEND_DTMF:
+                return "IPEXTID_SEND_DTMF";
+            case gcip_defs_h.IPEXTID_RECEIVE_DTMF:
+                return "IPEXTID_RECEIVE_DTMF";
+            case gcip_defs_h.IPEXTID_IPPROTOCOL_STATE:
+                return "IPEXTID_IPPROTOCOL_STATE";
+            case gcip_defs_h.IPEXTID_FOIP:
+                return "IPEXTID_FOIP";
+            case gcip_defs_h.IPEXTID_RECEIVEMSG:
+                return "IPEXTID_RECEIVEMSG";
+            case gcip_defs_h.IPEXTID_CHANGEMODE:
+                return "IPEXTID_CHANGEMODE";
+            case gcip_defs_h.IPEXTID_LOCAL_MEDIA_ADDRESS:
+                return "IPEXTID_LOCAL_MEDIA_ADDRESS";
+            case gcip_defs_h.IPEXTID_RECEIVED_18X_RESPONSE:
+                return "IPEXTID_RECEIVED_18X_RESPONSE";
+            case gcip_defs_h.IPEXTID_GETCALLINFOUPDATE:
+                return "IPEXTID_GETCALLINFOUPDATE";
+            case gcip_defs_h.IPEXTID_SIP_STATS:
+                return "IPEXTID_SIP_STATS";
+            default:
+                return $"Unknown extension ID {extId}";
+
+        }
+    }
+
     public static string IpSetMediaStateDescription(this ushort parmId)
     {
         switch (parmId)

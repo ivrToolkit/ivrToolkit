@@ -23,6 +23,17 @@ public class ProcessExtension
         // todo this mess needs to be written better :)
         _logger.LogDebug("ProcessExtension(METAEVENT metaEvt)");
 
+        var extensionBlockPtr = metaEvt.extevtdatap;
+        if (extensionBlockPtr != IntPtr.Zero)
+        {
+            var extensionBlock = Marshal.PtrToStructure<EXTENSIONEVTBLK>(extensionBlockPtr);
+            _logger.LogDebug("Extension ID = {extensionId}: {description}", extensionBlock.ext_id, extensionBlock.ext_id.IpExtIdDescription());
+        } else
+        {
+            // I don't think this ever happens
+            _logger.LogDebug("There is no extension ID");
+        }
+
         var gcParmBlkp = metaEvt.extevtdatap + 1;
         var parmDatap = IntPtr.Zero;
 

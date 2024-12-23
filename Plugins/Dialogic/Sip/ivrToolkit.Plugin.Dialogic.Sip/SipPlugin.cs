@@ -63,10 +63,6 @@ public class SipPlugin : IIvrPlugin
         SetupGlobalCallParameterBlock();
         SetAuthenticationInfo();
         Register();
-
-        // show some info
-        deviceInformation.LogDeviceInformationAfterGcStart();
-
     }
 
     private void _boardEventListener_OnMetaEvent(object sender, MetaEventArgs e)
@@ -294,7 +290,7 @@ public class SipPlugin : IIvrPlugin
         {
             reg_client = regClient,
             reg_server = regServer,
-            time_to_live = 3600,
+            time_to_live = 3600, // 1 hour
             max_hops = 30
         };
 

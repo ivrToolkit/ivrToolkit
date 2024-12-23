@@ -32,12 +32,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             LogIptBoard();
             LogIpmBoard();
         }
-        internal void LogDeviceInformationAfterGcStart()
-        {
-            _logger.LogInformation("LogDeviceInformationAfterGcStart()");
-            LogIptBoard();
-            LogIpmBoard();
-        }
 
         internal void LogCclibsStatus()
         {

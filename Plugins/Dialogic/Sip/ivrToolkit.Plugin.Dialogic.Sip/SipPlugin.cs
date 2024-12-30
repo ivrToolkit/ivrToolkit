@@ -353,7 +353,7 @@ public class SipPlugin : IIvrPlugin
         var gcParmBlkp = metaEvt.extevtdatap;
         var parmDatap = IntPtr.Zero;
 
-        parmDatap = gcip_h.gc_util_next_parm(gcParmBlkp, parmDatap);
+        parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
 
         while (parmDatap != IntPtr.Zero)
         {
@@ -418,7 +418,7 @@ public class SipPlugin : IIvrPlugin
                     break;
             }
 
-            parmDatap = gcip_h.gc_util_next_parm(gcParmBlkp, parmDatap);
+            parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
         }
         gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
     }

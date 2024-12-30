@@ -10,10 +10,6 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
 {
     public class gcip_h
     {
-        [DllImport("libgc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr gc_util_next_parm(IntPtr parm_blk, IntPtr cur_parm);
-
-
         /* Use INIT_IPCCLIB_START_DATA function to initialize the IPCCLIB_START_DATA structure.
          *
          * Applications must use this function to inititialize the IPCCLIB_START_DATA data 

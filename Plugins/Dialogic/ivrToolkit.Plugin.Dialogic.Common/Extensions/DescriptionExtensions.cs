@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Reflection.Metadata.Ecma335;
 using ivrToolkit.Plugin.Dialogic.Common.DialogicDefs;
 // ReSharper disable StringLiteralTypo
 
@@ -265,6 +266,35 @@ public static class DescriptionExtensions
                 return "IPSET_MSG_SIP";
             case gcip_defs_h.IPSET_SIP_MSGINFO:
                 return "IPSET_SIP_MSGINFO";
+            case gcip_defs_h.IPSET_SIP_RESPONSE_CODE:
+                return "IPSET_SIP_RESPONSE_CODE";
+
+            case gcip_defs_h.IPSET_CONFIG:
+                return "IPSET_CONFIG";
+            case gcip_defs_h.IPSET_DTMF:
+                return "IPSET_DTMF";
+            case gcip_defs_h.IPSET_EXTENSIONEVT_MSK:
+                return "IPSET_EXTENSIONEVT_MSK";
+            case gcip_defs_h.IPSET_FOIP:
+                return "IPSET_FOIP";
+            case gcip_defs_h.IPSET_LOCAL_ALIAS:
+                return "IPSET_LOCAL_ALIAS";
+            case gcip_defs_h.IPSET_PROTOCOL:
+                return "IPSET_PROTOCOL";
+            case gcip_defs_h.IPSET_SIP_STATS:
+                return "IPSET_SIP_STATS";
+            case gcip_defs_h.IPSET_SIP_REQUEST_ERROR:
+                return "IPSET_SIP_REQUEST_ERROR";
+            case gcip_defs_h.IPSET_SIP_SESSION_TIMER:
+                return "IPSET_SIP_SESSION_TIMER";
+            case gcip_defs_h.IPSET_SUPPORTED_PREFIXES:
+                return "IPSET_SUPPORTED_PREFIXES";
+            case gcip_defs_h.IPSET_REG_INFO:
+                return "IPSET_REG_INFO";
+            case gcip_defs_h.IPSET_MIME:
+                return "IPSET_MIME";
+            case gcip_defs_h.IPSET_MIME_200OK_TO_BYE:
+                return "IPSET_MIME_200OK_TO_BYE";
             default:
                 return $"Unknown set_ID({setId})";
         }
@@ -301,6 +331,27 @@ public static class DescriptionExtensions
                 return $"Unknown parmID {parmId}";
         }
     }
+
+    public static string IpSetMimeDescription(this ushort parmId)
+    {
+        switch (parmId)
+        {
+            case gcip_defs_h.IPPARM_MIME_PART:
+                return "IPPARM_MIME_PART";
+            case gcip_defs_h.IPPARM_MIME_PART_BODY:
+                return "IPPARM_MIME_PART_BODY";
+            case gcip_defs_h.IPPARM_MIME_PART_BODY_SIZE:
+                return "IPPARM_MIME_PART_BODY_SIZE";
+            case gcip_defs_h.IPPARM_MIME_PART_HEADER:
+                return "IPPARM_MIME_PART_HEADER";
+            case gcip_defs_h.IPPARM_MIME_PART_TYPE:
+                return "IPPARM_MIME_PART_TYPE";
+            default:
+                return $"Unknown parmID {parmId}";
+        }
+    }
+
+
     public static string IpSetMsgSipDescription(this ushort parmId)
     {
         switch (parmId)

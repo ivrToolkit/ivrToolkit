@@ -114,6 +114,8 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public static extern int gc_ResetLineDev(int linedev, uint mode);
 
 
+        [DllImport("libgc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr gc_util_next_parm(IntPtr parm_blk, IntPtr cur_parm);
 
 
         /* -- bit mask for gc_GetCCLibInfo */

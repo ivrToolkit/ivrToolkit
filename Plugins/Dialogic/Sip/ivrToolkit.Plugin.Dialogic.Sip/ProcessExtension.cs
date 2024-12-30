@@ -4,6 +4,7 @@ using ivrToolkit.Plugin.Dialogic.Common.DialogicDefs;
 using Microsoft.Extensions.Logging;
 using ivrToolkit.Plugin.Dialogic.Common.Extensions;
 using ivrToolkit.Core.Exceptions;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ivrToolkit.Plugin.Dialogic.Sip;
 
@@ -13,6 +14,21 @@ public class ProcessExtension
 
     public ProcessExtension(ILoggerFactory loggerFactory) {
         _logger = loggerFactory.CreateLogger<ProcessExtension>();
+    }
+
+    private void HandleMime(ref IntPtr gcParmBlkp)
+    {
+        var parmDatap = IntPtr.Zero;
+        parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
+
+        while (parmDatap != IntPtr.Zero)
+        {
+            var parmData = Marshal.PtrToStructure<GC_PARM_DATA>(parmDatap);
+            _logger.LogDebug("    {description}", parmData.parm_ID.IpSetMimeDescription());
+            // do something here
+            parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
+        }
+        gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
     }
 
     /**
@@ -37,7 +53,7 @@ public class ProcessExtension
         var gcParmBlkp = metaEvt.extevtdatap + 1;
         var parmDatap = IntPtr.Zero;
 
-        parmDatap = gcip_h.gc_util_next_parm(gcParmBlkp, parmDatap);
+        parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
 
         while (parmDatap != IntPtr.Zero)
         {
@@ -110,9 +126,21 @@ public class ProcessExtension
                     var str = GetStringFromPtr(parmDatap + 5, parmData.value_size);
                     _logger.LogDebug("  {0}: {1}", parmData.parm_ID.SipMsgInfo(), str);
                     break;
+                case gcip_defs_h.IPSET_MIME:
+                    _logger.LogDebug("  {description}", parmData.parm_ID.IpSetMimeDescription());
+                    switch (parmData.parm_ID)
+                    {
+                        case gcip_defs_h.IPPARM_MIME_PART:
+                            var parmblkp = parmDatap + 5;
+                            var pointerValue = GetValueFromPtr(parmDatap + 5, parmData.value_size);
+                            parmblkp = new IntPtr(pointerValue);
+                            HandleMime(ref parmblkp);
+                            break;
+                    }
+                    break;
             }
 
-            parmDatap = gcip_h.gc_util_next_parm(gcParmBlkp, parmDatap);
+            parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
         }
         gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
     }

@@ -38,6 +38,7 @@ namespace ivrToolkit.Core.Util
 
             var directory = Path.GetDirectoryName(fullFileName);
             var fileName = Path.GetFileName(fullFileName);
+            if (string.IsNullOrWhiteSpace(directory)) directory = ".";
 
             _watcher = new FileSystemWatcher(directory, fileName);
 

@@ -354,6 +354,20 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
         public const int IPPARM_REMOTE = 1;
         public const int IPPARM_LOCAL_ENUM = 2;
 
+
+        /* parm IDs defined under IPSET_MIME for configuration
+         * IPPARM_MIME_PART                 | MIME part pointer to GC_PARM_BLK
+         * IPPARM_MIME_PART_BODY_SIZE       | MIME part body size
+         * IPPARM_MIME_PART_TYPE            | MIME part type string
+         * IPPARM_MIME_PART_HEADER          | MIME part header string
+         * IPPARM_MIME_PART_BODY            | MIME part pointer to memory buffer
+         */
+        public const int IPPARM_MIME_PART = 0x1;
+        public const int IPPARM_MIME_PART_BODY_SIZE = 0x2;
+        public const int IPPARM_MIME_PART_TYPE = 0x3;
+        public const int IPPARM_MIME_PART_HEADER = 0x4;
+        public const int IPPARM_MIME_PART_BODY = 0x5;
+
         /*
          * IPEXTID_SENDMSG | This extension is used for sending Q931 and 
          * nonstandard messages. The sets supported are IPSET_MSG_H245, 
@@ -430,6 +444,13 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
          * of SIP related message information (e.g. Request URI).
          */
         public const int IPSET_SIP_MSGINFO = BASE_SETID + 27;
+        public const int IPSET_MIME = BASE_SETID + 30;
+        public const int IPSET_MIME_200OK_TO_BYE = BASE_SETID + 31;
+        public const int IPSET_SIP_RESPONSE_CODE = BASE_SETID + 32;
+
+        public const int IPSET_SIP_REQUEST_ERROR = BASE_SETID + 37;
+        public const int IPSET_SIP_SESSION_TIMER = BASE_SETID + 40;
+        public const int IPSET_SIP_STATS = BASE_SETID + 44;
 
         /* Different Parm IDs that can be used with SetID IPSET_SIP_MSGINFO */
 

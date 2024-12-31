@@ -21,10 +21,48 @@ public class ProcessExtension
         var parmDatap = IntPtr.Zero;
         parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
 
+        var bodySize = 0;
+
         while (parmDatap != IntPtr.Zero)
         {
             var parmData = Marshal.PtrToStructure<GC_PARM_DATA>(parmDatap);
             _logger.LogDebug("    {description}", parmData.parm_ID.IpSetMimeDescription());
+
+            switch (parmData.parm_ID)
+            {
+                case gcip_defs_h.IPPARM_MIME_PART_TYPE:
+                    var contentType = GetStringFromPtr(parmDatap + 5, parmData.value_size);
+                    _logger.LogDebug("      {contentType}", contentType);
+                    break;
+                case gcip_defs_h.IPPARM_MIME_PART_HEADER:
+                    var header = GetStringFromPtr(parmDatap + 5, parmData.value_size);
+                    _logger.LogDebug("      {header}", header);
+                    break;
+                case gcip_defs_h.IPPARM_MIME_PART_BODY:
+                    var bodyBuff = GetValueFromPtr(parmDatap + 5, parmData.value_size);
+                    var bodyBuffp = new IntPtr(bodyBuff);
+
+                    if (bodySize == 0) break;
+
+                    // Allocate memory for the buffer
+                    byte[] appBuff = new byte[bodySize + 1]; // +1 for null termination
+
+                    // Copy data from unmanaged memory to managed byte array
+                    Marshal.Copy(bodyBuffp, appBuff, 0, bodySize);
+
+                    // Null-terminate the buffer
+                    appBuff[bodySize] = 0;
+
+                    // Convert to a string and print it (assuming content is text)
+                    string bodyContent = System.Text.Encoding.Default.GetString(appBuff).TrimEnd('\0');
+                    _logger.LogDebug($"      {bodyContent}");
+
+                    break;
+                case gcip_defs_h.IPPARM_MIME_PART_BODY_SIZE:
+                    bodySize = GetValueFromPtr(parmDatap + 5, parmData.value_size);
+                    _logger.LogDebug("      Body size = {size}", bodySize);
+                    break;
+            }
             // do something here
             parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
         }
@@ -147,8 +185,9 @@ public class ProcessExtension
 
     private string GetStringFromPtr(IntPtr ptr, int size)
     {
-        return Marshal.PtrToStringAnsi(ptr, size);
+        return Marshal.PtrToStringAnsi(ptr, size).TrimEnd('\0');
     }
+
     private int GetValueFromPtr(IntPtr ptr, byte size)
     {
         int value;

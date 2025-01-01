@@ -79,6 +79,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.Listeners
 
         private void FireEvent(METAEVENT metaEvt, int eventHandle)
         {
+            _logger.LogDebug("FireEvent - {eventType}", metaEvt.evttype.EventTypeDescription());
             var raiseEvent = OnMetaEvent;
             raiseEvent?.Invoke(this, new MetaEventArgs(eventHandle, metaEvt));
 

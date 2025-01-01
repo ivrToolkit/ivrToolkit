@@ -485,14 +485,21 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         * The USER_DISPLAY is blocked by carriers (Fido, Telus, etc.)
         * The USER_DISPLAY can also be set using the PBX.
         */
-        private void MakeCall(string ani, string dnis)
+
+        // from = ani = automatic number identification. Example: "200@192.168.1.40"
+        // to = dnis = dialed number identification service. Example: "2348675309@192.168.1.40"
+        private void MakeCall(string from, string to)
         {
             var startTime = DateTimeOffset.Now;
-            _logger.LogDebug("MakeCall({0}, {1})", ani, dnis);
+            _logger.LogDebug("MakeCall({0}, {1})", from, to);
             DisplayCallState();
 
             var gcParmBlkp = IntPtr.Zero;
-            InsertSipHeader(ref gcParmBlkp, $"Contact: <sip:{ani}:{_voiceProperties.SipSignalingPort}>");
+
+            // todo should the contact ip be my actual ip in the LAN or should it be the location of the FreePBX?
+            //      right now, from and contact have the same IP which is to the FreePBX server.
+
+            InsertSipHeader(ref gcParmBlkp, $"Contact: <sip:{from}:{_voiceProperties.SipSignalingPort}>");
             SetUserInfo(ref gcParmBlkp); // set user info and delete the parameter block
 
             var result = 0;
@@ -510,7 +517,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
 
             var gclibMakeCallBlk = new GCLIB_MAKECALL_BLK();
-            gclibMakeCallBlk.origination.address = ani;
+            gclibMakeCallBlk.origination.address = from;
             gclibMakeCallBlk.origination.address_type = gclib_h.GCADDRTYPE_TRANSPARENT;
             gclibMakeCallBlk.ext_datap = gcParmBlkp;
 
@@ -526,7 +533,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
                 SetCodec(gclib_h.GCTGT_GCLIB_CHAN);
 
-                result = gclib_h.gc_MakeCall(_gcDev, ref _callReferenceNumber, dnis, ref gcMakeCallBlk, 30, DXXXLIB_H.EV_ASYNC);
+                result = gclib_h.gc_MakeCall(_gcDev, ref _callReferenceNumber, to, ref gcMakeCallBlk, 30, DXXXLIB_H.EV_ASYNC);
                 result.ThrowIfGlobalCallError();
             }
             finally

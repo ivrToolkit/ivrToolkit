@@ -100,8 +100,7 @@ public class SipPlugin : IIvrPlugin
         try
         {
             _boardEventListener?.Dispose();
-
-            var result = gclib_h.gc_Stop();
+            var result = gclib_h.gc_Close(_boardDev);
             result.ThrowIfGlobalCallError();
 
         }
@@ -260,11 +259,10 @@ public class SipPlugin : IIvrPlugin
         var alias = _voiceProperties.SipAlias;
 
         var regServer = $"{proxy}"; // Request-URI
-        var regClient = $"{alias}@{proxy}"; // To header field
+        var regClient = $"{alias}@{proxy}";
 
         _logger.LogDebug("Register() - regServer = {0}, regClient = {1}", regServer,
             regClient);
-
 
         var gcParmBlkPtr = IntPtr.Zero;
 
@@ -286,8 +284,8 @@ public class SipPlugin : IIvrPlugin
 
         var ipRegisterAddress = new IP_REGISTER_ADDRESS
         {
-            reg_client = regClient,
-            reg_server = regServer,
+            reg_client = regClient, // me. example: "200@192.168.1.40"
+            reg_server = regServer, // FreePBX. example: "192.168.1.40"
             time_to_live = 3600, // 1 hour
             max_hops = 30
         };
@@ -301,13 +299,13 @@ public class SipPlugin : IIvrPlugin
             dataSize, pData);
         result.ThrowIfGlobalCallError();
 
-        var contact = $"{regClient}\0"; // alias
-        var pContact = _unmanagedMemoryService.StringToHGlobalAnsi("pContact", contact);
-        dataSize = (byte)contact.Length;
+        var findAlias = $"{regClient}\0"; // me. example: "200@192.168.1.40"
+        var pFindAlias = _unmanagedMemoryService.StringToHGlobalAnsi("pFindAlias", findAlias);
+        dataSize = (byte)findAlias.Length;
 
 
         result = gclib_h.gc_util_insert_parm_ref(ref gcParmBlkPtr, gcip_defs_h.IPSET_LOCAL_ALIAS,
-            gcip_defs_h.IPPARM_ADDRESS_TRANSPARENT, dataSize, pContact);
+            gcip_defs_h.IPPARM_ADDRESS_TRANSPARENT, dataSize, pFindAlias);
         result.ThrowIfGlobalCallError();
 
         uint serviceId = 1;
@@ -326,7 +324,7 @@ public class SipPlugin : IIvrPlugin
         var eventWaitEnum = _boardEventListener.WaitForEvent(10); // wait for 10 seconds 
         _logger.LogDebug("Result for gc_ReqService is {0}", eventWaitEnum);
 
-        _unmanagedMemoryService.Free(pContact);
+        _unmanagedMemoryService.Free(pFindAlias);
         _unmanagedMemoryService.Free(pData);
 
     }

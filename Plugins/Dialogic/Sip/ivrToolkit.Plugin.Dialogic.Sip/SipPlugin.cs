@@ -257,15 +257,13 @@ public class SipPlugin : IIvrPlugin
         _logger.LogDebug("Register()");
 
         var proxy = _voiceProperties.SipProxyIp;
-        var local = _voiceProperties.SipLocalIp;
         var alias = _voiceProperties.SipAlias;
 
         var regServer = $"{proxy}"; // Request-URI
         var regClient = $"{alias}@{proxy}"; // To header field
-        var contact = $"sip:{alias}@{local}"; // Contact header field
 
-        _logger.LogDebug("Register() - regServer = {0}, regClient = {1}, contact = {2}", regServer,
-            regClient, contact);
+        _logger.LogDebug("Register() - regServer = {0}, regClient = {1}", regServer,
+            regClient);
 
 
         var gcParmBlkPtr = IntPtr.Zero;
@@ -303,9 +301,10 @@ public class SipPlugin : IIvrPlugin
             dataSize, pData);
         result.ThrowIfGlobalCallError();
 
-        dataSize = (byte)(contact.Length + 1);
-
+        var contact = $"{regClient}\0"; // alias
         var pContact = _unmanagedMemoryService.StringToHGlobalAnsi("pContact", contact);
+        dataSize = (byte)contact.Length;
+
 
         result = gclib_h.gc_util_insert_parm_ref(ref gcParmBlkPtr, gcip_defs_h.IPSET_LOCAL_ALIAS,
             gcip_defs_h.IPPARM_ADDRESS_TRANSPARENT, dataSize, pContact);
@@ -425,7 +424,7 @@ public class SipPlugin : IIvrPlugin
 
     private string GetStringFromPtr(IntPtr ptr, int size)
     {
-        return Marshal.PtrToStringAnsi(ptr, size);
+        return Marshal.PtrToStringAnsi(ptr, size).TrimEnd('\0'); ;
     }
 
     private int GetValueFromPtr(IntPtr ptr, byte size)

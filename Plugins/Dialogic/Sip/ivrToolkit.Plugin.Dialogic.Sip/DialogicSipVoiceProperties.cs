@@ -51,21 +51,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         /// </summary>
         public string SipRealm => GetProperty("sip.realm", "");
 
-        /// <summary>
-        /// Required for call-out
-        /// </summary>
-        public string SipUserAgent => GetProperty("sip.user_agent", "");
-
-        /// <summary>
-        /// Required for call-out
-        /// </summary>
-        public string SipFrom => GetProperty("sip.from", "");
-
-        /// <summary>
-        /// Required for call-out
-        /// </summary>
-        public string SipConctact => GetProperty("sip.contact", "");
-
         public new void Dispose()
         {
             _logger.LogDebug("Dispose()");

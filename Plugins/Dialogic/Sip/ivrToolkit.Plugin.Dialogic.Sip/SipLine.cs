@@ -373,8 +373,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             var cap = GetCap();
 
-            var ani = _voiceProperties.SipAlias + "@" + _voiceProperties.SipProxyIp;
-            var dnis = number + "@" + _voiceProperties.SipProxyIp;
+            var ani = _voiceProperties.SipAlias + "@" + _voiceProperties.SipProxyIp; // automatic number identification (from)
+            var dnis = number + "@" + _voiceProperties.SipProxyIp; // dialed number identification service (to)
 
             MakeCall(ani, dnis);
 
@@ -482,7 +482,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         * Make a call.
         * Please note,
         * The call header sets the USER_DISPLAY.
-        * The USER_DISPLAY is blocekd by carriers (Fido, Telus, etc.)
+        * The USER_DISPLAY is blocked by carriers (Fido, Telus, etc.)
         * The USER_DISPLAY can also be set using the PBX.
         */
         private void MakeCall(string ani, string dnis)
@@ -492,9 +492,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             DisplayCallState();
 
             var gcParmBlkp = IntPtr.Zero;
-            InsertSipHeader(ref gcParmBlkp, $"User-Agent: {_voiceProperties.SipUserAgent}");
-            InsertSipHeader(ref gcParmBlkp, $"From: {_voiceProperties.SipFrom}<sip:{ani}>");
-            InsertSipHeader(ref gcParmBlkp, $"Contact: {_voiceProperties.SipConctact}<sip:{ani}:{_voiceProperties.SipSignalingPort}>");
+            InsertSipHeader(ref gcParmBlkp, $"Contact: <sip:{ani}:{_voiceProperties.SipSignalingPort}>");
             SetUserInfo(ref gcParmBlkp); // set user info and delete the parameter block
 
             var result = 0;

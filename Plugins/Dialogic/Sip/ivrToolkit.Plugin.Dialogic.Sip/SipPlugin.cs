@@ -299,13 +299,13 @@ public class SipPlugin : IIvrPlugin
             dataSize, pData);
         result.ThrowIfGlobalCallError();
 
-        var findAlias = $"{regClient}\0"; // me. example: "200@192.168.1.40"
-        var pFindAlias = _unmanagedMemoryService.StringToHGlobalAnsi("pFindAlias", findAlias);
-        dataSize = (byte)findAlias.Length;
-
+        // set up the contact
+        var contact = $"{_voiceProperties.SipContact}\0"; // contact. example: {alias}@{proxy_ip}:{sip_signaling_port}
+        var pContact = _unmanagedMemoryService.StringToHGlobalAnsi("pContact", contact);
+        dataSize = (byte)contact.Length;
 
         result = gclib_h.gc_util_insert_parm_ref(ref gcParmBlkPtr, gcip_defs_h.IPSET_LOCAL_ALIAS,
-            gcip_defs_h.IPPARM_ADDRESS_TRANSPARENT, dataSize, pFindAlias);
+            gcip_defs_h.IPPARM_ADDRESS_TRANSPARENT, dataSize, pContact);
         result.ThrowIfGlobalCallError();
 
         uint serviceId = 1;
@@ -324,7 +324,7 @@ public class SipPlugin : IIvrPlugin
         var eventWaitEnum = _boardEventListener.WaitForEvent(10); // wait for 10 seconds 
         _logger.LogDebug("Result for gc_ReqService is {0}", eventWaitEnum);
 
-        _unmanagedMemoryService.Free(pFindAlias);
+        _unmanagedMemoryService.Free(pContact);
         _unmanagedMemoryService.Free(pData);
 
     }

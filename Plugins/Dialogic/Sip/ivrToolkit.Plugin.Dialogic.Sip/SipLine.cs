@@ -373,8 +373,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             var cap = GetCap();
 
-            var ani = _voiceProperties.SipAlias + "@" + _voiceProperties.SipProxyIp; // automatic number identification (from)
-            var dnis = number + "@" + _voiceProperties.SipProxyIp; // dialed number identification service (to)
+            var ani = $"{_voiceProperties.SipAlias}@{_voiceProperties.SipProxyIp}"; // automatic number identification (from)
+            var dnis = $"{number}@{_voiceProperties.SipProxyIp}"; // dialed number identification service (to)
 
             MakeCall(ani, dnis);
 
@@ -496,10 +496,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             var gcParmBlkp = IntPtr.Zero;
 
-            // todo should the contact ip be my actual ip in the LAN or should it be the location of the FreePBX?
-            //      right now, from and contact have the same IP which is to the FreePBX server.
-
-            InsertSipHeader(ref gcParmBlkp, $"Contact: <sip:{from}:{_voiceProperties.SipSignalingPort}>");
+            InsertSipHeader(ref gcParmBlkp, $"Contact: <sip:{_voiceProperties.SipContact}>");
             SetUserInfo(ref gcParmBlkp); // set user info and delete the parameter block
 
             var result = 0;

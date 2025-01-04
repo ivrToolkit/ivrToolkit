@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31605.320
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35527.113 d17.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C69C987F-E124-47F5-8609-E49D47EE2788}"
 	ProjectSection(SolutionItems) = preProject
@@ -44,6 +44,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ivrToolkit.Core.Tests", "Tests\Unit.Tests\ivrToolkit.Core.Tests\ivrToolkit.Core.Tests.csproj", "{A5B92646-A00D-48C2-BE99-B3C2B59597CC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyFirstApp", "Examples\MyFirstApp\MyFirstApp.csproj", "{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ivrToolkit.Plugin.SipSorcery", "Plugins\SipSorcery\ivrToolkit.Plugin.SipSorcery\ivrToolkit.Plugin.SipSorcery.csproj", "{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SipSorcery", "SipSorcery", "{9E44A18B-4B6E-45A9-B898-F7DBFAC4F13D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -217,6 +221,22 @@ Global
 		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Release|Win32.Build.0 = Release|Any CPU
 		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Release|x86.ActiveCfg = Release|Any CPU
 		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB}.Release|x86.Build.0 = Release|Any CPU
+		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Debug|Win32.Build.0 = Debug|Any CPU
+		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Debug|x86.Build.0 = Debug|Any CPU
+		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Release|Win32.ActiveCfg = Release|Any CPU
+		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Release|Win32.Build.0 = Release|Any CPU
+		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Release|x86.ActiveCfg = Release|Any CPU
+		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -234,6 +254,8 @@ Global
 		{71DEF086-181B-4E3A-9941-111FA291E6D8} = {9042AFE7-8249-4A73-85E0-3FCC1648B6DE}
 		{A5B92646-A00D-48C2-BE99-B3C2B59597CC} = {71DEF086-181B-4E3A-9941-111FA291E6D8}
 		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB} = {C68DB211-E713-4265-A2F3-F573383C2C84}
+		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6} = {9E44A18B-4B6E-45A9-B898-F7DBFAC4F13D}
+		{9E44A18B-4B6E-45A9-B898-F7DBFAC4F13D} = {1137A0FF-E16A-4674-BA02-A0D41ADBAB58}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A5C71D1A-0ABE-437B-89FB-59EE74035D64}

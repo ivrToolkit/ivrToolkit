@@ -16,6 +16,7 @@ namespace ivrToolkit.Plugin.SipSorcery
         private readonly SipVoiceProperties _voiceProperties;
         private readonly ILogger<SipPlugin> _logger;
         private bool _disposed;
+        private SIPTransport _sipTransport;
 
         public SipPlugin(ILoggerFactory loggerFactory, SipVoiceProperties voiceProperties)
         {
@@ -33,8 +34,9 @@ namespace ivrToolkit.Plugin.SipSorcery
 
         public void Start()
         {
-            var to = $"{_voiceProperties.TemporaryPhoneNumber}@{_voiceProperties.SipProxyIp}:{_voiceProperties.SipSignalingPort}";
-            TestAsync(_voiceProperties.SipAlias, _voiceProperties.SipPassword, to).GetAwaiter().GetResult(); // blocking
+            var sipTransport = new SIPTransport();
+            sipTransport.EnableTraceLogs();
+            _sipTransport = sipTransport;
         }
 
 
@@ -55,36 +57,6 @@ namespace ivrToolkit.Plugin.SipSorcery
 
         
         
-        private async Task TestAsync(string user, string pass, string to)
-        {
-            CancellationTokenSource exitCts = new CancellationTokenSource();
-            var sipTransport = new SIPTransport();
-            sipTransport.EnableTraceLogs();
-
-            var userAgent = new SIPUserAgent(sipTransport, null);
-
-            var voipMediaSession = new VoIPMediaSession();
-            voipMediaSession.AcceptRtpFromAny = true;
-
-            // Place the call and wait for the result.
-            var callResult = await userAgent.Call(to, user, pass, voipMediaSession);
-
-            if (!callResult)
-            {
-                _logger.LogDebug("The call failed!");
-                return;
-            }
-
-            voipMediaSession.AudioExtrasSource.AudioSamplePeriodMilliseconds = 20;
-            await voipMediaSession.AudioExtrasSource.StartAudio();
-
-            WavConverter wavConverter = new WavConverter();
-            await voipMediaSession.AudioExtrasSource.SendAudioFromStream(
-                wavConverter.NAudioConvert8BitUnsignedTo16BitSignedPCM(
-                "Voice Files/Press1234.wav"),
-                AudioSamplingRatesEnum.Rate8KHz);
-
-        }
 
 
         public VoiceProperties VoiceProperties => _voiceProperties;
@@ -98,6 +70,7 @@ namespace ivrToolkit.Plugin.SipSorcery
             }
             _logger.LogDebug("Dispose()");
             _disposed = true;
+            _sipTransport.Dispose();
         }
 
         public IIvrLine GetLine(int lineNumber)
@@ -107,7 +80,7 @@ namespace ivrToolkit.Plugin.SipSorcery
 
             if (_disposed) throw new DisposedException("You cannot get a line from a disposed plugin");
 
-            var line = new SipLine(_loggerFactory, _voiceProperties, lineNumber);
+            var line = new SipLine(_loggerFactory, _voiceProperties, lineNumber, _sipTransport);
             return new LineWrapper(_loggerFactory, lineNumber, line);
         }
     }

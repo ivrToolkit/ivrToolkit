@@ -3,47 +3,37 @@ using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
 using Microsoft.Extensions.Logging;
-using SIPSorcery.Media;
 using SIPSorcery.SIP;
-using SIPSorcery.SIP.App;
-using SIPSorceryMedia.Abstractions;
 
 namespace ivrToolkit.Plugin.SipSorcery
 {
-    public class SipPlugin : IIvrPlugin
+    public class SipSorceryPlugin : IIvrPlugin
     {
         private readonly ILoggerFactory _loggerFactory;
         private readonly SipVoiceProperties _voiceProperties;
-        private readonly ILogger<SipPlugin> _logger;
+        private readonly ILogger<SipSorceryPlugin> _logger;
         private bool _disposed;
         private SIPTransport _sipTransport;
 
-        public SipPlugin(ILoggerFactory loggerFactory, SipVoiceProperties voiceProperties)
+        public SipSorceryPlugin(ILoggerFactory loggerFactory, SipVoiceProperties voiceProperties)
         {
             loggerFactory.ThrowIfNull(nameof(loggerFactory));
             voiceProperties.ThrowIfNull(nameof(voiceProperties));
 
             _loggerFactory = loggerFactory;
             _voiceProperties = voiceProperties;
-            _logger = loggerFactory.CreateLogger<SipPlugin>();
+            _logger = loggerFactory.CreateLogger<SipSorceryPlugin>();
 
             _logger.LogDebug("ctr()");
 
-            Start();
-        }
-
-        public void Start()
-        {
             var sipTransport = new SIPTransport();
-            sipTransport.EnableTraceLogs();
+            if (voiceProperties.SipTransportEnableTraceLogs)
+            {
+                sipTransport.EnableTraceLogs();
+            }
+
             _sipTransport = sipTransport;
         }
-
-
-
-        
-        
-
 
         public VoiceProperties VoiceProperties => _voiceProperties;
 
@@ -66,7 +56,7 @@ namespace ivrToolkit.Plugin.SipSorcery
 
             if (_disposed) throw new DisposedException("You cannot get a line from a disposed plugin");
 
-            var line = new SipLine(_loggerFactory, _voiceProperties, lineNumber, _sipTransport);
+            var line = new SipSorceryLine(_loggerFactory, _voiceProperties, lineNumber, _sipTransport);
             return new LineWrapper(_loggerFactory, lineNumber, line);
         }
     }

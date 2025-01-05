@@ -30,7 +30,7 @@ namespace SipSorceryOutTest
 
             var SipVoiceProperties = new SipVoiceProperties(loggerFactory, @"c:\repos\Config\SipSorcery\voice.properties");
 
-            var sipPlugin = new SipPlugin(loggerFactory, SipVoiceProperties);
+            var sipPlugin = new SipSorceryPlugin(loggerFactory, SipVoiceProperties);
 
             PluginManager pluginManager = null;
 

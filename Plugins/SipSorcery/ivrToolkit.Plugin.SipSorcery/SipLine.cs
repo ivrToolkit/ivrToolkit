@@ -1,20 +1,38 @@
 ﻿using ivrToolkit.Core.Enums;
+using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Plugin.SipSorcery
 {
     internal class SipLine : IIvrBaseLine, IIvrLineManagement
     {
-        public IIvrLineManagement Management => throw new NotImplementedException();
+        private readonly ILoggerFactory _loggerFactory;
+        private readonly SipVoiceProperties _voiceProperties;
+        private readonly int _lineNumber;
+        private readonly ILogger<SipLine> _logger;
 
-        public string LastTerminator => throw new NotImplementedException();
+        public SipLine(ILoggerFactory loggerFactory, SipVoiceProperties voiceProperties, int lineNumber)
+        {
+            _loggerFactory = loggerFactory.ThrowIfNull(nameof(loggerFactory));
+            _voiceProperties = voiceProperties.ThrowIfNull(nameof(voiceProperties));
+            _lineNumber = lineNumber;
 
-        public int LineNumber => throw new NotImplementedException();
+            _logger = loggerFactory.CreateLogger<SipLine>();
+            _logger.LogDebug("ctr(ILoggerFactory, VoiceProperties, {0})", lineNumber);
+
+            Start();
+        }
+        private void Start()
+        {
+            _logger.LogDebug("Start() - Starting line: {0}", _lineNumber);
+        }
+
+        public IIvrLineManagement Management => this;
+
+        public string LastTerminator { get; set; }
+
+        public int LineNumber => _lineNumber;
 
         public int Volume { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
@@ -25,7 +43,7 @@ namespace ivrToolkit.Plugin.SipSorcery
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            _logger.LogDebug("Dispose() - Disposing of the line");
         }
 
         public string FlushDigitBuffer()

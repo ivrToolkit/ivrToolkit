@@ -7,6 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="NAudio.Core" Version="2.2.1" />
+    <PackageReference Include="SIPSorcery" Version="8.0.7" />
+    <PackageReference Include="SIPSorceryMedia.Abstractions" Version="8.0.7" />
+    <PackageReference Include="SIPSorceryMedia.Encoders" Version="8.0.7" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\..\ivrToolkit.Core\ivrToolkit.Core.csproj" />
   </ItemGroup>
 

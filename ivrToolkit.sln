@@ -49,6 +49,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ivrToolkit.Plugin.SipSorcer
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SipSorcery", "SipSorcery", "{9E44A18B-4B6E-45A9-B898-F7DBFAC4F13D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SipSorceryOutTest", "Examples\SipSorceryOutTest\SipSorceryOutTest.csproj", "{3458B414-2507-4AD7-9650-73F0A6212892}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -237,6 +239,22 @@ Global
 		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Release|Win32.Build.0 = Release|Any CPU
 		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Release|x86.ActiveCfg = Release|Any CPU
 		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6}.Release|x86.Build.0 = Release|Any CPU
+		{3458B414-2507-4AD7-9650-73F0A6212892}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3458B414-2507-4AD7-9650-73F0A6212892}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3458B414-2507-4AD7-9650-73F0A6212892}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{3458B414-2507-4AD7-9650-73F0A6212892}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{3458B414-2507-4AD7-9650-73F0A6212892}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{3458B414-2507-4AD7-9650-73F0A6212892}.Debug|Win32.Build.0 = Debug|Any CPU
+		{3458B414-2507-4AD7-9650-73F0A6212892}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3458B414-2507-4AD7-9650-73F0A6212892}.Debug|x86.Build.0 = Debug|Any CPU
+		{3458B414-2507-4AD7-9650-73F0A6212892}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3458B414-2507-4AD7-9650-73F0A6212892}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3458B414-2507-4AD7-9650-73F0A6212892}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{3458B414-2507-4AD7-9650-73F0A6212892}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{3458B414-2507-4AD7-9650-73F0A6212892}.Release|Win32.ActiveCfg = Release|Any CPU
+		{3458B414-2507-4AD7-9650-73F0A6212892}.Release|Win32.Build.0 = Release|Any CPU
+		{3458B414-2507-4AD7-9650-73F0A6212892}.Release|x86.ActiveCfg = Release|Any CPU
+		{3458B414-2507-4AD7-9650-73F0A6212892}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -256,6 +274,7 @@ Global
 		{CA30C189-90F8-4C79-B75C-1BB94BCA32DB} = {C68DB211-E713-4265-A2F3-F573383C2C84}
 		{0BF454B1-4D9C-46B9-BFEE-E00D2A8928D6} = {9E44A18B-4B6E-45A9-B898-F7DBFAC4F13D}
 		{9E44A18B-4B6E-45A9-B898-F7DBFAC4F13D} = {1137A0FF-E16A-4674-BA02-A0D41ADBAB58}
+		{3458B414-2507-4AD7-9650-73F0A6212892} = {C68DB211-E713-4265-A2F3-F573383C2C84}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A5C71D1A-0ABE-437B-89FB-59EE74035D64}

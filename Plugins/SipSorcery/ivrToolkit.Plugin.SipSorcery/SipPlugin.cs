@@ -40,20 +40,6 @@ namespace ivrToolkit.Plugin.SipSorcery
         }
 
 
-            // userAgent.ClientCallFailed += (uac, error, sipResponse) => _logger.LogDebug("Call failed {error}.", error);
-            //userAgent.ClientCallFailed += (uac, error, sipResponse) => exitCts.Cancel();
-            //userAgent.OnCallHungup += (dialog) => exitCts.Cancel();
-            //userAgent.ClientCallAnswered += (uac, sipResonse) => _logger.LogDebug("Answered");
-            //userAgent.ClientCallFailed += (uac, error, sipResonse) => _logger.LogDebug("Call failed {error}.", error);
-            //userAgent.OnCallHungup += (dialog) => _logger.LogDebug("Hungup");
-            //userAgent.ClientCallRinging += (uac, sipResonse) => _logger.LogDebug("Ringing");
-            //userAgent.ClientCallTrying += (uac, sipResonse) => _logger.LogDebug("Trying");
-            //userAgent.OnCallHungup += (dialog) => _logger.LogDebug("OnCallHungup");
-            //userAgent.OnDtmfTone += (aByte, aInt) => _logger.LogDebug("OnDtmfTone - {byte},{int}", aByte, aInt);
-            //userAgent.OnIncomingCall += (uac, sipAction) => _logger.LogDebug("OnIncomingCall");
-            //userAgent.OnReinviteRequest += (inviteTransaction) => _logger.LogDebug("OnReinviteRequest");
-            //userAgent.OnRtpEvent += (rptEvent, header) => _logger.LogDebug("OnRtpEvent");
-            //userAgent.RemotePutOnHold += () => _logger.LogDebug("RemotePutOnHold");
 
         
         

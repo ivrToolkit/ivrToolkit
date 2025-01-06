@@ -199,3 +199,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+----------------------------------- END MAIN LICENSE --------------------------------------
+
+------------------------------- Additional Licensing Information for IvrToolkit.Plugin.SipSorcery ---------------------------------------
+SipSorcery is used in the IvrToolkit.Plugin.SipSorcery. You can find its license at https://github.com/sipsorcery-org/sipsorcery?tab=License-1-ov-file#readme

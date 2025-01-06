@@ -53,7 +53,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\ivrToolkit.Core\ivrToolkit.Core.csproj" />
-    <ProjectReference Include="..\..\Plugins\Dialogic\ivrToolkit.Plugin.Dialogic.Common\ivrToolkit.Plugin.Dialogic.Common.csproj" />
     <ProjectReference Include="..\..\Plugins\SipSorcery\ivrToolkit.Plugin.SipSorcery\ivrToolkit.Plugin.SipSorcery.csproj" />
   </ItemGroup>
 

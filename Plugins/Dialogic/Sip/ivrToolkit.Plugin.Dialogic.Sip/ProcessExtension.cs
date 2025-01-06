@@ -4,7 +4,6 @@ using ivrToolkit.Plugin.Dialogic.Common.DialogicDefs;
 using Microsoft.Extensions.Logging;
 using ivrToolkit.Plugin.Dialogic.Common.Extensions;
 using ivrToolkit.Core.Exceptions;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace ivrToolkit.Plugin.Dialogic.Sip;
 
@@ -74,8 +73,11 @@ public class ProcessExtension
     */
     public void HandleExtension(METAEVENT metaEvt)
     {
-        // todo this mess needs to be written better :)
-        _logger.LogDebug("ProcessExtension(METAEVENT metaEvt)");
+        _logger.LogDebug("ProcessExtension(METAEVENT metaEvt) - evtDev = {eventDevice}", metaEvt.evtdev);
+
+        var receivedNotify = false;
+        var callIdHeader = "";
+        var eventDev = metaEvt.evtdev;
 
         var extensionBlockPtr = metaEvt.extevtdatap;
         if (extensionBlockPtr != IntPtr.Zero)
@@ -103,14 +105,6 @@ public class ProcessExtension
             {
                 case gcip_defs_h.IPSET_SWITCH_CODEC:
                     _logger.LogDebug("{  description}", parmData.parm_ID.IpSetSwitchCodeDescription());
-                    switch (parmData.parm_ID)
-                    {
-                        // todo I don't think this ever happens
-                        case gcip_defs_h.IPPARM_AUDIO_REQUESTED:
-                            //ResponseCodecRequest(true);
-                            break;
-                    }
-
                     break;
                 case gcip_defs_h.IPSET_MEDIA_STATE:
                     _logger.LogDebug("  {description}", parmData.parm_ID.IpSetMediaStateDescription());
@@ -157,12 +151,21 @@ public class ProcessExtension
                         case gcip_defs_h.IPPARM_MSGTYPE:
                             var messType = GetValueFromPtr(parmDatap + 5, parmData.value_size);
                             _logger.LogDebug("  {description}", messType.IpMsgTypeDescription());
+                            if (messType == gcip_defs_h.IP_MSGTYPE_SIP_NOTIFY)
+                            {
+                                receivedNotify = true;
+                            }
                             break;
                     }
                     break;
                 case gcip_defs_h.IPSET_SIP_MSGINFO:
                     var str = GetStringFromPtr(parmDatap + 5, parmData.value_size);
                     _logger.LogDebug("  {0}: {1}", parmData.parm_ID.SipMsgInfo(), str);
+                    if (parmData.parm_ID == gcip_defs_h.IPPARM_CALLID_HDR)
+                    {
+                        callIdHeader = str;
+                    }
+
                     break;
                 case gcip_defs_h.IPSET_MIME:
                     _logger.LogDebug("  {description}", parmData.parm_ID.IpSetMimeDescription());
@@ -181,6 +184,57 @@ public class ProcessExtension
             parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
         }
         gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
+
+        if (receivedNotify)
+        {
+            try
+            {
+                RespondToNotify(true, callIdHeader, eventDev); // send accept
+            }
+            catch (Exception e)
+            {
+                // I don't want to crash the program just because of this and it may never happen
+                _logger.LogError(e, "Failed to respond to notify");
+            }
+        }
+    }
+
+    private void RespondToNotify(bool accept, string callIdHeader, int eventDev)
+    {
+        _logger.LogDebug("{name}({acceptReject}, {callIdHeader})", nameof(RespondToNotify), accept ? "accept" : "reject", callIdHeader);
+        if (string.IsNullOrEmpty(callIdHeader))
+        {
+            _logger.LogDebug("Missing IPPARM_EVENT_HDR");
+            return;
+        }
+
+        var gcParmBlkPtr = IntPtr.Zero;
+        var result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gcip_defs_h.IPSET_MSG_SIP,
+            gcip_defs_h.IPPARM_MSGTYPE,
+            sizeof(int),
+            (uint)(accept ? gcip_defs_h.IPPARM_ACCEPT : gcip_defs_h.IPPARM_REJECT));
+        result.ThrowIfGlobalCallError();
+
+        // Insert SIP Call ID field
+        var pCallIdHeader = Marshal.StringToHGlobalAnsi(callIdHeader);
+        try
+        {
+            result = gclib_h.gc_util_insert_parm_ref_ex(ref gcParmBlkPtr, gcip_defs_h.IPSET_SIP_MSGINFO,
+                gcip_defs_h.IPPARM_SIP_HDR, (uint)(callIdHeader.Length + 1), pCallIdHeader);
+            result.ThrowIfGlobalCallError();
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(pCallIdHeader);
+        }
+
+        var returnParamPtr = IntPtr.Zero;
+
+        result = gclib_h.gc_Extension(gclib_h.GCTGT_GCLIB_CHAN, eventDev, gcip_defs_h.IPEXTID_SENDMSG,
+            gcParmBlkPtr, ref returnParamPtr, DXXXLIB_H.EV_ASYNC);
+        result.ThrowIfGlobalCallError();
+
+        gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
     }
 
     private string GetStringFromPtr(IntPtr ptr, int size)

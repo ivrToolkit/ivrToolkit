@@ -993,27 +993,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             return 0;
         }
 
-
-        /**
-        * Process a codec request.
-        */
-        private void ResponseCodecRequest(bool acceptCall)
-        {
-            _logger.LogDebug("response_codec_request({0})...", acceptCall ? "accept" : "reject");
-            var gcParmBlkPtr = IntPtr.Zero;
-            var result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gcip_defs_h.IPSET_SWITCH_CODEC,
-                (ushort)(acceptCall ? gcip_defs_h.IPPARM_ACCEPT : gcip_defs_h.IPPARM_REJECT), sizeof(int), 0);
-            result.ThrowIfGlobalCallError();
-
-            var returnParamPtr = IntPtr.Zero;
-
-            result = gclib_h.gc_Extension(gclib_h.GCTGT_GCLIB_CRN, _callReferenceNumber, gcip_defs_h.IPEXTID_CHANGEMODE,
-                gcParmBlkPtr, ref returnParamPtr, DXXXLIB_H.EV_ASYNC);
-            result.ThrowIfGlobalCallError();
-
-            gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
-        }
-
         private void MetaEvent(object sender, MetaEventArgs e)
         {
             var eventHandle = e.EventHandle;

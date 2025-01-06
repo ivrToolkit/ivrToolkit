@@ -4,7 +4,8 @@
 		<TargetFrameworks>net6.0;net8.0</TargetFrameworks>
 		<Version>1.0.0</Version>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-		<Description>A toolkit for writing Interactive Voice Response Applications with primary support for Dialogic Cards.</Description>
+		<Description>A toolkit for writing Interactive Voice Response Applications with primary support for Dialogic Cards.
+		Now supports SipSorcery.</Description>
 		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 		<Copyright>Copyright 2013-2021 Troy Makaro</Copyright>
 		<PackageProjectUrl>http://www.ivrtoolkit.com</PackageProjectUrl>

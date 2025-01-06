@@ -117,12 +117,9 @@ namespace ivrToolkit.Plugin.SipSorcery
             _voipMediaSession.TakeOffHold();
 
             // Place the call and wait for the result.
-            var stopwatch = Stopwatch.StartNew();
-            stopwatch.Start();
-
+            var startTime = Stopwatch.GetTimestamp();
             var callResult = await _userAgent.Call(to, user, pass, _voipMediaSession);
-            var duration = stopwatch.Elapsed;
-            stopwatch.Stop();
+            var duration = Stopwatch.GetElapsedTime(startTime);
             _logger.LogInformation("Dial call duration: {duration}", duration);
 
             if (!callResult)

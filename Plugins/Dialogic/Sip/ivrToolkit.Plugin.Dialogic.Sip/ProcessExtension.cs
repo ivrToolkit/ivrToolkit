@@ -215,26 +215,32 @@ public class ProcessExtension
             (uint)(accept ? gcip_defs_h.IPPARM_ACCEPT : gcip_defs_h.IPPARM_REJECT));
         result.ThrowIfGlobalCallError();
 
+        // format the caller id correctly
+        callIdHeader = $"Call-ID: {callIdHeader}\0";
+
         // Insert SIP Call ID field
         var pCallIdHeader = Marshal.StringToHGlobalAnsi(callIdHeader);
         try
         {
+            // string has a null on the end so don't use Length + 1
             result = gclib_h.gc_util_insert_parm_ref_ex(ref gcParmBlkPtr, gcip_defs_h.IPSET_SIP_MSGINFO,
-                gcip_defs_h.IPPARM_SIP_HDR, (uint)(callIdHeader.Length + 1), pCallIdHeader);
+                gcip_defs_h.IPPARM_SIP_HDR, (uint)callIdHeader.Length, pCallIdHeader);
             result.ThrowIfGlobalCallError();
+
+            var returnParamPtr = IntPtr.Zero;
+
+            result = gclib_h.gc_Extension(gclib_h.GCTGT_GCLIB_CHAN, eventDev, gcip_defs_h.IPEXTID_SENDMSG,
+                gcParmBlkPtr, ref returnParamPtr, DXXXLIB_H.EV_ASYNC);
+            result.ThrowIfGlobalCallError();
+
         }
         finally
         {
+            gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
             Marshal.FreeHGlobal(pCallIdHeader);
         }
 
-        var returnParamPtr = IntPtr.Zero;
 
-        result = gclib_h.gc_Extension(gclib_h.GCTGT_GCLIB_CHAN, eventDev, gcip_defs_h.IPEXTID_SENDMSG,
-            gcParmBlkPtr, ref returnParamPtr, DXXXLIB_H.EV_ASYNC);
-        result.ThrowIfGlobalCallError();
-
-        gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
     }
 
     private string GetStringFromPtr(IntPtr ptr, int size)

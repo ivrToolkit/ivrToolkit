@@ -5,17 +5,17 @@
         {
           "files": [ "**/ivrToolkit.Core.csproj" ],
           "exclude": [ "**/bin/**", "**/obj/**" ],
-          "src": "."
+          "src": ""
         }
       ],
-      "dest": "api"
+      "dest": "obj/api"
     }
   ],
   "build": {
     "content": [
       {
         "files": [
-          "**/*.md"
+          "**/*.yml"
         ]
       }
     ],
@@ -26,6 +26,6 @@
         ]
       }
     ],
-    "dest": "_site/api"
+    "dest": "_site"
   }
 }

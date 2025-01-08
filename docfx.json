@@ -3,9 +3,9 @@
     {
       "src": [
         {
-          "files": [ "**/*.csproj" ],
+          "files": [ "**/ivrToolkit.Core.csproj" ],
           "exclude": [ "**/bin/**", "**/obj/**" ],
-          "src": "../src"
+          "src": "."
         }
       ],
       "dest": "api"
@@ -26,6 +26,6 @@
         ]
       }
     ],
-    "dest": "_site"
+    "dest": "_site/api"
   }
 }

@@ -28,7 +28,15 @@ jobs:
         run: docfx docfx.json
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./_site
+        run: |
+          git clone https://github.com/ivrToolkit/ivrToolkit.github.io.git deploy-repo
+          rm -rf deploy-repo/*
+          cp -R _site/* deploy-repo/
+          cd deploy-repo
+          git config user.name "GitHub Actions"
+          git config user.email "github-actions@github.com"
+          git add .
+          git commit -m "Update documentation [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.DEPLOY_TOKEN }}

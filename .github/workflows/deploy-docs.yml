@@ -8,26 +8,27 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-steps:
-  - name: Checkout
-    uses: actions/checkout@v2
 
-  - name: Install .NET Core SDK
-    uses: actions/setup-dotnet@v1
-    with:
-      dotnet-version: 8.0.x
+    steps: # Add proper indentation for steps
+      - name: Checkout
+        uses: actions/checkout@v2
 
-  - name: Install DocFX
-    run: dotnet tool install -g docfx
+      - name: Install .NET Core SDK
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 8.0.x
 
-  - name: Add .NET tools to PATH
-    run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+      - name: Install DocFX
+        run: dotnet tool install -g docfx
 
-  - name: Generate Documentation
-    run: docfx docfx.json
-    
-  - name: Deploy to GitHub Pages
-    uses: peaceiris/actions-gh-pages@v3
-    with:
-      github_token: ${{ secrets.GITHUB_TOKEN }}
-      publish_dir: ./_site
+      - name: Add .NET tools to PATH
+        run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+      - name: Generate Documentation
+        run: docfx docfx.json
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site

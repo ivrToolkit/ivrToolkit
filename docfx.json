@@ -1,18 +1,16 @@
 {
-  "metadata": {
-    "src": [
-      {
-        "files": [
-          "**/*.cs"
-        ],
-        "exclude": [
-          "bin/**",
-          "obj/**"
-        ]
-      }
-    ],
-    "dest": "obj/api"
-  },
+  "metadata": [
+    {
+      "src": [
+        {
+          "files": [ "**/*.csproj" ],
+          "exclude": [ "**/bin/**", "**/obj/**" ],
+          "src": "../src"
+        }
+      ],
+      "dest": "api"
+    }
+  ],
   "build": {
     "content": [
       {

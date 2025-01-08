@@ -33,8 +33,8 @@ jobs:
           rm -rf deploy-repo/*
           cp -R _site/* deploy-repo/
           cd deploy-repo
-          git config user.name "GitHub Actions"
-          git config user.email "github-actions@github.com"
+          git config Troy "GitHub Actions"
+          git config troy@makaro.com "github-actions@github.com"
           git add .
           git commit -m "Update documentation [skip ci]"
           git push

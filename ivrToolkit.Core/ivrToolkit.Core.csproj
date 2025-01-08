@@ -11,6 +11,9 @@
 		<PackageProjectUrl>http://www.ivrtoolkit.com</PackageProjectUrl>
 		<PackageIcon>icon.jpg</PackageIcon>
 		<PackageIconUrl />
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<!-- Suppress warnings for missing XML comments -->
+		<NoWarn>$(NoWarn);1591</NoWarn>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

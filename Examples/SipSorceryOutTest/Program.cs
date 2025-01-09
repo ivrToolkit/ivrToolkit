@@ -32,11 +32,11 @@ namespace SipSorceryOutTest
 
             var sipPlugin = new SipSorceryPlugin(loggerFactory, SipVoiceProperties);
 
-            PluginManager pluginManager = null;
+            LineManager lineManager = null;
 
             try
             {
-                pluginManager = new PluginManager(loggerFactory, sipPlugin);
+                lineManager = new LineManager(loggerFactory.CreateLogger<LineManager>(), sipPlugin);
 
                 while (true)
                 {
@@ -50,7 +50,7 @@ namespace SipSorceryOutTest
                     if (string.IsNullOrWhiteSpace(phoneNumber)) return;
 
                     var ln = int.Parse(lineNumber);
-                    var line = pluginManager.GetLine(ln);
+                    var line = lineManager.GetLine(ln);
 
                     _logger.LogDebug("Start Line {0}", ln);
                     var waitThread = new Thread(() => WaitCall(loggerFactory, SipVoiceProperties, line, phoneNumber));
@@ -63,7 +63,7 @@ namespace SipSorceryOutTest
                     waitThread.Join(); 
 
                     _logger.LogDebug("Releasing all lines");
-                    pluginManager.ReleaseAll();
+                    lineManager.ReleaseAll();
                     Console.WriteLine();
                 } // while
             }
@@ -74,8 +74,8 @@ namespace SipSorceryOutTest
             finally
             {
                 _logger.LogDebug("In finally of main thread.");
-                pluginManager?.ReleaseAll();
-                pluginManager?.Dispose();
+                lineManager?.ReleaseAll();
+                lineManager?.Dispose();
             }
         }
 

@@ -4,14 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace ivrToolkit.Core.Util
+namespace ivrToolkit.Plugin.Dialogic.Common
 {
-   
+
     public class UnmanagedMemoryService : IDisposable
     {
         public class PtrLabel
         {
-            public IntPtr Ptr { get; set; }
+            public nint Ptr { get; set; }
             public string Label { get; set; }
         }
 
@@ -26,7 +26,7 @@ namespace ivrToolkit.Core.Util
             _logger.LogDebug("ctr({0})", _scopeName);
         }
 
-        public IntPtr Create<T>(string label, T[] structObjects)
+        public nint Create<T>(string label, T[] structObjects)
         {
             _logger.LogDebug("create<T>({0}, T[]) - scope: {1}", label, _scopeName);
             var structSize = Marshal.SizeOf<T>();
@@ -42,7 +42,7 @@ namespace ivrToolkit.Core.Util
             return pUnmanagedMemory;
         }
 
-        public IntPtr Create<T>(string label, T structObject)
+        public nint Create<T>(string label, T structObject)
         {
             _logger.LogDebug("create<T>({0}, T) - scope: {1}", label, _scopeName);
             var structSize = Marshal.SizeOf<T>();
@@ -53,7 +53,7 @@ namespace ivrToolkit.Core.Util
             return pUnmanagedMemory;
         }
 
-        public IntPtr Create<T>(string label, T structObject, int sizeOverride)
+        public nint Create<T>(string label, T structObject, int sizeOverride)
         {
             _logger.LogDebug("create<T>({0}, T, {1}) - scope: {2}", label, sizeOverride, _scopeName);
             var structSize = sizeOverride;
@@ -64,7 +64,7 @@ namespace ivrToolkit.Core.Util
             return pUnmanagedMemory;
         }
 
-        public IntPtr StringToHGlobalAnsi(string label, string text)
+        public nint StringToHGlobalAnsi(string label, string text)
         {
             _logger.LogDebug("StringToHGlobalAnsi({0}, string) - scope: {1}", label, _scopeName);
             var pUnmanagedMemory = Marshal.StringToHGlobalAnsi(text);
@@ -72,7 +72,7 @@ namespace ivrToolkit.Core.Util
             _pointers.Add(new PtrLabel { Ptr = pUnmanagedMemory, Label = label });
             return pUnmanagedMemory;
         }
-        public void Push(string label, IntPtr ptr)
+        public void Push(string label, nint ptr)
         {
             _logger.LogDebug("Push({0}, IntPtr) - scope: {1}", label, _scopeName);
             _pointers.Add(new PtrLabel { Ptr = ptr, Label = label });
@@ -91,7 +91,7 @@ namespace ivrToolkit.Core.Util
             _pointers.Clear();
         }
 
-        public void Free(IntPtr ptr)
+        public void Free(nint ptr)
         {
             _logger.LogDebug("Free {0} - scope: {1}", ptr, _scopeName);
 

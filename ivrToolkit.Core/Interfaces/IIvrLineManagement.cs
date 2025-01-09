@@ -1,7 +1,7 @@
 ﻿namespace ivrToolkit.Core.Interfaces
 {
     /// <summary>
-    /// The purpose of this interface is to define functionality that will be called from another thread like the PluginManager
+    /// The purpose of this interface is to define functionality that will be called from another thread like the LineManager
     /// </summary>
     public interface IIvrLineManagement
     {

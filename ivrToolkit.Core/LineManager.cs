@@ -13,31 +13,22 @@ using Microsoft.Extensions.Logging;
 namespace ivrToolkit.Core
 {
     /// <summary>
-    /// The line manager's responsibility is to keep track of lines.
+    /// The LineManager keeps track of the lines in use.
     /// </summary>
-    /// <example>
-    /// <code>
-    ///        // pick the line number you want
-    ///        line = PluginManager.getLine(1);
-    /// </code>
-    /// </example>
-    [Obsolete("This class is deprecated. Use LineManager instead.")]
-    public class PluginManager : IDisposable
+    public class LineManager : IDisposable
     {
         private readonly Dictionary<int, IIvrLine> _lines = new();
         private readonly object _lockObject = new();
 
         private readonly IIvrPlugin _ivrPlugin;
-        private readonly ILogger<PluginManager> _logger;
+        private readonly ILogger<LineManager> _logger;
 
-        public PluginManager(ILoggerFactory loggerFactory, IIvrPlugin ivrPlugin)
+        public LineManager(ILogger<LineManager> logger, IIvrPlugin ivrPlugin)
         {
-            loggerFactory.ThrowIfNull(nameof(loggerFactory));
-            ivrPlugin.ThrowIfNull(nameof(ivrPlugin));
+            _logger = logger.ThrowIfNull(nameof(logger));
+            _ivrPlugin = ivrPlugin.ThrowIfNull(nameof(ivrPlugin));
 
-            _logger = loggerFactory.CreateLogger<PluginManager>();
             _logger.LogDebug("ctr()");
-            _ivrPlugin = ivrPlugin;
         }
 
         /// <summary>
@@ -50,7 +41,7 @@ namespace ivrToolkit.Core
         {
             lineNumber.ThrowIfLessThanOrEqualTo(0, nameof(lineNumber));
 
-            _logger.LogDebug("PluginManager.GetLine({0})", lineNumber);
+            _logger.LogDebug("GetLine({0})", lineNumber);
             lock (_lockObject)
             {
                 var line = _ivrPlugin.GetLine(lineNumber);
@@ -105,6 +96,7 @@ namespace ivrToolkit.Core
 
         public void Dispose()
         {
+            ReleaseAll();
             _logger.LogDebug("Dispose()");
             _ivrPlugin?.Dispose();
         }

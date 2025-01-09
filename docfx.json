@@ -12,6 +12,10 @@
     }
   ],
   "build": {
+    "template": [
+      "default",
+      "modern"
+    ],
     "content": [
       {
         "files": [
@@ -26,6 +30,6 @@
         ]
       }
     ],
-    "dest": "_site"
+    "dest": "_site/docs"
   }
 }

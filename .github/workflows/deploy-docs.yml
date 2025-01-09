@@ -30,6 +30,7 @@ jobs:
       - name: Deploy to GitHub Pages
         run: |
           git clone https://${{ secrets.DEPLOY_TOKEN }}@github.com/ivrToolkit/ivrToolkit.github.io.git deploy-repo
+          rm -rf deploy-repo/docs
           cp -R _site/* deploy-repo/
           cd deploy-repo
           git config user.name "GitHub Actions"

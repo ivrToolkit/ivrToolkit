@@ -3,9 +3,8 @@
     {
       "src": [
         {
-          "files": [ "**/ivrToolkit.Core.csproj" ],
-          "exclude": [ "**/bin/**", "**/obj/**" ],
-          "src": ""
+          "files": [ "ivrToolkit.Core/ivrToolkit.Core.csproj" ],
+          "exclude": [ "**/bin/**", "**/obj/**" ]
         }
       ],
       "dest": "api"
@@ -13,13 +12,12 @@
   ],
   "build": {
     "template": [
-      "default",
-      "modern"
+      "default"
     ],
     "content": [
       {
         "files": [
-          "**/*.yml"
+          "api/*.yml"
         ]
       }
     ],

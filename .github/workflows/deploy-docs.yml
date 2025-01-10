@@ -25,7 +25,9 @@ jobs:
         run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
       - name: Generate Documentation
-        run: docfx docfx.json
+        run: |
+          cd ApiDocBuilder
+          docfx docfx.json
 
       - name: Deploy to GitHub Pages
         run: |

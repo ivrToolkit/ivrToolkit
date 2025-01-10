@@ -29,14 +29,14 @@ namespace SipInTest
 
             var sipPlugin = new SipPlugin(loggerFactory, dialogicSipVoiceProperties);
 
-            PluginManager pluginManager = null;
+            LineManager lineManager = null;
 
             try
             {
-                pluginManager = new PluginManager(loggerFactory, sipPlugin);
+                lineManager = new LineManager(loggerFactory.CreateLogger<LineManager>(), sipPlugin);
 
 
-                var line = pluginManager.GetLine(1);
+                var line = lineManager.GetLine(1);
 
                 Console.WriteLine("Start Line {0}", 1);
                 var waitThread1 = new Thread(() => WaitCall(loggerFactory, dialogicSipVoiceProperties, line));
@@ -47,7 +47,7 @@ namespace SipInTest
                 Console.ReadLine();
 
                 Console.WriteLine("Releasing all lines");
-                pluginManager.ReleaseAll();
+                lineManager.ReleaseAll();
                 waitThread1.Join();
             }
             catch (Exception e)
@@ -56,8 +56,8 @@ namespace SipInTest
             }
             finally
             {
-                pluginManager?.ReleaseAll();
-                pluginManager?.Dispose();
+                lineManager?.ReleaseAll();
+                lineManager?.Dispose();
             }
         }
 

@@ -31,11 +31,10 @@ namespace SipOutTest
 
             var sipPlugin = new SipPlugin(loggerFactory, dialogicSipVoiceProperties);
 
-            PluginManager pluginManager = null;
-
+            LineManager lineManager = null;
             try
             {
-                pluginManager = new PluginManager(loggerFactory, sipPlugin);
+                lineManager = new LineManager(loggerFactory.CreateLogger<LineManager>(), sipPlugin);
 
                 while (true)
                 {
@@ -49,7 +48,7 @@ namespace SipOutTest
                     if (string.IsNullOrWhiteSpace(phoneNumber)) return;
 
                     var ln = int.Parse(lineNumber);
-                    var line = pluginManager.GetLine(ln);
+                    var line = lineManager.GetLine(ln);
 
                     _logger.LogDebug("Start Line {0}", ln);
                     var waitThread = new Thread(() => WaitCall(loggerFactory, dialogicSipVoiceProperties, line, phoneNumber));
@@ -62,7 +61,7 @@ namespace SipOutTest
                     waitThread.Join(); 
 
                     _logger.LogDebug("Releasing all lines");
-                    pluginManager.ReleaseAll();
+                    lineManager.ReleaseAll();
                     Console.WriteLine();
                 } // while
             }
@@ -73,8 +72,8 @@ namespace SipOutTest
             finally
             {
                 _logger.LogDebug("In finally of main thread.");
-                pluginManager?.ReleaseAll();
-                pluginManager?.Dispose();
+                lineManager?.ReleaseAll();
+                lineManager?.Dispose();
             }
         }
 

@@ -1,0 +1,39 @@
+{
+  "metadata": [
+    {
+      "src": [
+        {
+          "files": [ "ivrToolkit.Core/ivrToolkit.Core.csproj" ],
+          "exclude": [ "**/bin/**", "**/obj/**" ],
+          "src": "../"
+        }
+      ],
+      "dest": "api"
+    }
+  ],
+  "build": {
+    "template": [ "default", "templates/default" ],
+    "content": [
+      {
+        "files": [
+          "**/*.yml",
+          "**/*.md"
+        ]
+      }
+    ],
+    "resource": [
+      {
+        "files": [
+          "logo.jpg"
+        ]
+      }
+    ],
+    "dest": "../_site/docs"
+  },
+  "globalMetadata": {
+    "_appName": "ivrToolkit",
+    "_appTitle": "ivrToolkit"
+  },
+  "home": "api/ivrToolkit.Core.AbstractScript.yml",
+  "dest": "../_site/docs"
+}

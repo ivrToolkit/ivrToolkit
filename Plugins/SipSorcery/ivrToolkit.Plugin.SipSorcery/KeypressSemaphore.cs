@@ -60,7 +60,7 @@ namespace ivrToolkit.Plugin.SipSorcery
             {
                 if (_semaphoreSlim != null)
                 {
-                    await _semaphoreSlim.WaitAsync(milliseconds, cancellationToken);
+                    await _semaphoreSlim.WaitAsync(milliseconds, _cts.Token);
                 }
             }
             catch (OperationCanceledException)

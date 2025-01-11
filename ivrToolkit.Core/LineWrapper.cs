@@ -208,7 +208,7 @@ namespace ivrToolkit.Core
 
         public async Task PlayFileAsync(string filename, CancellationToken cancellationToken)
         {
-            _logger.LogDebug("PlayFile({0})", filename);
+            _logger.LogDebug("PlayFileAsync({0})", filename);
             CheckDispose();
             try
             {

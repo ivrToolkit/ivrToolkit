@@ -85,7 +85,7 @@ namespace ivrToolkit.Plugin.SipSorcery
 
             _voipMediaSession?.Dispose();
             _voipMediaSession = null;
-            _userAgent.Hangup();
+            //_userAgent.Hangup();
 
             _keypressSemaphore.Teardown();
         }
@@ -284,19 +284,33 @@ namespace ivrToolkit.Plugin.SipSorcery
             }
         }
 
-        async Task IIvrBaseLine.PlayFileAsync(string filename, CancellationToken cancellationToken)
+        public async Task PlayFileAsync(string filename, CancellationToken cancellationToken)
         {
+            _logger.LogDebug("{}({}) - _digitPressed = {pressed}", nameof(PlayFile), filename, _digitPressed);
+            if (!_userAgent.IsCallActive)
+            {
+                // break area for testing
+                _logger.LogDebug("{}({}) (1)- _userAgent is inactive, throwing HangupException", nameof(PlayFile), filename);
+                CloseDialResources();
+                throw new HangupException();
+            }
+            if (_digitPressed) return; // todo there is(should be) a way to stop digit presses during play.
             await PlayFileAsync(filename);
+            await Task.Delay(200, cancellationToken);
+            if (!_userAgent.IsCallActive)
+            {
+                _logger.LogDebug("{}({}) (2)- _userAgent is inactive, throwing HangupException", nameof(PlayFile), filename);
+                // break area for testing
+                CloseDialResources();
+                throw new HangupException();
+            }
         }
 
         private async Task PlayFileAsync(string filename)
         {
             if (_voipMediaSession == null) return;
-                
-            var wavConverter = new WavConverter();
-            await _voipMediaSession.AudioExtrasSource.SendAudioFromStream(
-                wavConverter.NAudioConvert8BitUnsignedTo16BitSignedPCM(
-                filename),
+            
+            await _voipMediaSession.AudioExtrasSource.SendAudioFromStream(new FileStream(filename, FileMode.Open),
                 AudioSamplingRatesEnum.Rate8KHz);
         }
 

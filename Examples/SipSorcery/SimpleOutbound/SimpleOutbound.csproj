@@ -21,6 +21,9 @@
     <None Remove="Voice Files\ThankYou.wav" />
     <None Remove="Voice Files\TryAgain.wav" />
     <None Remove="Voice Files\YouPressed.wav" />
+    <None Update="voice.properties">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -52,8 +55,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\ivrToolkit.Core\ivrToolkit.Core.csproj" />
-    <ProjectReference Include="..\..\Plugins\SipSorcery\ivrToolkit.Plugin.SipSorcery\ivrToolkit.Plugin.SipSorcery.csproj" />
+    <ProjectReference Include="..\..\..\ivrToolkit.Core\ivrToolkit.Core.csproj" />
+    <ProjectReference Include="..\..\..\Plugins\SipSorcery\ivrToolkit.Plugin.SipSorcery\ivrToolkit.Plugin.SipSorcery.csproj" />
   </ItemGroup>
 
 </Project>

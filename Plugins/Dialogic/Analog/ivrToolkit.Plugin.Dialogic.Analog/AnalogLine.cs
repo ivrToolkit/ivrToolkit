@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
@@ -127,7 +128,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
 
         }
 
-        public Task<CallAnalysis> DialAsync(string phoneNumber, int answeringMachineLengthInMilliseconds)
+        public Task<CallAnalysis> DialAsync(string phoneNumber, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
@@ -147,7 +148,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
             PlayFile(_voiceh, filename, "0123456789#*abcd", _currentXpb);
         }
 
-        public Task PlayFileAsync(string filename)
+        public Task PlayFileAsync(string filename, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
@@ -173,7 +174,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
             return GetDigits(_voiceh, numberOfDigits, terminators);
         }
 
-        public Task<string> GetDigitsAsync(int numberOfDigits, string terminators)
+        public Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }

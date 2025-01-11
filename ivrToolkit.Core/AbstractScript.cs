@@ -5,6 +5,7 @@
 // 
 // 
 
+using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.Util;
@@ -50,7 +51,7 @@ namespace ivrToolkit.Core
         }
 
         /// <inheritdoc/>
-        public virtual Task<IScript> ExecuteAsync()
+        public virtual Task<IScript> ExecuteAsync(CancellationToken cancellationToken)
         {
             throw new System.NotImplementedException();
         }

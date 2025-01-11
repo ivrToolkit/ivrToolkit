@@ -5,6 +5,7 @@
 // 
 // 
 
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ivrToolkit.Core.Interfaces
@@ -59,6 +60,6 @@ namespace ivrToolkit.Core.Interfaces
         /// <returns>The next script block to run or null indicating the scripts are done</returns>
         IScript Execute();
 
-        Task<IScript> ExecuteAsync();
+        Task<IScript> ExecuteAsync(CancellationToken cancellationToken);
     }
 }

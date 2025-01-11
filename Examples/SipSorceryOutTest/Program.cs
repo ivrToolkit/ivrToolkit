@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core;
 using ivrToolkit.Core.Enums;
@@ -33,6 +34,8 @@ namespace SipSorceryOutTest
             var sipPlugin = new SipSorceryPlugin(loggerFactory, sipVoiceProperties);
 
             LineManager lineManager = null;
+            
+            var cancellationToken = CancellationToken.None;
 
             try
             {
@@ -48,7 +51,7 @@ namespace SipSorceryOutTest
                     var line = lineManager.GetLine(ln);
 
                     _logger.LogDebug("Start Line {0}", ln);
-                    await WaitCallAsync(loggerFactory, sipVoiceProperties, line, phoneNumber);
+                    await WaitCallAsync(loggerFactory, sipVoiceProperties, line, phoneNumber, cancellationToken);
 
                     _logger.LogDebug("Releasing all lines");
                     lineManager.ReleaseAll();
@@ -68,7 +71,8 @@ namespace SipSorceryOutTest
         }
 
 
-        static async Task WaitCallAsync(ILoggerFactory loggerFactory, VoiceProperties dialogicVoiceProperties, IIvrLine line, string phoneNumber)
+        static async Task WaitCallAsync(ILoggerFactory loggerFactory, VoiceProperties dialogicVoiceProperties, 
+            IIvrLine line, string phoneNumber, CancellationToken cancellationToken)
         {
             var lineNumber = line.LineNumber;
             try
@@ -81,7 +85,7 @@ namespace SipSorceryOutTest
                     await Task.Delay(1000);
 
                     _logger.LogDebug("Dial: Line {0}: dialing {1}...", lineNumber, phoneNumber);
-                    var callAnalysis = await line.DialAsync(phoneNumber, 3500);
+                    var callAnalysis = await line.DialAsync(phoneNumber, 3500, cancellationToken);
                     switch (callAnalysis)
                     {
                         case CallAnalysis.Busy:
@@ -106,7 +110,7 @@ namespace SipSorceryOutTest
                     try
                     {
                         var manager = new ScriptManager(loggerFactory, new WelcomeScript(loggerFactory, dialogicVoiceProperties, line));
-                        await manager.ExecuteScriptAsync();
+                        await manager.ExecuteScriptAsync(cancellationToken);
 
                         _logger.LogDebug("scripts are done so hanging up.");
                         line.Hangup();

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
@@ -358,6 +359,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 _inCallProgressAnalysis = false;
             }
 
+        }
+
+        public Task<CallAnalysis> DialAsync(string phoneNumber, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
         }
 
         public Task<CallAnalysis> DialAsync(string phoneNumber, int answeringMachineLengthInMilliseconds)
@@ -724,6 +730,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             PlaySipFile(filename, "0123456789#*abcd");
         }
 
+        public Task PlayFileAsync(string filename, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task PlayFileAsync(string filename)
         {
             throw new NotImplementedException();
@@ -855,6 +866,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             _logger.LogDebug("GetDigits({0}, {1})", numberOfDigits, terminators);
             return GetDigits(_dxDev, numberOfDigits, terminators);
+        }
+
+        public Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
         }
 
         public Task<string> GetDigitsAsync(int numberOfDigits, string terminators)

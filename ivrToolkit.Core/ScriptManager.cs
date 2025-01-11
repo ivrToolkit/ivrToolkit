@@ -5,6 +5,7 @@
 // 
 // 
 
+using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -83,19 +84,19 @@ namespace ivrToolkit.Core
             return _nextScript != null;
         }
 
-        public async Task ExecuteScriptAsync()
+        public async Task ExecuteScriptAsync(CancellationToken cancellationToken)
         {
             while (HasNext())
             {
                 // execute the next script
-                await ExecuteAsync();
+                await ExecuteAsync(cancellationToken);
             }
         }
 
-        private async Task ExecuteAsync()
+        private async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             _logger.LogDebug("Execute()");
-            _nextScript = await _nextScript.ExecuteAsync();
+            _nextScript = await _nextScript.ExecuteAsync(cancellationToken);
         }
     } // class
 }

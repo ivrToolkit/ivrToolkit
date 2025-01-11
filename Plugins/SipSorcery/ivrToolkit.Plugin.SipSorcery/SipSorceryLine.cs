@@ -22,8 +22,8 @@ namespace ivrToolkit.Plugin.SipSorcery
 
         private string _digitBuffer = "";
         private bool _digitPressed;
-        private object _lockObject = new object();
-        private KeypressSemaphore _keypressSemaphore = null!;
+        private readonly object _lockObject = new object();
+        private readonly KeypressSemaphore _keypressSemaphore;
 
         public SipSorceryLine(ILoggerFactory loggerFactory, SipVoiceProperties voiceProperties, int lineNumber, SIPTransport sipTransport)
         {
@@ -38,12 +38,12 @@ namespace ivrToolkit.Plugin.SipSorcery
 
             _userAgent = new SIPUserAgent(sipTransport, null);
 
-            _userAgent.ClientCallFailed += (uac, error, sipResponse) => _logger.LogDebug("Call failed {error}.", error);
-            _userAgent.ClientCallAnswered += (uac, sipResonse) => _logger.LogDebug("Answered");
-            _userAgent.ClientCallRinging += (uac, sipResonse) => _logger.LogDebug("Ringing");
-            _userAgent.ClientCallTrying += (uac, sipResonse) => _logger.LogDebug("Trying");
+            _userAgent.ClientCallFailed += (_, error, _) => _logger.LogDebug("Call failed {error}.", error);
+            _userAgent.ClientCallAnswered += (_, _) => _logger.LogDebug("Answered");
+            _userAgent.ClientCallRinging += (_, _) => _logger.LogDebug("Ringing");
+            _userAgent.ClientCallTrying += (_, _) => _logger.LogDebug("Trying");
 
-            _userAgent.OnCallHungup += (dialog) =>
+            _userAgent.OnCallHungup += (_) =>
             {
                 _logger.LogDebug("OnCallHungup");
                 CloseDialResources();
@@ -72,8 +72,8 @@ namespace ivrToolkit.Plugin.SipSorcery
                 }
             };
 
-            _userAgent.OnIncomingCall += (uac, sipAction) => _logger.LogDebug("OnIncomingCall");
-            _userAgent.OnReinviteRequest += (inviteTransaction) => _logger.LogDebug("OnReinviteRequest");
+            _userAgent.OnIncomingCall += (_, _) => _logger.LogDebug("OnIncomingCall");
+            _userAgent.OnReinviteRequest += (_) => _logger.LogDebug("OnReinviteRequest");
             //_userAgent.OnRtpEvent += (rptEvent, header) => _logger.LogDebug("OnRtpEvent");
             _userAgent.RemotePutOnHold += () => _logger.LogDebug("RemotePutOnHold");
 
@@ -107,10 +107,22 @@ namespace ivrToolkit.Plugin.SipSorcery
             LastTerminator = "";
 
             var to = $"{number}@{_voiceProperties.SipProxyIp}:{_voiceProperties.SipSignalingPort}";
-            return DialAsync(_voiceProperties.SipAlias, _voiceProperties.SipPassword, to).GetAwaiter().GetResult(); // blocking
+            return DialAsync(_voiceProperties.SipAlias, _voiceProperties.SipPassword, to, CancellationToken.None).GetAwaiter().GetResult(); // blocking
         }
 
-        private async Task<CallAnalysis> DialAsync(string user, string pass, string to)
+        public async Task<CallAnalysis> DialAsync(string number, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken)
+        {
+            // reset the line
+            _keypressSemaphore.Teardown();
+            _digitBuffer = "";
+            _digitPressed = false;
+            LastTerminator = "";
+
+            var to = $"{number}@{_voiceProperties.SipProxyIp}:{_voiceProperties.SipSignalingPort}";
+            return await DialAsync(_voiceProperties.SipAlias, _voiceProperties.SipPassword, to, cancellationToken);
+        }
+
+        private async Task<CallAnalysis> DialAsync(string user, string pass, string to, CancellationToken cancellationToken)
         {
             _voipMediaSession = new VoIPMediaSession();
             _voipMediaSession.AcceptRtpFromAny = true;
@@ -147,6 +159,7 @@ namespace ivrToolkit.Plugin.SipSorcery
             _userAgent.Dispose();
         }
 
+
         public string FlushDigitBuffer()
         {
             string currentDigitBuffer;
@@ -160,6 +173,20 @@ namespace ivrToolkit.Plugin.SipSorcery
         }
 
         public string GetDigits(int numberOfDigits, string terminators)
+        {
+            return GetDigitsInternalAsync(numberOfDigits, terminators, 
+                 ms => { var result = _keypressSemaphore.Wait(ms); return Task.FromResult(result); }
+                 ).GetAwaiter().GetResult();
+        }
+
+        public async Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken)
+        {
+            return await GetDigitsInternalAsync(numberOfDigits, terminators, 
+                async (ms) => await _keypressSemaphore.WaitAsync(ms, cancellationToken));
+        }
+        
+        private async Task<string> GetDigitsInternalAsync(int numberOfDigits, string terminators,
+            Func<int, Task<bool>> wait)
         {
             if (!_userAgent.IsCallActive)
             {
@@ -189,7 +216,7 @@ namespace ivrToolkit.Plugin.SipSorcery
             _keypressSemaphore.Setup( numberOfDigits, terminators);
 
             _logger.LogDebug("_semaphore wait for {} milliseconds", _voiceProperties.DigitsTimeoutInMilli);
-            var worked = _keypressSemaphore.Wait(_voiceProperties.DigitsTimeoutInMilli);
+            var worked = await wait(_voiceProperties.DigitsTimeoutInMilli);
             if (!worked)
             {
                 // A teardown must have happened during hangup
@@ -204,7 +231,7 @@ namespace ivrToolkit.Plugin.SipSorcery
             _digitPressed = false;
             return FlushDigitBuffer();
         }
-
+        
         private string GetUpToAndIncludingTerminator(int numberOfDigits, string terminators)
         {
             _logger.LogDebug("{name}({digits}, {terminators})", nameof(GetUpToAndIncludingTerminator), numberOfDigits, terminators);
@@ -257,8 +284,15 @@ namespace ivrToolkit.Plugin.SipSorcery
             }
         }
 
+        async Task IIvrBaseLine.PlayFileAsync(string filename, CancellationToken cancellationToken)
+        {
+            await PlayFileAsync(filename);
+        }
+
         private async Task PlayFileAsync(string filename)
         {
+            if (_voipMediaSession == null) return;
+                
             var wavConverter = new WavConverter();
             await _voipMediaSession.AudioExtrasSource.SendAudioFromStream(
                 wavConverter.NAudioConvert8BitUnsignedTo16BitSignedPCM(

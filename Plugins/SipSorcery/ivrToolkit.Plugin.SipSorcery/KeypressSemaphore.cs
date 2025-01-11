@@ -1,7 +1,5 @@
 ﻿using ivrToolkit.Core.Extensions;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Text;
 
 namespace ivrToolkit.Plugin.SipSorcery
 {
@@ -47,6 +45,23 @@ namespace ivrToolkit.Plugin.SipSorcery
             try
             {
                 _semaphoreSlim?.Wait(milliseconds, _cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                return false;
+            }
+            return true;
+        }
+        
+        public async Task<bool> WaitAsync(int milliseconds, CancellationToken cancellationToken)
+        {
+            _logger.LogDebug("{name}({buffer})", nameof(Wait), milliseconds);
+            try
+            {
+                if (_semaphoreSlim != null)
+                {
+                    await _semaphoreSlim.WaitAsync(milliseconds, cancellationToken);
+                }
             }
             catch (OperationCanceledException)
             {

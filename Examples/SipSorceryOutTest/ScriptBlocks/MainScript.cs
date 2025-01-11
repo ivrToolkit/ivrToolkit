@@ -5,6 +5,7 @@
 // 
 // 
 
+using System.Threading.Tasks;
 using ivrToolkit.Core;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
@@ -30,12 +31,12 @@ namespace SipOutTest.ScriptBlocks
 
         public override string Description => "Main Script";
 
-        public override IScript Execute()
+        public override async Task<IScript> ExecuteAsync()
         {
             _logger.LogDebug("Execute()");
             while (true)
             {
-                string result = PromptFunctions.RegularPrompt(@"Voice Files\Press1234.wav");
+                string result = await PromptFunctions.RegularPromptAsync(@"Voice Files\Press1234.wav");
 
                 Line.PlayFile(@"Voice Files\YouPressed.wav");
 

@@ -4,6 +4,9 @@
 // This file is part of ivrToolkit, distributed under the Apache-2.0 license.
 // 
 // 
+
+using System.Threading.Tasks;
+
 namespace ivrToolkit.Core.Interfaces
 {
     /// <summary>
@@ -55,5 +58,7 @@ namespace ivrToolkit.Core.Interfaces
         /// </summary>
         /// <returns>The next script block to run or null indicating the scripts are done</returns>
         IScript Execute();
+
+        Task<IScript> ExecuteAsync();
     }
 }

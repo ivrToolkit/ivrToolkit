@@ -5,6 +5,8 @@
 // 
 // 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
@@ -138,12 +140,37 @@ namespace ivrToolkit.Core.Util
         /// </summary>
         public string Answer { get; set; }
 
+
         /// <summary>
         /// Asks the question and returns an answer.
         /// </summary>
         public string Ask()
         {
             _logger.LogDebug("Ask()");
+            return AskInternalAsync(
+                content =>
+                {
+                    PlayFileOrPhrase(content); return Task.CompletedTask;
+                },
+                (numberOfDigits, terminators) =>
+                {
+                    var result = _line.GetDigits(numberOfDigits, terminators); return Task.FromResult(result);
+                }).GetAwaiter().GetResult();
+        }
+        
+        public async Task<string> AskAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogDebug("AskAsync()");
+            return await AskInternalAsync(
+                async content => await PlayFileOrPhraseAsync(content, cancellationToken),
+                async (numberOfDigits, terminators) => await _line.GetDigitsAsync(numberOfDigits, terminators, cancellationToken));
+        }
+
+        private async Task<string> AskInternalAsync(
+            Func<string, Task> playFileOrPhrase,
+            Func<int, string, Task<string>> getDigits)
+        {
+            _logger.LogDebug("AskInternal()");
             var count = 0;
             var blankCount = 0;
             var myTerminators = Terminators + (SpecialTerminator ?? "");
@@ -158,8 +185,9 @@ namespace ivrToolkit.Core.Util
                 {
                     OnPrePlay?.Invoke(PromptMessage);
 
-                    PlayFileOrPhrase(PromptMessage);
-                    Answer = _line.GetDigits(NumberOfDigits, myTerminators + "t");
+                    await playFileOrPhrase(PromptMessage);
+                    Answer = await getDigits(NumberOfDigits, myTerminators + "t");
+                    //Answer = _line.GetDigits(NumberOfDigits, myTerminators + "t");
                     if (OnKeysEntered != null)
                     {
                         var term = _line.LastTerminator;
@@ -204,7 +232,7 @@ namespace ivrToolkit.Core.Util
 
                         if (InvalidAnswerMessage != null)
                         {
-                            PlayFileOrPhrase(InvalidAnswerMessage);
+                            await playFileOrPhrase(InvalidAnswerMessage);
                         }
                     }
                 }
@@ -227,7 +255,7 @@ namespace ivrToolkit.Core.Util
 
             if (TooManyAttemptsMessage != null)
             {
-                PlayFileOrPhrase(TooManyAttemptsMessage);
+                await playFileOrPhrase(TooManyAttemptsMessage);
             }
 
             throw new TooManyAttempts();
@@ -243,6 +271,19 @@ namespace ivrToolkit.Core.Util
             else
             {
                 _line.PlayFile(fileNameOrPhrase);
+            }
+        }
+        
+        private async Task PlayFileOrPhraseAsync(string fileNameOrPhrase, CancellationToken cancellationToken)
+        {
+            _logger.LogDebug("PlayFileOrPhraseAsync({0})", fileNameOrPhrase);
+            if (fileNameOrPhrase.IndexOf("|", StringComparison.Ordinal) != -1)
+            {
+                await _line.PlayStringAsync(fileNameOrPhrase, cancellationToken);
+            }
+            else
+            {
+                await _line.PlayFileAsync(fileNameOrPhrase, cancellationToken);
             }
         }
 

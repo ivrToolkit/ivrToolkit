@@ -5,6 +5,7 @@
 // 
 // 
 
+using System.Threading.Tasks;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.Util;
 using Microsoft.Extensions.Logging;
@@ -43,7 +44,15 @@ namespace ivrToolkit.Core
         }
 
         /// <inheritdoc/>
-        public abstract IScript Execute();
+        public virtual IScript Execute()
+        {
+            throw new System.NotImplementedException();
+        }
 
+        /// <inheritdoc/>
+        public virtual Task<IScript> ExecuteAsync()
+        {
+            throw new System.NotImplementedException();
+        }
     } // class
 }

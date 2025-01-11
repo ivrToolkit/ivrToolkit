@@ -5,6 +5,7 @@
 // 
 // 
 
+using System.Threading.Tasks;
 using ivrToolkit.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -71,7 +72,7 @@ namespace ivrToolkit.Core
             _logger.LogDebug("Execute()");
             _nextScript = _nextScript.Execute();
         }
-
+        
         /// <summary>
         /// Checks to see if there is another script block to execute.
         /// </summary>
@@ -80,6 +81,21 @@ namespace ivrToolkit.Core
         {
             _logger.LogDebug("HasNext()");
             return _nextScript != null;
+        }
+
+        public async Task ExecuteScriptAsync()
+        {
+            while (HasNext())
+            {
+                // execute the next script
+                await ExecuteAsync();
+            }
+        }
+
+        private async Task ExecuteAsync()
+        {
+            _logger.LogDebug("Execute()");
+            _nextScript = await _nextScript.ExecuteAsync();
         }
     } // class
 }

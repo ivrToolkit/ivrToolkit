@@ -6,6 +6,8 @@
 // 
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using ivrToolkit.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -43,8 +45,8 @@ namespace ivrToolkit.Core.Util
         public virtual Prompt GetRegularStylePrompt()
         {
             _logger.LogDebug("GetRegularStylePrompt()");
-            var DG_MAXDIGS = 31;
-            var p = new Prompt(_loggerFactory, _voiceProperties, _line) {NumberOfDigits = DG_MAXDIGS, Terminators = "#", Attempts = GetAttempts(), BlankAttempts = GetBlankAttempts()};
+            const int dgMaxdigs = 31;
+            var p = new Prompt(_loggerFactory, _voiceProperties, _line) {NumberOfDigits = dgMaxdigs, Terminators = "#", Attempts = GetAttempts(), BlankAttempts = GetBlankAttempts()};
             return p;
         }
         
@@ -88,13 +90,27 @@ namespace ivrToolkit.Core.Util
         /// <returns>The digit pressed that is within the allowed string.</returns>
         public string SingleDigitPrompt(string promptMessage, string allowed)
         {
-            _logger.LogDebug("SingleDigitPrompt()");
+            return SingleDigitPromptInternalAsync(promptMessage,allowed,
+                (p) => { var result = p.Ask(); return Task.FromResult(result); }
+                ).GetAwaiter().GetResult();
+        }
+
+        public async Task<string> SingleDigitPromptAsync(string promptMessage, string allowed, CancellationToken cancellationToken)
+        {
+            return await SingleDigitPromptInternalAsync(promptMessage,allowed,
+                async (p) => await p.AskAsync(cancellationToken));
+        }
+
+        private async Task<string> SingleDigitPromptInternalAsync(string promptMessage, string allowed,
+             Func<Prompt, Task<string>> ask)
+        {
+            _logger.LogDebug("SingleDigitPromptInternalAsync()");
             var p = GetMenuStylePrompt();
             p.PromptMessage = promptMessage;
             p.OnValidation += answer => allowed.IndexOf(answer, StringComparison.Ordinal) != -1;
-            return p.Ask();
+            return await ask(p);
         }
-
+        
         /// <summary>
         /// Gets a multi digit response from the user.
         /// The attempts are set from 'prompt.attempts' property in ads.properties.
@@ -105,6 +121,12 @@ namespace ivrToolkit.Core.Util
         {
             _logger.LogDebug("RegularPrompt({0})", promptMessage );
             return RegularPrompt(promptMessage, null);
+        }
+        
+        public async Task<string> RegularPromptAsync(string promptMessage, CancellationToken cancellationToken)
+        {
+            _logger.LogDebug("RegularPromptAsync({0})", promptMessage );
+            return await RegularPromptAsync(promptMessage, null, cancellationToken);
         }
 
         /// <summary>
@@ -121,13 +143,23 @@ namespace ivrToolkit.Core.Util
             bool CustomHandler(string answer)
             {
                 if (validAnswers == null) return true;
-
                 return validAnswers.Any(s => answer == s);
             }
-
             return CustomValidationPrompt(promptMessage, CustomHandler);
         }
 
+        public async Task<string> RegularPromptAsync(string promptMessage, string[] validAnswers, CancellationToken cancellationToken)
+        {
+            _logger.LogDebug("RegularPromptAsync({0}, {1})", promptMessage, validAnswers);
+
+            bool CustomHandler(string answer)
+            {
+                if (validAnswers == null) return true;
+                return validAnswers.Any(s => answer == s);
+            }
+            return await CustomValidationPromptAsync(promptMessage, CustomHandler, cancellationToken);
+        }
+        
         /// <summary>
         /// Gets a multi digit response from the user.
         /// The attempts are set from 'prompt.attempts' property in ads.properties.
@@ -137,11 +169,28 @@ namespace ivrToolkit.Core.Util
         /// <returns></returns>
         public string CustomValidationPrompt(string promptMessage, Prompt.ValidationHandler customHandler)
         {
-            _logger.LogDebug("RegularPrompt({0}, Prompt.ValidationHandler)", promptMessage);
-            var prompt = GetRegularStylePrompt();
+            _logger.LogDebug("CustomValidationPrompt({0}, Prompt.ValidationHandler)", promptMessage);
+            return CustomValidationPromptInternalAsync(promptMessage, customHandler,
+                (p) => { var result = p.Ask(); return Task.FromResult(result); }
+            ).GetAwaiter().GetResult();
+        }
+        
+        public async Task<string> CustomValidationPromptAsync(string promptMessage, Prompt.ValidationHandler customHandler, 
+            CancellationToken cancellationToken)
+        {
+            return await CustomValidationPromptInternalAsync(promptMessage,customHandler,
+                async (p) => await p.AskAsync(cancellationToken));
+        }
+
+        private async Task<string> CustomValidationPromptInternalAsync(string promptMessage, Prompt.ValidationHandler customHandler,
+            Func<Prompt, Task<string>> ask)
+        {
+            _logger.LogDebug("CustomValidationPromptInternalAsync()");
+            var prompt = GetMenuStylePrompt();
             prompt.PromptMessage = promptMessage;
             prompt.OnValidation += customHandler;
-            return prompt.Ask();
+            return await ask(prompt);
         }
+        
     } // class
 }

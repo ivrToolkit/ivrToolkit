@@ -5,6 +5,8 @@
 // 
 // 
 
+using System.Threading;
+using System.Threading.Tasks;
 using ivrToolkit.Core.Util;
 
 namespace ivrToolkit.Core.Interfaces
@@ -41,6 +43,7 @@ namespace ivrToolkit.Core.Interfaces
         /// <param name="allowed">This list of digits that are acceptable</param>
         /// <returns>The digit pressed that is within the allowed string.</returns>
         string SingleDigitPrompt(string promptMessage, string allowed);
+        Task<string> SingleDigitPromptAsync(string promptMessage, string allowed, CancellationToken cancellationToken);
 
         /// <summary>
         /// Gets a multi digit response from the user.
@@ -49,6 +52,7 @@ namespace ivrToolkit.Core.Interfaces
         /// <param name="promptMessage">The name of the file or the phrase string to speak out</param>
         /// <returns>A response of any size including empty</returns>
         string RegularPrompt(string promptMessage);
+        Task<string> RegularPromptAsync(string promptMessage, CancellationToken cancellationToken);
 
         /// <summary>
         /// Gets a multi digit response from the user.
@@ -58,6 +62,7 @@ namespace ivrToolkit.Core.Interfaces
         /// <param name="validAnswers">A string array of valid answers.</param>
         /// <returns>A response matching on of the validAnswers[] string</returns>
         string RegularPrompt(string promptMessage, string[] validAnswers);
+        Task<string> RegularPromptAsync(string promptMessage, string[] validAnswers, CancellationToken cancellationToken);
 
         /// <summary>
         /// Gets a multi digit response from the user.
@@ -67,5 +72,7 @@ namespace ivrToolkit.Core.Interfaces
         /// <param name="customHandler">Prompt.ValidationHandler custom answer validator</param>
         /// <returns></returns>
         string CustomValidationPrompt(string promptMessage, Prompt.ValidationHandler customHandler);
+        Task<string> CustomValidationPromptAsync(string promptMessage, Prompt.ValidationHandler customHandler, CancellationToken cancellationToken);
+
     }
 }

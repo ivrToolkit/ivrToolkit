@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
@@ -115,6 +117,37 @@ namespace ivrToolkit.Core
             return result;
         }
 
+        public async Task<CallAnalysis> DialAsync(string number, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken)
+        {
+            answeringMachineLengthInMilliseconds.ThrowIfLessThanOrEqualTo(999, nameof(answeringMachineLengthInMilliseconds));
+            number.ThrowIfNullOrWhiteSpace(nameof(number));
+
+            _logger.LogDebug("Dial({0}, {1})", number, answeringMachineLengthInMilliseconds);
+            CheckDispose();
+
+            TakeOffHook();
+            _logger.LogDebug("Line is now off hook");
+
+            _logger.LogDebug("about to dial: {0}", number);
+            var result = await _lineImplementation.DialAsync(number, answeringMachineLengthInMilliseconds, cancellationToken);
+
+            _logger.LogDebug("CallAnalysis is: {0}", result.ToString());
+
+            if (result == CallAnalysis.Stopped) ThrowDisposingException();
+
+            if (result == CallAnalysis.AnsweringMachine || result == CallAnalysis.Connected)
+            {
+                _status = LineStatusTypes.Connected;
+            }
+            else
+            {
+                Hangup();
+            }
+
+            return result;
+        }
+        
+        
         #region ILineManagement region
 
         void IIvrLineManagement.TriggerDispose()
@@ -173,6 +206,25 @@ namespace ivrToolkit.Core
             }
         }
 
+        public async Task PlayFileAsync(string filename, CancellationToken cancellationToken)
+        {
+            _logger.LogDebug("PlayFile({0})", filename);
+            CheckDispose();
+            try
+            {
+                await _lineImplementation.PlayFileAsync(filename, cancellationToken);
+            }
+            catch (DisposingException)
+            {
+                ThrowDisposingException();
+            }
+            catch (HangupException)
+            {
+                _status = LineStatusTypes.OnHook;
+                throw;
+            }
+        }
+        
         public void RecordToFile(string filename)
         {
             RecordToFile(filename, 60000 * 5); // default timeout of 5 minutes
@@ -206,6 +258,28 @@ namespace ivrToolkit.Core
             try
             {
                 var answer = _lineImplementation.GetDigits(numberOfDigits, terminators);
+                return StripOffTerminator(answer, terminators);
+            }
+            catch (DisposingException)
+            {
+                ThrowDisposingException();
+            }
+            catch (HangupException)
+            {
+                _status = LineStatusTypes.OnHook;
+                throw;
+            }
+
+            return null; // will never get here
+        }
+
+        public async Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken)
+        {
+            _logger.LogDebug("GetDigits({0}, {1})", numberOfDigits, terminators);
+            CheckDispose();
+            try
+            {
+                var answer = await _lineImplementation.GetDigitsAsync(numberOfDigits, terminators, cancellationToken);
                 return StripOffTerminator(answer, terminators);
             }
             catch (DisposingException)

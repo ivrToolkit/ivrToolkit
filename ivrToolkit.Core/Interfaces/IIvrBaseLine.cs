@@ -6,6 +6,8 @@
 // 
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using ivrToolkit.Core.Enums;
 
 namespace ivrToolkit.Core.Interfaces
@@ -61,11 +63,15 @@ namespace ivrToolkit.Core.Interfaces
         /// <returns>The Call analysis enumeration</returns>
         CallAnalysis Dial(string number, int answeringMachineLengthInMilliseconds);
 
+        Task<CallAnalysis> DialAsync(string phoneNumber, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken);
+
         /// <summary>
         /// Plays a wav file which must be in the format of 8000hz 1 channel unsigned 8 bit PCM.
         /// </summary>
         /// <param name="filename">The wav file to play</param>
         void PlayFile(string filename);
+
+        Task PlayFileAsync(string filename, CancellationToken cancellationToken);
 
         /// <summary>
         /// Records a wav file to the disk in the format of 8000hz 1 channel unsigned 8 bit PCM. Has a default timeout of 5 minutes.
@@ -87,6 +93,7 @@ namespace ivrToolkit.Core.Interfaces
         /// <param name="terminators">The terminator keys</param>
         /// <returns>Returns the digits pressed not including the terminator if there was one</returns>
         string GetDigits(int numberOfDigits, string terminators);
+        Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken);
 
         /// <summary>
         /// Returns every character including the terminator

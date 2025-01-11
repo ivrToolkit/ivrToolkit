@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Threading;
+using System.Threading.Tasks;
 using ivrToolkit.Core;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
@@ -12,8 +12,8 @@ namespace SipSorceryOutTest
 {
     class Program
     {
-        public static ILogger<Program> _logger;
-        static void Main()
+        private static ILogger<Program> _logger;
+        static async Task Main()
         {
             var loggerFactory =
                 LoggerFactory.Create(builder =>
@@ -28,9 +28,9 @@ namespace SipSorceryOutTest
             SIPSorcery.LogFactory.Set(loggerFactory);
             _logger.LogDebug("Starting the program!");
 
-            var SipVoiceProperties = new SipVoiceProperties(loggerFactory, @"c:\repos\Config\SipSorcery\voice.properties");
+            var sipVoiceProperties = new SipVoiceProperties(loggerFactory, @"c:\repos\Config\SipSorcery\voice.properties");
 
-            var sipPlugin = new SipSorceryPlugin(loggerFactory, SipVoiceProperties);
+            var sipPlugin = new SipSorceryPlugin(loggerFactory, sipVoiceProperties);
 
             LineManager lineManager = null;
 
@@ -40,32 +40,20 @@ namespace SipSorceryOutTest
 
                 while (true)
                 {
-                    Thread.Sleep(3000);
-                    Console.Write("Enter a line number: ");
-                    var lineNumber = Console.ReadLine();
-                    if (string.IsNullOrWhiteSpace(lineNumber)) return;
-
                     Console.Write("Enter a phone number to call: ");
                     var phoneNumber = Console.ReadLine();
                     if (string.IsNullOrWhiteSpace(phoneNumber)) return;
 
-                    var ln = int.Parse(lineNumber);
+                    var ln = 1;
                     var line = lineManager.GetLine(ln);
 
                     _logger.LogDebug("Start Line {0}", ln);
-                    var waitThread = new Thread(() => WaitCall(loggerFactory, SipVoiceProperties, line, phoneNumber));
-
-                    waitThread.Start();
-
-                    _logger.LogDebug("Thread should be alive.");
-
-                    // wait for the thread to end.
-                    waitThread.Join(); 
+                    await WaitCallAsync(loggerFactory, sipVoiceProperties, line, phoneNumber);
 
                     _logger.LogDebug("Releasing all lines");
                     lineManager.ReleaseAll();
                     Console.WriteLine();
-                } // while
+                }
             }
             catch (Exception e)
             {
@@ -80,7 +68,7 @@ namespace SipSorceryOutTest
         }
 
 
-        static void WaitCall(ILoggerFactory loggerFactory, VoiceProperties dialogicVoiceProperties, IIvrLine line, string phoneNumber)
+        static async Task WaitCallAsync(ILoggerFactory loggerFactory, VoiceProperties dialogicVoiceProperties, IIvrLine line, string phoneNumber)
         {
             var lineNumber = line.LineNumber;
             try
@@ -90,9 +78,10 @@ namespace SipSorceryOutTest
                 {
                     _logger.LogDebug("Dial: Line {0}: Hang Up", lineNumber);
                     line.Hangup();
-                    Thread.Sleep(1000);
+                    await Task.Delay(1000);
+
                     _logger.LogDebug("Dial: Line {0}: dialing {1}...", lineNumber, phoneNumber);
-                    var callAnalysis = line.Dial(phoneNumber, 3500);
+                    var callAnalysis = await line.DialAsync(phoneNumber, 3500);
                     switch (callAnalysis)
                     {
                         case CallAnalysis.Busy:
@@ -108,7 +97,7 @@ namespace SipSorceryOutTest
                         case CallAnalysis.Connected:
                             break;
                         case CallAnalysis.AnsweringMachine:
-                            line.Hangup();
+                            //line.Hangup();
                             return;
                     }
 
@@ -117,12 +106,8 @@ namespace SipSorceryOutTest
                     try
                     {
                         var manager = new ScriptManager(loggerFactory, new WelcomeScript(loggerFactory, dialogicVoiceProperties, line));
+                        await manager.ExecuteScriptAsync();
 
-                        while (manager.HasNext())
-                        {
-                            // execute the next script
-                            manager.Execute();
-                        }
                         _logger.LogDebug("scripts are done so hanging up.");
                         line.Hangup();
                     }
@@ -132,7 +117,6 @@ namespace SipSorceryOutTest
                         line.Hangup();
                     }
                     _logger.LogDebug("Disposing of line");
-                    Thread.Sleep(5000); // todo remove me
                     line.Dispose();
                     _logger.LogDebug("Line is now disposed");
                     return;

@@ -5,6 +5,7 @@
 // 
 // 
 
+using System.Threading.Tasks;
 using ivrToolkit.Core;
 using ivrToolkit.Core.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -28,14 +29,13 @@ namespace SipOutTest.ScriptBlocks
         }
 
         public override string Description => "Welcome";
-
-        public override IScript Execute()
+        
+        public override async Task<IScript> ExecuteAsync()
         {
             _logger.LogDebug("Execute()");
             // say My welcome message
-            Line.PlayFile(@"Voice Files\ThankYou.wav");
+            await Line.PlayFileAsync(@"Voice Files\ThankYou.wav");
             return new MainScript(_loggerFactory, _voiceProperties, _line);
         }
-
     } // class
 }

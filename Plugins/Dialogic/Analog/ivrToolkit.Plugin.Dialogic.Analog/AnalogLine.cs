@@ -7,8 +7,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
+using System.Threading.Tasks;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
@@ -41,9 +40,9 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
 
         public IIvrLineManagement Management => this;
 
-        public string LastTerminator { get; private set; }
+        public string LastTerminator { get;  } = string.Empty;
 
-        public int LineNumber { get; private set; }
+        public int LineNumber { get; }
 
         private DialogicDef.DX_XPB _currentXpb;
 
@@ -128,6 +127,11 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
 
         }
 
+        public Task<CallAnalysis> DialAsync(string phoneNumber, int answeringMachineLengthInMilliseconds)
+        {
+            throw new NotImplementedException();
+        }
+
         private void SetDefaultFileType() {
             _currentXpb = new DialogicDef.DX_XPB
                 {
@@ -141,6 +145,11 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         public void PlayFile(string filename)
         {
             PlayFile(_voiceh, filename, "0123456789#*abcd", _currentXpb);
+        }
+
+        public Task PlayFileAsync(string filename)
+        {
+            throw new NotImplementedException();
         }
 
         public void RecordToFile(string filename)
@@ -162,6 +171,11 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         public string GetDigits(int numberOfDigits, string terminators)
         {
             return GetDigits(_voiceh, numberOfDigits, terminators);
+        }
+
+        public Task<string> GetDigitsAsync(int numberOfDigits, string terminators)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>

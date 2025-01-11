@@ -186,7 +186,7 @@ namespace ivrToolkit.Core.Util
             Func<Prompt, Task<string>> ask)
         {
             _logger.LogDebug("CustomValidationPromptInternalAsync()");
-            var prompt = GetMenuStylePrompt();
+            var prompt = GetRegularStylePrompt();
             prompt.PromptMessage = promptMessage;
             prompt.OnValidation += customHandler;
             return await ask(prompt);

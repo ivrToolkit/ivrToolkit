@@ -1,13 +1,12 @@
-﻿namespace ivrToolkit.Core.Interfaces
+﻿namespace ivrToolkit.Core.Interfaces;
+
+/// <summary>
+/// The purpose of this interface is to define functionality that will be called from another thread like the LineManager
+/// </summary>
+public interface IIvrLineManagement
 {
     /// <summary>
-    /// The purpose of this interface is to define functionality that will be called from another thread like the LineManager
+    /// Triggers a TriggerDispose event in the line.
     /// </summary>
-    public interface IIvrLineManagement
-    {
-        /// <summary>
-        /// Triggers a TriggerDispose event in the line.
-        /// </summary>
-        void TriggerDispose();
-    }
+    void TriggerDispose();
 }

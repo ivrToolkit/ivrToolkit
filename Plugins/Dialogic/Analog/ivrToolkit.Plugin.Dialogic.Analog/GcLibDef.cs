@@ -33,10 +33,10 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace ivrToolkit.Plugin.Dialogic.Analog
+namespace ivrToolkit.Plugin.Dialogic.Analog;
+
+public class GcLibDef
 {
-    public class GcLibDef
-    {
 
 /*
  * Typedefs used throughout GlobalCall software, and application.
@@ -52,14 +52,14 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
 
         public struct LINEDEV
         {
-            public int Linedev;
+                public int Linedev;
         }
 
 /*gc2*/
 
         public struct CRN
         {
-            public int crn;
+                public int crn;
         }
 
 /*
@@ -113,18 +113,18 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         /*gc3*/
 
         /*
- * Total number of Call Control Libraries supported by GlobalCall
- */
+         * Total number of Call Control Libraries supported by GlobalCall
+         */
         public const int GC_TOTAL_CCLIBS = 10; /* Number of CC libraries suppported */
 
         /*
- * GlobalCall Library component
- */
+         * GlobalCall Library component
+         */
         public const int GC_LIB = 0; /* GlobalCall library */
 
         /*
- * Call Control Libraries supported by GlobalCall
- */
+         * Call Control Libraries supported by GlobalCall
+         */
         public const int GC_ALL_LIB = 0; /* All CC libraries */
         public const int GC_ICAPI_LIB = 1; /* ICAPI library */
         public const int GC_ISDN_LIB = 2; /* ISDN library */
@@ -147,10 +147,10 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct CCLIB_START_STRUCT
         {
-            /// char*
-            [MarshalAs(UnmanagedType.LPStr)] public string cclib_name; /* Must match CCLib name in gcprod */
+                /// char*
+                [MarshalAs(UnmanagedType.LPStr)] public string cclib_name; /* Must match CCLib name in gcprod */
 
-            public IntPtr cclib_data;
+                public IntPtr cclib_data;
         }
 
 /*
@@ -160,8 +160,8 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_START_STRUCT
         {
-            public int num_cclibs;
-            public CCLIB_START_STRUCT cclib_list;
+                public int num_cclibs;
+                public CCLIB_START_STRUCT cclib_list;
         }
 
 /*
@@ -171,9 +171,9 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_CUSTOMLIB_STRUCT
         {
-            [MarshalAs(UnmanagedType.LPStr)] public string file_name; /* Name of library file */
+                [MarshalAs(UnmanagedType.LPStr)] public string file_name; /* Name of library file */
 
-            [MarshalAs(UnmanagedType.LPStr)] public string start_proc_name; /* Name of start procedure */
+                [MarshalAs(UnmanagedType.LPStr)] public string start_proc_name; /* Name of start procedure */
         }
 
 /*
@@ -184,32 +184,32 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_CCLIB_STATE
         {
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = GC_MAX_CCLIBNAME_LEN)]
-            public string name; /* name of the library. */
-            public int state; /* state of the library */
+                [MarshalAs(UnmanagedType.ByValTStr, SizeConst = GC_MAX_CCLIBNAME_LEN)]
+                public string name; /* name of the library. */
+                public int state; /* state of the library */
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_CCLIB_STATUSALL
         {
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = GC_TOTAL_CCLIBS)]
-            public GC_CCLIB_STATE[] cclib_state;
+                [MarshalAs(UnmanagedType.ByValArray, SizeConst = GC_TOTAL_CCLIBS)]
+                public GC_CCLIB_STATE[] cclib_state;
         }
 
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GETEVENT
         {
-            public int poll_units; /* # of poll units before gc_GetEvent */
-            /* should return */
-            /* -1 = no limit */
-            /* 0 is the same as 1 */
-            /* NB - Only 1 or forever is currently */
-            /* implemented */
-            /* in the future, poll_units may be */
-            /* either cycles or time */
-            public int rfu1; /* reserved for future use */
-            public int rfu2; /* reserved for future use */
+                public int poll_units; /* # of poll units before gc_GetEvent */
+                /* should return */
+                /* -1 = no limit */
+                /* 0 is the same as 1 */
+                /* NB - Only 1 or forever is currently */
+                /* implemented */
+                /* in the future, poll_units may be */
+                /* either cycles or time */
+                public int rfu1; /* reserved for future use */
+                public int rfu2; /* reserved for future use */
         }
 
 /*
@@ -275,23 +275,23 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         public const int GCEV_DISCONNECTED = (DT_GC | 0x26); /* Remote end disconnected */
 
         public const int GCEV_PROCEEDING = (DT_GC | 0x27); /* The call state has been changed to
-                                            * the proceeding state */
+                                                            * the proceeding state */
 
         public const int GCEV_PROGRESSING = (DT_GC | 0x28); /* A call progress message has been
-                                            * received */
+                                                             * received */
 
         public const int GCEV_USRINFO = (DT_GC | 0x29); /* A user to user information event is
-                                            * coming */
+                                                         * coming */
 
         public const int GCEV_FACILITY = (DT_GC | 0x2A); /* Network facility indication */
 
         public const int GCEV_CONGESTION = (DT_GC | 0x2B); /* Remote end is not ready to accept
-                                            * incoming user information */
+                                                            * incoming user information */
 
         public const int GCEV_D_CHAN_STATUS = (DT_GC | 0x2E); /* Report D-channel status to the user */
 
         public const int GCEV_NOUSRINFOBUF = (DT_GC | 0x30); /* User information element buffer is
-                                            * not ready */
+                                                              * not ready */
 
         public const int GCEV_NOFACILITYBUF = (DT_GC | 0x31); /* Facility buffer is not ready */
         public const int GCEV_BLOCKED = (DT_GC | 0x32); /* Line device is blocked */
@@ -398,7 +398,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         public const int GCEV_REQ_MODIFY_CALL = (DT_GC | 0x86); /* received Modify request from remote party */
 
         public const int GCEV_REQ_MODIFY_CALL_UNSUPPORTED
-            = (DT_GC | 0x87); /* unsupported inbound capability */
+                = (DT_GC | 0x87); /* unsupported inbound capability */
 
         public const int GCEV_MODIFY_CALL_ACK = (DT_GC | 0x88); /* acknowledge by remote party of accepting Modify */
         public const int GCEV_MODIFY_CALL_REJ = (DT_GC | 0x89); /* Rejection by remote party of Modify request */
@@ -466,16 +466,16 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
  */
 
         public const int GCACT_SETMSK = 0x01; /* Enable notification of events
-                                         * specified in bitmask and disable
-                                         * notification of previously set
-                                         * events */
+                                               * specified in bitmask and disable
+                                               * notification of previously set
+                                               * events */
 
         public const int GCACT_ADDMSK = 0x02; /* Enable notification of events
-                                         * specified in bitmask in addition
-                                         * to previously set events. */
+                                               * specified in bitmask in addition
+                                               * to previously set events. */
 
         public const int GCACT_SUBMSK = 0x03; /* Disable notification of events
-                                         * specified  in bitmask. */
+                                               * specified  in bitmask. */
 
 /*
  * BUFFER sizes
@@ -545,7 +545,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
  * Call States
  */
 /*
- * The call states defined for basic services   
+ * The call states defined for basic services
  */
         public const int GCST_NULL = 0x00;
         public const int GCST_ACCEPTED = 0x01;
@@ -566,7 +566,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         public const int GCST_CALLROUTING = 0x4000;
 
 /*
- * The call states defined for supplementary services  
+ * The call states defined for supplementary services
  */
         public const int GCSUPP_CALLSTBASE = 0x40000000; /* Call state base for GC supplementary services */
         public const int GCST_INVOKE_XFER_ACCEPTED = (GCSUPP_CALLSTBASE | 0x1);
@@ -627,36 +627,36 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
 -- Note: structure is ordered with longest fields 1st
 -- to improve access time with some compilers
 */
-            public long magicno; /* for internal validity check */
+                public long magicno; /* for internal validity check */
 
-            /* application calls gc_GetMetaEvent() to fill in these fields */
-            public uint flags; /* flags field */
-            /* - possibly event data structure type */
-            /* i.e. evtdata_struct_type */
-            public IntPtr evtdatap; /* pointer to the event data block */
-            /* other libraries to be determined */
-            /* sr_getevtdatap() */
-            public int evtlen; /* event length */
-            /* sr_getevtlen */
-            public int evtdev; /* sr_getevtdev */
-            public int evttype; /* Event type */
+                /* application calls gc_GetMetaEvent() to fill in these fields */
+                public uint flags; /* flags field */
+                /* - possibly event data structure type */
+                /* i.e. evtdata_struct_type */
+                public IntPtr evtdatap; /* pointer to the event data block */
+                /* other libraries to be determined */
+                /* sr_getevtdatap() */
+                public int evtlen; /* event length */
+                /* sr_getevtlen */
+                public int evtdev; /* sr_getevtdev */
+                public int evttype; /* Event type */
 
-            /* linedev & crn are only valid for GlobalCall events */
-            public LINEDEV linedev; /* linedevice */
-            public CRN crn; /* crn - if 0 then no crn for this event */
-            public IntPtr extevtdatap; /* pointer to abstract data buffer */
-            public IntPtr usrattr; /* user attribute */
-            public int cclibid; /* ID of CCLib that event is associated with */
-            /* + = CCLib ID number */
-            /* -1 = unknown */
-            public int rfu1; /* for future use only */
+                /* linedev & crn are only valid for GlobalCall events */
+                public LINEDEV linedev; /* linedevice */
+                public CRN crn; /* crn - if 0 then no crn for this event */
+                public IntPtr extevtdatap; /* pointer to abstract data buffer */
+                public IntPtr usrattr; /* user attribute */
+                public int cclibid; /* ID of CCLib that event is associated with */
+                /* + = CCLib ID number */
+                /* -1 = unknown */
+                public int rfu1; /* for future use only */
 
         }
 
 /* define(s) for flags field within METAEVENT structure */
 
         public const int GCME_GC_EVENT =
-            0x1; /* Event is a GlobalCall event */
+                0x1; /* Event is a GlobalCall event */
 
 /*gc8*/
         public const int MAXPHONENUM = 32; /* Maximum length of a phone number */
@@ -672,14 +672,14 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         // TODO this was initially a union so probably is done incorrectly
         public struct GC_PARM
         {
-            public short shortvalue;
-            public uint ulongvalue;
-            public int longvalue;
-            public int intvalue;
-            public uint uintvalue;
-            public byte charvalue;
-            [MarshalAs(UnmanagedType.LPStr)] public string paddress;
-            public IntPtr pstruct;
+                public short shortvalue;
+                public uint ulongvalue;
+                public int longvalue;
+                public int intvalue;
+                public uint uintvalue;
+                public byte charvalue;
+                [MarshalAs(UnmanagedType.LPStr)] public string paddress;
+                public IntPtr pstruct;
         }
 
 /*
@@ -692,45 +692,45 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
  * these issues.
  */
 
-/* 
+/*
     GC_PARM_DATA data structure used in GC_PARM_BLK
 */
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_PARM_DATA
         {
-            public ushort set_ID; /* Set ID (two bytes long)*/
-            public ushort parm_ID; /* Parameter ID (two bytes long) */
-            public byte value_size; /* Size of value_buf in bytes */
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
-            public byte[] value_buf; /* Address to the parm value buffer */
+                public ushort set_ID; /* Set ID (two bytes long)*/
+                public ushort parm_ID; /* Parameter ID (two bytes long) */
+                public byte value_size; /* Size of value_buf in bytes */
+                [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+                public byte[] value_buf; /* Address to the parm value buffer */
         }
 
-/* 
+/*
     Generic GC_PARM_BLK data structure
 */
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_PARM_BLK
         {
-            public ushort parm_data_size; /* Size of parm_data_buf in bytes */
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
-            public byte[] parm_data_buf; /* Address to the parm data buffer,
-                                            * a chain of GC_PARM_DATA */
+                public ushort parm_data_size; /* Size of parm_data_buf in bytes */
+                [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+                public byte[] parm_data_buf; /* Address to the parm data buffer,
+                                              * a chain of GC_PARM_DATA */
         }
 
 
 /*
 
- * An extended version of GC_PARM_DATA, called GC_PARM_DATA_EXT, has been added  
+ * An extended version of GC_PARM_DATA, called GC_PARM_DATA_EXT, has been added
 
  * to enable applications access to parm data greater than 255 bytes. This structure
 
  * must be initialized by calling INIT_GC_PARM_DATA_EXT() prior to initial use.
 
- * Applications are strongly recommended to use gc_util_next_parm_ex() and 
+ * Applications are strongly recommended to use gc_util_next_parm_ex() and
 
- * gc_util_find_parm_ex() in conjunction with GC_PARM_DATA_EXT when retrieve  
+ * gc_util_find_parm_ex() in conjunction with GC_PARM_DATA_EXT when retrieve
 
  * GC_PARM_BLK data that can potentially contain parm data greater than 255 bytes.
 
@@ -741,17 +741,17 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
 
         {
 
-            public uint version; /* Current version of this structure */
+                public uint version; /* Current version of this structure */
 
-            public IntPtr pInternal; /* For internal use only */
+                public IntPtr pInternal; /* For internal use only */
 
-            public uint set_ID; /* Set ID (four bytes long)*/
+                public uint set_ID; /* Set ID (four bytes long)*/
 
-            public uint parm_ID; /* Parameter ID (four bytes long)*/
+                public uint parm_ID; /* Parameter ID (four bytes long)*/
 
-            public uint data_size; /* Size of data pointed to by pData (four bytes long)*/
+                public uint data_size; /* Size of data pointed to by pData (four bytes long)*/
 
-            public IntPtr pData; /* Data pointer(four bytes long)*/
+                public IntPtr pData; /* Data pointer(four bytes long)*/
 
         }
 
@@ -844,33 +844,33 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
         /* followed by target ID = any long value */
 
 
-/* 
+/*
 List of possible value for update condition argument in gc_SetConfigData()
 */
         public const int GCUPDATE_IMMEDIATE = 0;
         public const int GCUPDATE_ATNULL = 1;
 
 /*
-*  The following data structure is used in evtdatap field of GC METAEVENT for RTCM  
-*/
+ *  The following data structure is used in evtdatap field of GC METAEVENT for RTCM
+ */
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_RTCM_EVTDATA
         {
-            public int request_ID; /* The RTCM request ID */
-            public int gc_result; /* GC result value for this event */
-            public int cclib_result; /* CCLib result value for this event */
-            public int cclib_ID; /* CCLib ID for the result */
+                public int request_ID; /* The RTCM request ID */
+                public int gc_result; /* GC result value for this event */
+                public int cclib_result; /* CCLib result value for this event */
+                public int cclib_ID; /* CCLib ID for the result */
 
-            [MarshalAs(UnmanagedType.LPStr)]
-            public string additional_msg; /* Additional message for this event */
+                [MarshalAs(UnmanagedType.LPStr)]
+                public string additional_msg; /* Additional message for this event */
 
-            // TODO HELP! i don't know what to do with this one?????
-            //public GC_PARM_BLKP retrieved_parmblkp; /* Retrieved GC_PARM_BLK -- */
-            /* used for gc_GetConfigData() in */
-            /* asynchronous mode */
-            public int target_type; /* Target type */
-            public int target_id; /* Target ID */
+                // TODO HELP! i don't know what to do with this one?????
+                //public GC_PARM_BLKP retrieved_parmblkp; /* Retrieved GC_PARM_BLK -- */
+                /* used for gc_GetConfigData() in */
+                /* asynchronous mode */
+                public int target_type; /* Target type */
+                public int target_id; /* Target ID */
         }
 
 /* structure for gc_GetDeviceNameInfo */
@@ -878,55 +878,55 @@ List of possible value for update condition argument in gc_SetConfigData()
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_DEVICENAME_INFO
         {
-            public int cclibid;
-            public long rfu;
+                public int cclibid;
+                public long rfu;
         }
 
 
-/* 
- *    This structure is used for providing address information about the 
+/*
+ *    This structure is used for providing address information about the
  *    origination and destination parties in the makecall block.
  */
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GCLIB_ADDRESS_BLK
         {
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = MAX_ADDRESS_LEN)]
-            public string address; /* address data element */
+                [MarshalAs(UnmanagedType.ByValTStr, SizeConst = MAX_ADDRESS_LEN)]
+                public string address; /* address data element */
 
-            public byte address_type; /* address type parameter */
-            public byte address_plan; /* address plan parameter */
+                public byte address_type; /* address type parameter */
+                public byte address_plan; /* address plan parameter */
 
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = MAX_ADDRESS_LEN)]
-            public string sub_address; /* address data element */
+                [MarshalAs(UnmanagedType.ByValTStr, SizeConst = MAX_ADDRESS_LEN)]
+                public string sub_address; /* address data element */
 
-            public byte sub_address_type; /* sub-address data element */
-            public byte sub_address_plan; /* sub-address plan data element */
+                public byte sub_address_type; /* sub-address data element */
+                public byte sub_address_plan; /* sub-address plan data element */
         }
 
 /*
  *   This structure provides information about the medium e.g. timeslot to be
- *   used for the call. See the Technology User's Guide for support information.  
+ *   used for the call. See the Technology User's Guide for support information.
  */
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GCLIB_CHAN_BLK
         {
-            public byte medium_id; /* select timeslot/port */
-            public byte medium_sel; /* Preferred or exclusive */
+                public byte medium_id; /* select timeslot/port */
+                public byte medium_sel; /* Preferred or exclusive */
         }
 
 /*
  *   This structure provides information about the call e.g. category of the
- *   call. See the Technology User's Guide for support information.  
+ *   call. See the Technology User's Guide for support information.
  */
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GCLIB_CALL_BLK
         {
-            public byte category; /* Category of the call */
-            public byte address_info; /* Indicates if address is */
-            /* complete or overlap mode */
+                public byte category; /* Category of the call */
+                public byte address_info; /* Indicates if address is */
+                /* complete or overlap mode */
         }
 
 /*
@@ -936,25 +936,25 @@ List of possible value for update condition argument in gc_SetConfigData()
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GCLIB_MAKECALL_BLK
         {
-            public GCLIB_ADDRESS_BLK destination; /* Called party information */
-            public GCLIB_ADDRESS_BLK origination; /* Calling party information */
-            public GCLIB_CHAN_BLK chan_info; /* Channel information */
-            public GCLIB_CALL_BLK call_info; /* Call information */
-            // TODO HELP! i don't know what to do with this one?????
-            //public GC_PARM_BLKP ext_datap; /* Extended parameters */
+                public GCLIB_ADDRESS_BLK destination; /* Called party information */
+                public GCLIB_ADDRESS_BLK origination; /* Calling party information */
+                public GCLIB_CHAN_BLK chan_info; /* Channel information */
+                public GCLIB_CALL_BLK call_info; /* Call information */
+                // TODO HELP! i don't know what to do with this one?????
+                //public GC_PARM_BLKP ext_datap; /* Extended parameters */
         }
 
 
 /*
- *    This structure is used for passing the GC generic makecall block or 
+ *    This structure is used for passing the GC generic makecall block or
  *    a technology specific makecall block.
  */
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_MAKECALL_BLK
         {
-            public GCLIB_MAKECALL_BLK gclib; /* Generic makecall block */
-            public IntPtr cclib; /* cclib specific portion */
+                public GCLIB_MAKECALL_BLK gclib; /* Generic makecall block */
+                public IntPtr cclib; /* cclib specific portion */
         }
 
 
@@ -969,15 +969,15 @@ List of possible value for update condition argument in gc_SetConfigData()
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GCLIB_WAITCALL_BLK
         {
-            public long flags;
-            public long rfu;
+                public long flags;
+                public long rfu;
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_WAITCALL_BLK
         {
-            public GCLIB_WAITCALL_BLK gclib; /* GlobalCall specific portion */
-            public IntPtr cclib; /* cclib specific portion */
+                public GCLIB_WAITCALL_BLK gclib; /* GlobalCall specific portion */
+                public IntPtr cclib; /* cclib specific portion */
         }
 
 
@@ -990,23 +990,23 @@ List of possible value for update condition argument in gc_SetConfigData()
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GCLIB_IE_BLK
         {
-            public long flags;
-            public long rfu;
+                public long flags;
+                public long rfu;
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_IE_BLK
         {
-            public GCLIB_IE_BLK gclib; /* GlobalCall specific portion */
-            public IntPtr cclib; /* cclib specific portion */
+                public GCLIB_IE_BLK gclib; /* GlobalCall specific portion */
+                public IntPtr cclib; /* cclib specific portion */
         }
 
 
 
 /*
  * Type definition for SCBus Timeslots information structure.
- * NOTE: All GlobalCall libraries/applications should include this header file in order to 
- * access this structure, i.e. this structure must not be accessed from another header file 
+ * NOTE: All GlobalCall libraries/applications should include this header file in order to
+ * access this structure, i.e. this structure must not be accessed from another header file
  * (e.g. dtilib.h/msilib.h/dxxxlib.h)
  */
 //#ifndef __SC_TSINFO__
@@ -1027,15 +1027,15 @@ List of possible value for update condition argument in gc_SetConfigData()
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GCLIB_L2_BLK
         {
-            public long flags;
-            public long rfu;
+                public long flags;
+                public long rfu;
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_L2_BLK
         {
-            public GCLIB_L2_BLK gclib; /* GlobalCall specific portion */
-            public IntPtr cclib; /* cclib specific portion */
+                public GCLIB_L2_BLK gclib; /* GlobalCall specific portion */
+                public IntPtr cclib; /* cclib specific portion */
         }
 
 
@@ -1065,14 +1065,14 @@ List of possible value for update condition argument in gc_SetConfigData()
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct ALARM_FIELD
         {
-            public long alarm_number; /* the alarm number */
+                public long alarm_number; /* the alarm number */
 
-            /* Note: type of data is assumed to be known by the context */
-            public GC_PARM alarm_data; /* data for the alarm */
-            /* field is typically ignored */
-            /* if transmitting or stopping transmission */
-            /* of an alarm */
-            public GC_PARM rfu; /* reserved for future use, must be 0 */
+                /* Note: type of data is assumed to be known by the context */
+                public GC_PARM alarm_data; /* data for the alarm */
+                /* field is typically ignored */
+                /* if transmitting or stopping transmission */
+                /* of an alarm */
+                public GC_PARM rfu; /* reserved for future use, must be 0 */
         }
 
 /********************************/
@@ -1082,9 +1082,9 @@ List of possible value for update condition argument in gc_SetConfigData()
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct ALARM_LIST
         {
-            public int n_alarms; /* # of alarms in this list */
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = MAX_NUMBER_OF_ALARMS)]
-            public ALARM_FIELD[] alarm_fields;
+                public int n_alarms; /* # of alarms in this list */
+                [MarshalAs(UnmanagedType.ByValArray, SizeConst = MAX_NUMBER_OF_ALARMS)]
+                public ALARM_FIELD[] alarm_fields;
         }
 
 
@@ -1098,16 +1098,16 @@ List of possible value for update condition argument in gc_SetConfigData()
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct ALARM_PARM_FIELD
         {
-            /****************************************************/
-            /* a union since different ASOs may have different  */
-            /* formats for the size                             */
-            /****************************************************/
-            public GC_PARM alarm_parm_number;
+                /****************************************************/
+                /* a union since different ASOs may have different  */
+                /* formats for the size                             */
+                /****************************************************/
+                public GC_PARM alarm_parm_number;
 
-            /* Note: type of data is assumed to be known by the context */
-            public GC_PARM alarm_parm_data;
+                /* Note: type of data is assumed to be known by the context */
+                public GC_PARM alarm_parm_data;
 
-            public GC_PARM rfu; /* resserved for future use, must be 0 */
+                public GC_PARM rfu; /* resserved for future use, must be 0 */
         }
 
 /**********************************************************/
@@ -1117,10 +1117,10 @@ List of possible value for update condition argument in gc_SetConfigData()
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct ALARM_PARM_LIST
         {
-            public int n_parms; /* # of alarm parameters */
-            /* in this list */
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = MAX_NUMBER_OF_ALARM_PARMS)]
-            public ALARM_PARM_FIELD[] alarm_parm_fields;
+                public int n_parms; /* # of alarm parameters */
+                /* in this list */
+                [MarshalAs(UnmanagedType.ByValArray, SizeConst = MAX_NUMBER_OF_ALARM_PARMS)]
+                public ALARM_PARM_FIELD[] alarm_parm_fields;
         }
 
 
@@ -1134,8 +1134,8 @@ List of possible value for update condition argument in gc_SetConfigData()
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_ALARM_EVENT
         {
-            public uint alarm_source_ID; /* source of the alarm */
-            public int alarm_number; /* e.g if an E1 alarm, DTE1_LOS */
+                public uint alarm_source_ID; /* source of the alarm */
+                public int alarm_number; /* e.g if an E1 alarm, DTE1_LOS */
         }
 
 
@@ -1146,9 +1146,9 @@ List of possible value for update condition argument in gc_SetConfigData()
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct ALARM_SOURCE_OBJECT_FIELD
         {
-            public GC_PARM aso_data; /* type is assumed to be known by the context */
-            /* typically will be char * or unsigned long */
-            public int rfu; /* reserved for future use, must be 0 */
+                public GC_PARM aso_data; /* type is assumed to be known by the context */
+                /* typically will be char * or unsigned long */
+                public int rfu; /* reserved for future use, must be 0 */
         }
 
         public const int ASO_LIST_BY_NAME = 0;
@@ -1157,16 +1157,16 @@ List of possible value for update condition argument in gc_SetConfigData()
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct ALARM_SOURCE_OBJECT_LIST
         {
-            public int n_asos; /* # of asos in this data structure */
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = MAX_ASOS)]
-            public ALARM_SOURCE_OBJECT_FIELD[] aso_fields;
+                public int n_asos; /* # of asos in this data structure */
+                [MarshalAs(UnmanagedType.ByValArray, SizeConst = MAX_ASOS)]
+                public ALARM_SOURCE_OBJECT_FIELD[] aso_fields;
         }
 
         /***********************************/
         /* defines used by alarm functions */
         /***********************************/
 /*
--- set & get configuration values 
+-- set & get configuration values
 */
         public const int ALARM_CONFIG_BLOCKING = 0; /* set alarm configuration to be */
         /* blocking or non-blocking */
@@ -1263,68 +1263,68 @@ List of possible value for update condition argument in gc_SetConfigData()
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct EXTENSIONEVTBLK
         {
-            public byte ext_id;
-            public GC_PARM_BLK parmblk;
+                public byte ext_id;
+                public GC_PARM_BLK parmblk;
         }
 
 /*
- * The following data structure defines the rerouting information, e.g., used as event data for 
+ * The following data structure defines the rerouting information, e.g., used as event data for
  * GCEV_REQ_XFER and GCEV_INIT_XFER
  */
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_REROUTING_INFO
         {
-            [MarshalAs(UnmanagedType.LPStr)]
-            public string rerouting_num; /* Rerouting number, terminated with '\0' */
-            public GCLIB_ADDRESS_BLK rerouting_addrblkp; /* Rerouting address block    */
-            public GC_PARM_BLK parm_blkp; /* Additional parameters associated */
+                [MarshalAs(UnmanagedType.LPStr)]
+                public string rerouting_num; /* Rerouting number, terminated with '\0' */
+                public GCLIB_ADDRESS_BLK rerouting_addrblkp; /* Rerouting address block    */
+                public GC_PARM_BLK parm_blkp; /* Additional parameters associated */
         }
 
 /*
- * The following data structure defines the error or result information 
+ * The following data structure defines the error or result information
  */
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_INFO
         {
-            public int gcValue;
+                public int gcValue;
 
-            [MarshalAs(UnmanagedType.LPStr)]
-            public string gcMsg;
+                [MarshalAs(UnmanagedType.LPStr)]
+                public string gcMsg;
 
-            public int ccLibId;
+                public int ccLibId;
 
-            [MarshalAs(UnmanagedType.LPStr)]
-            public string ccLibName;
+                [MarshalAs(UnmanagedType.LPStr)]
+                public string ccLibName;
 
-            public int ccValue;
+                public int ccValue;
 
-            [MarshalAs(UnmanagedType.LPStr)]
-            public string ccMsg;
+                [MarshalAs(UnmanagedType.LPStr)]
+                public string ccMsg;
 
-            [MarshalAs(UnmanagedType.LPStr)]
-            public string additionalInfo;
+                [MarshalAs(UnmanagedType.LPStr)]
+                public string additionalInfo;
         }
 
 /*
- * The following data structure defines the tracing data for GCEV_TRACEDATA 
+ * The following data structure defines the tracing data for GCEV_TRACEDATA
  */
         public const int GCVAL_TRACEDATA_SIZE = 2048; /* Maximum size of tracing data in memory buffer */
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_TRACEDATA
         {
-            public uint seq_no; /* Sequence number  of tracing data*/
-            public ushort data_size; /* Size of tracing data */
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = GCVAL_TRACEDATA_SIZE)]
-            public byte[] data_buf; /* Memory buffer for tracing data */
+                public uint seq_no; /* Sequence number  of tracing data*/
+                public ushort data_size; /* Size of tracing data */
+                [MarshalAs(UnmanagedType.ByValArray, SizeConst = GCVAL_TRACEDATA_SIZE)]
+                public byte[] data_buf; /* Memory buffer for tracing data */
         }
 
 /* The data structure defines for CAS transition, CAS pulse, and CAS Train to allow user to tune / retrieve the defintion of
- * CAS signals.  The sequence of data fields in these structures strictly follows CAS definition in CDP file.  
+ * CAS signals.  The sequence of data fields in these structures strictly follows CAS definition in CDP file.
  * The ABCD code is a character string, terminated by '\0'. The unit of all time-related fields is millisecond.  Not all data fields are applied to DM3
-*/
+ */
 
         public const int GCVAL_CAS_CODE_SIZE = 0x5; /* The "ABCD" code size of CAS Signal in character string */
 
@@ -1333,18 +1333,18 @@ List of possible value for update condition argument in gc_SetConfigData()
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_CASPROT_TRANS
         {
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = GCVAL_CAS_CODE_SIZE)]
-            public string PreTransCode; /* ABCD pre-transition code */
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = GCVAL_CAS_CODE_SIZE)]
-            public string PostTransCode; /* ABCD post-transition code */
+                [MarshalAs(UnmanagedType.ByValTStr, SizeConst = GCVAL_CAS_CODE_SIZE)]
+                public string PreTransCode; /* ABCD pre-transition code */
+                [MarshalAs(UnmanagedType.ByValTStr, SizeConst = GCVAL_CAS_CODE_SIZE)]
+                public string PostTransCode; /* ABCD post-transition code */
 
-            public ushort PreTransInterval; /* The minimum time for the duration of the pre-transition (in msec)*/
-            public ushort PostTransInterval; /* The minimum time for the duration of the post-transition (in msec)*/
-            public ushort PreTransIntervalNom;
-            /* The nominal time for the duration of the pre-transition (in msec). Ignored in DM3: always 0 */
+                public ushort PreTransInterval; /* The minimum time for the duration of the pre-transition (in msec)*/
+                public ushort PostTransInterval; /* The minimum time for the duration of the post-transition (in msec)*/
+                public ushort PreTransIntervalNom;
+                /* The nominal time for the duration of the pre-transition (in msec). Ignored in DM3: always 0 */
 
-            public ushort PostTransIntervalNom;
-            /* The nominal time for the duration of the post-transition (in msec).Ignored in DM3: always 0 */
+                public ushort PostTransIntervalNom;
+                /* The nominal time for the duration of the post-transition (in msec).Ignored in DM3: always 0 */
         }
 
 /* Data structure of CAS Pulse signal */
@@ -1352,21 +1352,21 @@ List of possible value for update condition argument in gc_SetConfigData()
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_CASPROT_PULSE
         {
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = GCVAL_CAS_CODE_SIZE)]
-            public string OffPulseCode; /* ABCD pulse off code */
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = GCVAL_CAS_CODE_SIZE)]
-            public string OnPulseCode; /* ABCD pulse on code */
-            public ushort PrePulseInterval; /* The minimum time for the duration of the pre-pulse (in msec) */
-            public ushort PostPulseInterval; /* The minimum time for the duration of the post-pulse (in msec) */
-            public ushort PrePulseIntervalNom;
-            /* The nominal time for the duration of the pre-pulse. Ignored in DM3: always 0 */
+                [MarshalAs(UnmanagedType.ByValTStr, SizeConst = GCVAL_CAS_CODE_SIZE)]
+                public string OffPulseCode; /* ABCD pulse off code */
+                [MarshalAs(UnmanagedType.ByValTStr, SizeConst = GCVAL_CAS_CODE_SIZE)]
+                public string OnPulseCode; /* ABCD pulse on code */
+                public ushort PrePulseInterval; /* The minimum time for the duration of the pre-pulse (in msec) */
+                public ushort PostPulseInterval; /* The minimum time for the duration of the post-pulse (in msec) */
+                public ushort PrePulseIntervalNom;
+                /* The nominal time for the duration of the pre-pulse. Ignored in DM3: always 0 */
 
-            public ushort PostPulseIntervalNom;
-            /* The nominal time for the duration of the post-pulse (in msec). Ignored in DM3: always 0 */
+                public ushort PostPulseIntervalNom;
+                /* The nominal time for the duration of the post-pulse (in msec). Ignored in DM3: always 0 */
 
-            public ushort PulseIntervalMin; /* The minimum time for the duration of the pulse interval (in msec) */
-            public ushort PulseIntervalNom; /* The nominal time for the duration of the pulse interval (in msec) */
-            public ushort PulseIntervalMax; /* The maximum time for the duration of the pulse interval (in msec) */
+                public ushort PulseIntervalMin; /* The minimum time for the duration of the pulse interval (in msec) */
+                public ushort PulseIntervalNom; /* The nominal time for the duration of the pulse interval (in msec) */
+                public ushort PulseIntervalMax; /* The maximum time for the duration of the pulse interval (in msec) */
         }
 
 /* Data structure of CAS Train signal. */
@@ -1374,30 +1374,30 @@ List of possible value for update condition argument in gc_SetConfigData()
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_CASPROT_TRAIN
         {
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = GCVAL_CAS_CODE_SIZE)]
-            public string OffPulseCode; /* ABCD pulse off code */
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = GCVAL_CAS_CODE_SIZE)]
-            public string OnPulseCode; /* ABCD pulse on code */
+                [MarshalAs(UnmanagedType.ByValTStr, SizeConst = GCVAL_CAS_CODE_SIZE)]
+                public string OffPulseCode; /* ABCD pulse off code */
+                [MarshalAs(UnmanagedType.ByValTStr, SizeConst = GCVAL_CAS_CODE_SIZE)]
+                public string OnPulseCode; /* ABCD pulse on code */
 
-            public ushort PreTrainInterval; /* The minimum time for the duration of the pre-train (in msec) */
-            public ushort PostTrainInterval; /* The minimum time for the duration of the post-train (in msec) */
-            public ushort PreTrainIntervalNom;
-            /* The nominal time for the duration of the pre-train. Ignored in DM3: always 0 */
+                public ushort PreTrainInterval; /* The minimum time for the duration of the pre-train (in msec) */
+                public ushort PostTrainInterval; /* The minimum time for the duration of the post-train (in msec) */
+                public ushort PreTrainIntervalNom;
+                /* The nominal time for the duration of the pre-train. Ignored in DM3: always 0 */
 
-            public ushort PostTrainIntervalNom;
-            /* The nominal time for the duration of the post-train (in msec). Ignored in DM3: always 0 */
+                public ushort PostTrainIntervalNom;
+                /* The nominal time for the duration of the post-train (in msec). Ignored in DM3: always 0 */
 
-            public ushort PulseIntervalMin; /* The minimum time for the duration of the pulse interval (in msec)*/
-            public ushort PulseIntervalNom; /* The nominal time for the duration of the pulse interval (in msec)*/
-            public ushort PulseIntervalMax; /* The maximum time for the duration of the pulse interval (in msec)*/
-            public ushort InterPulseIntervalMin;
-            /* The minimum time for the duration of inter-pulse interval (in msec)*/
+                public ushort PulseIntervalMin; /* The minimum time for the duration of the pulse interval (in msec)*/
+                public ushort PulseIntervalNom; /* The nominal time for the duration of the pulse interval (in msec)*/
+                public ushort PulseIntervalMax; /* The maximum time for the duration of the pulse interval (in msec)*/
+                public ushort InterPulseIntervalMin;
+                /* The minimum time for the duration of inter-pulse interval (in msec)*/
 
-            public ushort InterPulseIntervalNom;
-            /* The nominal time for the duration of inter-pulse interval (in msec)*/
+                public ushort InterPulseIntervalNom;
+                /* The nominal time for the duration of inter-pulse interval (in msec)*/
 
-            public ushort InterPulseIntervalMax;
-            /* The maximum time for the duration of inter-pulse interval (in msec) */
+                public ushort InterPulseIntervalMax;
+                /* The maximum time for the duration of inter-pulse interval (in msec) */
         }
 
 
@@ -1406,8 +1406,8 @@ List of possible value for update condition argument in gc_SetConfigData()
 /**************************************************************************/
 
 
-/* 
- * List of possible values for address_type parameter in the 
+/*
+ * List of possible values for address_type parameter in the
  * GCLIB_ADDRESS_BLK structure.
  */
         public const int GCADDRTYPE_TRANSPARENT = 1; /* Transparent Number*/
@@ -1421,8 +1421,8 @@ List of possible value for update condition argument in gc_SetConfigData()
         public const int GCADDRTYPE_NET_SPECIFIC = 9; /* Network specific address */
         public const int GCADDRTYPE_ABBREVIATED = 10; /* Abbreviated address */
 
-/* 
- * List of possible values for address_plan field in the 
+/*
+ * List of possible values for address_plan field in the
  * GCLIB_ADDRESS_BLK structure.
  */
         public const int GCADDRPLAN_UNKNOWN = 1; /* Address plan - Unknown */
@@ -1432,8 +1432,8 @@ List of possible value for update condition argument in gc_SetConfigData()
         public const int GCADDRPLAN_DATA_X121 = 5; /* Address plan - X121 plan */
         public const int GCADDRPLAN_TELEX_F69 = 6; /* Address plan - Telex F69 plan */
 
-/* 
- * List of possible values for sub_address_type field in the 
+/*
+ * List of possible values for sub_address_type field in the
  * GCLIB_ADDRESS_BLK structure.
  */
         public const int GCSUBADDR_UNKNOWN = 1; /* Address type - Unknown type */
@@ -1441,16 +1441,16 @@ List of possible value for update condition argument in gc_SetConfigData()
         public const int GCSUBADDR_USER = 3; /* Address type - User type */
         public const int GCSUBADDR_IA5 = 4; /* Address type - IA5 characters */
 
-/* 
- * List of possible values for medium_sel field in the 
+/*
+ * List of possible values for medium_sel field in the
  * GCLIB_CHAN_BLK structure.
  */
         public const int GCMEDSEL_MEDIUM_PREF = 1; /* Timeslot selected is preferred */
         public const int GCMEDSEL_MEDIUM_EXCL = 2; /* Timeslot selected is exclusive */
 
 
-/* 
- * List of possible values for category field in the 
+/*
+ * List of possible values for category field in the
  * GCLIB_CALL_BLK structure.
  */
         public const int GCCAT_SUB_NOPRIOR = 1; /* Subscriber without priority */
@@ -1464,27 +1464,27 @@ List of possible value for update condition argument in gc_SetConfigData()
         public const int GCCAT_MOBILE = 9; /* Mobile users */
         public const int GCCAT_VPN = 10; /* Virtual private network line */
 
-/* 
- * List of possible values for address_info field in the 
+/*
+ * List of possible values for address_info field in the
  * GCLIB_CALL_BLK structure.
  */
         public const int GCADDRINFO_ENBLOC = 1; /* Address is complete */
         public const int GCADDRINFO_OVERLAP = 2; /* Address is not complete */
 
-/* 
+/*
  * If an optional field in the makecall block is not set, then it must
  * be intialized to GCMKCALLBLK_DEFAULT.
  */
         public const int GCMKCALLBLK_DEFAULT = 0xFF; /* To initialize fields that are not used */
 
 
-/* 
+/*
  * List of possible values of board open status
  */
         public const int GCBOARD_OPEN_IMPLICIT = 0;
         public const int GCBOARD_OPEN_EXPLICIT = 1;
 
-/* 
+/*
  * List of possible query IDs
  */
         public const int GCQUERY_LD_NAME_TO_ID = 1; /* query line device ID from its name */
@@ -1492,22 +1492,22 @@ List of possible value for update condition argument in gc_SetConfigData()
         public const int GCQUERY_PROTOCOL_NAME_TO_ID = 3; /* query protocol name from its name */
         public const int GCQUERY_PARM_NAME_TO_ID = 4; /* query parm ID from its name */
 
-/* 
+/*
  * Data structure for GC_PARM_ID
  */
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         public struct GC_PARM_ID
         {
-            public ushort set_ID; /* Set ID */
-            public ushort parm_ID; /* Parm ID */
-            public byte value_type; /* Value type, its defines listed in gccfgparm.h */
-            public byte update_perm; /* Update permission, its defines listed in gccfgparm.h */
+                public ushort set_ID; /* Set ID */
+                public ushort parm_ID; /* Parm ID */
+                public byte value_type; /* Value type, its defines listed in gccfgparm.h */
+                public byte update_perm; /* Update permission, its defines listed in gccfgparm.h */
         }
 
 /* Pre-determined sizes of parm_data_buf, used when inserting parms.  When
  * using the insert_parm functions, initially the smallest size will be
- * created, and increased to next sizes as needed.  As 
+ * created, and increased to next sizes as needed.  As
  * one can see, the max size of any block is therefore 8192 bytes */
         public const int PARM_BLK_SMALL = 0x100; /* 256 bytes */
         public const int PARM_BLK_MEDIUM = 0x200; /* 512 bytes */
@@ -1526,7 +1526,7 @@ List of possible value for update condition argument in gc_SetConfigData()
         public const int GC_MEDIADEVICE = 3;
         public const int GC_NET_GCLINEDEVICE = 4;
 
-/* Value defines of the rejection reason supplementary services (it is intended 
+/* Value defines of the rejection reason supplementary services (it is intended
  * to select the same values as the result values for rejection event)
  */
         public const int GCVAL_REJREASON_UNSPECIFIED = 0x569; /* Not given */
@@ -1786,5 +1786,4 @@ List of possible value for update condition argument in gc_SetConfigData()
 //int GC_CDECL gc_CancelWaitCall(LINEDEV linedev, unsigned long mode);
 
 
-    }
 }

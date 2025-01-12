@@ -1,17 +1,16 @@
-﻿namespace ivrToolkit.Core.Enums
+﻿namespace ivrToolkit.Core.Enums;
+
+/// <summary>
+/// Detects tones using either leading edge or trailing edge
+/// </summary>
+public enum ToneDetection
 {
     /// <summary>
-    /// Detects tones using either leading edge or trailing edge
+    /// use leading edge
     /// </summary>
-    public enum ToneDetection
-    {
-        /// <summary>
-        /// use leading edge
-        /// </summary>
-        Leading,
-        /// <summary>
-        /// use trailing edge
-        /// </summary>
-        Trailing
-    }
+    Leading,
+    /// <summary>
+    /// use trailing edge
+    /// </summary>
+    Trailing
 }

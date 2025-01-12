@@ -6,26 +6,25 @@
 // 
 using System;
 
-namespace ivrToolkit.Core.Exceptions
+namespace ivrToolkit.Core.Exceptions;
+
+/// <summary>
+/// Thrown if the person on the end of the line hangs up.
+/// </summary>
+public class HangupException : VoiceException
 {
-    /// <summary>
-    /// Thrown if the person on the end of the line hangs up.
-    /// </summary>
-    public class HangupException : VoiceException
+    /// <inheritdoc/>
+    public HangupException()
     {
-        /// <inheritdoc/>
-        public HangupException()
-        {
-        }
-        /// <inheritdoc/>
-        public HangupException(string message)
-            : base(message)
-        {
-        }
-        /// <inheritdoc/>
-        public HangupException(string message, Exception innerException)
-            : base(message, innerException)
-        {
-        }
+    }
+    /// <inheritdoc/>
+    public HangupException(string message)
+        : base(message)
+    {
+    }
+    /// <inheritdoc/>
+    public HangupException(string message, Exception innerException)
+        : base(message, innerException)
+    {
     }
 }

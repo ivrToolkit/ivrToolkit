@@ -5,13 +5,12 @@ using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
-using ivrToolkit.Core.Util;
 using Microsoft.Extensions.Logging;
 
 // ReSharper disable StringLiteralTypo
 // ReSharper disable CommentTypo
 
-namespace ivrToolkit.Core;
+namespace ivrToolkit.Core.Util;
 
 /// <summary>
 /// This wrapper handles common functionality in all plugin lines so that the implementation doesn't have to handle it.
@@ -30,22 +29,20 @@ public class LineWrapper : IIvrLine, IIvrLineManagement
     private bool _disposeTriggerActivated;
     private int _volume;
     private bool _disposed;
-    private readonly ILoggerFactory _loggerFactory;
-    private readonly VoiceProperties _voiceProperties;
+    private readonly PromptService _promptService;
 
 
     public LineWrapper(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, int lineNumber, IIvrBaseLine lineImplementation)
     {
         _lineNumber = lineNumber;
         _lineImplementation = lineImplementation.ThrowIfNull(nameof(lineImplementation));
-        _loggerFactory = loggerFactory.ThrowIfNull(nameof(loggerFactory));
-        _voiceProperties = voiceProperties.ThrowIfNull(nameof(voiceProperties));
+        loggerFactory.ThrowIfNull(nameof(loggerFactory));
+        voiceProperties.ThrowIfNull(nameof(voiceProperties));
             
         _logger = loggerFactory.CreateLogger<LineWrapper>();
         _logger.LogDebug("ctr(ILoggerFactory, VoiceProperties, {0})", lineNumber);
             
-        _loggerFactory = loggerFactory;
-        _voiceProperties = voiceProperties;
+        _promptService = new PromptService(loggerFactory.CreateLogger<PromptService>(), voiceProperties, this);
     }
 
     public IIvrLineManagement Management => this;
@@ -399,83 +396,22 @@ public class LineWrapper : IIvrLine, IIvrLineManagement
 
     public string Prompt(string filename, PromptOptions promptOptions = null)
     {
-        return PromptInternalAsync(filename, promptOptions,
-            prompt => { var result = prompt.Ask(); return Task.FromResult(result); }
-            ).GetAwaiter().GetResult();
+        return _promptService.Prompt(filename, promptOptions);
     }
 
     public string MultiTryPrompt(string filename, Func<string, bool> evaluator, MultiTryPromptOptions multiTryPromptOptions = null)
     {
-        return MultiTryPromptInternalAsync(filename, multiTryPromptOptions,
-            prompt => { var result = prompt.Ask(); return Task.FromResult(result); }
-            ).GetAwaiter().GetResult();
+        return _promptService.MultiTryPrompt(filename, evaluator, multiTryPromptOptions);
     }
 
-    public async Task<string> PromptAsync(string filename, CancellationToken cancellationToken, PromptOptions promptOptions = null)
+    public Task<string> PromptAsync(string filename, CancellationToken cancellationToken, PromptOptions promptOptions = null)
     {
-        return await PromptInternalAsync(filename, promptOptions,
-            async prompt => await prompt.AskAsync(cancellationToken));
+        return _promptService.PromptAsync(filename, cancellationToken, promptOptions);
     }
 
-    public async Task<string> MultiTryPromptAsync(string filename, Func<string, bool> evaluator, CancellationToken cancellationToken,
+    public Task<string> MultiTryPromptAsync(string filename, Func<string, bool> evaluator, CancellationToken cancellationToken,
         MultiTryPromptOptions multiTryPromptOptions = null)
     {
-        return await MultiTryPromptInternalAsync(filename, multiTryPromptOptions,
-            async prompt => await prompt.AskAsync(cancellationToken));
+        return _promptService.MultiTryPromptAsync(filename, evaluator, cancellationToken, multiTryPromptOptions);
     }
-
-    private async Task<string> PromptInternalAsync(string filename,
-        PromptOptions promptOptions,
-        Func<Prompt, Task<string>> ask)
-    {
-        await Task.CompletedTask;
-            
-        promptOptions ??= new PromptOptions();
-            
-        // set up the defaults
-        if (string.IsNullOrWhiteSpace(promptOptions.Terminators)) promptOptions.Terminators = "#";
-        if (promptOptions.MaxLength == 0) promptOptions.MaxLength = 31;
-            
-            
-        var prompt = new Prompt(_loggerFactory, _voiceProperties, this)
-        {
-            NumberOfDigits = promptOptions.MaxLength, 
-            Terminators = promptOptions.Terminators, 
-            PromptMessage = filename,
-            Attempts = 99, // doesn't matter, it will only do one attempt
-            BlankAttempts = 99 // doesn't matter, it will only do one attempt
-        };
-            
-        return await ask(prompt);
-
-    }
-    
-    private async Task<string> MultiTryPromptInternalAsync(string filename,
-        MultiTryPromptOptions promptOptions,
-        Func<Prompt, Task<string>> ask)
-    {
-        await Task.CompletedTask;
-            
-        promptOptions ??= new MultiTryPromptOptions();
-
-        promptOptions.Terminators = string.IsNullOrWhiteSpace(promptOptions.Terminators) ? "#" : promptOptions.Terminators;
-        promptOptions.MaxLength = promptOptions.MaxLength > 0 ? promptOptions.MaxLength : 31;
-        promptOptions.AllowedDigits = string.IsNullOrWhiteSpace(promptOptions.AllowedDigits) ? "0123456789*#" : promptOptions.AllowedDigits;
-        promptOptions.MaxRepeat = promptOptions.MaxRepeat > 0 ? promptOptions.MaxRepeat : 99;
-        promptOptions.BlankMaxRepeat = promptOptions.BlankMaxRepeat > 0 ? promptOptions.BlankMaxRepeat : 99;
-        
-        var prompt = new Prompt(_loggerFactory, _voiceProperties, this)
-        {
-            NumberOfDigits = promptOptions.MaxLength, 
-            Terminators = promptOptions.Terminators, 
-            PromptMessage = filename,
-            Attempts = promptOptions.MaxLength,
-            BlankAttempts = promptOptions.BlankMaxRepeat
-        };
-            
-        return await ask(prompt);
-
-    }
-    
-    
 }

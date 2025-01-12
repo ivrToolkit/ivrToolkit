@@ -1,6 +1,5 @@
-﻿namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
+﻿namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs;
+
+class errno_h
 {
-    class errno_h
-    {
-    }
 }

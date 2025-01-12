@@ -11,7 +11,7 @@ using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.Util;
 using Microsoft.Extensions.Logging;
 
-namespace ivrToolkit.Core;
+namespace ivrToolkit.Core.Legacy;
 
 /// <summary>
 /// An implementation of the IScript interface that implements the line property to save you some time.
@@ -26,8 +26,15 @@ public abstract class AbstractScript : IScript
         _loggerFactory = loggerFactory;
         _voiceProperties = voiceProperties;
         Line = line;
+        PromptFunctions = new PromptFunctions(_loggerFactory, _voiceProperties, line);
     }
-        
+
+
+    /// <summary>
+    /// Used within your script block to handle prompts
+    /// </summary>
+    protected IPromptFunctions PromptFunctions { get; }
+
     /// <inheritdoc/>
     public IIvrLine Line { get; }
 

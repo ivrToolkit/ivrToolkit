@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace ivrToolkit.Core.Interfaces;
 
-public interface IPromptShit
+public interface IPromptService
 {
     string Prompt(string filename, PromptOptions promptOptions = null);
     string MultiTryPrompt(string filename, Func<string, bool> evaluator, MultiTryPromptOptions multiTryPromptOptions = null);

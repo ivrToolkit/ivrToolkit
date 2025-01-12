@@ -2,7 +2,13 @@
 
 public class MultiTryPromptOptions : PromptOptions
 {
-    public int MaxRepeat { get; set; } = 0;
-    public int BlankMaxRepeat { get; set; } = 0;
-    public string AllowedDigits { get; set; } = string.Empty;
+    /// <summary>
+    /// The number of attempts before throwing the TooManyAttemptsException
+    /// </summary>
+    public int MaxAttempts { get; set; }
+
+    /// <summary>
+    /// The number of blank attempts before throwing the TooManyAttemptsException
+    /// </summary>
+    public int BlankMaxAttempts { get; set; }
 }

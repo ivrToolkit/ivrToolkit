@@ -7,35 +7,35 @@
 
 using ivrToolkit.Core;
 using ivrToolkit.Core.Interfaces;
+using ivrToolkit.Core.Util;
 using Microsoft.Extensions.Logging;
 
-namespace SipOutTest.ScriptBlocks
+namespace SipOutTest.ScriptBlocks;
+
+public class WelcomeScript : ivrToolkit.Core.Legacy.AbstractScript
 {
-    public class WelcomeScript : AbstractScript
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly VoiceProperties _voiceProperties;
+    private readonly IIvrLine _line;
+    private readonly ILogger<WelcomeScript> _logger;
+
+    public WelcomeScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, IIvrLine line) : base(loggerFactory, voiceProperties, line)
     {
-        private readonly ILoggerFactory _loggerFactory;
-        private readonly VoiceProperties _voiceProperties;
-        private readonly IIvrLine _line;
-        private readonly ILogger<WelcomeScript> _logger;
+        _loggerFactory = loggerFactory;
+        _voiceProperties = voiceProperties;
+        _line = line;
+        _logger = loggerFactory.CreateLogger<WelcomeScript>();
+        _logger.LogDebug("Ctr()");
+    }
 
-        public WelcomeScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, IIvrLine line) : base(loggerFactory, voiceProperties, line)
-        {
-            _loggerFactory = loggerFactory;
-            _voiceProperties = voiceProperties;
-            _line = line;
-            _logger = loggerFactory.CreateLogger<WelcomeScript>();
-            _logger.LogDebug("Ctr()");
-        }
+    public override string Description => "Welcome";
 
-        public override string Description => "Welcome";
+    public override IScript Execute()
+    {
+        _logger.LogDebug("Execute()");
+        // say My welcome message
+        Line.PlayFile(@"Voice Files\ThankYou.wav");
+        return new MainScript(_loggerFactory, _voiceProperties, _line);
+    }
 
-        public override IScript Execute()
-        {
-            _logger.LogDebug("Execute()");
-            // say My welcome message
-            Line.PlayFile(@"Voice Files\ThankYou.wav");
-            return new MainScript(_loggerFactory, _voiceProperties, _line);
-        }
-
-    } // class
-}
+} // class

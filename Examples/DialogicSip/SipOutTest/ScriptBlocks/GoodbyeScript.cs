@@ -7,28 +7,28 @@
 
 using ivrToolkit.Core;
 using ivrToolkit.Core.Interfaces;
+using ivrToolkit.Core.Util;
 using Microsoft.Extensions.Logging;
 
-namespace SipOutTest.ScriptBlocks
+namespace SipOutTest.ScriptBlocks;
+
+public class GoodbyeScript : ivrToolkit.Core.Legacy.AbstractScript
 {
-    public class GoodbyeScript : AbstractScript
+    private readonly ILogger<GoodbyeScript> _logger;
+
+    public GoodbyeScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, IIvrLine line) : base(loggerFactory, voiceProperties, line)
     {
-        private readonly ILogger<GoodbyeScript> _logger;
+        _logger = loggerFactory.CreateLogger<GoodbyeScript>();
+        _logger.LogDebug("Ctr()");
+    }
 
-        public GoodbyeScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, IIvrLine line) : base(loggerFactory, voiceProperties, line)
-        {
-            _logger = loggerFactory.CreateLogger<GoodbyeScript>();
-            _logger.LogDebug("Ctr()");
-        }
+    public override string Description => "Goodbye";
 
-        public override string Description => "Goodbye";
-
-        public override IScript Execute()
-        {
-            _logger.LogDebug("Execute");
-            // say my goodbye message
-            Line.PlayFile(@"Voice Files\Goodbye.wav");
-            return null; // signal the end
-        }
-    } // class
-}
+    public override IScript Execute()
+    {
+        _logger.LogDebug("Execute");
+        // say my goodbye message
+        Line.PlayFile(@"Voice Files\Goodbye.wav");
+        return null; // signal the end
+    }
+} // class

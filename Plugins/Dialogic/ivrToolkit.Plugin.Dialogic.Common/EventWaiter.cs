@@ -6,242 +6,240 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Runtime.InteropServices;
 
-namespace ivrToolkit.Plugin.Dialogic.Common
+namespace ivrToolkit.Plugin.Dialogic.Common;
+
+// Define a class to hold custom event info
+public class MetaEventArgs : EventArgs
 {
-
-    // Define a class to hold custom event info
-    public class MetaEventArgs : EventArgs
+    public MetaEventArgs(int eventHandle, METAEVENT metaEvent)
     {
-        public MetaEventArgs(int eventHandle, METAEVENT metaEvent)
-        {
-            EventHandle = eventHandle;
-            MetaEvent = metaEvent;
-        }
-
-        public METAEVENT MetaEvent { get; set; }
-        public int EventHandle { get; set; }
+        EventHandle = eventHandle;
+        MetaEvent = metaEvent;
     }
 
-    public enum  EventWaitEnum
+    public METAEVENT MetaEvent { get; set; }
+    public int EventHandle { get; set; }
+}
+
+public enum  EventWaitEnum
+{
+    Expired = -2,
+    Error = -1,
+    Success = 1
+}
+
+public class EventWaiter
+{
+    public const int SyncWaitInfinite = -1;
+
+    private ILogger<EventWaiter> _logger;
+    private ILoggerFactory _loggerFactory;
+    private bool _disposeTriggerActivated;
+
+    public event EventHandler<MetaEventArgs> OnMetaEvent;
+
+    public bool DisposeTriggerActivated
     {
-        Expired = -2,
-        Error = -1,
-        Success = 1
+        set => _disposeTriggerActivated = value;
     }
 
-    public class EventWaiter
+    public EventWaiter(ILoggerFactory loggerFactory)
     {
-        public const int SyncWaitInfinite = -1;
+        _logger = loggerFactory.CreateLogger<EventWaiter>();
+        _loggerFactory = loggerFactory;
+        _logger.LogDebug("Ctr()");
+    }
 
-        private ILogger<EventWaiter> _logger;
-        private ILoggerFactory _loggerFactory;
-        private bool _disposeTriggerActivated;
+    public EventWaitEnum WaitForEventIndefinitely(int waitForEvent, int[] handles)
+    {
+        _logger.LogDebug("*** Waiting for event: {0}: {1}, waitSeconds = indefinitely", waitForEvent, waitForEvent.EventTypeDescription());
 
-        public event EventHandler<MetaEventArgs> OnMetaEvent;
-
-        public bool DisposeTriggerActivated
+        EventWaitEnum result;
+        while ((result = WaitForEvent(waitForEvent, 5, handles, false)) == EventWaitEnum.Expired) // wait  5 seconds
         {
-            set => _disposeTriggerActivated = value;
+            _logger.LogTrace("Wait for call exhausted. Will try again");
+            CheckDisposing();
         }
 
-        public EventWaiter(ILoggerFactory loggerFactory)
-        {
-            _logger = loggerFactory.CreateLogger<EventWaiter>();
-            _loggerFactory = loggerFactory;
-            _logger.LogDebug("Ctr()");
-        }
+        return result;
+    }
 
-        public EventWaitEnum WaitForEventIndefinitely(int waitForEvent, int[] handles)
-        {
-            _logger.LogDebug("*** Waiting for event: {0}: {1}, waitSeconds = indefinitely", waitForEvent, waitForEvent.EventTypeDescription());
+    public EventWaitEnum WaitForThisEventOnly(int waitForEvent, int waitSeconds, int[] handles, bool showDebug = true)
+    {
+        return WaitForEvent(waitForEvent, waitSeconds, handles, showDebug, true);
+    }
 
-            EventWaitEnum result;
-            while ((result = WaitForEvent(waitForEvent, 5, handles, false)) == EventWaitEnum.Expired) // wait  5 seconds
+    public EventWaitEnum WaitForEvent(int waitForEvent, int waitSeconds, int[] handles, bool showDebug = true, bool waitExact = false)
+    {
+        if (showDebug) _logger.LogDebug("*** Waiting for event: {0}: {1}, waitSeconds = {2}, handles = {3}, waitExact = {4}", 
+            waitForEvent, waitForEvent.EventTypeDescription(), 
+            waitSeconds, string.Join(",", handles), waitExact);
+
+        var eventThrown = -1;
+        var count = 0;
+        var eventHandle = 0;
+
+        do
+        {
+            var result = srllib_h.sr_waitevtEx(handles, handles.Length, 1000, ref eventHandle);
+            var timedOut = result == -1;
+            if (!timedOut)
             {
-                _logger.LogTrace("Wait for call exhausted. Will try again");
-                CheckDisposing();
-            }
+                var metaEvt = GetEvent(eventHandle);
+                eventThrown = metaEvt.evttype;
 
-            return result;
-        }
-
-        public EventWaitEnum WaitForThisEventOnly(int waitForEvent, int waitSeconds, int[] handles, bool showDebug = true)
-        {
-            return WaitForEvent(waitForEvent, waitSeconds, handles, showDebug, true);
-        }
-
-        public EventWaitEnum WaitForEvent(int waitForEvent, int waitSeconds, int[] handles, bool showDebug = true, bool waitExact = false)
-        {
-            if (showDebug) _logger.LogDebug("*** Waiting for event: {0}: {1}, waitSeconds = {2}, handles = {3}, waitExact = {4}", 
-                waitForEvent, waitForEvent.EventTypeDescription(), 
-                waitSeconds, string.Join(",", handles), waitExact);
-
-            var eventThrown = -1;
-            var count = 0;
-            var eventHandle = 0;
-
-            do
-            {
-                var result = srllib_h.sr_waitevtEx(handles, handles.Length, 1000, ref eventHandle);
-                var timedOut = result == -1;
-                if (!timedOut)
+                if (waitExact)
                 {
-                    var metaEvt = GetEvent(eventHandle);
-                    eventThrown = metaEvt.evttype;
-
-                    if (waitExact)
-                    {
-                        // wait for the exact event only. Will fire extension events too since they are only informational
-                        if (eventThrown == waitForEvent || eventThrown == gclib_h.GCEV_EXTENSION)
-                        {
-                            FireEvent(eventHandle, metaEvt);
-                        }
-                        else
-                        {
-                            var message = "";
-                            _logger.LogDebug("Skipping event {0}:{1}", eventThrown, eventThrown.EventTypeDescription());
-                            if (eventThrown == gclib_h.GCEV_TASKFAIL)
-                            {
-                                message = $" - {GetTaskFailMessage(metaEvt)}";
-                            }
-                            _logger.LogDebug("Skipping event {0}:{1}{2}", eventThrown, eventThrown.EventTypeDescription(), message);
-                        }
-                    }
-                    else
+                    // wait for the exact event only. Will fire extension events too since they are only informational
+                    if (eventThrown == waitForEvent || eventThrown == gclib_h.GCEV_EXTENSION)
                     {
                         FireEvent(eventHandle, metaEvt);
                     }
-                    if (eventThrown == waitForEvent) break;
+                    else
+                    {
+                        var message = "";
+                        _logger.LogDebug("Skipping event {0}:{1}", eventThrown, eventThrown.EventTypeDescription());
+                        if (eventThrown == gclib_h.GCEV_TASKFAIL)
+                        {
+                            message = $" - {GetTaskFailMessage(metaEvt)}";
+                        }
+                        _logger.LogDebug("Skipping event {0}:{1}{2}", eventThrown, eventThrown.EventTypeDescription(), message);
+                    }
                 }
-                CheckDisposing();
-
-                count++;
-            } while (LoopAgain(eventThrown, waitForEvent, count, waitSeconds));
-
-            if (eventThrown == waitForEvent)
-            {
-                return EventWaitEnum.Success;
+                else
+                {
+                    FireEvent(eventHandle, metaEvt);
+                }
+                if (eventThrown == waitForEvent) break;
             }
+            CheckDisposing();
 
-            if (HasExpired(count, waitSeconds))
-            {
-                return EventWaitEnum.Expired;
-            }
+            count++;
+        } while (LoopAgain(eventThrown, waitForEvent, count, waitSeconds));
 
-            return EventWaitEnum.Error;
+        if (eventThrown == waitForEvent)
+        {
+            return EventWaitEnum.Success;
         }
 
-        private string GetTaskFailMessage(METAEVENT metaEvt)
+        if (HasExpired(count, waitSeconds))
         {
-            var callStatusInfo = new GC_INFO();
-            UnmanagedMemoryService unmanagedMemory = new UnmanagedMemoryService(_loggerFactory, "One Time");
-            var ptr = unmanagedMemory.Create($"{nameof(GC_INFO)} for GetTaskFailMessage", callStatusInfo);
-
-            var result = gclib_h.gc_ResultInfo(ref metaEvt, ptr);
-            try
-            {
-                result.ThrowIfGlobalCallError();
-
-                callStatusInfo = Marshal.PtrToStructure<GC_INFO>(ptr);
-
-                var ex = new GlobalCallErrorException(callStatusInfo);
-                return ex.Message;
-            }
-            catch (GlobalCallErrorException e)
-            {
-                // for now we will just log an error if we get one
-                _logger.LogError(e, "Was not expecting this!");
-                return $"WTH? - {e.Message}";
-            }
-            finally
-            {
-                unmanagedMemory.Free(ptr);
-            }
+            return EventWaitEnum.Expired;
         }
 
-        private METAEVENT GetEvent(int eventHandle)
+        return EventWaitEnum.Error;
+    }
+
+    private string GetTaskFailMessage(METAEVENT metaEvt)
+    {
+        var callStatusInfo = new GC_INFO();
+        UnmanagedMemoryService unmanagedMemory = new UnmanagedMemoryService(_loggerFactory, "One Time");
+        var ptr = unmanagedMemory.Create($"{nameof(GC_INFO)} for GetTaskFailMessage", callStatusInfo);
+
+        var result = gclib_h.gc_ResultInfo(ref metaEvt, ptr);
+        try
         {
-            _logger.LogDebug("GetEvent({0})", eventHandle);
-            var metaEvt = new METAEVENT();
-
-            var result = gclib_h.gc_GetMetaEventEx(ref metaEvt, eventHandle);
-            result.ThrowIfGlobalCallError();
-            return metaEvt;
-        }
-
-        private void FireEvent(int eventHandle, METAEVENT metaEvt)
-        {
-            _logger.LogDebug("FireEvent({0})", eventHandle);
-
-            var result = gclib_h.gc_GetMetaEventEx(ref metaEvt, eventHandle);
             result.ThrowIfGlobalCallError();
 
-            _logger.LogDebug(
-                "evt_type = {0}:{1}, evt_dev = {2}, evt_flags = {3},  line_dev = {4} ",
-                metaEvt.evttype, metaEvt.evttype.EventTypeDescription(), metaEvt.evtdev, metaEvt.flags,
-                metaEvt.linedev);
+            callStatusInfo = Marshal.PtrToStructure<GC_INFO>(ptr);
 
-            EventHandler<MetaEventArgs> raiseEvent = OnMetaEvent;
-            if (raiseEvent != null)
-            {
-                raiseEvent(this, new MetaEventArgs(eventHandle, metaEvt));
-            }
+            var ex = new GlobalCallErrorException(callStatusInfo);
+            return ex.Message;
+        }
+        catch (GlobalCallErrorException e)
+        {
+            // for now we will just log an error if we get one
+            _logger.LogError(e, "Was not expecting this!");
+            return $"WTH? - {e.Message}";
+        }
+        finally
+        {
+            unmanagedMemory.Free(ptr);
+        }
+    }
 
-            return;
+    private METAEVENT GetEvent(int eventHandle)
+    {
+        _logger.LogDebug("GetEvent({0})", eventHandle);
+        var metaEvt = new METAEVENT();
+
+        var result = gclib_h.gc_GetMetaEventEx(ref metaEvt, eventHandle);
+        result.ThrowIfGlobalCallError();
+        return metaEvt;
+    }
+
+    private void FireEvent(int eventHandle, METAEVENT metaEvt)
+    {
+        _logger.LogDebug("FireEvent({0})", eventHandle);
+
+        var result = gclib_h.gc_GetMetaEventEx(ref metaEvt, eventHandle);
+        result.ThrowIfGlobalCallError();
+
+        _logger.LogDebug(
+            "evt_type = {0}:{1}, evt_dev = {2}, evt_flags = {3},  line_dev = {4} ",
+            metaEvt.evttype, metaEvt.evttype.EventTypeDescription(), metaEvt.evtdev, metaEvt.flags,
+            metaEvt.linedev);
+
+        EventHandler<MetaEventArgs> raiseEvent = OnMetaEvent;
+        if (raiseEvent != null)
+        {
+            raiseEvent(this, new MetaEventArgs(eventHandle, metaEvt));
         }
 
-        private bool HasExpired(int count, int waitSeconds)
+        return;
+    }
+
+    private bool HasExpired(int count, int waitSeconds)
+    {
+        _logger.LogTrace("HasExpired({0}, {1})", count, waitSeconds);
+
+        if (waitSeconds == SyncWaitInfinite)
         {
-            _logger.LogTrace("HasExpired({0}, {1})", count, waitSeconds);
-
-            if (waitSeconds == SyncWaitInfinite)
-            {
-                return false;
-            }
-
-            if (count > waitSeconds)
-            {
-                return true;
-            }
-
             return false;
         }
 
-        private bool LoopAgain(int eventThrown, int waitForEvent, int count, int waitSeconds)
+        if (count > waitSeconds)
         {
-            _logger.LogTrace("LoopAgain({0}, {1}, {2}, {3})", eventThrown, waitForEvent, count, waitSeconds);
-
-            var hasEventThrown = false;
-            var hasExpired = false;
-
-            if (eventThrown == waitForEvent)
-            {
-                hasEventThrown = true;
-            }
-
-            if (HasExpired(count, waitSeconds))
-            {
-                hasExpired = true;
-            }
-
-            if (hasEventThrown || hasExpired)
-            {
-                return false;
-            }
-
             return true;
         }
 
-        private void CheckDisposing()
+        return false;
+    }
+
+    private bool LoopAgain(int eventThrown, int waitForEvent, int count, int waitSeconds)
+    {
+        _logger.LogTrace("LoopAgain({0}, {1}, {2}, {3})", eventThrown, waitForEvent, count, waitSeconds);
+
+        var hasEventThrown = false;
+        var hasExpired = false;
+
+        if (eventThrown == waitForEvent)
         {
-            if (_disposeTriggerActivated) ThrowDisposingException();
+            hasEventThrown = true;
         }
 
-        private void ThrowDisposingException()
+        if (HasExpired(count, waitSeconds))
         {
-            _logger.LogDebug("ThrowDisposingException()");
-            _disposeTriggerActivated = false;
-            throw new DisposingException();
+            hasExpired = true;
         }
+
+        if (hasEventThrown || hasExpired)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private void CheckDisposing()
+    {
+        if (_disposeTriggerActivated) ThrowDisposingException();
+    }
+
+    private void ThrowDisposingException()
+    {
+        _logger.LogDebug("ThrowDisposingException()");
+        _disposeTriggerActivated = false;
+        throw new DisposingException();
     }
 }

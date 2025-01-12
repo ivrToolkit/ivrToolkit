@@ -1,5 +1,8 @@
 ﻿namespace ivrToolkit.Core.Util;
 
+/// <summary>
+/// For setting up extra options when using line.MultiTryPrompt
+/// </summary>
 public class MultiTryPromptOptions : PromptOptions
 {
     /// <summary>

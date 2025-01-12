@@ -2,6 +2,9 @@
 
 namespace ivrToolkit.Core.Util;
 
+/// <summary>
+/// For setting up extra options when using line.Prompt
+/// </summary>
 public class PromptOptions
 {
     /// <summary>

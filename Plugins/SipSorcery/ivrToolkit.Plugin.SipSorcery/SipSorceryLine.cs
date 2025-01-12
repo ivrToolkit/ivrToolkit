@@ -9,6 +9,7 @@ using SIPSorceryMedia.Abstractions;
 using System.Text;
 using ivrToolkit.Core.Exceptions;
 using System.Diagnostics;
+using ivrToolkit.Core.Util;
 
 namespace ivrToolkit.Plugin.SipSorcery
 {
@@ -160,6 +161,11 @@ namespace ivrToolkit.Plugin.SipSorcery
         }
 
 
+        public Task<string> SingleDigitPromptAsync(string filename, PromptOptions promptOptions, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
         public string FlushDigitBuffer()
         {
             string currentDigitBuffer;
@@ -184,7 +190,8 @@ namespace ivrToolkit.Plugin.SipSorcery
             return await GetDigitsInternalAsync(numberOfDigits, terminators, 
                 async (ms) => await _keypressSemaphore.WaitAsync(ms, cancellationToken));
         }
-        
+
+
         private async Task<string> GetDigitsInternalAsync(int numberOfDigits, string terminators,
             Func<int, Task<bool>> wait)
         {

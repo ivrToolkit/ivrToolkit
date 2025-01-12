@@ -36,15 +36,67 @@ class Program
 
 
             var line = lineManager.GetLine(1);
-            var promptFunctions = new PromptFunctions(loggerFactory, sipVoiceProperties, line);
-
 
             var callAnalysis = await line.DialAsync(phoneNumber, 3500, cancellationToken);
             if (callAnalysis == CallAnalysis.Connected)
             {
                 await line.PlayFileAsync(@"Voice Files\ThankYou.wav", cancellationToken);
-                string result = await promptFunctions.RegularPromptAsync(@"Voice Files\Press1234.wav", cancellationToken);
 
+
+                // single attempt prompt
+                var answer = line.Prompt(@"Voice Files\Press1234.wav\");
+                
+                // single attempt prompt with overrides
+                answer = line.Prompt(@"Voice Files\Press1234.wav\", new()
+                {
+                    MaxLength = 5
+                });
+
+                // multi attempt prompt
+                answer =line.MultiTryPrompt(@"Voice Files\Press1234.wav\",
+                    value => value == "1234");
+                
+                // multi attempt prompt with overrides
+                answer = line.MultiTryPrompt(@"Voice Files\Press1234.wav\",
+                    value => value == "1234",
+                    new MultiTryPromptOptions { MaxRepeat = 5, BlankMaxRepeat = 5 });
+                
+                
+
+                
+                
+                
+                
+                
+                // single attempt prompt
+                answer = await line.PromptAsync(@"Voice Files\Press1234.wav\", cancellationToken);
+                
+                // single attempt prompt with overrides
+                answer = await line.PromptAsync(@"Voice Files\Press1234.wav\", cancellationToken,
+                    new() { MaxLength = 5 });
+
+                // multi attempt prompt
+                answer = await line.MultiTryPromptAsync(@"Voice Files\Press1234.wav\",
+                    value => value == "1234", cancellationToken);
+                
+                // multi attempt prompt with overrides
+                answer = await line.MultiTryPromptAsync(@"Voice Files\Press1234.wav\",
+                    value => value == "1234", cancellationToken,
+                    new MultiTryPromptOptions { MaxRepeat = 5, BlankMaxRepeat = 5 });
+                
+                
+                
+                
+                
+                
+
+                
+                
+                
+                
+                
+                
+                
                 await line.PlayFileAsync(@"Voice Files\YouPressed.wav", cancellationToken);
 
                 await line.PlayCharactersAsync(result, cancellationToken);

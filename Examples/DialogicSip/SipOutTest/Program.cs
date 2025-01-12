@@ -27,7 +27,7 @@ namespace SipOutTest
             _logger = loggerFactory.CreateLogger<Program>();
             _logger.LogDebug("Starting the program!");
 
-            var dialogicSipVoiceProperties = new DialogicSipVoiceProperties(loggerFactory, "voice.properties");
+            var dialogicSipVoiceProperties = new DialogicSipVoiceProperties(loggerFactory, @"c:\repos\Config\DialogicSip\voice.properties");
 
             var sipPlugin = new SipPlugin(loggerFactory, dialogicSipVoiceProperties);
 

@@ -42,7 +42,7 @@ class Program
                 await line.PlayFileAsync(@"Voice Files\ThankYou.wav", cancellationToken);
                 
                 // single attempt prompt
-                var result = await line.PromptAsync(@"Voice Files\Press1234.wav\", cancellationToken);
+                var result = await line.PromptAsync(@"Voice Files\Press1234.wav", cancellationToken);
                 
                 await line.PlayFileAsync(@"Voice Files\YouPressed.wav", cancellationToken);
 

@@ -107,8 +107,7 @@ namespace ivrToolkit.Plugin.SipSorcery
             _digitPressed = false;
             LastTerminator = "";
 
-            var to = $"{number}@{_voiceProperties.SipProxyIp}:{_voiceProperties.SipSignalingPort}";
-            return DialAsync(_voiceProperties.SipAlias, _voiceProperties.SipPassword, to, CancellationToken.None).GetAwaiter().GetResult(); // blocking
+            return DialAsync(number, answeringMachineLengthInMilliseconds, CancellationToken.None).GetAwaiter().GetResult(); // blocking
         }
 
         public async Task<CallAnalysis> DialAsync(string number, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken)
@@ -120,18 +119,14 @@ namespace ivrToolkit.Plugin.SipSorcery
             LastTerminator = "";
 
             var to = $"{number}@{_voiceProperties.SipProxyIp}:{_voiceProperties.SipSignalingPort}";
-            return await DialAsync(_voiceProperties.SipAlias, _voiceProperties.SipPassword, to, cancellationToken);
-        }
-
-        private async Task<CallAnalysis> DialAsync(string user, string pass, string to, CancellationToken cancellationToken)
-        {
+            
             _voipMediaSession = new VoIPMediaSession();
             _voipMediaSession.AcceptRtpFromAny = true;
             _voipMediaSession.TakeOffHold();
 
             // Place the call and wait for the result.
             var startTime = Stopwatch.GetTimestamp();
-            var callResult = await _userAgent.Call(to, user, pass, _voipMediaSession);
+            var callResult = await _userAgent.Call(to, _voiceProperties.SipAlias, _voiceProperties.SipPassword, _voipMediaSession);
             var duration = Stopwatch.GetElapsedTime(startTime);
             _logger.LogInformation("Dial call duration: {duration}", duration);
 
@@ -150,9 +145,8 @@ namespace ivrToolkit.Plugin.SipSorcery
             }
 
             return CallAnalysis.Connected;
-
         }
-
+        
         public void Dispose()
         {
             _logger.LogDebug("Dispose() - Disposing of the line");
@@ -160,12 +154,7 @@ namespace ivrToolkit.Plugin.SipSorcery
             _userAgent.Dispose();
         }
 
-
-        public Task<string> SingleDigitPromptAsync(string filename, PromptOptions promptOptions, CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
-
+        
         public string FlushDigitBuffer()
         {
             string currentDigitBuffer;

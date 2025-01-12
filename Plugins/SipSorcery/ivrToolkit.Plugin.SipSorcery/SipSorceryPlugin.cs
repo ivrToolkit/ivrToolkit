@@ -57,7 +57,7 @@ namespace ivrToolkit.Plugin.SipSorcery
             if (_disposed) throw new DisposedException("You cannot get a line from a disposed plugin");
 
             var line = new SipSorceryLine(_loggerFactory, _voiceProperties, lineNumber, _sipTransport);
-            return new LineWrapper(_loggerFactory, lineNumber, line);
+            return new LineWrapper(_loggerFactory, _voiceProperties, lineNumber, line);
         }
     }
 }

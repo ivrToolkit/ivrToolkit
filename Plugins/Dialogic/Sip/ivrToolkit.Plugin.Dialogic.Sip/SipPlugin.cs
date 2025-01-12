@@ -82,7 +82,7 @@ public class SipPlugin : IIvrPlugin
         if (_disposed) throw new DisposedException("You cannot get a line from a disposed plugin");
 
         var line = new SipLine(_loggerFactory, _voiceProperties, lineNumber);
-        return new LineWrapper(_loggerFactory, lineNumber, line);
+        return new LineWrapper(_loggerFactory, _voiceProperties, lineNumber, line);
     }
 
     public void Dispose()

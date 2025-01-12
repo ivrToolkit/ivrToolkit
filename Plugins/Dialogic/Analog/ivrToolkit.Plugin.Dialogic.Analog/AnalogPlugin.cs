@@ -94,7 +94,7 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
 
             var handles = _voiceProperties.UseGc ? OpenDeviceWithGc(deviceName): OpenDeviceWithDx(deviceName);
             var lineImpl = new AnalogLine(_loggerFactory, _voiceProperties, handles.Devh, handles.Voiceh, lineNumber);
-            return new LineWrapper(_loggerFactory, lineNumber, lineImpl);
+            return new LineWrapper(_loggerFactory, _voiceProperties, lineNumber, lineImpl);
         }
 
         public VoiceProperties VoiceProperties => _voiceProperties;

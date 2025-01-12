@@ -14,7 +14,7 @@ namespace ivrToolkit.Core.Interfaces
     /// <summary>
     /// This interface exposes the main methods used to control the selected plugin.
     /// </summary>
-    public interface IIvrLine : IIvrBaseLine
+    public interface IIvrLine : IIvrBaseLine, IPromptShit
     {
 
         /// <summary>

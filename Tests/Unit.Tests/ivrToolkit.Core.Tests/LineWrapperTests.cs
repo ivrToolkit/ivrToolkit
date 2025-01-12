@@ -24,7 +24,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_Dial_throws_DisposingException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Management.TriggerDispose();
 
             Action act = () => test.Dial("1", 1000);
@@ -34,7 +34,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_Dial_throws_DisposedException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Dispose();
 
             Action act = () => test.Dial("1", 1000);
@@ -44,7 +44,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_Dial_anseringMachineLengthInMs_999_throws_ArgumentOutOfRangeException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Management.TriggerDispose();
 
             Action act = () => test.Dial("1", 999);
@@ -54,7 +54,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_Dial_numberIsNull_throws_ArgumentNullException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Management.TriggerDispose();
 
             Action act = () => test.Dial(null, 1000);
@@ -64,7 +64,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_Dial_numberIsEmpty_throws_ArgumentException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Management.TriggerDispose();
 
             Action act = () => test.Dial("", 1000);
@@ -77,7 +77,7 @@ namespace ivrToolkit.Core.Tests
             var mock = GetMockedLineBase();
             mock.Setup(x => x.Dial(It.IsAny<string>(), It.IsAny<int>())).Returns(CallAnalysis.AnsweringMachine);
 
-            var test = new LineWrapper(new NullLoggerFactory(), 1, mock.Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, mock.Object);
             test.Dial("12223334444", 1000);
             test.Status.Should().Be(LineStatusTypes.Connected);
         }
@@ -88,7 +88,7 @@ namespace ivrToolkit.Core.Tests
             var mock = GetMockedLineBase();
             mock.Setup(x => x.Dial(It.IsAny<string>(), It.IsAny<int>())).Returns(CallAnalysis.Connected);
 
-            var test = new LineWrapper(new NullLoggerFactory(), 1, mock.Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, mock.Object);
             test.Dial("12223334444", 1000);
             test.Status.Should().Be(LineStatusTypes.Connected);
         }
@@ -99,7 +99,7 @@ namespace ivrToolkit.Core.Tests
             var mock = GetMockedLineBase();
             mock.Setup(x => x.Dial(It.IsAny<string>(), It.IsAny<int>())).Returns(CallAnalysis.Busy);
 
-            var test = new LineWrapper(new NullLoggerFactory(), 1, mock.Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, mock.Object);
             test.Dial("12223334444", 1000);
             test.Status.Should().Be(LineStatusTypes.OnHook);
         }
@@ -110,7 +110,7 @@ namespace ivrToolkit.Core.Tests
             var mock = GetMockedLineBase();
             mock.Setup(x => x.Dial(It.IsAny<string>(), It.IsAny<int>())).Returns(CallAnalysis.Stopped);
 
-            var test = new LineWrapper(new NullLoggerFactory(), 1, mock.Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, mock.Object);
 
             using (new AssertionScope())
             {
@@ -125,7 +125,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_CheckDispose_throws_DisposingException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Management.TriggerDispose();
 
             Action act = () => test.CheckDispose();
@@ -135,7 +135,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_CheckDispose_throws_DisposedException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Dispose();
 
             Action act = () => test.CheckDispose();
@@ -147,7 +147,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_WaitRings_throws_DisposingException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Management.TriggerDispose();
 
             Action act = () => test.WaitRings(1);
@@ -157,7 +157,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_WaitRings_throws_DisposedException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Dispose();
 
             Action act = () => test.WaitRings(1);
@@ -169,7 +169,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_Hangup_throws_DisposingException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Management.TriggerDispose();
 
             Action act = () => test.Hangup();
@@ -179,7 +179,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_Hangup_throws_DisposedException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Dispose();
 
             Action act = () => test.Hangup();
@@ -191,7 +191,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_TakeOffHook_throws_DisposingException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Management.TriggerDispose();
 
             Action act = () => test.TakeOffHook();
@@ -201,7 +201,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_TakeOffHook_throws_DisposedException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Dispose();
 
             Action act = () => test.TakeOffHook();
@@ -213,7 +213,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_PlayFile_throws_DisposingException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Management.TriggerDispose();
 
             Action act = () => test.PlayFile("");
@@ -223,7 +223,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_PlayFile_throws_DisposedException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Dispose();
 
             Action act = () => test.PlayFile("");
@@ -235,7 +235,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_RecordToFile_throws_DisposingException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Management.TriggerDispose();
 
             Action act = () => test.RecordToFile("");
@@ -245,7 +245,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_RecordToFile_throws_DisposedException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Dispose();
 
             Action act = () => test.RecordToFile("");
@@ -257,7 +257,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_GetDigits_throws_DisposingException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Management.TriggerDispose();
 
             Action act = () => test.GetDigits(1, "");
@@ -267,7 +267,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_GetDigits_throws_DisposedException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Dispose();
 
             Action act = () => test.GetDigits(1, "");
@@ -279,7 +279,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_FlushDigitBuffer_throws_DisposingException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Management.TriggerDispose();
 
             Action act = () => test.FlushDigitBuffer();
@@ -289,7 +289,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_FlushDigitBuffer_throws_DisposedException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Dispose();
 
             Action act = () => test.FlushDigitBuffer();
@@ -301,7 +301,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_Volume_throws_DisposingException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Management.TriggerDispose();
 
             Action act = () => test.Volume = 1;
@@ -311,7 +311,7 @@ namespace ivrToolkit.Core.Tests
         [Fact]
         public void LineWrapper_Volume_throws_DisposedException()
         {
-            var test = new LineWrapper(new NullLoggerFactory(), 1, GetMockedLineBase().Object);
+            var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
             test.Dispose();
 
             Action act = () => test.Volume = 1;

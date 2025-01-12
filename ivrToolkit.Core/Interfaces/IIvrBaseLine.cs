@@ -16,7 +16,7 @@ namespace ivrToolkit.Core.Interfaces
     /// This interface exposes the main methods used to control the selected plugin.
     /// It is meant to be used by the LineWrapper class only.
     /// </summary>
-    public interface IIvrBaseLine : IPromptShit, IDisposable
+    public interface IIvrBaseLine : IDisposable
     {
         /// <summary>
         /// Functionality for managing the line from another thread.

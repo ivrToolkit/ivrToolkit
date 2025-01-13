@@ -17,12 +17,7 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     /// Display the Sipsorcery log information in the log. Default is True.
     /// </summary>
     public bool SipTransportEnableTraceLogs => bool.Parse(GetProperty("debug.sipTransport.enableTraceLogs", "true"));
-
-    /// <summary>
-    /// Number of milliseconds between keypress before it considers it to be a prompt attempt. Default is '5000'.
-    /// </summary>
-    public int DigitsTimeoutInMilli => int.Parse(GetProperty("getDigits.timeoutInMilliseconds", "5000"));
-
+    
     /// <summary>
     /// The SIP port used for SIP signaling
     /// </summary>

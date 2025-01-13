@@ -33,6 +33,11 @@ public class VoiceProperties : Properties, IDisposable
     /// </summary>
     public int PromptBlankAttempts => int.Parse(GetProperty("prompt.blankAttempts", "5"));
 
+    /// <summary>
+    /// Number of milliseconds between keypress before it considers it to be a prompt attempt. Default is '5000'.
+    /// </summary>
+    public int DigitsTimeoutInMilli => int.Parse(GetProperty("getDigits.timeoutInMilliseconds", "5000"));
+    
     public new void Dispose()
     {
         _logger.LogDebug("Dispose()");

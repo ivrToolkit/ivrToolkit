@@ -45,27 +45,28 @@ public static class LineExtensions
     }
 
     /// <summary>
-    /// Plays a DateTime object given based on the mask parameter.
+    /// Plays a DateTime object given based on the mask parameter.<br/>
     /// </summary>
     /// <param name="line">The voice line object</param>
     /// <param name="dateTime">Can be just the date, just the time or both</param>
-    /// <param name="mask">Tells the voice plugin how to speak the datetime</param>
+    /// <param name="mask">Tells the voice plugin how to speak the datetime.</param>
     /// <remarks>
-    /// Mask Definition: (mask parts can be separated by the following characters: ':',' ' or '-'.
-    ///     <table>
-    ///         <tr><th>Mask Part</th><th>Description</th></tr>
-    ///         <tr><td>m, mm or mmm   </td><td>Speaks the month. Ex: December   </td></tr>
-    ///         <tr><td>d or dd   </td><td>Speaks the day of the month. ex: 3rd   </td></tr>
-    ///         <tr><td>ddd or dddd   </td><td>Speaks the day of the week. ex: Saturday   </td></tr>
-    ///         <tr><td>yyy or yyyy   </td><td>Speaks the year. speak years 2010 to 2099 with the word thousand   </td></tr>
-    ///         <tr><td>h or hh   </td><td>Speaks the hours. If you mask contains 'a/p' then it is 12 hour time else 24 hour time  </td></tr>
-    ///         <tr><td>n or nn   </td><td>Speaks the minutes   </td></tr>
-    ///         <tr><td>a/p   </td><td>Speaks either am or pm   </td></tr>
-    ///     </table>
-    ///     <example>
-    ///     line.playDate(myDateTime,"m-d-yyy h:m a/p");
-    ///     </example>
+    ///
+    /// Mask parts can be separated by the following characters: `:`, ` `, or `-`.<br/>
+    /// <br/>
+    /// <b>"m" "mm", or "mmm"</b>  - Speaks the month. Example: December<br/>
+    /// <b>"d" or "dd"</b>     - Speaks the day of the month. Example: 3rd<br/>
+    /// <b>"ddd" or "dddd"</b> - Speaks the day of the week. Example: Saturday<br/>
+    /// <b>"yyy" or "yyyy"</b> - Speaks the year. Speak years 2010 to 2099 with the word "thousand".<br/>
+    /// <b>"h" or "hh"</b>     - Speaks the hours. If your mask contains `a/p`, it is 12-hour time; otherwise, it is 24-hour time.<br/>
+    /// <b>"n" or "nn"</b>     - Speaks the minutes.<br/>
+    /// <b>"a/p"</b>           - Speaks either "am" or "pm".<br/>
     /// </remarks>
+    /// <example>
+    /// <code>
+    ///     line.PlayDate(myDateTime,"m-d-yyy h:m a/p");
+    /// </code>
+    /// </example>
     public static void PlayDate(this IIvrLine line, DateTime dateTime, string mask)
     {
         PlayDateInternalAsync(dateTime, mask,

@@ -4,9 +4,10 @@ using System.Threading.Tasks;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
+using ivrToolkit.Core.Util;
 using Microsoft.Extensions.Logging;
 
-namespace ivrToolkit.Core.Util;
+namespace ivrToolkit.Core.Prompt;
 
 public class PromptService : IPromptService
 {
@@ -22,35 +23,35 @@ public class PromptService : IPromptService
         _voiceProperties = voiceProperties.ThrowIfNull(nameof(voiceProperties));
     }
     
-    public string Prompt(string filename, PromptOptions promptOptions = null)
+    public string Prompt(string fileOrPhrase, PromptOptions promptOptions = null)
     {
         _options = new FullPromptOptions(_voiceProperties);
-        _options.Load(promptOptions, filename);
+        _options.Load(promptOptions, fileOrPhrase);
         
         return Ask(null);
     }
 
-    public string MultiTryPrompt(string filename, Func<string, bool> evaluator, MultiTryPromptOptions multiTryPromptOptions = null)
+    public string MultiTryPrompt(string fileOrPhrase, Func<string, bool> evaluator, MultiTryPromptOptions multiTryPromptOptions = null)
     {
         _options = new FullPromptOptions(_voiceProperties);
-        _options.Load(multiTryPromptOptions, filename);
+        _options.Load(multiTryPromptOptions, fileOrPhrase);
         
         return Ask(evaluator);
     }
 
-    public async Task<string> PromptAsync(string filename, CancellationToken cancellationToken, PromptOptions promptOptions = null)
+    public async Task<string> PromptAsync(string fileOrPhrase, CancellationToken cancellationToken, PromptOptions promptOptions = null)
     {
         _options = new FullPromptOptions(_voiceProperties);
-        _options.Load(promptOptions, filename);
+        _options.Load(promptOptions, fileOrPhrase);
 
         return await AskAsync(null, cancellationToken);
     }
 
-    public async Task<string> MultiTryPromptAsync(string filename, Func<string, bool> evaluator, CancellationToken cancellationToken,
+    public async Task<string> MultiTryPromptAsync(string fileOrPhrase, Func<string, bool> evaluator, CancellationToken cancellationToken,
         MultiTryPromptOptions multiTryPromptOptions = null)
     {
         _options = new FullPromptOptions(_voiceProperties);
-        _options.Load(multiTryPromptOptions, filename);
+        _options.Load(multiTryPromptOptions, fileOrPhrase);
         
         return await AskAsync(evaluator, cancellationToken);
     }
@@ -59,7 +60,7 @@ public class PromptService : IPromptService
     {
         _logger.LogDebug("Ask()");
         return AskInternalAsync(evaluator,
-            content => { _line.PlayFileOrPhrase(content); return Task.CompletedTask; },
+            fileOrPhrase => { _line.PlayFileOrPhrase(fileOrPhrase); return Task.CompletedTask; },
             (numberOfDigits, terminators) => { var result = _line.GetDigits(numberOfDigits, terminators); return Task.FromResult(result); }
         ).GetAwaiter().GetResult();
     }
@@ -68,7 +69,7 @@ public class PromptService : IPromptService
     {
         _logger.LogDebug("AskAsync()");
         return await AskInternalAsync(evaluator,
-            async content => await _line.PlayFileOrPhraseAsync(content, cancellationToken),
+            async fileOrPhrase => await _line.PlayFileOrPhraseAsync(fileOrPhrase, cancellationToken),
             async (numberOfDigits, terminators) => await _line.GetDigitsAsync(numberOfDigits, terminators, cancellationToken));
     }
 
@@ -182,11 +183,11 @@ public class PromptService : IPromptService
             BlankMaxAttempts = promptOptions.BlankMaxAttempts > 0 ? promptOptions.BlankMaxAttempts : _voiceProperties.PromptBlankAttempts;
         }
         
-        public void Load(PromptOptions promptOptions, string filename)
+        public void Load(PromptOptions promptOptions, string fileOrPhrase)
         {
             promptOptions ??= new PromptOptions();
             
-            PromptMessage = filename;
+            PromptMessage = fileOrPhrase;
             Terminators = string.IsNullOrWhiteSpace(promptOptions.Terminators) ? "#" : promptOptions.Terminators;
             MaxLength = promptOptions.MaxLength > 0 ? promptOptions.MaxLength : 30;
             AllowedDigits = string.IsNullOrWhiteSpace(promptOptions.AllowedDigits) ? "0123456789*#" : promptOptions.AllowedDigits;

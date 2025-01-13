@@ -9,7 +9,6 @@ using SIPSorceryMedia.Abstractions;
 using System.Text;
 using ivrToolkit.Core.Exceptions;
 using System.Diagnostics;
-
 namespace ivrToolkit.Plugin.SipSorcery;
 
 internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement

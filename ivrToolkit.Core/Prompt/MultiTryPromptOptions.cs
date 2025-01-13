@@ -1,4 +1,4 @@
-﻿namespace ivrToolkit.Core.Util;
+﻿namespace ivrToolkit.Core.Prompt;
 
 /// <summary>
 /// For setting up extra options when using line.MultiTryPrompt

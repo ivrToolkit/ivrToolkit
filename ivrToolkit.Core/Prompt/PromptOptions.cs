@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ivrToolkit.Core.Util;
+namespace ivrToolkit.Core.Prompt;
 
 /// <summary>
 /// For setting up extra options when using line.Prompt
@@ -32,7 +32,7 @@ public class PromptOptions
     public string SpecialTerminator { get; set; }
     
     /// <summary>
-    /// An action
+    /// The method to handle your special terminator digit.
     /// </summary>
     public Action OnSpecialTerminator { get; set; }
 

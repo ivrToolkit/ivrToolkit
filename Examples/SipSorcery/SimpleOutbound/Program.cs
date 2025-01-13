@@ -12,7 +12,9 @@ namespace SimpleOutbound;
 
 class Program
 {
+    private const string WAV_FILE_LOCATION = "Voice Files";
     private static ILogger<Program> _logger;
+    
     static async Task Main()
     {
         var loggerFactory = BuildLoggerFactory();
@@ -20,7 +22,6 @@ class Program
         Console.Write("Enter a phone number to call: ");
         var phoneNumber = Console.ReadLine();
         if (string.IsNullOrWhiteSpace(phoneNumber)) return;
-        
         
         
         var sipVoiceProperties = new SipVoiceProperties(loggerFactory, @"c:\repos\Config\SipSorcery\voice.properties");
@@ -38,17 +39,17 @@ class Program
             var callAnalysis = await line.DialAsync(phoneNumber, 3500, cancellationToken);
             if (callAnalysis == CallAnalysis.Connected)
             {
-                await line.PlayFileAsync(@"Voice Files\ThankYou.wav", cancellationToken);
+                await line.PlayFileAsync($"{WAV_FILE_LOCATION}/ThankYou.wav", cancellationToken);
                 
                 // single attempt prompt
-                var result = await line.PromptAsync(@"Voice Files\Press1234.wav", cancellationToken);
+                var result = await line.PromptAsync($"{WAV_FILE_LOCATION}/Press1234.wav", cancellationToken);
                 
-                await line.PlayFileAsync(@"Voice Files\YouPressed.wav", cancellationToken);
+                await line.PlayFileAsync($"{WAV_FILE_LOCATION}/YouPressed.wav", cancellationToken);
 
                 await line.PlayCharactersAsync(result, cancellationToken);
-
-                await line.PlayFileAsync(result == "1234" ? @"Voice Files\Correct.wav" : @"Voice Files\Incorrect.wav", cancellationToken);
-                await line.PlayFileAsync(@"Voice Files\goodbye.wav", cancellationToken);
+                
+                await line.PlayFileAsync(result == "1234" ? $"{WAV_FILE_LOCATION}/Correct.wav" : @"Voice Files\Incorrect.wav", cancellationToken);
+                await line.PlayFileAsync($"{WAV_FILE_LOCATION}/goodbye.wav", cancellationToken);
                 line.Hangup();
             }
 

@@ -5,6 +5,7 @@ using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
+using ivrToolkit.Core.Prompt;
 using Microsoft.Extensions.Logging;
 
 // ReSharper disable StringLiteralTypo

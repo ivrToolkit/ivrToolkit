@@ -39,25 +39,17 @@ namespace ivrToolkit.Core;
 ///       line.hangup();
 /// </code>
 /// </example>
-public class ScriptManager
+public class ScriptManager : IScriptManager
 {
     private IScript _nextScript;
     private readonly ILogger<ScriptManager> _logger;
 
-    /// <summary>
-    /// The next script block to be executed.
-    /// </summary>
     public IScript NextScript
     {
         get => _nextScript;
         set => _nextScript = value;
     }
 
-    /// <summary>
-    /// Initializes the script manager with the current voice line and a starting script.
-    /// </summary>
-    /// <param name="loggerFactory"></param>
-    /// <param name="startingScript">The first script</param>
     public ScriptManager(ILoggerFactory loggerFactory, IScript startingScript)
     {
         _logger = loggerFactory.CreateLogger<ScriptManager>();
@@ -65,19 +57,12 @@ public class ScriptManager
         NextScript = startingScript;
     }
 
-    /// <summary>
-    /// Executes the next script block.
-    /// </summary>
     public void Execute()
     {
         _logger.LogDebug("Execute()");
         _nextScript = _nextScript.Execute();
     }
         
-    /// <summary>
-    /// Checks to see if there is another script block to execute.
-    /// </summary>
-    /// <returns>Returns the next script block to execute or null if there are no more.</returns>
     public bool HasNext()
     {
         _logger.LogDebug("HasNext()");
@@ -93,7 +78,7 @@ public class ScriptManager
         }
     }
 
-    private async Task ExecuteAsync(CancellationToken cancellationToken)
+    public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         _logger.LogDebug("Execute()");
         _nextScript = await _nextScript.ExecuteAsync(cancellationToken);

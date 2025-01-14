@@ -3,8 +3,6 @@
 // 
 // This file is part of ivrToolkit, distributed under the Apache-2.0 license.
 // 
-
-using System;
 using System.Collections.Generic;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
@@ -16,7 +14,7 @@ namespace ivrToolkit.Core;
 /// <summary>
 /// The LineManager keeps track of the lines in use.
 /// </summary>
-public class LineManager : IDisposable
+public class LineManager : ILineManager
 {
     private readonly Dictionary<int, IIvrLine> _lines = new();
     private readonly object _lockObject = new();
@@ -32,12 +30,6 @@ public class LineManager : IDisposable
         _logger.LogDebug("ctr()");
     }
 
-    /// <summary>
-    /// Gets the line class that will do the line manipulation.
-    /// </summary>
-    /// 
-    /// <param name="lineNumber">The line number to connect to starting at 1</param>
-    /// <returns>A class that represents the phone line</returns>
     public IIvrLine GetLine(int lineNumber)
     {
         lineNumber.ThrowIfLessThanOrEqualTo(0, nameof(lineNumber));
@@ -51,7 +43,30 @@ public class LineManager : IDisposable
         }
     }
 
-    public VoiceProperties VoiceProperties => _ivrPlugin.VoiceProperties;
+    public IIvrLine GetLine()
+    {
+        _logger.LogDebug("{methodName}()", nameof(GetLine));
+        lock (_lockObject)
+        {
+            var lineNumber = NextAvailableLine();
+            var line = _ivrPlugin.GetLine(lineNumber);
+            _lines.Add(line.LineNumber, line);
+            return line;
+        }
+    }
+
+    // SipSorcery Doesn't use line numbers but the LineManager still works with them
+    private int NextAvailableLine()
+    {
+        var lineNumber = 1;
+        while (_lines.ContainsKey(lineNumber))
+        {
+            lineNumber++;
+        }
+        return lineNumber; // Return the first unused line number
+    }
+
+public VoiceProperties VoiceProperties => _ivrPlugin.VoiceProperties;
 
     /// <summary>
     /// Releases a voice line and removes it from the list of used lines.

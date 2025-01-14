@@ -34,7 +34,7 @@ class Program
         {
             lineManager = new LineManager(loggerFactory.CreateLogger<LineManager>(), sipPlugin);
             
-            var line = lineManager.GetLine(1);
+            var line = lineManager.GetLine();
 
             var callAnalysis = await line.DialAsync(phoneNumber, 3500, cancellationToken);
             if (callAnalysis == CallAnalysis.Connected)

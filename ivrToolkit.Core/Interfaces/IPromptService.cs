@@ -23,7 +23,7 @@ public interface IPromptService
     string Prompt(string fileOrPhrase, PromptOptions promptOptions = null);
     
     /// <summary>
-    /// Same as <see cref="Prompt"/> but repeats x number of time until evaluator is satisfied.
+    /// Same as <see cref="Prompt"/> bt repeats x number of time until evaluator is satisfied.
     /// </summary>
     /// <param name="fileOrPhrase">The name of the file or the phrase string to speak out</param>
     /// <param name="evaluator">Pass in a function that will validate the answer. Return true if it is correct or

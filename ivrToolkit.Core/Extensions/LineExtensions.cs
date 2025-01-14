@@ -316,7 +316,7 @@ public static class LineExtensions
         {
             if (c == ' ')
             {
-                Thread.Sleep(500);
+                await Task.Delay(500);
             }
             else if (c == '*')
             {

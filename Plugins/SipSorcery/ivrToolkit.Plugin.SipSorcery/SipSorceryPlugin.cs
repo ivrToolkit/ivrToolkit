@@ -1,5 +1,4 @@
-﻿using ivrToolkit.Core;
-using ivrToolkit.Core.Exceptions;
+﻿using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.Util;
@@ -10,11 +9,11 @@ namespace ivrToolkit.Plugin.SipSorcery;
 
 public class SipSorceryPlugin : IIvrPlugin
 {
+    private readonly ILogger<SipSorceryPlugin> _logger;
     private readonly ILoggerFactory _loggerFactory;
     private readonly SipVoiceProperties _voiceProperties;
-    private readonly ILogger<SipSorceryPlugin> _logger;
     private bool _disposed;
-    private SIPTransport _sipTransport;
+    private readonly SIPTransport _sipTransport;
 
     public SipSorceryPlugin(ILoggerFactory loggerFactory, SipVoiceProperties voiceProperties)
     {
@@ -28,10 +27,7 @@ public class SipSorceryPlugin : IIvrPlugin
         _logger.LogDebug("ctr()");
 
         var sipTransport = new SIPTransport();
-        if (voiceProperties.SipTransportEnableTraceLogs)
-        {
-            sipTransport.EnableTraceLogs();
-        }
+        if (voiceProperties.SipTransportEnableTraceLogs) sipTransport.EnableTraceLogs();
 
         _sipTransport = sipTransport;
     }
@@ -45,6 +41,7 @@ public class SipSorceryPlugin : IIvrPlugin
             _logger.LogWarning("Dispose() - Already Disposed");
             return;
         }
+
         _logger.LogDebug("Dispose()");
         _disposed = true;
         _sipTransport.Dispose();

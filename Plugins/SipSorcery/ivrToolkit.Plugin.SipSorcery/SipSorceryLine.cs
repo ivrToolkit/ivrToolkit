@@ -268,7 +268,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         }
         if (_digitPressed) return; // todo there is(should be) a way to stop digit presses during play.
         PlayFileAsync(filename).GetAwaiter().GetResult();
-        Task.Delay(200).Wait();
+        Task.Delay(300).Wait();
         if (!_userAgent.IsCallActive)
         {
             _logger.LogDebug("{}({}) (2)- _userAgent is inactive, throwing HangupException", nameof(PlayFile), filename);
@@ -290,7 +290,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         }
         if (_digitPressed) return; // todo there is(should be) a way to stop digit presses during play.
         await PlayFileAsync(filename);
-        await Task.Delay(200, cancellationToken);
+        await Task.Delay(300, cancellationToken);
         if (!_userAgent.IsCallActive)
         {
             _logger.LogDebug("{}({}) (2)- _userAgent is inactive, throwing HangupException", nameof(PlayFile), filename);

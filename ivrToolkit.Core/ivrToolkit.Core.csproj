@@ -15,15 +15,7 @@
 		<!-- Suppress warnings for missing XML comments -->
 		<NoWarn>$(NoWarn);1591</NoWarn>
 	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<PlatformTarget>x86</PlatformTarget>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<PlatformTarget>x86</PlatformTarget>
-	</PropertyGroup>
-
+	
 	<ItemGroup>
 		<None Remove="voice.properties" />
 	</ItemGroup>

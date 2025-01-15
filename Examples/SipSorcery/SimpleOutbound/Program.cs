@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using ivrToolkit.Core;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
-using ivrToolkit.Core.Extensions;
 using ivrToolkit.Plugin.SipSorcery;
 using Microsoft.Extensions.Logging;
 
@@ -23,51 +22,64 @@ class Program
         var phoneNumber = Console.ReadLine();
         if (string.IsNullOrWhiteSpace(phoneNumber)) return;
         
-        
-        var sipVoiceProperties = new SipVoiceProperties(loggerFactory, @"c:\repos\Config\SipSorcery\voice.properties");
-        var sipPlugin = new SipSorceryPlugin(loggerFactory, sipVoiceProperties);
-
         var cancellationToken = CancellationToken.None;
+        
+        // this is one way to set up your properties, with a property file
+        var propertiesFromFile = new SipVoiceProperties(loggerFactory, @"c:\repos\Config\SipSorcery\voice.properties");
 
-        LineManager lineManager = null;
+        var proxyIp = propertiesFromFile.SipProxyIp;
+        var user = propertiesFromFile.SipAlias;
+        var password = propertiesFromFile.SipPassword;
+        
+        // otherwise, you can just set up your properties this way
+        var sipVoiceProperties = new SipVoiceProperties(loggerFactory)
+        {
+            SipProxyIp = proxyIp,
+            SipAlias = user,
+            SipPassword = password
+        };
+        
+        // instantiate the plugin you want to use
+        using var sipPlugin = new SipSorceryPlugin(loggerFactory, sipVoiceProperties);
+        
+        // create a line manager
+        using var lineManager = new LineManager(loggerFactory, sipVoiceProperties, sipPlugin);
+        
+        // grab a line
+        var line = lineManager.GetLine();
+        
         try
         {
-            lineManager = new LineManager(loggerFactory.CreateLogger<LineManager>(), sipPlugin);
-            
-            var line = lineManager.GetLine();
-
+            // make a call out
             var callAnalysis = await line.DialAsync(phoneNumber, 3500, cancellationToken);
             if (callAnalysis == CallAnalysis.Connected)
             {
+                // play a wav file
                 await line.PlayFileAsync($"{WAV_FILE_LOCATION}/ThankYou.wav", cancellationToken);
-                
-                // single attempt prompt
+            
+                // play a wav file and wait for digits to be pressed
                 var result = await line.PromptAsync($"{WAV_FILE_LOCATION}/Press1234.wav", cancellationToken);
-                
+            
+                // play another wav file
                 await line.PlayFileAsync($"{WAV_FILE_LOCATION}/YouPressed.wav", cancellationToken);
 
+                // speak out each digit of the result
                 await line.PlayCharactersAsync(result, cancellationToken);
-                
+            
+                // say Correct or Incorrect
                 await line.PlayFileAsync(result == "1234" ? $"{WAV_FILE_LOCATION}/Correct.wav" : @"Voice Files\Incorrect.wav", cancellationToken);
+
+                // Say goodbye
                 await line.PlayFileAsync($"{WAV_FILE_LOCATION}/goodbye.wav", cancellationToken);
+
+                // finally hang up
                 line.Hangup();
             }
-
         }
-        catch (HangupException e)
+        catch (HangupException)
         {
-            _logger.LogError(e, e.Message);
+            _logger.LogDebug("The person that was called hung up");
         }
-        catch (Exception e)
-        {
-            _logger.LogError(e, e.Message);
-        }
-        finally
-        {
-            lineManager?.ReleaseAll();
-            lineManager?.Dispose();
-        }
-        
         
         Console.Write("Press any key to continue...: ");
         Console.ReadKey();

@@ -75,15 +75,14 @@ public class SipPlugin : IIvrPlugin
         HandleEvent(metaEvt);
     }
 
-    public IIvrLine GetLine(int lineNumber)
+    public IIvrBaseLine GetLine(int lineNumber)
     {
         _logger.LogDebug("GetLine({0})", lineNumber);
         lineNumber.ThrowIfLessThanOrEqualTo(0, nameof(lineNumber));
 
         if (_disposed) throw new DisposedException("You cannot get a line from a disposed plugin");
 
-        var line = new SipLine(_loggerFactory, _voiceProperties, lineNumber);
-        return new LineWrapper(_loggerFactory, _voiceProperties, lineNumber, line);
+        return new SipLine(_loggerFactory, _voiceProperties, lineNumber);
     }
 
     public void Dispose()

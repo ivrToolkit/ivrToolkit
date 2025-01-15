@@ -23,21 +23,39 @@ public class VoiceProperties : Properties, IDisposable
         _logger.LogDebug("ctr(ILoggerFactory, {0})", fileName);
     }
 
+    public VoiceProperties(ILoggerFactory loggerFactory) : base (loggerFactory)
+    {
+        _logger = loggerFactory.CreateLogger<VoiceProperties>();
+        _logger.LogDebug("ctr(ILoggerFactory)");
+    }
+
     /// <summary>
     /// Total number of attempts to try at a prompt before 'TooManyAttemptsException' is thrown. Default is '99'.
     /// </summary>
-    public int PromptAttempts => int.Parse(GetProperty("prompt.attempts", "99"));
+    public int PromptAttempts
+    {
+        get => int.Parse(GetProperty("prompt.attempts", "99"));
+        set => SetProperty("prompt.attempts", value.ToString());
+    }
 
     /// <summary>
     /// Number of blank entry attempts to try at a prompt before 'TooManyAttemptsException' is thrown. Default is '5'.
     /// </summary>
-    public int PromptBlankAttempts => int.Parse(GetProperty("prompt.blankAttempts", "5"));
+    public int PromptBlankAttempts
+    {
+        get => int.Parse(GetProperty("prompt.blankAttempts", "5"));
+        set => SetProperty("prompt.blankAttempts", value.ToString());
+    }
 
     /// <summary>
     /// Number of milliseconds between keypress before it considers it to be a prompt attempt. Default is '5000'.
     /// </summary>
-    public int DigitsTimeoutInMilli => int.Parse(GetProperty("getDigits.timeoutInMilliseconds", "5000"));
-    
+    public int DigitsTimeoutInMilli
+    {
+        get => int.Parse(GetProperty("getDigits.timeoutInMilliseconds", "5000"));
+        set => SetProperty("getDigits.timeoutInMilliseconds", value.ToString());
+    }
+
     public new void Dispose()
     {
         _logger.LogDebug("Dispose()");

@@ -16,17 +16,21 @@ namespace ivrToolkit.Core;
 /// </summary>
 public class LineManager : ILineManager
 {
+    private readonly VoiceProperties _voiceProperties;
     private readonly Dictionary<int, IIvrLine> _lines = new();
     private readonly object _lockObject = new();
 
     private readonly IIvrPlugin _ivrPlugin;
     private readonly ILogger<LineManager> _logger;
+    private readonly ILoggerFactory _loggerFactory;
 
-    public LineManager(ILogger<LineManager> logger, IIvrPlugin ivrPlugin)
+    public LineManager(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, IIvrPlugin ivrPlugin)
     {
-        _logger = logger.ThrowIfNull(nameof(logger));
+        _voiceProperties = voiceProperties.ThrowIfNull(nameof(voiceProperties));
+        _loggerFactory = loggerFactory.ThrowIfNull(nameof(loggerFactory));
         _ivrPlugin = ivrPlugin.ThrowIfNull(nameof(ivrPlugin));
 
+        _logger = loggerFactory.CreateLogger<LineManager>();
         _logger.LogDebug("ctr()");
     }
 
@@ -38,8 +42,9 @@ public class LineManager : ILineManager
         lock (_lockObject)
         {
             var line = _ivrPlugin.GetLine(lineNumber);
-            _lines.Add(line.LineNumber, line);
-            return line;
+            var wrappedLine = new LineWrapper(_loggerFactory, _voiceProperties, lineNumber, line);
+            _lines.Add(line.LineNumber, wrappedLine);
+            return wrappedLine;
         }
     }
 
@@ -50,8 +55,10 @@ public class LineManager : ILineManager
         {
             var lineNumber = NextAvailableLine();
             var line = _ivrPlugin.GetLine(lineNumber);
-            _lines.Add(line.LineNumber, line);
-            return line;
+
+            var wrappedLine = new LineWrapper(_loggerFactory, _voiceProperties, lineNumber, line);
+            _lines.Add(line.LineNumber, wrappedLine);
+            return wrappedLine;
         }
     }
 
@@ -114,6 +121,5 @@ public VoiceProperties VoiceProperties => _ivrPlugin.VoiceProperties;
     {
         ReleaseAll();
         _logger.LogDebug("Dispose()");
-        _ivrPlugin?.Dispose();
     }
 }

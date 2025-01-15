@@ -74,7 +74,7 @@ public class AnalogPlugin : IIvrPlugin
             
     }
 
-    public IIvrLine GetLine(int lineNumber)
+    public IIvrBaseLine GetLine(int lineNumber)
     {
         lock (_lockObject)
         {
@@ -94,8 +94,7 @@ public class AnalogPlugin : IIvrPlugin
         var deviceName = GetDeviceName(lineNumber);
 
         var handles = _voiceProperties.UseGc ? OpenDeviceWithGc(deviceName): OpenDeviceWithDx(deviceName);
-        var lineImpl = new AnalogLine(_loggerFactory, _voiceProperties, handles.Devh, handles.Voiceh, lineNumber);
-        return new LineWrapper(_loggerFactory, _voiceProperties, lineNumber, lineImpl);
+        return new AnalogLine(_loggerFactory, _voiceProperties, handles.Devh, handles.Voiceh, lineNumber);
     }
 
     public VoiceProperties VoiceProperties => _voiceProperties;

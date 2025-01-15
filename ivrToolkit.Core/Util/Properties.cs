@@ -51,6 +51,17 @@ public class Properties : IDisposable
     }
 
     /// <summary>
+    /// Loads the properties from the 
+    /// </summary>
+    /// <param name="loggerFactory">Used for debugging</param>
+    public Properties(ILoggerFactory loggerFactory)
+    {
+        _logger = loggerFactory.CreateLogger<Properties>();
+        _logger.LogDebug("ctr(ILoggerFactory)");
+    }
+
+
+    /// <summary>
     /// Gets the string value of a property. Case insensitive.
     /// </summary>
     /// <param name="key">The key name to search for</param>
@@ -92,6 +103,14 @@ public class Properties : IDisposable
         }
     }
 
+    public void SetProperty(string key, string def)
+    {
+        lock (this)
+        {
+            _stuff.Add(key.ToLower(),def);
+        }
+    }
+    
     /// <summary>
     /// Gets a list of property names that matches the prefix. Strips off the prefix from the property names
     /// </summary>
@@ -204,5 +223,4 @@ public class Properties : IDisposable
             }
         }
     }
-
 }

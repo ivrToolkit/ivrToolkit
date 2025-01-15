@@ -8,13 +8,14 @@
 using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Enums;
+using ivrToolkit.Core.Util;
 
 namespace ivrToolkit.Core.Interfaces;
 
 /// <summary>
 /// This interface exposes the main methods used to control the selected plugin.
 /// </summary>
-public interface IIvrLine : IIvrBaseLine, IPromptService
+public interface IIvrLine : IIvrBaseLine, IPromptMethods, IPlayMethods
 {
 
     /// <summary>

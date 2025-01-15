@@ -16,12 +16,12 @@ namespace ivrToolkit.Core;
 /// <summary>
 /// An implementation of the IScript interface that implements the line property to save you some time.
 /// </summary>
-public abstract class AbstractScript : IScript
+public abstract class BaseScript : IScript
 {
     private readonly ILoggerFactory _loggerFactory;
     private readonly VoiceProperties _voiceProperties;
 
-    protected AbstractScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, IIvrLine line)
+    protected BaseScript(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, IIvrLine line)
     {
         _loggerFactory = loggerFactory;
         _voiceProperties = voiceProperties;

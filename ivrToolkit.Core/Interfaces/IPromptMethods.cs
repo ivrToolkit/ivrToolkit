@@ -12,7 +12,7 @@ namespace ivrToolkit.Core.Interfaces;
 /// A prompt is a file/message to play followed by asking for digits.
 /// A multiTryPrompt is one that will repeat x number of times until you get what you expect.
 /// </summary>
-public interface IPromptService
+public interface IPromptMethods
 {
     /// <summary>
     /// Speaks a file/phrase to a person on the call and then expexts digits to be pressed.

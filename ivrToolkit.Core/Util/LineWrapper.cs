@@ -5,7 +5,6 @@ using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
-using ivrToolkit.Core.Prompt;
 using Microsoft.Extensions.Logging;
 
 // ReSharper disable StringLiteralTypo
@@ -16,7 +15,7 @@ namespace ivrToolkit.Core.Util;
 /// <summary>
 /// This wrapper handles common functionality in all plugin lines so that the implementation doesn't have to handle it.
 /// </summary>
-public class LineWrapper : IIvrLine, IIvrLineManagement
+internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 {
 
     private readonly int _lineNumber;
@@ -30,20 +29,18 @@ public class LineWrapper : IIvrLine, IIvrLineManagement
     private bool _disposeTriggerActivated;
     private int _volume;
     private bool _disposed;
-    private readonly PromptService _promptService;
+    private readonly VoiceProperties _voiceProperties;
 
 
-    public LineWrapper(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, int lineNumber, IIvrBaseLine lineImplementation)
+    internal LineWrapper(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, int lineNumber, IIvrBaseLine lineImplementation)
     {
         _lineNumber = lineNumber;
         _lineImplementation = lineImplementation.ThrowIfNull(nameof(lineImplementation));
         loggerFactory.ThrowIfNull(nameof(loggerFactory));
-        voiceProperties.ThrowIfNull(nameof(voiceProperties));
+        _voiceProperties = voiceProperties.ThrowIfNull(nameof(voiceProperties));
             
         _logger = loggerFactory.CreateLogger<LineWrapper>();
         _logger.LogDebug("ctr(ILoggerFactory, VoiceProperties, {0})", lineNumber);
-            
-        _promptService = new PromptService(loggerFactory.CreateLogger<PromptService>(), voiceProperties, this);
     }
 
     public IIvrLineManagement Management => this;
@@ -393,26 +390,5 @@ public class LineWrapper : IIvrLine, IIvrLineManagement
         }
         _logger.LogDebug("Reset() - Disposing and recreate the line from scratch");
         _lineImplementation.Reset();
-    }
-
-    public string Prompt(string filename, PromptOptions promptOptions = null)
-    {
-        return _promptService.Prompt(filename, promptOptions);
-    }
-
-    public string MultiTryPrompt(string filename, Func<string, bool> evaluator, MultiTryPromptOptions multiTryPromptOptions = null)
-    {
-        return _promptService.MultiTryPrompt(filename, evaluator, multiTryPromptOptions);
-    }
-
-    public Task<string> PromptAsync(string filename, CancellationToken cancellationToken, PromptOptions promptOptions = null)
-    {
-        return _promptService.PromptAsync(filename, cancellationToken, promptOptions);
-    }
-
-    public Task<string> MultiTryPromptAsync(string filename, Func<string, bool> evaluator, CancellationToken cancellationToken,
-        MultiTryPromptOptions multiTryPromptOptions = null)
-    {
-        return _promptService.MultiTryPromptAsync(filename, evaluator, cancellationToken, multiTryPromptOptions);
     }
 }

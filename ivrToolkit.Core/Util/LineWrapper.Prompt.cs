@@ -2,27 +2,15 @@
 using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Exceptions;
-using ivrToolkit.Core.Extensions;
-using ivrToolkit.Core.Interfaces;
-using ivrToolkit.Core.Util;
+using ivrToolkit.Core.Prompt;
 using Microsoft.Extensions.Logging;
 
-namespace ivrToolkit.Core.Prompt;
+namespace ivrToolkit.Core.Util;
 
-public class PromptService : IPromptService
+internal partial class LineWrapper
 {
-    private readonly IIvrLine _line;
-    private readonly ILogger<PromptService> _logger;
-    private VoiceProperties _voiceProperties;
     private FullPromptOptions _options;
 
-    public PromptService(ILogger<PromptService> logger, VoiceProperties voiceProperties, IIvrLine ivrLine)
-    {
-        _line = ivrLine.ThrowIfNull(nameof(ivrLine));
-        _logger = logger.ThrowIfNull(nameof(logger));
-        _voiceProperties = voiceProperties.ThrowIfNull(nameof(voiceProperties));
-    }
-    
     public string Prompt(string fileOrPhrase, PromptOptions promptOptions = null)
     {
         _options = new FullPromptOptions(_voiceProperties);
@@ -60,8 +48,8 @@ public class PromptService : IPromptService
     {
         _logger.LogDebug("Ask()");
         return AskInternalAsync(evaluator,
-            fileOrPhrase => { _line.PlayFileOrPhrase(fileOrPhrase); return Task.CompletedTask; },
-            (numberOfDigits, terminators) => { var result = _line.GetDigits(numberOfDigits, terminators); return Task.FromResult(result); }
+            fileOrPhrase => { PlayFileOrPhrase(fileOrPhrase); return Task.CompletedTask; },
+            (numberOfDigits, terminators) => { var result = GetDigits(numberOfDigits, terminators); return Task.FromResult(result); }
         ).GetAwaiter().GetResult();
     }
         
@@ -69,8 +57,8 @@ public class PromptService : IPromptService
     {
         _logger.LogDebug("AskAsync()");
         return await AskInternalAsync(evaluator,
-            async fileOrPhrase => await _line.PlayFileOrPhraseAsync(fileOrPhrase, cancellationToken),
-            async (numberOfDigits, terminators) => await _line.GetDigitsAsync(numberOfDigits, terminators, cancellationToken));
+            async fileOrPhrase => await PlayFileOrPhraseAsync(fileOrPhrase, cancellationToken),
+            async (numberOfDigits, terminators) => await GetDigitsAsync(numberOfDigits, terminators, cancellationToken));
     }
 
     private async Task<string> AskInternalAsync(
@@ -99,7 +87,7 @@ public class PromptService : IPromptService
                 await playFileOrPhrase(_options.PromptMessage);
                 answer = await getDigits(_options.MaxLength, myTerminators + "t");
 
-                if (_line.LastTerminator == "t")
+                if (LastTerminator == "t")
                 {
                     if (myTerminators.IndexOf("t", StringComparison.Ordinal) == -1)
                     {
@@ -112,7 +100,7 @@ public class PromptService : IPromptService
                     }
                 }
 
-                if (_options.SpecialTerminator != null && _line.LastTerminator == _options.SpecialTerminator)
+                if (_options.SpecialTerminator != null && LastTerminator == _options.SpecialTerminator)
                 {
                     if (_options.OnSpecialTerminator != null)
                     {

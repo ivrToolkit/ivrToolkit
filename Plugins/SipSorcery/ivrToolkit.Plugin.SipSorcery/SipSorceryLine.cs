@@ -23,6 +23,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     private bool _digitPressed;
     private readonly object _lockObject = new object();
     private readonly KeypressSemaphore _keypressSemaphore;
+    private bool _dialResourcesClosed;
 
     public SipSorceryLine(ILoggerFactory loggerFactory, SipVoiceProperties voiceProperties, int lineNumber, SIPTransport sipTransport)
     {
@@ -82,11 +83,24 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     {
         _logger.LogDebug("{name}", nameof(CloseDialResources));
 
-        _voipMediaSession?.Dispose();
-        _voipMediaSession = null;
-        //_userAgent.Hangup();
+        lock (_lockObject)
+        {
+            if (_dialResourcesClosed)
+            {
+                _logger.LogDebug("Dial resources are already closed.");
+                return;
+            }
+            _keypressSemaphore.Teardown();
+            
+            _dialResourcesClosed = true;
+        
+            _voipMediaSession?.Dispose();
+            _voipMediaSession = null;
 
-        _keypressSemaphore.Teardown();
+            if (_userAgent.IsCallActive) _userAgent.Hangup();
+        }
+
+        
     }
 
     public IIvrLineManagement Management => this;
@@ -99,18 +113,13 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 
     public CallAnalysis Dial(string number, int answeringMachineLengthInMilliseconds)
     {
-        // reset the line
-        _keypressSemaphore.Teardown();
-        _digitBuffer = "";
-        _digitPressed = false;
-        LastTerminator = "";
-
         return DialAsync(number, answeringMachineLengthInMilliseconds, CancellationToken.None).GetAwaiter().GetResult(); // blocking
     }
 
     public async Task<CallAnalysis> DialAsync(string number, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken)
     {
         // reset the line
+        _dialResourcesClosed = false;
         _keypressSemaphore.Teardown();
         _digitBuffer = "";
         _digitPressed = false;

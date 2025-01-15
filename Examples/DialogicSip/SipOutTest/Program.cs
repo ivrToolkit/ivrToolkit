@@ -35,7 +35,7 @@ class Program
         LineManager lineManager = null;
         try
         {
-            lineManager = new LineManager(loggerFactory.CreateLogger<LineManager>(), sipPlugin);
+            lineManager = new LineManager(loggerFactory, dialogicSipVoiceProperties, sipPlugin);
 
             while (true)
             {

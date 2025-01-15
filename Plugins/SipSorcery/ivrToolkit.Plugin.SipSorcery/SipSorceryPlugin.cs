@@ -42,7 +42,6 @@ public class SipSorceryPlugin : IIvrPlugin
         if (_disposed) throw new DisposedException("You cannot get a line from a disposed plugin");
 
         return new SipSorceryLine(_loggerFactory, _voiceProperties, lineNumber, _sipTransport);
-        //return new LineWrapper(_loggerFactory, _voiceProperties, lineNumber, line);
     }
     
     public void Dispose()

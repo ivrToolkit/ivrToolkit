@@ -8,6 +8,31 @@ public class DialogicSipVoiceProperties : DialogicVoiceProperties, IDisposable
 {
     private readonly ILogger _logger;
 
+    // Constants for property keys and defaults
+    private const string SIP_CHANNEL_OFFSET_KEY = "sip.channel_offset";
+    private const string SIP_CHANNEL_OFFSET_DEFAULT = "0";
+
+    private const string MAX_CALLS_KEY = "sip.max_calls";
+    private const string MAX_CALLS_DEFAULT = "1";
+
+    private const string SIP_SIGNALING_PORT_KEY = "sip.sip_signaling_port";
+    private const string SIP_SIGNALING_PORT_DEFAULT = "5060";
+
+    private const string SIP_PROXY_IP_KEY = "sip.proxy_ip";
+    private const string SIP_PROXY_IP_DEFAULT = "";
+
+    private const string SIP_ALIAS_KEY = "sip.alias";
+    private const string SIP_ALIAS_DEFAULT = "";
+
+    private const string SIP_PASSWORD_KEY = "sip.password";
+    private const string SIP_PASSWORD_DEFAULT = "";
+
+    private const string SIP_REALM_KEY = "sip.realm";
+    private const string SIP_REALM_DEFAULT = "";
+
+    private const string SIP_CONTACT_KEY = "sip.contact";
+    private const string SIP_CONTACT_DEFAULT = "{alias}@{proxy_ip}:{sip_signaling_port}";
+
     public DialogicSipVoiceProperties(ILoggerFactory loggerFactory, string fileName) : base(loggerFactory, fileName)
     {
         _logger = loggerFactory.CreateLogger<DialogicSipVoiceProperties>();
@@ -17,34 +42,38 @@ public class DialogicSipVoiceProperties : DialogicVoiceProperties, IDisposable
     /// <summary>
     /// Number to add the line in order to get the channel.
     /// </summary>
-    public uint SipChannelOffset => uint.Parse(GetProperty("sip.channel_offset", "0"));
+    public uint SipChannelOffset => uint.Parse(GetProperty(SIP_CHANNEL_OFFSET_KEY, SIP_CHANNEL_OFFSET_DEFAULT));
 
-    public ushort MaxCalls => ushort.Parse(GetProperty("sip.max_calls", "1"));
+    public ushort MaxCalls => ushort.Parse(GetProperty(MAX_CALLS_KEY, MAX_CALLS_DEFAULT));
 
     /// <summary>
     /// The SIP port used for SIP signaling
     /// </summary>
-    public ushort SipSignalingPort => ushort.Parse(GetProperty("sip.sip_signaling_port", "5060"));
+    public ushort SipSignalingPort => ushort.Parse(GetProperty(SIP_SIGNALING_PORT_KEY, SIP_SIGNALING_PORT_DEFAULT));
 
     /// <summary>
     /// The SIP proxy ip address.  This is the address of the PBX that will be used to connect to the SIP Trunk.
     /// </summary>
-    public string SipProxyIp => GetProperty("sip.proxy_ip", "");
+    public string SipProxyIp => GetProperty(SIP_PROXY_IP_KEY, SIP_PROXY_IP_DEFAULT);
 
     /// <summary>
     /// The SIP account on the PBX server. This is the account that will be used to make and receive calls for this ADS SIP instance.
     /// </summary>
-    public string SipAlias => GetProperty("sip.alias", "");
+    public string SipAlias => GetProperty(SIP_ALIAS_KEY, SIP_ALIAS_DEFAULT);
 
     /// <summary>
     /// The SIP password for the SipAlias on the PBX server. 
     /// </summary>
-    public string SipPassword => GetProperty("sip.password", "");
+    public string SipPassword => GetProperty(SIP_PASSWORD_KEY, SIP_PASSWORD_DEFAULT);
 
     /// <summary>
     /// The SIP realm for the SipAlias on the PBX server. 
     /// </summary>
-    public string SipRealm => GetProperty("sip.realm", "");
+    public string SipRealm
+    {
+        get => GetProperty(SIP_REALM_KEY, SIP_REALM_DEFAULT);
+        set => SetProperty(SIP_REALM_KEY, value);
+    }
 
     /// <summary>
     /// The SIP contact
@@ -53,7 +82,7 @@ public class DialogicSipVoiceProperties : DialogicVoiceProperties, IDisposable
     {
         get
         {
-            var result = GetProperty("sip.contact", "{alias}@{proxy_ip}:{sip_signaling_port}");
+            var result = GetProperty(SIP_CONTACT_KEY, SIP_CONTACT_DEFAULT);
             result = result.Replace("{alias}", SipAlias)
                 .Replace("{proxy_ip}", SipProxyIp)
                 .Replace("{sip_signaling_port}", SipSignalingPort.ToString());
@@ -66,5 +95,4 @@ public class DialogicSipVoiceProperties : DialogicVoiceProperties, IDisposable
         _logger.LogDebug("Dispose()");
         base.Dispose();
     }
-
 }

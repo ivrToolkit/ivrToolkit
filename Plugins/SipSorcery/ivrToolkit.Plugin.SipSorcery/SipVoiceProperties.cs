@@ -6,6 +6,23 @@ namespace ivrToolkit.Plugin.SipSorcery;
 public class SipVoiceProperties : VoiceProperties, IDisposable
 {
     private readonly ILogger _logger;
+
+    // Constants for property keys
+    private const string DEBUG_SIP_TRANSPORT_ENABLE_TRACE_LOGS_KEY = "debug.sipTransport.enableTraceLogs";
+    private const string DEBUG_SIP_TRANSPORT_ENABLE_TRACE_LOGS_DEFAULT = "true";
+
+    private const string SIP_SIGNALING_PORT_KEY = "sip.sip_signaling_port";
+    private const string SIP_SIGNALING_PORT_DEFAULT = "5060";
+
+    private const string SIP_PROXY_IP_KEY = "sip.proxy_ip";
+    private const string SIP_PROXY_IP_DEFAULT = "";
+
+    private const string SIP_ALIAS_KEY = "sip.alias";
+    private const string SIP_ALIAS_DEFAULT = "";
+
+    private const string SIP_PASSWORD_KEY = "sip.password";
+    private const string SIP_PASSWORD_DEFAULT = "";
+
     public SipVoiceProperties(ILoggerFactory loggerFactory, string fileName) : base(loggerFactory, fileName)
     {
         _logger = loggerFactory.CreateLogger<SipVoiceProperties>();
@@ -23,8 +40,8 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     /// </summary>
     public bool SipTransportEnableTraceLogs
     {
-        get => bool.Parse(GetProperty("debug.sipTransport.enableTraceLogs", "true"));
-        set => SetProperty("debug.sipTransport.enableTraceLogs", value.ToString());
+        get => bool.Parse(GetProperty(DEBUG_SIP_TRANSPORT_ENABLE_TRACE_LOGS_KEY, DEBUG_SIP_TRANSPORT_ENABLE_TRACE_LOGS_DEFAULT));
+        set => SetProperty(DEBUG_SIP_TRANSPORT_ENABLE_TRACE_LOGS_KEY, value.ToString());
     }
 
     /// <summary>
@@ -32,17 +49,17 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     /// </summary>
     public ushort SipSignalingPort
     {
-        get => ushort.Parse(GetProperty("sip.sip_signaling_port", "5060"));
-        set => SetProperty("sip.sip_signaling_port", value.ToString());
+        get => ushort.Parse(GetProperty(SIP_SIGNALING_PORT_KEY, SIP_SIGNALING_PORT_DEFAULT));
+        set => SetProperty(SIP_SIGNALING_PORT_KEY, value.ToString());
     }
 
     /// <summary>
-    /// The SIP proxy ip address.  This is the address of the PBX that will be used to connect to the SIP Trunk.
+    /// The SIP proxy IP address. This is the address of the PBX that will be used to connect to the SIP Trunk.
     /// </summary>
     public string SipProxyIp
     {
-        get => GetProperty("sip.proxy_ip", "");
-        set => SetProperty("sip.proxy_ip", value);
+        get => GetProperty(SIP_PROXY_IP_KEY, SIP_PROXY_IP_DEFAULT);
+        set => SetProperty(SIP_PROXY_IP_KEY, value);
     }
 
     /// <summary>
@@ -50,8 +67,8 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     /// </summary>
     public string SipAlias
     {
-        get => GetProperty("sip.alias", "");
-        set => SetProperty("sip.alias", value);
+        get => GetProperty(SIP_ALIAS_KEY, SIP_ALIAS_DEFAULT);
+        set => SetProperty(SIP_ALIAS_KEY, value);
     }
 
     /// <summary>
@@ -59,8 +76,8 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     /// </summary>
     public string SipPassword
     {
-        get => GetProperty("sip.password", "");
-        set => SetProperty("sip.password", value);
+        get => GetProperty(SIP_PASSWORD_KEY, SIP_PASSWORD_DEFAULT);
+        set => SetProperty(SIP_PASSWORD_KEY, value);
     }
 
     public new void Dispose()

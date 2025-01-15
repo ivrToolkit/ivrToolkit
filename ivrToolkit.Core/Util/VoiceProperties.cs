@@ -4,7 +4,6 @@
 // This file is part of ivrToolkit, distributed under the Apache-2.0 license.
 // 
 // 
-
 using System;
 using Microsoft.Extensions.Logging;
 
@@ -17,7 +16,15 @@ public class VoiceProperties : Properties, IDisposable
 {
     private readonly ILogger<VoiceProperties> _logger;
 
-    public VoiceProperties(ILoggerFactory loggerFactory, string fileName) : base (loggerFactory, fileName)
+    private const string PROMPT_ATTEMPTS_KEY = "prompt.attempts";
+    private const string PROMPT_BLANK_ATTEMPTS_KEY = "prompt.blankAttempts";
+    private const string DIGITS_TIMEOUT_KEY = "getDigits.timeoutInMilliseconds";
+
+    private const string DEFAULT_PROMPT_ATTEMPTS = "99";
+    private const string DEFAULT_PROMPT_BLANK_ATTEMPTS = "5";
+    private const string DEFAULT_DIGITS_TIMEOUT = "5000";
+
+    protected VoiceProperties(ILoggerFactory loggerFactory, string fileName) : base (loggerFactory, fileName)
     {
         _logger = loggerFactory.CreateLogger<VoiceProperties>();
         _logger.LogDebug("ctr(ILoggerFactory, {0})", fileName);
@@ -34,8 +41,8 @@ public class VoiceProperties : Properties, IDisposable
     /// </summary>
     public int PromptAttempts
     {
-        get => int.Parse(GetProperty("prompt.attempts", "99"));
-        set => SetProperty("prompt.attempts", value.ToString());
+        get => int.Parse(GetProperty(PROMPT_ATTEMPTS_KEY, DEFAULT_PROMPT_ATTEMPTS));
+        set => SetProperty(PROMPT_ATTEMPTS_KEY, value.ToString());
     }
 
     /// <summary>
@@ -43,8 +50,8 @@ public class VoiceProperties : Properties, IDisposable
     /// </summary>
     public int PromptBlankAttempts
     {
-        get => int.Parse(GetProperty("prompt.blankAttempts", "5"));
-        set => SetProperty("prompt.blankAttempts", value.ToString());
+        get => int.Parse(GetProperty(PROMPT_BLANK_ATTEMPTS_KEY, DEFAULT_PROMPT_BLANK_ATTEMPTS));
+        set => SetProperty(PROMPT_BLANK_ATTEMPTS_KEY, value.ToString());
     }
 
     /// <summary>
@@ -52,8 +59,8 @@ public class VoiceProperties : Properties, IDisposable
     /// </summary>
     public int DigitsTimeoutInMilli
     {
-        get => int.Parse(GetProperty("getDigits.timeoutInMilliseconds", "5000"));
-        set => SetProperty("getDigits.timeoutInMilliseconds", value.ToString());
+        get => int.Parse(GetProperty(DIGITS_TIMEOUT_KEY, DEFAULT_DIGITS_TIMEOUT));
+        set => SetProperty(DIGITS_TIMEOUT_KEY, value.ToString());
     }
 
     public new void Dispose()

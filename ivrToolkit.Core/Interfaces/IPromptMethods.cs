@@ -23,16 +23,6 @@ public interface IPromptMethods
     string Prompt(string fileOrPhrase, PromptOptions promptOptions = null);
     
     /// <summary>
-    /// Same as <see cref="Prompt"/> bt repeats x number of time until evaluator is satisfied.
-    /// </summary>
-    /// <param name="fileOrPhrase">The name of the file or the phrase string to speak out</param>
-    /// <param name="evaluator">Pass in a function that will validate the answer. Return true if it is correct or
-    /// false if incorrect.</param>
-    /// <param name="multiTryPromptOptions">Defines prompt options to override the default ones. See <see cref="MultiTryPromptOptions"/></param>
-    /// <returns>The answer to the prompt</returns>
-    string MultiTryPrompt(string fileOrPhrase, Func<string, bool> evaluator, MultiTryPromptOptions multiTryPromptOptions = null);
-
-    /// <summary>
     /// A asynchronous version of <see cref="Prompt"/>
     /// </summary>
     /// <param name="fileOrPhrase">The name of the file or the phrase string to speak out</param>
@@ -42,7 +32,17 @@ public interface IPromptMethods
     /// <returns>The answer to the prompt</returns>
     Task<string> PromptAsync(string fileOrPhrase, CancellationToken cancellationToken,
         PromptOptions promptOptions = null);
-
+    
+    /// <summary>
+    /// Same as <see cref="Prompt"/> bt repeats x number of time until evaluator is satisfied.
+    /// </summary>
+    /// <param name="fileOrPhrase">The name of the file or the phrase string to speak out</param>
+    /// <param name="evaluator">Pass in a function that will validate the answer. Return true if it is correct or
+    /// false if incorrect.</param>
+    /// <param name="multiTryPromptOptions">Defines prompt options to override the default ones. See <see cref="MultiTryPromptOptions"/></param>
+    /// <returns>The answer to the prompt</returns>
+    string MultiTryPrompt(string fileOrPhrase, Func<string, bool> evaluator, MultiTryPromptOptions multiTryPromptOptions = null);
+    
     /// <summary>
     /// Same as <see cref="PromptAsync"/> but repeats x number of time until evaluator is satisfied.
     /// </summary>
@@ -50,9 +50,19 @@ public interface IPromptMethods
     /// <param name="evaluator">Pass in a function that will validate the answer. Return true if it is correct or
     /// false if incorrect.</param>
     /// <param name="cancellationToken">Allows method to cancel itself gracefully</param>
+    /// <returns>The answer to the prompt</returns>
+    Task<string> MultiTryPromptAsync(string fileOrPhrase, Func<string, bool> evaluator, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Same as <see cref="PromptAsync"/> but repeats x number of time until evaluator is satisfied.
+    /// </summary>
+    /// <param name="fileOrPhrase">The name of the file or the phrase string to speak out</param>
+    /// <param name="evaluator">Pass in a function that will validate the answer. Return true if it is correct or
+    /// false if incorrect.</param>
     /// <param name="multiTryPromptOptions">Defines prompt options to override the default ones.
     /// Leave as null to keep the default options. See <see cref="MultiTryPromptOptions"/></param>
+    /// <param name="cancellationToken">Allows method to cancel itself gracefully</param>
     /// <returns>The answer to the prompt</returns>
-    Task<string> MultiTryPromptAsync(string fileOrPhrase, Func<string, bool> evaluator, CancellationToken cancellationToken,
-        MultiTryPromptOptions multiTryPromptOptions = null);
+    Task<string> MultiTryPromptAsync(string fileOrPhrase, Func<string, bool> evaluator, MultiTryPromptOptions multiTryPromptOptions,
+        CancellationToken cancellationToken);
 }

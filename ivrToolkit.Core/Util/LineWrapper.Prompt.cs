@@ -27,6 +27,7 @@ internal partial class LineWrapper
         return Ask(evaluator);
     }
 
+
     public async Task<string> PromptAsync(string fileOrPhrase, CancellationToken cancellationToken, PromptOptions promptOptions = null)
     {
         _options = new FullPromptOptions(_voiceProperties);
@@ -35,8 +36,14 @@ internal partial class LineWrapper
         return await AskAsync(null, cancellationToken);
     }
 
-    public async Task<string> MultiTryPromptAsync(string fileOrPhrase, Func<string, bool> evaluator, CancellationToken cancellationToken,
-        MultiTryPromptOptions multiTryPromptOptions = null)
+
+    public Task<string> MultiTryPromptAsync(string fileOrPhrase, Func<string, bool> evaluator, CancellationToken cancellationToken)
+    {
+        return MultiTryPromptAsync(fileOrPhrase, evaluator, null, cancellationToken);
+    }
+
+    public async Task<string> MultiTryPromptAsync(string fileOrPhrase, Func<string, bool> evaluator, MultiTryPromptOptions multiTryPromptOptions,
+        CancellationToken cancellationToken)
     {
         _options = new FullPromptOptions(_voiceProperties);
         _options.Load(multiTryPromptOptions, fileOrPhrase);

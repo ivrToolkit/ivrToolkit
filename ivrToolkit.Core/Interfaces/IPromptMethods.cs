@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using ivrToolkit.Core.Prompt;
 using ivrToolkit.Core.Util;
 
 namespace ivrToolkit.Core.Interfaces;

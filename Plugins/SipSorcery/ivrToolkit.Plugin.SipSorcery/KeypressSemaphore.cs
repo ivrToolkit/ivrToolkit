@@ -7,7 +7,7 @@ public class KeypressSemaphore
 {
     private readonly ILogger<KeypressSemaphore> _logger;
     private SemaphoreSlim? _semaphoreSlim;
-    private CancellationTokenSource _cts;
+    private CancellationTokenSource _cts = null!;
     private int? _maxDigits;
     private string? _terminators;
 
@@ -15,12 +15,12 @@ public class KeypressSemaphore
     {
         loggerFactory.ThrowIfNull(nameof(loggerFactory));
         _logger = loggerFactory.CreateLogger<KeypressSemaphore>();
-        _logger.LogDebug("{name}()", nameof(KeypressSemaphore));
+        _logger.LogDebug("{method}()", nameof(KeypressSemaphore));
     }
 
     public void ReleaseMaybe(string buffer)
     {
-        _logger.LogDebug("{name}({buffer}) - semaphoreSlim setup = {setup}", nameof(ReleaseMaybe), buffer, _semaphoreSlim != null);
+        _logger.LogDebug("{method}({buffer}) - semaphoreSlim setup = {setup}", nameof(ReleaseMaybe), buffer, _semaphoreSlim != null);
         if (_semaphoreSlim == null || _terminators == null) return;
 
         var count = 0;
@@ -30,18 +30,18 @@ public class KeypressSemaphore
             count++;
             if (count == _maxDigits || _terminators.Contains(c))
             {
-                _logger.LogDebug("{name}({buffer}) - wakey wakey!", nameof(ReleaseMaybe), buffer);
+                _logger.LogDebug("{method}({buffer}) - wakey wakey!", nameof(ReleaseMaybe), buffer);
                 _semaphoreSlim.Release();
                 return;
             }
         }
         // did not find a terminator and did not hit the number of digits required
-        _logger.LogDebug("{name}({buffer}) - did not find a terminator and did not hit the number of digits required", nameof(ReleaseMaybe), buffer);
+        _logger.LogDebug("{method}({buffer}) - did not find a terminator and did not hit the number of digits required", nameof(ReleaseMaybe), buffer);
     }
 
     public bool Wait(int milliseconds)
     {
-        _logger.LogDebug("{name}({buffer})", nameof(Wait), milliseconds);
+        _logger.LogDebug("{method}({buffer})", nameof(Wait), milliseconds);
         try
         {
             _semaphoreSlim?.Wait(milliseconds, _cts.Token);
@@ -55,7 +55,7 @@ public class KeypressSemaphore
         
     public async Task<bool> WaitAsync(int milliseconds, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("{name}({buffer})", nameof(Wait), milliseconds);
+        _logger.LogDebug("{method}({buffer})", nameof(Wait), milliseconds);
         try
         {
             if (_semaphoreSlim != null)
@@ -72,7 +72,7 @@ public class KeypressSemaphore
 
     public void Setup(int maxDigits, string terminators)
     {
-        _logger.LogDebug("{name}({max}, {terminators})", nameof(Setup), maxDigits, terminators);
+        _logger.LogDebug("{method}({max}, {terminators})", nameof(Setup), maxDigits, terminators);
         _semaphoreSlim?.Dispose();
         _semaphoreSlim = new SemaphoreSlim(0, 1);
         _cts = new CancellationTokenSource();
@@ -82,7 +82,7 @@ public class KeypressSemaphore
 
     public void Teardown()
     {
-        _logger.LogDebug("{name}()", nameof(Teardown));
+        _logger.LogDebug("{method}()", nameof(Teardown));
         _cts?.Cancel(); // signal the cancellation
         _semaphoreSlim?.Dispose();
         _semaphoreSlim = null;

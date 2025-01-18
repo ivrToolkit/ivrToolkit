@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Core.Util;
 
@@ -16,6 +17,7 @@ internal partial class LineWrapper
     private const string ROOT = "System Recordings\\";
 
     private bool Is24Hour(string mask) {
+        _logger.LogDebug("{method}({mask})", nameof(Is24Hour), mask);
         var parts = mask.Split(new[] { ' ',':', '-' });
         return parts.All(part => part != "a/p");
     }
@@ -26,6 +28,7 @@ internal partial class LineWrapper
     /// <param name="phoneNumber">The phone number must be 7, 10 or 11 characters long with no spaces or dashes. Just numbers.</param>
     public void PlayPhoneNumber(string phoneNumber)
     {
+        _logger.LogDebug("{method}({phoneNumber})", phoneNumber, nameof(PlayPhoneNumber));
         phoneNumber = phoneNumber.PadLeft(11);
         phoneNumber = phoneNumber.Substring(0, 1) + " " + phoneNumber.Substring(1, 3) + " " + 
                       phoneNumber.Substring(4, 3) + " " + phoneNumber.Substring(7, 4);
@@ -56,6 +59,7 @@ internal partial class LineWrapper
     /// </example>
     public void PlayDate(DateTime dateTime, string mask)
     {
+        _logger.LogDebug("{method}({dateTime}, {mask})", nameof(PlayDate), dateTime, mask);
         PlayDateInternalAsync(dateTime, mask,
             file => { PlayF(file); return Task.CompletedTask; },
             year => { SpeakYearThousands(year); return Task.CompletedTask; },
@@ -65,6 +69,7 @@ internal partial class LineWrapper
         
     public async Task PlayDateAsync(DateTime dateTime, string mask, CancellationToken cancellationToken)
     {
+        _logger.LogDebug("{method}({dateTime}, {mask})", nameof(PlayDateAsync), dateTime, mask);
         await PlayDateInternalAsync(dateTime, mask,
             async file => await PlayFAsync(file, cancellationToken),
             async year => await SpeakYearThousandsAsync(year, cancellationToken),
@@ -76,6 +81,7 @@ internal partial class LineWrapper
         Func<string, Task> speakYearThousands,
         Func<long, Task> playInteger)
     {
+        _logger.LogDebug("{method}({dateTime}, {mask})", nameof(PlayDateInternalAsync), dateTime, mask);
         mask = mask.ToLower();
         var parts = mask.Split(' ', ':', '-');
         foreach (var part in parts)
@@ -172,6 +178,7 @@ internal partial class LineWrapper
     ///
     private void SpeakYearThousands(string year)
     {
+        _logger.LogDebug("{method}({year})", nameof(SpeakYearThousands), year);
         SpeakYearThousandsInternalAsync(year,
             file => { PlayF(file); return Task.CompletedTask; },
             lng => { PlayInteger(lng); return Task.CompletedTask; }).GetAwaiter().GetResult();
@@ -179,6 +186,7 @@ internal partial class LineWrapper
 
     private async Task SpeakYearThousandsAsync(string year, CancellationToken cancellationToken)
     {
+        _logger.LogDebug("{method}({year})", nameof(SpeakYearThousandsAsync), year);
         await SpeakYearThousandsInternalAsync(year,
             async file => await PlayFAsync(file, cancellationToken),
             async lng => await PlayIntegerAsync(lng, cancellationToken));
@@ -188,6 +196,7 @@ internal partial class LineWrapper
         Func<string, Task> playF,
         Func<long, Task> playInteger)
     {
+        _logger.LogDebug("{method}({year})", nameof(SpeakYearThousandsInternalAsync), year);
         var y1 = year.Substring(0, 2);
         var y2 = year.Substring(2, 2);
         var y1Int = int.Parse(y1);
@@ -229,6 +238,7 @@ internal partial class LineWrapper
     /// <param name="number">The number you want to speak</param>
     public void PlayMoney(double number)
     {
+        _logger.LogDebug("{method}({number})", nameof(PlayMoney), number);
         PlayMoneyInternalAsync(number,
             i =>
             {
@@ -244,6 +254,7 @@ internal partial class LineWrapper
     
     public async Task PlayMoneyAsync(double number, CancellationToken cancellationToken)
     {
+        _logger.LogDebug("{method}({number})", nameof(PlayMoneyAsync), number);
         await PlayMoneyInternalAsync(number,
             async i => await PlayIntegerAsync(i, cancellationToken),
             async file => await PlayFAsync(file, cancellationToken));
@@ -253,6 +264,7 @@ internal partial class LineWrapper
         Func<long, Task> playInteger,
         Func<string, Task> playF)
     {
+        _logger.LogDebug("{method}({number})", nameof(PlayMoneyInternalAsync), number);
         var n = number.ToString("F"); // two decimal places
         var index = n.IndexOf(".", StringComparison.Ordinal);
         string w;
@@ -284,12 +296,14 @@ internal partial class LineWrapper
     /// <param name="characters">0-9, a-z, # and *</param>
     public void PlayCharacters(string characters)
     {
+        _logger.LogDebug("{method}({characters})", nameof(PlayCharacters), characters);
         PlayCharactersInternalAsync(characters,
             chars => { PlayF(chars); return Task.CompletedTask; }
         ).GetAwaiter().GetResult();
     }
     public async Task PlayCharactersAsync(string characters, CancellationToken cancellationToken)
     {
+        _logger.LogDebug("{method}({characters})", nameof(PlayCharactersAsync), characters);
         await PlayCharactersInternalAsync(characters,
             async chars => await PlayFAsync(chars, cancellationToken));
     }
@@ -297,6 +311,7 @@ internal partial class LineWrapper
     private async Task PlayCharactersInternalAsync(string characters, 
         Func<string, Task> playF)
     {
+        _logger.LogDebug("{method}({characters})", nameof(PlayCharactersInternalAsync), characters);
         var chars = characters.ToCharArray();
         foreach (var c in chars)
         {
@@ -325,6 +340,7 @@ internal partial class LineWrapper
     /// <param name="number">The number to speak out</param>
     public void PlayNumber(double number)
     {
+        _logger.LogDebug("{method}({number})", nameof(PlayNumber), number);
         PlayNumberInternalAsync(number,
             n => { PlayInteger(n); return Task.CompletedTask; },
             file => { PlayF(file); return Task.CompletedTask; }
@@ -333,6 +349,7 @@ internal partial class LineWrapper
 
     public async Task PlayNumberAsync(double number, CancellationToken cancellationToken)
     {
+        _logger.LogDebug("{method}({number})", nameof(PlayNumberAsync), number);
         await PlayNumberInternalAsync(number,
             async n => await PlayIntegerAsync(n, cancellationToken),
             async file => await PlayFAsync(file, cancellationToken));
@@ -342,6 +359,7 @@ internal partial class LineWrapper
         Func<long, Task> playInteger,
         Func<string, Task> playF)
     {
+        _logger.LogDebug("{method}({number})", nameof(PlayNumberInternalAsync), number);
         var n =number.ToString("G");
         var index = n.IndexOf(".", StringComparison.Ordinal);
         string w;
@@ -373,6 +391,7 @@ internal partial class LineWrapper
     /// <param name="number">The integer to speak out.</param>
     public void PlayInteger(long number)
     {
+        _logger.LogDebug("{method}({number})", nameof(PlayInteger), number);
         PlayIntegerInternalAsync(number,
             filename =>
             {
@@ -388,6 +407,7 @@ internal partial class LineWrapper
 
     public async Task PlayIntegerAsync(long number, CancellationToken cancellationToken)
     {
+        _logger.LogDebug("{method}({number})", nameof(PlayIntegerAsync), number);
         await PlayIntegerInternalAsync(number,
             async filename => await PlayFAsync(filename, cancellationToken),
             async n => await SpeakUpTo999Async(n, cancellationToken));
@@ -397,6 +417,7 @@ internal partial class LineWrapper
         Func<string, Task> playF,
         Func<long, Task> speakUpTo999)
     {
+        _logger.LogDebug("{method}({number})", nameof(PlayIntegerInternalAsync), number);
         if (number < 0)
         {
             await playF("negative");
@@ -446,11 +467,13 @@ internal partial class LineWrapper
     /// <param name="number">A number between 1 and 31</param>
     public void PlayOrdinal(int number)
     {
+        _logger.LogDebug("{method}({number})", nameof(PlayOrdinal), number);
         PlayF("ord" + number);
     }
         
     public async Task PlayOrdinalAsync(int number, CancellationToken cancellationToken)
     {
+        _logger.LogDebug("{method}({number})", nameof(PlayOrdinalAsync), number);
         await PlayFAsync("ord" + number, cancellationToken);
     }
 
@@ -472,6 +495,7 @@ internal partial class LineWrapper
     /// <param name="str">The string to interpret in the format of 'data|code,data|code,data|code'...</param>
     public void PlayString(string str)
     {
+        _logger.LogDebug("{method}({str})", nameof(PlayString), str);
         PlayStringInternalAsync(
             str,
             characters => { PlayCharacters(characters); return Task.CompletedTask; },
@@ -484,6 +508,7 @@ internal partial class LineWrapper
         
     public async Task PlayStringAsync(string str, CancellationToken cancellationToken)
     {
+        _logger.LogDebug("{method}({str})", nameof(PlayStringAsync), str);
         await PlayStringInternalAsync(
             str,
             async characters => await PlayCharactersAsync(characters, cancellationToken),
@@ -502,6 +527,7 @@ internal partial class LineWrapper
         Func<int, Task> playOrdinal,
         Func<DateTime, string, Task> playDate)
     {
+        _logger.LogDebug("{method}({str})", nameof(PlayStringInternalAsync), str);
         var parts = str.Split(new[]{','});
         foreach (var part in parts)
         {
@@ -545,6 +571,7 @@ internal partial class LineWrapper
 
     private void SpeakUpTo999(long number)
     {
+        _logger.LogDebug("{method}({number})", nameof(SpeakUpTo999), number);
         SpeakUpTo999InternalAsync(number,
             n =>
             {
@@ -554,6 +581,7 @@ internal partial class LineWrapper
     }
     private async Task SpeakUpTo999Async(long number, CancellationToken cancellationToken)
     {
+        _logger.LogDebug("{method}({number})", nameof(SpeakUpTo999Async), number);
         await SpeakUpTo999InternalAsync(number,
             async n => await PlayFAsync(n, cancellationToken));
     }
@@ -561,6 +589,7 @@ internal partial class LineWrapper
     private async Task SpeakUpTo999InternalAsync(long number,
         Func<string, Task> playF)
     {
+        _logger.LogDebug("{method}({number})", nameof(SpeakUpTo999InternalAsync), number);
         const long hundred = 100;
         var hundreds = number / hundred;
         var rest = number % 100;
@@ -584,16 +613,19 @@ internal partial class LineWrapper
 
     private void PlayF(string filename)
     {
+        _logger.LogDebug("{method}({fileName})", nameof(PlayF), filename);
         PlayFile(ROOT + filename + ".wav");
     }
         
     private async Task PlayFAsync(string filename, CancellationToken cancellationToken)
     {
+        _logger.LogDebug("{method}({fileName})", nameof(PlayFAsync), filename);
         await PlayFileAsync(ROOT + filename + ".wav", cancellationToken);
     }
     
     public void PlayFileOrPhrase(string fileNameOrPhrase)
     {
+        _logger.LogDebug("{method}({fileNameOrPhrase})", nameof(PlayFileOrPhrase), fileNameOrPhrase);
         if (fileNameOrPhrase.IndexOf("|", StringComparison.Ordinal) != -1)
         {
             PlayString(fileNameOrPhrase);
@@ -606,6 +638,7 @@ internal partial class LineWrapper
         
     public async Task PlayFileOrPhraseAsync(string fileNameOrPhrase, CancellationToken cancellationToken)
     {
+        _logger.LogDebug("{method}({fileNameOrPhrase})", nameof(PlayFileOrPhraseAsync), fileNameOrPhrase);
         if (fileNameOrPhrase.IndexOf("|", StringComparison.Ordinal) != -1)
         {
             await PlayStringAsync(fileNameOrPhrase, cancellationToken);

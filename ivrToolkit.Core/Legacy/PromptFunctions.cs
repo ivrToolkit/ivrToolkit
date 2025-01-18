@@ -46,7 +46,7 @@ public class PromptFunctions : IPromptFunctions
     /// </summary>
     public virtual Prompt GetRegularStylePrompt()
     {
-        _logger.LogDebug("GetRegularStylePrompt()");
+        _logger.LogDebug("{method}()", nameof(GetRegularStylePrompt));
         const int dgMaxdigs = 31;
         var p = new Prompt(_loggerFactory, _voiceProperties, _line) {NumberOfDigits = dgMaxdigs, Terminators = "#", Attempts = GetAttempts(), BlankAttempts = GetBlankAttempts()};
         return p;
@@ -59,7 +59,7 @@ public class PromptFunctions : IPromptFunctions
     /// <returns></returns>
     public virtual Prompt GetMenuStylePrompt()
     {
-        _logger.LogDebug("GetMenuStylePrompt()");
+        _logger.LogDebug("{method}()", nameof(GetMenuStylePrompt));
         var p = new Prompt(_loggerFactory, _voiceProperties, _line) { NumberOfDigits = 1, Terminators = "", Attempts = GetAttempts(), BlankAttempts = GetBlankAttempts() };
         return p;
     }
@@ -70,7 +70,7 @@ public class PromptFunctions : IPromptFunctions
     /// <returns></returns>
     public int GetAttempts()
     {
-        _logger.LogDebug("GetAttempts()");
+        _logger.LogDebug("{method}()", nameof(GetAttempts));
         return _voiceProperties.PromptAttempts;
     }
     /// <summary>
@@ -79,7 +79,7 @@ public class PromptFunctions : IPromptFunctions
     /// <returns></returns>
     public int GetBlankAttempts()
     {
-        _logger.LogDebug("GetBlankAttempts()");
+        _logger.LogDebug("{method}()", nameof(GetBlankAttempts));
         return _voiceProperties.PromptBlankAttempts;
     }
 
@@ -106,7 +106,7 @@ public class PromptFunctions : IPromptFunctions
     private async Task<string> SingleDigitPromptInternalAsync(string promptMessage, string allowed,
         Func<Prompt, Task<string>> ask)
     {
-        _logger.LogDebug("SingleDigitPromptInternalAsync()");
+        _logger.LogDebug("{method}()", nameof(SingleDigitPromptInternalAsync));
         var p = GetMenuStylePrompt();
         p.PromptMessage = promptMessage;
         p.OnValidation += answer => allowed.IndexOf(answer, StringComparison.Ordinal) != -1;
@@ -121,13 +121,13 @@ public class PromptFunctions : IPromptFunctions
     /// <returns>A response of any size including empty</returns>
     public string RegularPrompt(string promptMessage)
     {
-        _logger.LogDebug("RegularPrompt({0})", promptMessage );
+        _logger.LogDebug("{method}({promptMessage})", nameof(RegularPrompt), promptMessage);
         return RegularPrompt(promptMessage, null);
     }
         
     public async Task<string> RegularPromptAsync(string promptMessage, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("RegularPromptAsync({0})", promptMessage );
+        _logger.LogDebug("{method}({promptMessage})", nameof(RegularPromptAsync), promptMessage);
         return await RegularPromptAsync(promptMessage, null, cancellationToken);
     }
 
@@ -140,7 +140,7 @@ public class PromptFunctions : IPromptFunctions
     /// <returns>A response matching on of the validAnswers[] string</returns>
     public string RegularPrompt(string promptMessage, string[] validAnswers)
     {
-        _logger.LogDebug("RegularPrompt({0}, {1})", promptMessage, validAnswers);
+        _logger.LogDebug("{method}({promptMessage}, {validAnswers})", nameof(RegularPrompt), promptMessage, validAnswers);
 
         bool CustomHandler(string answer)
         {
@@ -152,7 +152,7 @@ public class PromptFunctions : IPromptFunctions
 
     public async Task<string> RegularPromptAsync(string promptMessage, string[] validAnswers, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("RegularPromptAsync({0}, {1})", promptMessage, validAnswers);
+        _logger.LogDebug("{method}({promptMessage}, {validAnswers})", nameof(RegularPromptAsync), promptMessage, validAnswers);
 
         bool CustomHandler(string answer)
         {
@@ -171,7 +171,7 @@ public class PromptFunctions : IPromptFunctions
     /// <returns></returns>
     public string CustomValidationPrompt(string promptMessage, Prompt.ValidationHandler customHandler)
     {
-        _logger.LogDebug("CustomValidationPrompt({0}, Prompt.ValidationHandler)", promptMessage);
+        _logger.LogDebug("{method}({promptMessage}, Prompt.ValidationHandler)", nameof(CustomValidationPrompt), promptMessage);
         return CustomValidationPromptInternalAsync(promptMessage, customHandler,
             (p) => { var result = p.Ask(); return Task.FromResult(result); }
         ).GetAwaiter().GetResult();
@@ -180,6 +180,7 @@ public class PromptFunctions : IPromptFunctions
     public async Task<string> CustomValidationPromptAsync(string promptMessage, Prompt.ValidationHandler customHandler, 
         CancellationToken cancellationToken)
     {
+        _logger.LogDebug("{method}({promptMessage}, Prompt.ValidationHandler)", nameof(CustomValidationPromptAsync), promptMessage);
         return await CustomValidationPromptInternalAsync(promptMessage,customHandler,
             async (p) => await p.AskAsync(cancellationToken));
     }
@@ -187,7 +188,7 @@ public class PromptFunctions : IPromptFunctions
     private async Task<string> CustomValidationPromptInternalAsync(string promptMessage, Prompt.ValidationHandler customHandler,
         Func<Prompt, Task<string>> ask)
     {
-        _logger.LogDebug("CustomValidationPromptInternalAsync()");
+        _logger.LogDebug("{method}()", nameof(CustomValidationPromptInternalAsync));
         var prompt = GetRegularStylePrompt();
         prompt.PromptMessage = promptMessage;
         prompt.OnValidation += customHandler;

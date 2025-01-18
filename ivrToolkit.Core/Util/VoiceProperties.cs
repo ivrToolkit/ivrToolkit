@@ -65,7 +65,7 @@ public class VoiceProperties : Properties, IDisposable
 
     public new void Dispose()
     {
-        _logger.LogDebug("Dispose()");
+        _logger.LogDebug("{method}()", nameof(Dispose));
         base.Dispose();
     }
 }

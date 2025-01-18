@@ -59,18 +59,19 @@ public class ScriptManager : IScriptManager
 
     public void Execute()
     {
-        _logger.LogDebug("Execute()");
+        _logger.LogDebug("{method}()", nameof(Execute));
         _nextScript = _nextScript.Execute();
     }
         
     public bool HasNext()
     {
-        _logger.LogDebug("HasNext()");
+        _logger.LogDebug("{method}()", nameof(HasNext));
         return _nextScript != null;
     }
 
     public async Task ExecuteScriptAsync(CancellationToken cancellationToken)
     {
+        _logger.LogDebug("{method}()", nameof(ExecuteScriptAsync));
         while (HasNext())
         {
             // execute the next script
@@ -80,7 +81,7 @@ public class ScriptManager : IScriptManager
 
     public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Execute()");
+        _logger.LogDebug("{method}()", nameof(ExecuteAsync));
         _nextScript = await _nextScript.ExecuteAsync(cancellationToken);
     }
 } // class

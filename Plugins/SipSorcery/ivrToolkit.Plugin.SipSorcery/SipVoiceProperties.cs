@@ -26,7 +26,7 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     public SipVoiceProperties(ILoggerFactory loggerFactory, string fileName) : base(loggerFactory, fileName)
     {
         _logger = loggerFactory.CreateLogger<SipVoiceProperties>();
-        _logger.LogDebug("Ctr(ILoggerFactory loggerFactory, {0})", fileName);
+        _logger.LogDebug("Ctr(ILoggerFactory loggerFactory, {fileName})", fileName);
     }
 
     public SipVoiceProperties(ILoggerFactory loggerFactory) : base(loggerFactory)
@@ -82,7 +82,7 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
 
     public new void Dispose()
     {
-        _logger.LogDebug("Dispose()");
+        _logger.LogDebug("{method}()", nameof(Dispose));
         base.Dispose();
     }
 }

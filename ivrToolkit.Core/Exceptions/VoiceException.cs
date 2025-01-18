@@ -8,11 +8,7 @@ public class VoiceException : Exception
     public VoiceException()
     {
     }
-
-    protected VoiceException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
-
+    
     public VoiceException(string message) : base(message)
     {
     }

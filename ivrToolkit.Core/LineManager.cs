@@ -38,7 +38,7 @@ public class LineManager : ILineManager
     {
         lineNumber.ThrowIfLessThanOrEqualTo(0, nameof(lineNumber));
 
-        _logger.LogDebug("GetLine({0})", lineNumber);
+        _logger.LogDebug("{method}({lineNumber})", nameof(GetLine), lineNumber);
         lock (_lockObject)
         {
             var line = _ivrPlugin.GetLine(lineNumber);
@@ -50,7 +50,7 @@ public class LineManager : ILineManager
 
     public IIvrLine GetLine()
     {
-        _logger.LogDebug("{methodName}()", nameof(GetLine));
+        _logger.LogDebug("{method}()", nameof(GetLine));
         lock (_lockObject)
         {
             var lineNumber = NextAvailableLine();
@@ -83,7 +83,7 @@ public VoiceProperties VoiceProperties => _ivrPlugin.VoiceProperties;
     {
         lineNumber.ThrowIfLessThanOrEqualTo(0, nameof(lineNumber));
 
-        _logger.LogDebug("ReleaseLine({0})", lineNumber);
+        _logger.LogDebug("{method}({lineNumber})", nameof(ReleaseLine), lineNumber);
         lock (_lockObject)
         {
             try
@@ -106,7 +106,7 @@ public VoiceProperties VoiceProperties => _ivrPlugin.VoiceProperties;
     /// </summary>
     public void ReleaseAll()
     {
-        _logger.LogDebug("ReleaseAll()");
+        _logger.LogDebug("{method}()", nameof(ReleaseAll));
         lock (_lockObject)
         {
             foreach (var keyValue in _lines)
@@ -120,6 +120,6 @@ public VoiceProperties VoiceProperties => _ivrPlugin.VoiceProperties;
     public void Dispose()
     {
         ReleaseAll();
-        _logger.LogDebug("Dispose()");
+        _logger.LogDebug("{method}()", nameof(Dispose));
     }
 }

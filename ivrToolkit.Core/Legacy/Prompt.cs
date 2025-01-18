@@ -148,7 +148,7 @@ public class Prompt
     /// </summary>
     public string Ask()
     {
-        _logger.LogDebug("Ask()");
+        _logger.LogDebug("{method}()",nameof(Ask));
         return AskInternalAsync(
             content => { PlayFileOrPhrase(content); return Task.CompletedTask; },
             (numberOfDigits, terminators) => { var result = _line.GetDigits(numberOfDigits, terminators); return Task.FromResult(result); }
@@ -157,7 +157,7 @@ public class Prompt
         
     public async Task<string> AskAsync(CancellationToken cancellationToken)
     {
-        _logger.LogDebug("AskAsync()");
+        _logger.LogDebug("{method}()", nameof(AskAsync));
         return await AskInternalAsync(
             async content => await PlayFileOrPhraseAsync(content, cancellationToken),
             async (numberOfDigits, terminators) => await _line.GetDigitsAsync(numberOfDigits, terminators, cancellationToken));
@@ -167,7 +167,7 @@ public class Prompt
         Func<string, Task> playFileOrPhrase,
         Func<int, string, Task<string>> getDigits)
     {
-        _logger.LogDebug("AskInternal()");
+        _logger.LogDebug("{method}()", nameof(AskInternalAsync));
         var count = 0;
         var blankCount = 0;
         var myTerminators = Terminators + (SpecialTerminator ?? "");
@@ -256,7 +256,7 @@ public class Prompt
 
     private void PlayFileOrPhrase(string fileNameOrPhrase)
     {
-        _logger.LogDebug("PlayFileOrPhrase({0})", fileNameOrPhrase);
+        _logger.LogDebug("{method}({PlayFileOrPhrase})", nameof(PlayFileOrPhrase),  fileNameOrPhrase);
         if (fileNameOrPhrase.IndexOf("|", StringComparison.Ordinal) != -1)
         {
             _line.PlayString(fileNameOrPhrase);
@@ -269,7 +269,7 @@ public class Prompt
         
     private async Task PlayFileOrPhraseAsync(string fileNameOrPhrase, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("PlayFileOrPhraseAsync({0})", fileNameOrPhrase);
+        _logger.LogDebug("{method}({PlayFileOrPhrase})", nameof(PlayFileOrPhraseAsync),  fileNameOrPhrase);
         if (fileNameOrPhrase.IndexOf("|", StringComparison.Ordinal) != -1)
         {
             await _line.PlayStringAsync(fileNameOrPhrase, cancellationToken);

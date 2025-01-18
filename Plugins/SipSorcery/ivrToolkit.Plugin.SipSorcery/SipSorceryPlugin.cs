@@ -36,7 +36,7 @@ public class SipSorceryPlugin : IIvrPlugin
 
     IIvrBaseLine IIvrPlugin.GetLine(int lineNumber)
     {
-        _logger.LogDebug("GetLine({0})", lineNumber);
+        _logger.LogDebug("GetLine({lineNumber})", lineNumber);
         lineNumber.ThrowIfLessThanOrEqualTo(0, nameof(lineNumber));
 
         if (_disposed) throw new DisposedException("You cannot get a line from a disposed plugin");

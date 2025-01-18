@@ -8,11 +8,7 @@ public class DisposedException : VoiceException
     public DisposedException()
     {
     }
-
-    protected DisposedException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
-
+    
     public DisposedException(string message) : base(message)
     {
     }

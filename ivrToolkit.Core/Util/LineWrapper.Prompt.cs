@@ -2,7 +2,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Exceptions;
-using ivrToolkit.Core.Prompt;
 using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Core.Util;
@@ -13,6 +12,7 @@ internal partial class LineWrapper
 
     public string Prompt(string fileOrPhrase, PromptOptions promptOptions = null)
     {
+        _logger.LogDebug("{method}({fileOrPhrase})", nameof(Prompt), fileOrPhrase);
         _options = new FullPromptOptions(_voiceProperties);
         _options.Load(promptOptions, fileOrPhrase);
         
@@ -21,6 +21,7 @@ internal partial class LineWrapper
 
     public string MultiTryPrompt(string fileOrPhrase, Func<string, bool> evaluator, MultiTryPromptOptions multiTryPromptOptions = null)
     {
+        _logger.LogDebug("{method}({fileOrPhrase})", nameof(MultiTryPrompt), fileOrPhrase);
         _options = new FullPromptOptions(_voiceProperties);
         _options.Load(multiTryPromptOptions, fileOrPhrase);
         
@@ -30,6 +31,7 @@ internal partial class LineWrapper
 
     public async Task<string> PromptAsync(string fileOrPhrase, CancellationToken cancellationToken, PromptOptions promptOptions = null)
     {
+        _logger.LogDebug("{method}({fileOrPhrase})", nameof(PromptAsync), fileOrPhrase);
         _options = new FullPromptOptions(_voiceProperties);
         _options.Load(promptOptions, fileOrPhrase);
 
@@ -39,12 +41,14 @@ internal partial class LineWrapper
 
     public Task<string> MultiTryPromptAsync(string fileOrPhrase, Func<string, bool> evaluator, CancellationToken cancellationToken)
     {
+        _logger.LogDebug("{method}({fileOrPhrase})", nameof(MultiTryPromptAsync), fileOrPhrase);
         return MultiTryPromptAsync(fileOrPhrase, evaluator, null, cancellationToken);
     }
 
     public async Task<string> MultiTryPromptAsync(string fileOrPhrase, Func<string, bool> evaluator, MultiTryPromptOptions multiTryPromptOptions,
         CancellationToken cancellationToken)
     {
+        _logger.LogDebug("{method}({fileOrPhrase})", nameof(MultiTryPromptAsync), fileOrPhrase);
         _options = new FullPromptOptions(_voiceProperties);
         _options.Load(multiTryPromptOptions, fileOrPhrase);
         
@@ -53,7 +57,7 @@ internal partial class LineWrapper
     
     private string Ask(Func<string, bool> evaluator)
     {
-        _logger.LogDebug("Ask()");
+        _logger.LogDebug("{method}()", nameof(Ask));
         return AskInternalAsync(evaluator,
             fileOrPhrase => { PlayFileOrPhrase(fileOrPhrase); return Task.CompletedTask; },
             (numberOfDigits, terminators) => { var result = GetDigits(numberOfDigits, terminators); return Task.FromResult(result); }
@@ -62,7 +66,7 @@ internal partial class LineWrapper
         
     private async Task<string> AskAsync(Func<string, bool> evaluator, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("AskAsync()");
+        _logger.LogDebug("{method}()", nameof(AskAsync));
         return await AskInternalAsync(evaluator,
             async fileOrPhrase => await PlayFileOrPhraseAsync(fileOrPhrase, cancellationToken),
             async (numberOfDigits, terminators) => await GetDigitsAsync(numberOfDigits, terminators, cancellationToken));
@@ -73,7 +77,7 @@ internal partial class LineWrapper
         Func<string, Task> playFileOrPhrase,
         Func<int, string, Task<string>> getDigits)
     {
-        _logger.LogDebug("AskInternal()");
+        _logger.LogDebug("{method}()", nameof(AskInternalAsync));
 
         // we are in single digit mode so set up an evaluator to check allowed digits
         if (evaluator == null && _options.MaxLength == 1 && !string.IsNullOrWhiteSpace(_options.AllowedDigits))
@@ -166,11 +170,11 @@ internal partial class LineWrapper
         
         public string PromptMessage { get; set; }
 
-        public void Load(MultiTryPromptOptions promptOptions, string filename)
+        public void Load(MultiTryPromptOptions promptOptions, string fileOrPhrase)
         {
             promptOptions ??= new MultiTryPromptOptions();
             
-            PromptMessage = filename;
+            PromptMessage = fileOrPhrase;
             Terminators = string.IsNullOrWhiteSpace(promptOptions.Terminators) ? "#" : promptOptions.Terminators;
             MaxLength = promptOptions.MaxLength > 0 ? promptOptions.MaxLength : 30;
             AllowedDigits = string.IsNullOrWhiteSpace(promptOptions.AllowedDigits) ? "0123456789*#" : promptOptions.AllowedDigits;

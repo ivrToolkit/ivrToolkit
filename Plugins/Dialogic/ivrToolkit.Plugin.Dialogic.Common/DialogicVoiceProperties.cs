@@ -37,13 +37,7 @@ public class DialogicVoiceProperties : VoiceProperties, IDisposable
     /// Dial tone detection.  Default is 'L' for Leading.
     /// </summary>
     public string DialToneType => GetProperty("dial.cpa.dialTone.type", "L");
-
-
-    /// <summary>
-    /// Number of milliseconds between keypress before it considers it to be a prompt attempt. Default is '5000'.
-    /// </summary>
-    public int DigitsTimeoutInMilli => int.Parse(GetProperty("getDigits.timeoutInMilliseconds", "5000"));
-
+    
     /// <summary>
     /// if true then the noFreeLine tone will be enabled
     /// </summary>

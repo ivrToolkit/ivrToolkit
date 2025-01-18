@@ -81,7 +81,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 
     private void CloseDialResources()
     {
-        _logger.LogDebug("{name}", nameof(CloseDialResources));
+        _logger.LogDebug("{method}", nameof(CloseDialResources));
 
         lock (_lockObject)
         {
@@ -156,7 +156,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         
     public void Dispose()
     {
-        _logger.LogDebug("Dispose() - Disposing of the line");
+        _logger.LogDebug("{method}() - Disposing of the line", nameof(Dispose));
         CloseDialResources();
         _userAgent.Dispose();
     }
@@ -167,7 +167,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         string currentDigitBuffer;
         lock(_lockObject)
         {
-            _logger.LogDebug("{name}() - Digit Buffer is currently: {buffer}", nameof(FlushDigitBuffer), _digitBuffer);
+            _logger.LogDebug("{method}() - Digit Buffer is currently: {buffer}", nameof(FlushDigitBuffer), _digitBuffer);
             currentDigitBuffer = _digitBuffer;
             _digitBuffer = "";
         }
@@ -194,13 +194,13 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         if (!_userAgent.IsCallActive)
         {
             // break area for testing
-            _logger.LogDebug("{name}({digits}, {terminators}) - call is not active, throwing HangupException", nameof(GetDigits), numberOfDigits, terminators);
+            _logger.LogDebug("{method}({digits}, {terminators}) - call is not active, throwing HangupException", nameof(GetDigits), numberOfDigits, terminators);
             if (_digitBuffer.Length != 0)
                 CloseDialResources();
             throw new HangupException();
         }
 
-        _logger.LogDebug("{name}({digits}, {terminators})", nameof(GetDigits), numberOfDigits, terminators);
+        _logger.LogDebug("{method}({digits}, {terminators})", nameof(GetDigits), numberOfDigits, terminators);
         if (_digitBuffer.Length != 0)
         {
             // we need to deal with whatever is in the buffer already
@@ -209,7 +209,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
             {
                 // if there is anything left, set _digitPressed to true, otherwise set it tp false
                 _digitPressed = _digitBuffer.Length > 0;
-                _logger.LogDebug("{name}({digits}, {terminators}) - returning {result}", 
+                _logger.LogDebug("{method}({digits}, {terminators}) - returning {result}", 
                     nameof(GetDigits), numberOfDigits, terminators, result);
                 return result;
             }
@@ -223,7 +223,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         if (!worked)
         {
             // A teardown must have happened during hangup
-            _logger.LogDebug("{name}({digits}, {terminators}) - _keypressSemaphore.Wait was cancelled, throwing HangupException", nameof(GetDigits), numberOfDigits, terminators);
+            _logger.LogDebug("{method}({digits}, {terminators}) - _keypressSemaphore.Wait was cancelled, throwing HangupException", nameof(GetDigits), numberOfDigits, terminators);
             throw new HangupException();
         }
 
@@ -237,7 +237,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         
     private string GetUpToAndIncludingTerminator(int numberOfDigits, string terminators)
     {
-        _logger.LogDebug("{name}({digits}, {terminators})", nameof(GetUpToAndIncludingTerminator), numberOfDigits, terminators);
+        _logger.LogDebug("{method}({digits}, {terminators})", nameof(GetUpToAndIncludingTerminator), numberOfDigits, terminators);
         var result = new StringBuilder();
         ReadOnlySpan<char> span = _digitBuffer.AsSpan();
         foreach (char c in span)
@@ -248,30 +248,30 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
                 var resultString = result.ToString();
                 // pull what we are returning out of the buffer
                 _digitBuffer = _digitBuffer.Substring(result.Length); // todo this may cause an error if we are returning everything
-                _logger.LogDebug("{name}({digits}, {terminators}) - returning {result}, _digitBuffer is now = {buffer}", 
+                _logger.LogDebug("{method}({digits}, {terminators}) - returning {result}, _digitBuffer is now = {buffer}", 
                     nameof(GetUpToAndIncludingTerminator), numberOfDigits, terminators, resultString, _digitBuffer);
                 return resultString;
             }
         }
         // did not find a terminator and did not hit the number of digits required
-        _logger.LogDebug("{name}({digits}, {terminators}) - did not find a terminator or hit the number of digits required",
+        _logger.LogDebug("{method}({digits}, {terminators}) - did not find a terminator or hit the number of digits required",
             nameof(GetUpToAndIncludingTerminator), numberOfDigits, terminators);
         return "";
     }
 
     public void Hangup()
     {
-        _logger.LogDebug("Hangup()");
+        _logger.LogDebug("{method}()", nameof(Hangup));
         CloseDialResources();
     }
 
     public void PlayFile(string filename)
     {
-        _logger.LogDebug("{}({}) - _digitPressed = {pressed}", nameof(PlayFile), filename, _digitPressed);
+        _logger.LogDebug("{method}({fileName}) - _digitPressed = {pressed}", nameof(PlayFile), filename, _digitPressed);
         if (!_userAgent.IsCallActive)
         {
             // break area for testing
-            _logger.LogDebug("{}({}) (1)- _userAgent is inactive, throwing HangupException", nameof(PlayFile), filename);
+            _logger.LogDebug("{method}({filename}) - _userAgent is inactive, throwing HangupException", nameof(PlayFile), filename);
             CloseDialResources();
             throw new HangupException();
         }
@@ -280,7 +280,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         Task.Delay(300).Wait();
         if (!_userAgent.IsCallActive)
         {
-            _logger.LogDebug("{}({}) (2)- _userAgent is inactive, throwing HangupException", nameof(PlayFile), filename);
+            _logger.LogDebug("{method}({filename}) - _userAgent is inactive, throwing HangupException", nameof(PlayFile), filename);
             // break area for testing
             CloseDialResources();
             throw new HangupException();
@@ -289,11 +289,11 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 
     public async Task PlayFileAsync(string filename, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("{}({}) - _digitPressed = {pressed}", nameof(PlayFile), filename, _digitPressed);
+        _logger.LogDebug("{method}({filename}) - _digitPressed = {pressed}", nameof(PlayFile), filename, _digitPressed);
         if (!_userAgent.IsCallActive)
         {
             // break area for testing
-            _logger.LogDebug("{}({}) (1)- _userAgent is inactive, throwing HangupException", nameof(PlayFile), filename);
+            _logger.LogDebug("{method}({filename}) - _userAgent is inactive, throwing HangupException", nameof(PlayFile), filename);
             CloseDialResources();
             throw new HangupException();
         }
@@ -302,7 +302,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         await Task.Delay(300, cancellationToken);
         if (!_userAgent.IsCallActive)
         {
-            _logger.LogDebug("{}({}) (2)- _userAgent is inactive, throwing HangupException", nameof(PlayFile), filename);
+            _logger.LogDebug("{method}({filename}) - _userAgent is inactive, throwing HangupException", nameof(PlayFile), filename);
             // break area for testing
             CloseDialResources();
             throw new HangupException();
@@ -334,12 +334,12 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 
     public void TakeOffHook()
     {
-        _logger.LogDebug("TakeOffHook()");
+        _logger.LogDebug("{method}()", nameof(TakeOffHook));
     }
 
     public void TriggerDispose()
     {
-        _logger.LogDebug("ILineManagement.TriggerDispose() for line: {0}", _lineNumber);
+        _logger.LogDebug("{method} for line: {lineNumber}", nameof(TriggerDispose), _lineNumber);
 
         //var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
         //result.ThrowIfStandardRuntimeLibraryError(_dxDev);

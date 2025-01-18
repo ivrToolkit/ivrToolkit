@@ -158,7 +158,7 @@ public class Properties : IDisposable
 
     public void Dispose()
     {
-        _logger.LogDebug("Dispose()");
+        _logger.LogDebug("{method}()", nameof(Dispose));
         _watcher?.Dispose();
     }
 
@@ -169,7 +169,7 @@ public class Properties : IDisposable
     /// <returns>true if value equals 'true','on' or 'yes'. Otherwise returns false. case insensitive.</returns>
     protected bool ToBool(string value)
     {
-        _logger.LogDebug("ToBool({0})", value);
+        _logger.LogDebug("{method}({value})", nameof(ToBool), value);
         return value.Equals("true", StringComparison.OrdinalIgnoreCase) || 
                value.Equals("on", StringComparison.OrdinalIgnoreCase) || 
                value.Equals("yes", StringComparison.OrdinalIgnoreCase);
@@ -193,7 +193,7 @@ public class Properties : IDisposable
         {
             try
             {
-                _logger.LogDebug("Loading profile: {0}", _fileName);
+                _logger.LogDebug("{method}() - Loading profile: {fileName}", nameof(Load), _fileName);
 
                 _stuff.Clear();
                 var lines = File.ReadAllLines(_fileName);

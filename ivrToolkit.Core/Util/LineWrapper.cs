@@ -40,7 +40,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
         _voiceProperties = voiceProperties.ThrowIfNull(nameof(voiceProperties));
             
         _logger = loggerFactory.CreateLogger<LineWrapper>();
-        _logger.LogDebug("ctr(ILoggerFactory, VoiceProperties, {0})", lineNumber);
+        _logger.LogDebug("ctr(ILoggerFactory, VoiceProperties, {lineNumber})", lineNumber);
     }
 
     public IIvrLineManagement Management => this;
@@ -61,7 +61,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     public void WaitRings(int rings)
     {
-        _logger.LogDebug("WaitRings({0})", rings);
+        _logger.LogDebug("{method}({rings})", nameof(WaitRings), rings);
         CheckDispose();
 
         _status = LineStatusTypes.AcceptingCalls;
@@ -74,7 +74,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     public void Hangup()
     {
-        _logger.LogDebug("Hangup()");
+        _logger.LogDebug("{method}()",nameof(Hangup));
         _status = LineStatusTypes.OnHook;
         CheckDispose();
 
@@ -83,7 +83,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     public void TakeOffHook()
     {
-        _logger.LogDebug("TakeOffHook()");
+        _logger.LogDebug("{method}()", nameof(TakeOffHook));
         _status = LineStatusTypes.OffHook;
         CheckDispose();
 
@@ -96,16 +96,16 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
         answeringMachineLengthInMilliseconds.ThrowIfLessThanOrEqualTo(999, nameof(answeringMachineLengthInMilliseconds));
         number.ThrowIfNullOrWhiteSpace(nameof(number));
 
-        _logger.LogDebug("Dial({0}, {1})", number, answeringMachineLengthInMilliseconds);
+        _logger.LogDebug("{method}({number}, {answeringMachineLength})", nameof(Dial), number, answeringMachineLengthInMilliseconds);
         CheckDispose();
 
         TakeOffHook();
         _logger.LogDebug("Line is now off hook");
 
-        _logger.LogDebug("about to dial: {0}", number);
+        _logger.LogDebug("about to dial: {number}", number);
         var result = _lineImplementation.Dial(number, answeringMachineLengthInMilliseconds);
 
-        _logger.LogDebug("CallAnalysis is: {0}", result.ToString());
+        _logger.LogDebug("CallAnalysis is: {callAnalysis}", result.ToString());
 
         if (result == CallAnalysis.Stopped) ThrowDisposingException();
 
@@ -126,16 +126,16 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
         answeringMachineLengthInMilliseconds.ThrowIfLessThanOrEqualTo(999, nameof(answeringMachineLengthInMilliseconds));
         number.ThrowIfNullOrWhiteSpace(nameof(number));
 
-        _logger.LogDebug("Dial({0}, {1})", number, answeringMachineLengthInMilliseconds);
+        _logger.LogDebug("{method}({number}, {answeringMachineLength})", nameof(DialAsync), number, answeringMachineLengthInMilliseconds);
         CheckDispose();
 
         TakeOffHook();
         _logger.LogDebug("Line is now off hook");
 
-        _logger.LogDebug("about to dial: {0}", number);
+        _logger.LogDebug("about to dial: {number}", number);
         var result = await _lineImplementation.DialAsync(number, answeringMachineLengthInMilliseconds, cancellationToken);
 
-        _logger.LogDebug("CallAnalysis is: {0}", result.ToString());
+        _logger.LogDebug("CallAnalysis is: {callAnalysis}", result.ToString());
 
         if (result == CallAnalysis.Stopped) ThrowDisposingException();
 
@@ -156,10 +156,10 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     void IIvrLineManagement.TriggerDispose()
     {
-        _logger.LogDebug("ILineManagement.TriggerDispose() for line: {0}", _lineNumber);
+        _logger.LogDebug("{method} for line: {lineNumber}", nameof(IIvrLineManagement.TriggerDispose), _lineNumber);
         if (_disposed)
         {
-            _logger.LogDebug("Line {0} has already been disposed", _lineNumber);
+            _logger.LogDebug("Line {lineNumber} has already been disposed", _lineNumber);
             return;
         }
 
@@ -173,10 +173,10 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
     {
         if (_disposed)
         {
-            _logger.LogDebug("Dispose() - Line is already disposed");
+            _logger.LogDebug("{method}() - Line is already disposed", nameof(Dispose));
             return;
         }
-        _logger.LogDebug("Dispose() - Disposing of the line");
+        _logger.LogDebug("{method}() - Disposing of the line", nameof(Dispose));
 
         try
         {
@@ -193,7 +193,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     public void PlayFile(string filename)
     {
-        _logger.LogDebug("PlayFile({0})", filename);
+        _logger.LogDebug("{method}({filename})", nameof(PlayFile), filename);
         CheckDispose();
         try
         {
@@ -212,7 +212,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     public async Task PlayFileAsync(string filename, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("PlayFileAsync({0})", filename);
+        _logger.LogDebug("{method}({filename})", nameof(PlayFileAsync), filename);
         CheckDispose();
         try
         {
@@ -236,7 +236,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     public void RecordToFile(string filename, int timeoutMilliseconds)
     {
-        _logger.LogDebug("RecordToFile({0}, {1})", filename, timeoutMilliseconds);
+        _logger.LogDebug("{method}({filename}, {timeout})", nameof(RecordToFile), filename, timeoutMilliseconds);
         CheckDispose();
 
         try
@@ -257,7 +257,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     public string GetDigits(int numberOfDigits, string terminators)
     {
-        _logger.LogDebug("GetDigits({0}, {1})", numberOfDigits, terminators);
+        _logger.LogDebug("{method}({numberOfDigits}, {terminators})", nameof(GetDigits), numberOfDigits, terminators);
         CheckDispose();
         try
         {
@@ -279,7 +279,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     public async Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("GetDigits({0}, {1})", numberOfDigits, terminators);
+        _logger.LogDebug("{method}({numberOfDigits}, {terminators})", nameof(GetDigitsAsync), numberOfDigits, terminators);
         CheckDispose();
         try
         {
@@ -301,7 +301,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     public string FlushDigitBuffer()
     {
-        _logger.LogDebug("FlushDigitBuffer()");
+        _logger.LogDebug("{method}()", nameof(FlushDigitBuffer));
         CheckDispose();
 
         var all = "";
@@ -339,7 +339,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     private string StripOffTerminator(string answer, string terminators)
     {
-        _logger.LogDebug("StripOffTerminator({0}, {1})", answer, terminators);
+        _logger.LogDebug("{method}({answer}, {terminators})", nameof(StripOffTerminator), answer, terminators);
 
         LastTerminator = "";
         if (answer.Length >= 1)
@@ -370,14 +370,14 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     private void ThrowDisposingException()
     {
-        _logger.LogDebug("ThrowDisposingException()");
+        _logger.LogDebug("{method}()", nameof(ThrowDisposingException));
         _disposeTriggerActivated = false;
         throw new DisposingException();
     }
 
     private void ThrowDisposedException()
     {
-        _logger.LogDebug("ThrowDisposedException()");
+        _logger.LogDebug("{method}()", nameof(ThrowDisposedException));
         throw new DisposedException($"Line {_lineNumber} has already been disposed");
     }
 
@@ -385,10 +385,10 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
     {
         if (_disposed)
         {
-            _logger.LogDebug("Reset() - Line is already disposed");
+            _logger.LogDebug("{method}() - Line is already disposed", nameof(Reset));
             return;
         }
-        _logger.LogDebug("Reset() - Disposing and recreate the line from scratch");
+        _logger.LogDebug("{method}() - Disposing and recreate the line from scratch", nameof(Reset));
         _lineImplementation.Reset();
     }
 }

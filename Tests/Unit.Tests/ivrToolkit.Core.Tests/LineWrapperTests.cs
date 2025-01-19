@@ -1,6 +1,5 @@
 using System;
-using FluentAssertions;
-using FluentAssertions.Execution;
+using Shouldly;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
@@ -21,55 +20,80 @@ public class LineWrapperTests
         return line;
     }
 
+    private LineWrapper CreateLineWrapper()
+    {
+        var loggerFactory = new NullLoggerFactory();
+        var properties = new VoiceProperties(loggerFactory)
+        {
+            PromptAttempts = 99,
+            PromptBlankAttempts = 5,
+            DigitsTimeoutInMilli = 5000
+        };
+        
+        return new LineWrapper(new NullLoggerFactory(), properties, 1, GetMockedLineBase().Object);
+    }
+    private LineWrapper CreateLineWrapper(Mock<IIvrBaseLine> mockedLineBase)
+    {
+        var loggerFactory = new NullLoggerFactory();
+        var properties = new VoiceProperties(loggerFactory)
+        {
+            PromptAttempts = 99,
+            PromptBlankAttempts = 5,
+            DigitsTimeoutInMilli = 5000
+        };
+        
+        return new LineWrapper(new NullLoggerFactory(), properties, 1, mockedLineBase.Object);
+    }
+
     #region Dial
     [Fact]
     public void LineWrapper_Dial_throws_DisposingException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Management.TriggerDispose();
 
         Action act = () => test.Dial("1", 1000);
-        act.Should().Throw<DisposingException>();
+        act.ShouldThrow<DisposingException>();
     }
 
     [Fact]
     public void LineWrapper_Dial_throws_DisposedException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Dispose();
 
         Action act = () => test.Dial("1", 1000);
-        act.Should().Throw<DisposedException>();
+        act.ShouldThrow<DisposedException>();
     }
 
     [Fact]
     public void LineWrapper_Dial_anseringMachineLengthInMs_999_throws_ArgumentOutOfRangeException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Management.TriggerDispose();
 
         Action act = () => test.Dial("1", 999);
-        act.Should().Throw<ArgumentOutOfRangeException>();
+        act.ShouldThrow<ArgumentOutOfRangeException>();
     }
 
     [Fact]
     public void LineWrapper_Dial_numberIsNull_throws_ArgumentNullException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Management.TriggerDispose();
 
         Action act = () => test.Dial(null, 1000);
-        act.Should().Throw<ArgumentNullException>();
+        act.ShouldThrow<ArgumentNullException>();
     }
 
     [Fact]
     public void LineWrapper_Dial_numberIsEmpty_throws_ArgumentException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Management.TriggerDispose();
 
         Action act = () => test.Dial("", 1000);
-        act.Should().Throw<ArgumentException>();
+        act.ShouldThrow<ArgumentException>();
     }
 
     [Fact]
@@ -77,10 +101,10 @@ public class LineWrapperTests
     {
         var mock = GetMockedLineBase();
         mock.Setup(x => x.Dial(It.IsAny<string>(), It.IsAny<int>())).Returns(CallAnalysis.AnsweringMachine);
-
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, mock.Object);
+        var test = CreateLineWrapper(mock);
+        
         test.Dial("12223334444", 1000);
-        test.Status.Should().Be(LineStatusTypes.Connected);
+        test.Status.ShouldBe(LineStatusTypes.Connected);
     }
 
     [Fact]
@@ -88,10 +112,10 @@ public class LineWrapperTests
     {
         var mock = GetMockedLineBase();
         mock.Setup(x => x.Dial(It.IsAny<string>(), It.IsAny<int>())).Returns(CallAnalysis.Connected);
-
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, mock.Object);
+        var test = CreateLineWrapper(mock);
+        
         test.Dial("12223334444", 1000);
-        test.Status.Should().Be(LineStatusTypes.Connected);
+        test.Status.ShouldBe(LineStatusTypes.Connected);
     }
 
     [Fact]
@@ -100,9 +124,9 @@ public class LineWrapperTests
         var mock = GetMockedLineBase();
         mock.Setup(x => x.Dial(It.IsAny<string>(), It.IsAny<int>())).Returns(CallAnalysis.Busy);
 
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, mock.Object);
+        var test = CreateLineWrapper(mock);
         test.Dial("12223334444", 1000);
-        test.Status.Should().Be(LineStatusTypes.OnHook);
+        test.Status.ShouldBe(LineStatusTypes.OnHook);
     }
 
     [Fact]
@@ -110,15 +134,11 @@ public class LineWrapperTests
     {
         var mock = GetMockedLineBase();
         mock.Setup(x => x.Dial(It.IsAny<string>(), It.IsAny<int>())).Returns(CallAnalysis.Stopped);
+        var test = CreateLineWrapper(mock);
 
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, mock.Object);
-
-        using (new AssertionScope())
-        {
-            Action act = () => test.Dial("12223334444", 1000);
-            act.Should().Throw<DisposingException>();
-            test.Status.Should().Be(LineStatusTypes.OffHook);
-        }
+        Action act = () => test.Dial("12223334444", 1000);
+        act.ShouldThrow<DisposingException>();
+        test.Status.ShouldBe(LineStatusTypes.OffHook);
     }
     #endregion
 
@@ -126,21 +146,21 @@ public class LineWrapperTests
     [Fact]
     public void LineWrapper_CheckDispose_throws_DisposingException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Management.TriggerDispose();
 
         Action act = () => test.CheckDispose();
-        act.Should().Throw<DisposingException>();
+        act.ShouldThrow<DisposingException>();
     }
 
     [Fact]
     public void LineWrapper_CheckDispose_throws_DisposedException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Dispose();
 
         Action act = () => test.CheckDispose();
-        act.Should().Throw<DisposedException>();
+        act.ShouldThrow<DisposedException>();
     }
     #endregion
 
@@ -148,21 +168,21 @@ public class LineWrapperTests
     [Fact]
     public void LineWrapper_WaitRings_throws_DisposingException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Management.TriggerDispose();
 
         Action act = () => test.WaitRings(1);
-        act.Should().Throw<DisposingException>();
+        act.ShouldThrow<DisposingException>();
     }
 
     [Fact]
     public void LineWrapper_WaitRings_throws_DisposedException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Dispose();
 
         Action act = () => test.WaitRings(1);
-        act.Should().Throw<DisposedException>();
+        act.ShouldThrow<DisposedException>();
     }
     #endregion
 
@@ -170,21 +190,21 @@ public class LineWrapperTests
     [Fact]
     public void LineWrapper_Hangup_throws_DisposingException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Management.TriggerDispose();
 
         Action act = () => test.Hangup();
-        act.Should().Throw<DisposingException>();
+        act.ShouldThrow<DisposingException>();
     }
 
     [Fact]
     public void LineWrapper_Hangup_throws_DisposedException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Dispose();
 
         Action act = () => test.Hangup();
-        act.Should().Throw<DisposedException>();
+        act.ShouldThrow<DisposedException>();
     }
     #endregion
 
@@ -192,21 +212,21 @@ public class LineWrapperTests
     [Fact]
     public void LineWrapper_TakeOffHook_throws_DisposingException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Management.TriggerDispose();
 
         Action act = () => test.TakeOffHook();
-        act.Should().Throw<DisposingException>();
+        act.ShouldThrow<DisposingException>();
     }
 
     [Fact]
     public void LineWrapper_TakeOffHook_throws_DisposedException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Dispose();
 
         Action act = () => test.TakeOffHook();
-        act.Should().Throw<DisposedException>();
+        act.ShouldThrow<DisposedException>();
     }
     #endregion
 
@@ -214,21 +234,21 @@ public class LineWrapperTests
     [Fact]
     public void LineWrapper_PlayFile_throws_DisposingException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Management.TriggerDispose();
 
         Action act = () => test.PlayFile("");
-        act.Should().Throw<DisposingException>();
+        act.ShouldThrow<DisposingException>();
     }
 
     [Fact]
     public void LineWrapper_PlayFile_throws_DisposedException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Dispose();
 
         Action act = () => test.PlayFile("");
-        act.Should().Throw<DisposedException>();
+        act.ShouldThrow<DisposedException>();
     }
     #endregion
 
@@ -236,21 +256,21 @@ public class LineWrapperTests
     [Fact]
     public void LineWrapper_RecordToFile_throws_DisposingException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Management.TriggerDispose();
 
         Action act = () => test.RecordToFile("");
-        act.Should().Throw<DisposingException>();
+        act.ShouldThrow<DisposingException>();
     }
 
     [Fact]
     public void LineWrapper_RecordToFile_throws_DisposedException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Dispose();
 
         Action act = () => test.RecordToFile("");
-        act.Should().Throw<DisposedException>();
+        act.ShouldThrow<DisposedException>();
     }
     #endregion
 
@@ -258,21 +278,21 @@ public class LineWrapperTests
     [Fact]
     public void LineWrapper_GetDigits_throws_DisposingException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Management.TriggerDispose();
 
         Action act = () => test.GetDigits(1, "");
-        act.Should().Throw<DisposingException>();
+        act.ShouldThrow<DisposingException>();
     }
 
     [Fact]
     public void LineWrapper_GetDigits_throws_DisposedException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Dispose();
 
         Action act = () => test.GetDigits(1, "");
-        act.Should().Throw<DisposedException>();
+        act.ShouldThrow<DisposedException>();
     }
     #endregion
 
@@ -280,21 +300,21 @@ public class LineWrapperTests
     [Fact]
     public void LineWrapper_FlushDigitBuffer_throws_DisposingException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Management.TriggerDispose();
 
         Action act = () => test.FlushDigitBuffer();
-        act.Should().Throw<DisposingException>();
+        act.ShouldThrow<DisposingException>();
     }
 
     [Fact]
     public void LineWrapper_FlushDigitBuffer_throws_DisposedException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Dispose();
 
         Action act = () => test.FlushDigitBuffer();
-        act.Should().Throw<DisposedException>();
+        act.ShouldThrow<DisposedException>();
     }
     #endregion
 
@@ -302,21 +322,21 @@ public class LineWrapperTests
     [Fact]
     public void LineWrapper_Volume_throws_DisposingException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Management.TriggerDispose();
 
         Action act = () => test.Volume = 1;
-        act.Should().Throw<DisposingException>();
+        act.ShouldThrow<DisposingException>();
     }
 
     [Fact]
     public void LineWrapper_Volume_throws_DisposedException()
     {
-        var test = new LineWrapper(new NullLoggerFactory(), null,1, GetMockedLineBase().Object);
+        var test = CreateLineWrapper();
         test.Dispose();
 
         Action act = () => test.Volume = 1;
-        act.Should().Throw<DisposedException>();
+        act.ShouldThrow<DisposedException>();
     }
     #endregion
 }

@@ -21,6 +21,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<InternalsVisibleTo Include="ivrToolkit.Core.Tests" />
+	</ItemGroup>
+	
+	<ItemGroup>
 		<Content Include="System Recordings\0.wav">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>

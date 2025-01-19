@@ -55,7 +55,7 @@ public class KeypressSemaphore
         
     public async Task<bool> WaitAsync(int milliseconds, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("{method}({buffer})", nameof(Wait), milliseconds);
+        _logger.LogDebug("{method}({buffer})", nameof(WaitAsync), milliseconds);
         try
         {
             if (_semaphoreSlim != null)
@@ -84,7 +84,6 @@ public class KeypressSemaphore
     {
         _logger.LogDebug("{method}()", nameof(Teardown));
         _cts?.Cancel(); // signal the cancellation
-        _semaphoreSlim?.Dispose();
         _semaphoreSlim = null;
 
         _maxDigits = null;

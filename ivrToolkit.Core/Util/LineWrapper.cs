@@ -233,15 +233,37 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
     {
         RecordToFile(filename, 60000 * 5); // default timeout of 5 minutes
     }
-
+    
     public void RecordToFile(string filename, int timeoutMilliseconds)
+    {
+        RecordToFileInternalAsync(filename, timeoutMilliseconds,
+            (fileN, timeout) =>
+            {
+                _lineImplementation.RecordToFile(fileN, timeout);
+                return Task.CompletedTask;
+            }).GetAwaiter().GetResult();
+    }
+
+    public async Task RecordToFileAsync(string filename, CancellationToken cancellationToken)
+    {
+        await RecordToFileAsync(filename, 60000 * 5, cancellationToken); // default timeout of 5 minutes
+    }
+
+    public async Task RecordToFileAsync(string filename, int timeoutMilliseconds, CancellationToken cancellationToken)
+    {
+        await RecordToFileInternalAsync(filename, timeoutMilliseconds,
+            async (fileN, timeout) => await _lineImplementation.RecordToFileAsync(fileN, timeout, cancellationToken));
+    }
+
+    private async Task RecordToFileInternalAsync(string filename, int timeoutMilliseconds, 
+        Func<string, int, Task> recordToFileAsyncFunc)
     {
         _logger.LogDebug("{method}({filename}, {timeout})", nameof(RecordToFile), filename, timeoutMilliseconds);
         CheckDispose();
 
         try
         {
-            _lineImplementation.RecordToFile(filename, timeoutMilliseconds);
+            await recordToFileAsyncFunc(filename, timeoutMilliseconds);
         }
         catch (DisposingException)
         {

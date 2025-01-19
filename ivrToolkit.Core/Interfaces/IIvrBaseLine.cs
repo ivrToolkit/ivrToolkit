@@ -66,7 +66,7 @@ public interface IIvrBaseLine : IDisposable
     Task<CallAnalysis> DialAsync(string phoneNumber, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Plays a wav file which must be in the format of 8000hz 1 channel unsigned 8 bit PCM.
+    /// Plays a wav file which must be in the format of 8000hz 1 channel signed 16 bit PCM.
     /// </summary>
     /// <param name="filename">The wav file to play</param>
     void PlayFile(string filename);
@@ -78,13 +78,16 @@ public interface IIvrBaseLine : IDisposable
     /// </summary>
     /// <param name="filename">The file name to record to</param>
     void RecordToFile(string filename);
+    
+    Task RecordToFileAsync(string filename, CancellationToken cancellationToken);
 
     /// <summary>
     /// Records a wav file to the disk in the format of 8000hz 1 channel unsigned 8 bit PCM.
     /// </summary>
     /// <param name="filename">The file name to record to</param>
-    /// <param name="timeoutMillisconds">Maximum time to record in milliseconds</param>
-    void RecordToFile(string filename, int timeoutMillisconds);
+    /// <param name="timeoutMilliseconds">Maximum time to record in milliseconds</param>
+    void RecordToFile(string filename, int timeoutMilliseconds);
+    Task RecordToFileAsync(string filename, int timeoutMilliseconds, CancellationToken cancellationToken);
 
     /// <summary>
     /// Keep prompting for digits until number of digits is pressed or a terminator digit is pressed.

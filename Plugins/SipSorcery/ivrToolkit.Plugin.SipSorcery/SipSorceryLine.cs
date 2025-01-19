@@ -9,6 +9,10 @@ using SIPSorceryMedia.Abstractions;
 using System.Text;
 using ivrToolkit.Core.Exceptions;
 using System.Diagnostics;
+using System.Net;
+using NAudio.Wave;
+using SIPSorcery.Net;
+
 namespace ivrToolkit.Plugin.SipSorcery;
 
 internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
@@ -24,6 +28,13 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     private readonly object _lockObject = new object();
     private readonly KeypressSemaphore _keypressSemaphore;
     private bool _dialResourcesClosed;
+    
+    private const string ROOT = "System Recordings\\";
+    
+    private static WaveFileWriter? _waveFile;
+    
+    
+    
 
     public SipSorceryLine(ILoggerFactory loggerFactory, SipVoiceProperties voiceProperties, int lineNumber, SIPTransport sipTransport)
     {
@@ -42,7 +53,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         _userAgent.ClientCallAnswered += (_, _) => _logger.LogDebug("Answered");
         _userAgent.ClientCallRinging += (_, _) => _logger.LogDebug("Ringing");
         _userAgent.ClientCallTrying += (_, _) => _logger.LogDebug("Trying");
-
+        
         _userAgent.OnCallHungup += (_) =>
         {
             _logger.LogDebug("OnCallHungup");
@@ -76,31 +87,30 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         _userAgent.OnReinviteRequest += (_) => _logger.LogDebug("OnReinviteRequest");
         //_userAgent.OnRtpEvent += (rptEvent, header) => _logger.LogDebug("OnRtpEvent");
         _userAgent.RemotePutOnHold += () => _logger.LogDebug("RemotePutOnHold");
-
     }
 
     private void CloseDialResources()
     {
         _logger.LogDebug("{method}", nameof(CloseDialResources));
-
+        
         lock (_lockObject)
         {
+            // in case we hung up during a recording
+            _waveFile?.Close();
+            
             if (_dialResourcesClosed)
             {
                 _logger.LogDebug("Dial resources are already closed.");
                 return;
             }
-            _keypressSemaphore.Teardown();
             
+            _keypressSemaphore.Teardown();
             _dialResourcesClosed = true;
-        
             _voipMediaSession?.Dispose();
             _voipMediaSession = null;
 
             if (_userAgent.IsCallActive) _userAgent.Hangup();
         }
-
-        
     }
 
     public IIvrLineManagement Management => this;
@@ -124,6 +134,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         _digitBuffer = "";
         _digitPressed = false;
         LastTerminator = "";
+        _waveFile = null;
 
         var to = $"{number}@{_voiceProperties.SipProxyIp}:{_voiceProperties.SipSignalingPort}";
             
@@ -145,6 +156,11 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 
         _voipMediaSession.AudioExtrasSource.AudioSamplePeriodMilliseconds = 20;
         await _voipMediaSession.AudioExtrasSource.StartAudio();
+
+        
+        
+
+        
 
         if (!_userAgent.IsCallActive)
         {
@@ -170,10 +186,11 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
             _logger.LogDebug("{method}() - Digit Buffer is currently: {buffer}", nameof(FlushDigitBuffer), _digitBuffer);
             currentDigitBuffer = _digitBuffer;
             _digitBuffer = "";
+            _digitPressed = false;
         }
         return currentDigitBuffer;
     }
-
+    
     public string GetDigits(int numberOfDigits, string terminators)
     {
         return GetDigitsInternalAsync(numberOfDigits, terminators, 
@@ -220,6 +237,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 
         _logger.LogDebug("_semaphore wait for {} milliseconds", _voiceProperties.DigitsTimeoutInMilli);
         var worked = await wait(_voiceProperties.DigitsTimeoutInMilli);
+        _logger.LogDebug("************************************ got out of wait!!!!");
         if (!worked)
         {
             // A teardown must have happened during hangup
@@ -297,7 +315,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
             CloseDialResources();
             throw new HangupException();
         }
-        if (_digitPressed) return; // todo there is(should be) a way to stop digit presses during play.
+        if (_digitPressed) return;
         await PlayFileAsync(filename);
         await Task.Delay(300, cancellationToken);
         if (!_userAgent.IsCallActive)
@@ -319,12 +337,76 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 
     public void RecordToFile(string filename)
     {
-        throw new NotImplementedException();
+        RecordToFileAsync(filename, 0, CancellationToken.None).GetAwaiter().GetResult();
+    }
+    
+    public void RecordToFile(string filename, int timeoutMilliseconds)
+    {
+        RecordToFileAsync(filename, timeoutMilliseconds, CancellationToken.None).GetAwaiter().GetResult();
     }
 
-    public void RecordToFile(string filename, int timeoutMillisconds)
+    public async Task RecordToFileAsync(string filename, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        await RecordToFileAsync(filename, 0, cancellationToken);
+    }
+
+    public async Task RecordToFileAsync(string filename, int timeoutMilliseconds, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("{method}({fileName}, {timeout})", nameof(RecordToFileAsync), filename, timeoutMilliseconds);
+        FlushDigitBuffer();
+
+        if (timeoutMilliseconds == 0) timeoutMilliseconds = 60000 * 5; // set to 5 minutes
+
+        var saveTimeout = _voiceProperties.DigitsTimeoutInMilli;
+        try
+        {
+            await PlayFileAsync($"{ROOT}beep.wav", cancellationToken);
+
+            var wavFormat = new WaveFormat(8000, 16, 1);
+    
+            _waveFile = new WaveFileWriter(filename, wavFormat);
+            _voiceProperties.DigitsTimeoutInMilli = timeoutMilliseconds;
+
+            if (_voipMediaSession != null)
+            {
+                _voipMediaSession.OnRtpPacketReceived += OnVoipMediaSessionOnOnRtpPacketReceived;
+                await GetDigitsAsync(1, "0123456789*#", cancellationToken);
+
+                if (_voipMediaSession != null)
+                    _voipMediaSession.OnRtpPacketReceived -= OnVoipMediaSessionOnOnRtpPacketReceived;
+            }
+
+        }
+        finally
+        {
+            _waveFile?.Close();
+            _waveFile = null;
+            _voiceProperties.DigitsTimeoutInMilli = saveTimeout;
+        }
+    }
+
+    private void OnVoipMediaSessionOnOnRtpPacketReceived(IPEndPoint remoteEndPoint, SDPMediaTypesEnum mediaType, RTPPacket rtpPacket)
+    {
+        if (mediaType == SDPMediaTypesEnum.audio)
+        {
+            var sample = rtpPacket.Payload;
+
+            foreach (var aByte in sample)
+            {
+                if (rtpPacket.Header.PayloadType == (int)SDPWellKnownMediaFormatsEnum.PCMA)
+                {
+                    short pcm = NAudio.Codecs.ALawDecoder.ALawToLinearSample(aByte);
+                    byte[] pcmSample = [(byte)(pcm & 0xFF), (byte)(pcm >> 8)];
+                    _waveFile.Write(pcmSample, 0, 2);
+                }
+                else
+                {
+                    short pcm = NAudio.Codecs.MuLawDecoder.MuLawToLinearSample(aByte);
+                    byte[] pcmSample = [(byte)(pcm & 0xFF), (byte)(pcm >> 8)];
+                    _waveFile.Write(pcmSample, 0, 2);
+                }
+            }
+        }
     }
 
     public void Reset()

@@ -18,6 +18,9 @@
 	
 	<ItemGroup>
 		<None Remove="voice.properties" />
+		<None Update="System Recordings\beep.wav">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 	<ItemGroup>

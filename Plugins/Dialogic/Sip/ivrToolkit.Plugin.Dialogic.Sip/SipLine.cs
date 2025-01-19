@@ -746,10 +746,20 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
         RecordToFile(filename, 60000 * 5); // default timeout of 5 minutes
     }
 
+    public Task RecordToFileAsync(string filename, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
     public void RecordToFile(string filename, int timeoutMilliseconds)
     {
         _logger.LogDebug("RecordToFile({0}, {1})", filename, timeoutMilliseconds);
         RecordToFile(filename, "0123456789#*abcd", _currentXpb, timeoutMilliseconds);
+    }
+
+    public Task RecordToFileAsync(string filename, int timeoutMilliseconds, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
     }
 
     /// <summary>

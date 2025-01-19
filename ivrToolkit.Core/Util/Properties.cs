@@ -107,7 +107,7 @@ public class Properties : IDisposable
     {
         lock (this)
         {
-            _stuff.Add(key.ToLower(),def);
+            _stuff[key.ToLower()] = def;
         }
     }
     

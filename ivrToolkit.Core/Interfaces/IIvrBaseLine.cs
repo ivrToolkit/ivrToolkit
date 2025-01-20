@@ -74,7 +74,7 @@ public interface IIvrBaseLine : IDisposable
     Task PlayFileAsync(string filename, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Records a wav file to the disk in the format of 8000hz 1 channel unsigned 8 bit PCM. Has a default timeout of 5 minutes.
+    /// Records a wav file to the disk in the format of 8000hz 1 channel signed 16 bit PCM. Has a default timeout of 5 minutes.
     /// </summary>
     /// <param name="filename">The file name to record to</param>
     void RecordToFile(string filename);
@@ -82,7 +82,7 @@ public interface IIvrBaseLine : IDisposable
     Task RecordToFileAsync(string filename, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Records a wav file to the disk in the format of 8000hz 1 channel unsigned 8 bit PCM.
+    /// Records a wav file to the disk in the format of 8000hz 1 channel signed 16 bit PCM.
     /// </summary>
     /// <param name="filename">The file name to record to</param>
     /// <param name="timeoutMilliseconds">Maximum time to record in milliseconds</param>

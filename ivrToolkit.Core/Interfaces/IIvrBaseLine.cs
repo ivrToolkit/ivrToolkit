@@ -26,10 +26,7 @@ public interface IIvrBaseLine : IDisposable
     /// <summary>
     /// The last terminator key that was pressed
     /// </summary>
-    string LastTerminator
-    {
-        get;
-    }
+    string LastTerminator { get; set; }
 
     /// <summary>
     /// The attached line number.
@@ -94,9 +91,10 @@ public interface IIvrBaseLine : IDisposable
     /// </summary>
     /// <param name="numberOfDigits">Maximum number of digits allowed in the buffer.</param>
     /// <param name="terminators">The terminator keys</param>
+    /// <param name="timeoutMilliseconds">Override the default timeout if not zero.</param>
     /// <returns>Returns the digits pressed not including the terminator if there was one</returns>
-    string GetDigits(int numberOfDigits, string terminators);
-    Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken);
+    string GetDigits(int numberOfDigits, string terminators, int timeoutMilliseconds = 0);
+    Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken, int timeoutMilliseconds = 0);
 
     /// <summary>
     /// Returns every character including the terminator

@@ -4,10 +4,11 @@ using System.Threading.Tasks;
 using ivrToolkit.Core;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
+using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Plugin.SipSorcery;
 using Microsoft.Extensions.Logging;
 
-namespace RecordToFile;
+namespace DoubleOutbound;
 
 class Program
 {
@@ -19,14 +20,26 @@ class Program
         var loggerFactory = BuildLoggerFactory();
         
         Console.Write("Enter a phone number to call: ");
-        var phoneNumber = Console.ReadLine();
-        if (string.IsNullOrWhiteSpace(phoneNumber)) return;
+        var phoneNumber1 = Console.ReadLine();
+        if (string.IsNullOrWhiteSpace(phoneNumber1)) return;
+
+        Console.Write($"Enter a second phone number to call - [{phoneNumber1}]: ");
+        var phoneNumber2 = Console.ReadLine();
+        if (string.IsNullOrWhiteSpace(phoneNumber2)) phoneNumber2 = phoneNumber1;
+        
+
+        Console.Write($"Seconds to wait before second call starts: ");
+        var secondsString = Console.ReadLine();
+        if (string.IsNullOrWhiteSpace(secondsString)) return;
+
+        var worked = int.TryParse(secondsString, out var seconds);
+        if (!worked) return;
         
         var cancellationToken = CancellationToken.None;
         
         // this is one way to set up your properties, with a property file
         var propertiesFromFile = new SipVoiceProperties(loggerFactory, @"c:\repos\Config\SipSorcery\voice.properties");
-
+        
         var proxyIp = propertiesFromFile.SipProxyIp;
         var user = propertiesFromFile.SipAlias;
         var password = propertiesFromFile.SipPassword;
@@ -46,8 +59,27 @@ class Program
         using var lineManager = new LineManager(loggerFactory, sipVoiceProperties, sipPlugin);
         
         // grab a line
-        var line = lineManager.GetLine();
+        var line1 = lineManager.GetLine();
+        // grab another line
+        var line2 = lineManager.GetLine();
+
+        // begin the first call
+        var task1 = HandleLineAsync(line1, phoneNumber1, cancellationToken);
+
+        // begin the second call
+        await Task.Delay(seconds * 1000, cancellationToken);
+        var task2 = HandleLineAsync(line2, phoneNumber2, cancellationToken);
         
+        // wait for both to complete
+        Task.WaitAll([task1, task2], cancellationToken);
+        
+        Console.Write("Press any key to continue...: ");
+        Console.ReadKey();
+    }
+
+
+    private static async Task HandleLineAsync(IIvrLine line, string phoneNumber, CancellationToken cancellationToken)
+    {
         try
         {
             // make a call out
@@ -56,22 +88,21 @@ class Program
             {
                 // play a wav file
                 await line.PlayFileAsync($"{WAV_FILE_LOCATION}/ThankYou.wav", cancellationToken);
-
-                // play a wav file
-                await line.PlayFileAsync($"{WAV_FILE_LOCATION}/RecordMessage.wav", cancellationToken);
-                
-                // record a message - 5 minutes max
-                await line.RecordToFileAsync("myRecording.wav", cancellationToken);
-                
+            
+                // a user has to enter some digit or it is considered false and will ask again.
+                var result = await line.MultiTryPromptAsync($"{WAV_FILE_LOCATION}/Press1234.wav",
+                    value => value != "", 
+                    cancellationToken);
+            
                 // play another wav file
                 await line.PlayFileAsync($"{WAV_FILE_LOCATION}/YouPressed.wav", cancellationToken);
 
-                // speak out the last terminator that was pressed
-                await line.PlayCharactersAsync(line.LastTerminator, cancellationToken);
-                
-                // speak out the recorded message
-                await line.PlayFileAsync("myRecording.wav", cancellationToken);
-                
+                // speak out each digit of the result
+                await line.PlayCharactersAsync(result, cancellationToken);
+            
+                // say Correct or Incorrect
+                await line.PlayFileAsync(result == "1234" ? $"{WAV_FILE_LOCATION}/Correct.wav" : @"Voice Files\Incorrect.wav", cancellationToken);
+
                 // Say goodbye
                 await line.PlayFileAsync($"{WAV_FILE_LOCATION}/goodbye.wav", cancellationToken);
 
@@ -83,9 +114,6 @@ class Program
         {
             _logger.LogDebug("The person that was called hung up");
         }
-        
-        Console.Write("Press any key to continue...: ");
-        Console.ReadKey();
     }
 
     private static ILoggerFactory BuildLoggerFactory()
@@ -103,7 +131,4 @@ class Program
         SIPSorcery.LogFactory.Set(loggerFactory);
         return loggerFactory;
     }
-
-
-
 }

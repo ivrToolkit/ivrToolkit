@@ -47,8 +47,11 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     public LineStatusTypes Status => _status;
 
-
-    public string LastTerminator { get; set; }
+    public string LastTerminator
+    {
+        get => _lineImplementation.LastTerminator;
+        set => _lineImplementation.LastTerminator = value;
+    }
 
     public int LineNumber => _lineNumber;
 
@@ -277,13 +280,13 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
     }
 
 
-    public string GetDigits(int numberOfDigits, string terminators)
+    public string GetDigits(int numberOfDigits, string terminators, int timeoutMilliseconds = 0)
     {
         _logger.LogDebug("{method}({numberOfDigits}, {terminators})", nameof(GetDigits), numberOfDigits, terminators);
         CheckDispose();
         try
         {
-            var answer = _lineImplementation.GetDigits(numberOfDigits, terminators);
+            var answer = _lineImplementation.GetDigits(numberOfDigits, terminators, timeoutMilliseconds);
             return StripOffTerminator(answer, terminators);
         }
         catch (DisposingException)
@@ -299,13 +302,13 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
         return null; // will never get here
     }
 
-    public async Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken)
+    public async Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken, int timeoutMilliseconds = 0)
     {
         _logger.LogDebug("{method}({numberOfDigits}, {terminators})", nameof(GetDigitsAsync), numberOfDigits, terminators);
         CheckDispose();
         try
         {
-            var answer = await _lineImplementation.GetDigitsAsync(numberOfDigits, terminators, cancellationToken);
+            var answer = await _lineImplementation.GetDigitsAsync(numberOfDigits, terminators, cancellationToken, timeoutMilliseconds);
             return StripOffTerminator(answer, terminators);
         }
         catch (DisposingException)

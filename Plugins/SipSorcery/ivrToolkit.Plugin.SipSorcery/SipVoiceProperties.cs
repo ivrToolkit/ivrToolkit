@@ -41,7 +41,7 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     public bool SipTransportEnableTraceLogs
     {
         get => bool.Parse(GetProperty(DEBUG_SIP_TRANSPORT_ENABLE_TRACE_LOGS_KEY, DEBUG_SIP_TRANSPORT_ENABLE_TRACE_LOGS_DEFAULT));
-        set => SetProperty(DEBUG_SIP_TRANSPORT_ENABLE_TRACE_LOGS_KEY, value.ToString());
+        init => SetProperty(DEBUG_SIP_TRANSPORT_ENABLE_TRACE_LOGS_KEY, value.ToString());
     }
 
     /// <summary>
@@ -50,7 +50,7 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     public ushort SipSignalingPort
     {
         get => ushort.Parse(GetProperty(SIP_SIGNALING_PORT_KEY, SIP_SIGNALING_PORT_DEFAULT));
-        set => SetProperty(SIP_SIGNALING_PORT_KEY, value.ToString());
+        init => SetProperty(SIP_SIGNALING_PORT_KEY, value.ToString());
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     public string SipProxyIp
     {
         get => GetProperty(SIP_PROXY_IP_KEY, SIP_PROXY_IP_DEFAULT);
-        set => SetProperty(SIP_PROXY_IP_KEY, value);
+        init => SetProperty(SIP_PROXY_IP_KEY, value);
     }
 
     /// <summary>
@@ -68,7 +68,7 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     public string SipAlias
     {
         get => GetProperty(SIP_ALIAS_KEY, SIP_ALIAS_DEFAULT);
-        set => SetProperty(SIP_ALIAS_KEY, value);
+        init => SetProperty(SIP_ALIAS_KEY, value);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     public string SipPassword
     {
         get => GetProperty(SIP_PASSWORD_KEY, SIP_PASSWORD_DEFAULT);
-        set => SetProperty(SIP_PASSWORD_KEY, value);
+        init => SetProperty(SIP_PASSWORD_KEY, value);
     }
 
     public new void Dispose()

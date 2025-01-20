@@ -50,13 +50,13 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
 
     public IIvrLineManagement Management => this;
 
-    public string LastTerminator { get; set; }
-
     public int LineNumber => _lineNumber;
 
     private bool _inCallProgressAnalysis;
     private bool _disconnectionHappening;
 
+    public string LastTerminator { get; set; } = string.Empty;
+    
     private static readonly object _lockObject = new object();
 
     public SipLine(ILoggerFactory loggerFactory, DialogicSipVoiceProperties voiceProperties, int lineNumber)
@@ -510,7 +510,7 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
         InsertSipHeader(ref gcParmBlkp, $"Contact: <sip:{_voiceProperties.SipContact}>");
         SetUserInfo(ref gcParmBlkp); // set user info and delete the parameter block
 
-        var result = 0;
+        int result;
         try
         {
             gcParmBlkp = IntPtr.Zero;
@@ -872,22 +872,17 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
         FlushDigitBuffer();
     }
 
-    public string GetDigits(int numberOfDigits, string terminators)
+    public string GetDigits(int numberOfDigits, string terminators, int timeoutMilliSeconds = 0)
     {
         _logger.LogDebug("GetDigits({0}, {1})", numberOfDigits, terminators);
         return GetDigits(_dxDev, numberOfDigits, terminators);
     }
 
-    public Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken)
+    public Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken, int timeoutMilliSeconds = 0)
     {
         throw new NotImplementedException();
     }
-
-    public Task<string> GetDigitsAsync(int numberOfDigits, string terminators)
-    {
-        throw new NotImplementedException();
-    }
-
+    
     public string FlushDigitBuffer()
     {
         _logger.LogDebug("FlushDigitBuffer()");

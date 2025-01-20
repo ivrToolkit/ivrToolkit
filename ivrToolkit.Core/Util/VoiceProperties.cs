@@ -42,7 +42,7 @@ public class VoiceProperties : Properties, IDisposable
     public int PromptAttempts
     {
         get => int.Parse(GetProperty(PROMPT_ATTEMPTS_KEY, DEFAULT_PROMPT_ATTEMPTS));
-        set => SetProperty(PROMPT_ATTEMPTS_KEY, value.ToString());
+        init => SetProperty(PROMPT_ATTEMPTS_KEY, value.ToString());
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ public class VoiceProperties : Properties, IDisposable
     public int PromptBlankAttempts
     {
         get => int.Parse(GetProperty(PROMPT_BLANK_ATTEMPTS_KEY, DEFAULT_PROMPT_BLANK_ATTEMPTS));
-        set => SetProperty(PROMPT_BLANK_ATTEMPTS_KEY, value.ToString());
+        init => SetProperty(PROMPT_BLANK_ATTEMPTS_KEY, value.ToString());
     }
 
     /// <summary>
@@ -60,7 +60,7 @@ public class VoiceProperties : Properties, IDisposable
     public int DigitsTimeoutInMilli
     {
         get => int.Parse(GetProperty(DIGITS_TIMEOUT_KEY, DEFAULT_DIGITS_TIMEOUT));
-        set => SetProperty(DIGITS_TIMEOUT_KEY, value.ToString());
+        init => SetProperty(DIGITS_TIMEOUT_KEY, value.ToString());
     }
 
     public new void Dispose()

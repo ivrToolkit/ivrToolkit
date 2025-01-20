@@ -1,7 +1,7 @@
 ivrToolkit
 ==========
 
-An IVR toolkit library for dotNet developers wanting to write telephony applications. Plugins include a Dialogic driver and a windows sound card driver.
+An IVR toolkit library for dotNet developers wanting to write telephony applications. Plugins include a SipSorcery plugin, a Dialogic SIP plugin and a Dialogic analog board plugin. 
 
 https://www.ivrToolkit.com
 

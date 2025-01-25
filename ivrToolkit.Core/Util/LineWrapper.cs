@@ -61,7 +61,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
         CheckDisposed();
         CheckDisposing();
     }
-
+    
     public void WaitRings(int rings)
     {
         _logger.LogDebug("{method}({rings})", nameof(WaitRings), rings);
@@ -73,6 +73,29 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
         _status = LineStatusTypes.Connected;
         CheckDisposing();
+    }
+
+    public async Task WaitRingsAsync(int rings, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("{method}({rings})", nameof(WaitRings), rings);
+        CheckDispose();
+
+        _status = LineStatusTypes.AcceptingCalls;
+
+        await _lineImplementation.WaitRingsAsync(rings, cancellationToken);
+
+        _status = LineStatusTypes.Connected;
+        CheckDisposing();
+    }
+
+    public void StartIncomingListener(Func<IIvrLine, CancellationToken, Task> callback, CancellationToken cancellationToken)
+    {
+        _lineImplementation.StartIncomingListener(callback, this, cancellationToken);
+    }
+
+    void IIvrBaseLine.StartIncomingListener(Func<IIvrLine, CancellationToken, Task> callback, IIvrLine line, CancellationToken cancellationToken)
+    {
+        _lineImplementation.StartIncomingListener(callback, line, cancellationToken);
     }
 
     public void Hangup()

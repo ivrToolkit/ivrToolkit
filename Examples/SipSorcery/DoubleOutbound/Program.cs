@@ -40,15 +40,15 @@ class Program
         // this is one way to set up your properties, with a property file
         var propertiesFromFile = new SipVoiceProperties(loggerFactory, @"c:\repos\Config\SipSorcery\voice.properties");
         
-        var proxyIp = propertiesFromFile.SipProxyIp;
-        var user = propertiesFromFile.SipAlias;
+        var sipServer = propertiesFromFile.SipServer;
+        var sipUsername = propertiesFromFile.SipUsername;
         var password = propertiesFromFile.SipPassword;
         
         // otherwise, you can just set up your properties this way
         var sipVoiceProperties = new SipVoiceProperties(loggerFactory)
         {
-            SipProxyIp = proxyIp,
-            SipAlias = user,
+            SipServer = sipServer,
+            SipUsername = sipUsername,
             SipPassword = password
         };
         

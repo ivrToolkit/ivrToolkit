@@ -22,6 +22,13 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
 
     private const string SIP_PASSWORD_KEY = "sip.password";
     private const string SIP_PASSWORD_DEFAULT = "";
+    
+    private const string SIP_SERVER = "sip.server";
+    
+    private const string SIP_USERNAME = "sip.username";
+    
+    private const string SIP_LOCAL_ENDPOINT = "sip.localEndpoint";
+    private const string SIP_LOCAL_ENDPOINT_DEFAULT = "0.0.0.0:5060";
 
     public SipVoiceProperties(ILoggerFactory loggerFactory, string fileName) : base(loggerFactory, fileName)
     {
@@ -47,6 +54,7 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     /// <summary>
     /// The SIP port used for SIP signaling
     /// </summary>
+    [Obsolete("Now combined with SipServer")]
     public ushort SipSignalingPort
     {
         get => ushort.Parse(GetProperty(SIP_SIGNALING_PORT_KEY, SIP_SIGNALING_PORT_DEFAULT));
@@ -56,6 +64,7 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     /// <summary>
     /// The SIP proxy IP address. This is the address of the PBX that will be used to connect to the SIP Trunk.
     /// </summary>
+    [Obsolete("Now combined with SipServer")]
     public string SipProxyIp
     {
         get => GetProperty(SIP_PROXY_IP_KEY, SIP_PROXY_IP_DEFAULT);
@@ -65,6 +74,7 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     /// <summary>
     /// The SIP account on the PBX server. This is the account that will be used to make and receive calls for this ADS SIP instance.
     /// </summary>
+    [Obsolete("Use SipUsername instead")]
     public string SipAlias
     {
         get => GetProperty(SIP_ALIAS_KEY, SIP_ALIAS_DEFAULT);
@@ -79,6 +89,68 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
         get => GetProperty(SIP_PASSWORD_KEY, SIP_PASSWORD_DEFAULT);
         init => SetProperty(SIP_PASSWORD_KEY, value);
     }
+    
+    /// <summary>
+    /// This is the address of the PBX that will be used to connect to the SIP Trunk.
+    /// Format can be IpAddress[:port]
+    /// You do not need to specify a port. The default is 5060
+    /// </summary>
+    public string SipServer
+    {
+        get
+        {
+            var result = GetProperty(SIP_SERVER, "");
+            if (string.IsNullOrWhiteSpace(result))
+            {
+                result = $"{SipProxyIp}:{SipSignalingPort}";
+            }
+            else
+            {
+                if (result.StartsWith("sip:", StringComparison.OrdinalIgnoreCase))
+                {
+                    result = result.Substring(4); // strip off sip: if there is one.
+                }
+                if (!result.Contains(":"))
+                {
+                    result += ":5060";
+                }
+            }
+            return result;
+        }
+        init => SetProperty(SIP_SERVER, value);
+    }
+
+    ///
+    /// <summary>
+    /// The username for registry. In FreePBX it is the extension.
+    /// </summary>
+    public string SipUsername
+    {
+        get => GetProperty(SIP_USERNAME, SipAlias);
+        init => SetProperty(SIP_USERNAME, value);
+    }
+    
+    /// <summary>
+    /// The endpoint for the sip transport. Default is 0.0.0.0:5060.
+    /// Format is IpAddress[:port]
+    /// You do no need to specify a port. The default is 5060. This port can be any available port on your
+    /// local computer. You can specify 0 to use a dynamic port.
+    /// It can be quicker to use your actual IP rather than 0.0.0.0
+    /// </summary>
+    public string SipLocalEndpoint
+    {
+        get
+        {
+            var result = GetProperty(SIP_LOCAL_ENDPOINT, SIP_LOCAL_ENDPOINT_DEFAULT);
+            if (!result.Contains(":"))
+            {
+                result += ":5060";
+            }
+            return result;
+        }
+        init => SetProperty(SIP_SERVER, value);
+    }
+    
 
     public new void Dispose()
     {

@@ -52,6 +52,16 @@ public class AnalogLine : IIvrBaseLine, IIvrLineManagement
         WaitRings(_voiceh, rings);
     }
 
+    public Task WaitRingsAsync(int rings, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    void IIvrBaseLine.StartIncomingListener(Func<IIvrLine, CancellationToken, Task> callback, IIvrLine line, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
     public void Hangup()
     {
         Hangup(_voiceh);

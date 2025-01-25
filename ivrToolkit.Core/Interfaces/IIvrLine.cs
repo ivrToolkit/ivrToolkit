@@ -5,6 +5,7 @@
 // 
 // 
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Enums;
@@ -30,5 +31,7 @@ public interface IIvrLine : IIvrBaseLine, IPromptMethods, IPlayMethods
     /// Use this within long computational methods to check if the line has hung-up or stopped.
     /// </summary>
     void CheckDispose();
+    
+    public void StartIncomingListener(Func<IIvrLine, CancellationToken, Task> callback, CancellationToken cancellationToken);
 
 }

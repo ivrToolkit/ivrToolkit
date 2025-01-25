@@ -32,10 +32,19 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     private const string ROOT = "System Recordings\\";
     
     private static WaveFileWriter? _waveFile;
-    public SipSorceryLine(ILoggerFactory loggerFactory, SipVoiceProperties voiceProperties, int lineNumber, SIPTransport sipTransport)
+    
+    private readonly InviteManager _inviteManager;
+
+    public SipSorceryLine(ILoggerFactory loggerFactory, 
+        SipVoiceProperties voiceProperties, 
+        int lineNumber, 
+        SIPTransport sipTransport,
+        InviteManager inviteManager)
     {
         loggerFactory.ThrowIfNull(nameof(loggerFactory));
         _voiceProperties = voiceProperties.ThrowIfNull(nameof(voiceProperties));
+        _inviteManager = inviteManager.ThrowIfNull(nameof(inviteManager));
+        
         _lineNumber = lineNumber;
 
         _logger = loggerFactory.CreateLogger<SipSorceryLine>();
@@ -79,7 +88,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
             }
         };
 
-        _userAgent.OnIncomingCall += (_, _) => _logger.LogDebug("OnIncomingCall");
+        //_userAgent.OnIncomingCall += (_, _) => _logger.LogDebug("OnIncomingCall");
         _userAgent.OnReinviteRequest += (_) => _logger.LogDebug("OnReinviteRequest");
         //_userAgent.OnRtpEvent += (rptEvent, header) => _logger.LogDebug("OnRtpEvent");
         _userAgent.RemotePutOnHold += () => _logger.LogDebug("RemotePutOnHold");
@@ -122,7 +131,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         return DialAsync(number, answeringMachineLengthInMilliseconds, CancellationToken.None).GetAwaiter().GetResult(); // blocking
     }
 
-    public async Task<CallAnalysis> DialAsync(string number, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken)
+    private void ResetLine()
     {
         // reset the line
         _dialResourcesClosed = false;
@@ -130,8 +139,12 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         _digitBuffer = "";
         _digitPressed = false;
         _waveFile = null;
-
-        var to = $"{number}@{_voiceProperties.SipProxyIp}:{_voiceProperties.SipSignalingPort}";
+    }
+    
+    public async Task<CallAnalysis> DialAsync(string number, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken)
+    {
+        ResetLine();
+        var to = $"{number}@{_voiceProperties.SipServer}";
             
         _voipMediaSession = new VoIPMediaSession();
         _voipMediaSession.AcceptRtpFromAny = true;
@@ -139,7 +152,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 
         // Place the call and wait for the result.
         var startTime = Stopwatch.GetTimestamp();
-        var callResult = await _userAgent.Call(to, _voiceProperties.SipAlias, _voiceProperties.SipPassword, _voipMediaSession);
+        var callResult = await _userAgent.Call(to, _voiceProperties.SipUsername, _voiceProperties.SipPassword, _voipMediaSession);
         var duration = Stopwatch.GetElapsedTime(startTime);
         _logger.LogInformation("Dial call duration: {duration}", duration);
 
@@ -150,6 +163,9 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         }
 
         _voipMediaSession.AudioExtrasSource.AudioSamplePeriodMilliseconds = 20;
+        
+        
+        
         await _voipMediaSession.AudioExtrasSource.StartAudio();
 
         
@@ -292,7 +308,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
             nameof(GetUpToAndIncludingTerminator), numberOfDigits, terminators);
         return "";
     }
-
+    
     public void Hangup()
     {
         _logger.LogDebug("{method}()", nameof(Hangup));
@@ -435,15 +451,65 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     public void TriggerDispose()
     {
         _logger.LogDebug("{method} for line: {lineNumber}", nameof(TriggerDispose), _lineNumber);
-
-        //var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
-        //result.ThrowIfStandardRuntimeLibraryError(_dxDev);
-        //_eventWaiter.DisposeTriggerActivated = true;
+        Dispose();
     }
 
     public void WaitRings(int rings)
     {
         throw new NotImplementedException();
     }
+    
+    public Task WaitRingsAsync(int rings, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+    
+    void IIvrBaseLine.StartIncomingListener(Func<IIvrLine, CancellationToken, Task> callback, IIvrLine line, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("StartIncomingListener({lineNo})", line.LineNumber);
 
+        _userAgent.OnIncomingCall += async (ua, request) =>
+        {
+            _logger.LogDebug("Line: {lineNo}, Incoming call from {remoteSIPEndPoint}.", line.LineNumber, request.RemoteSIPEndPoint);
+
+
+            if (!request.StatusLine.Contains($"sip:{_voiceProperties.SipUsername}@"))
+            {
+                _logger.LogError("We have should not be getting: " + request.StatusLine);
+                ua.Cancel();
+                return;
+            }
+            
+            
+            if (!_inviteManager.IsAvailable(request))
+            {
+                _logger.LogDebug("We have already handled this INVITE");
+                ua.Cancel();
+                return;
+            }
+            
+            ResetLine();
+
+            _logger.LogDebug("About to accept the call");
+            var uas = _userAgent.AcceptCall(request);
+            
+            _logger.LogDebug(request.StatusLine); // INVITE sip:201@192.168.3.193:5060 SIP/2.0
+            
+            _voipMediaSession = new VoIPMediaSession();
+            _voipMediaSession.AcceptRtpFromAny = true;
+            _voipMediaSession.TakeOffHold();
+
+            _voipMediaSession.AudioExtrasSource.AudioSamplePeriodMilliseconds = 20;
+            _voipMediaSession.AudioExtrasSource.SetAudioSourceFormat(new AudioFormat(SDPWellKnownMediaFormatsEnum.PCMU));
+
+            await _voipMediaSession.AudioExtrasSource.StartAudio();
+
+            await Task.Delay(2000, cancellationToken); // I want to hear a ring
+            await ua.Answer(uas, _voipMediaSession);
+            
+            // execute the callback
+            await callback(line, cancellationToken);
+        };
+    }
+    
 }

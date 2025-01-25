@@ -251,6 +251,16 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
         }
     }
 
+    public Task WaitRingsAsync(int rings, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    void IIvrBaseLine.StartIncomingListener(Func<IIvrLine, CancellationToken, Task> callback, IIvrLine line, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
     public void Hangup()
     {
         _logger.LogDebug("Hangup(); - crn = {0}", _callReferenceNumber);

@@ -62,7 +62,7 @@ public class VoiceProperties : Properties, IDisposable
         get => int.Parse(GetProperty(DIGITS_TIMEOUT_KEY, DEFAULT_DIGITS_TIMEOUT));
         init => SetProperty(DIGITS_TIMEOUT_KEY, value.ToString());
     }
-
+    
     public new void Dispose()
     {
         _logger.LogDebug("{method}()", nameof(Dispose));

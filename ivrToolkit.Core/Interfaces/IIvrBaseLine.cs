@@ -41,7 +41,10 @@ public interface IIvrBaseLine : IDisposable
     /// </summary>
     /// <param name="rings">The number of rings to wait before answering</param>
     void WaitRings(int rings);
+    Task WaitRingsAsync(int rings, CancellationToken cancellationToken);
 
+    protected internal void StartIncomingListener(Func<IIvrLine, CancellationToken, Task> callback, IIvrLine line, CancellationToken cancellationToken);
+    
     /// <summary>
     /// Forces a hangup on the line.
     /// </summary>

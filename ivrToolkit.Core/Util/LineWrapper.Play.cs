@@ -3,7 +3,6 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using ivrToolkit.Core.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Core.Util;
@@ -29,11 +28,24 @@ internal partial class LineWrapper
     /// <param name="phoneNumber">The phone number must be 7, 10 or 11 characters long with no spaces or dashes. Just numbers.</param>
     public void PlayPhoneNumber(string phoneNumber)
     {
+        if (phoneNumber == null) return;
+        
         _logger.LogDebug("{method}({phoneNumber})", phoneNumber, nameof(PlayPhoneNumber));
         phoneNumber = phoneNumber.PadLeft(11);
         phoneNumber = phoneNumber.Substring(0, 1) + " " + phoneNumber.Substring(1, 3) + " " + 
                       phoneNumber.Substring(4, 3) + " " + phoneNumber.Substring(7, 4);
         PlayCharacters(phoneNumber.Trim());
+    }
+    
+    public async Task PlayPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken)
+    {
+        if (phoneNumber == null) return;
+        
+        _logger.LogDebug("{method}({phoneNumber})", phoneNumber, nameof(PlayPhoneNumber));
+        phoneNumber = phoneNumber.PadLeft(11);
+        phoneNumber = phoneNumber.Substring(0, 1) + " " + phoneNumber.Substring(1, 3) + " " + 
+                      phoneNumber.Substring(4, 3) + " " + phoneNumber.Substring(7, 4);
+        await PlayCharactersAsync(phoneNumber.Trim(), cancellationToken);
     }
 
     /// <summary>
@@ -321,7 +333,7 @@ internal partial class LineWrapper
             switch (c)
             {
                 case ' ':
-                    await Task.Delay(500);
+                    await _pauseHandler.PauseAsync(500, CancellationToken.None);
                     break;
                 case '*':
                     await playF("star");

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Interfaces;
 
-namespace ivrToolkit.Core.Tests.LineWrapperPlay;
+namespace ivrToolkit.Core.Tests.LineWrapperTests;
 
 public class FakeLine : IIvrBaseLine
 {
@@ -56,7 +56,7 @@ public class FakeLine : IIvrBaseLine
 
     public void PlayFile(string filename)
     {
-        throw new NotImplementedException();
+        PlayFileAsync(filename, CancellationToken.None).GetAwaiter().GetResult();
     }
 
     public async Task PlayFileAsync(string filename, CancellationToken cancellationToken)

@@ -13,6 +13,13 @@ public interface IPlayMethods
     void PlayPhoneNumber(string phoneNumber);
 
     /// <summary>
+    /// Plays a phone number as long as it is 7, 10 or 11 characters long.
+    /// </summary>
+    /// <param name="phoneNumber">The phone number must be 7, 10 or 11 characters long with no spaces or dashes. Just numbers.</param>
+    /// <param name="cancellationToken">The cancellation token for the operation.</param>
+    Task PlayPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Plays a DateTime object given based on the mask parameter.<br/>
     /// </summary>
     /// <param name="dateTime">Can be just the date, just the time or both</param>

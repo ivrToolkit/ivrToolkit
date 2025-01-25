@@ -10,7 +10,7 @@ using Xunit;
 
 namespace ivrToolkit.Core.Tests;
 
-public class LineWrapperTests
+public class OldLineWrapperTests
 {
 
     private Mock<IIvrBaseLine> GetMockedLineBase()
@@ -67,7 +67,7 @@ public class LineWrapperTests
     }
 
     [Fact]
-    public void LineWrapper_Dial_anseringMachineLengthInMs_999_throws_ArgumentOutOfRangeException()
+    public void LineWrapper_Dial_answeringMachineLengthInMs_999_throws_ArgumentOutOfRangeException()
     {
         var test = CreateLineWrapper();
         test.Management.TriggerDispose();

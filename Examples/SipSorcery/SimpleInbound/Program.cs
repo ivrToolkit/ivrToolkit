@@ -23,6 +23,7 @@ class Program
         // this is one way to set up your properties, with a property file
         var propertiesFromFile = new SipVoiceProperties(loggerFactory, @"c:\repos\Config\SipSorcery\voice.properties")
         {
+            // normally this is 5 but I needed the line to stay busy while I call in with another phone.
             PromptBlankAttempts = 99
         };
         
@@ -37,8 +38,8 @@ class Program
         line1.StartIncomingListener(HandleIncomingCallAsync, cancellationToken);
         
         // grab another line
-        //var line2 = lineManager.GetLine();
-        //line2.StartIncomingListener(HandleIncomingCallAsync, cancellationToken);
+        var line2 = lineManager.GetLine();
+        line2.StartIncomingListener(HandleIncomingCallAsync, cancellationToken);
         
         Console.Write("Press any key to continue...: ");
         Console.ReadKey();

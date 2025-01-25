@@ -312,27 +312,29 @@ internal partial class LineWrapper
     private async Task PlayCharactersInternalAsync(string characters, 
         Func<string, Task> playF)
     {
-        characters.ThrowIfNull(nameof(characters));
+        if (characters == null) return;
         
         _logger.LogDebug("{method}({characters})", nameof(PlayCharactersInternalAsync), characters);
         var chars = characters.ToCharArray();
         foreach (var c in chars)
         {
-            if (c == ' ')
+            switch (c)
             {
-                await Task.Delay(500);
-            }
-            else if (c == '*')
-            {
-                await playF("star");
-            }
-            else if (c == '#')
-            {
-                await playF("pound");
-            }
-            else
-            {
-                await playF(c.ToString(CultureInfo.InvariantCulture));
+                case ' ':
+                    await Task.Delay(500);
+                    break;
+                case '*':
+                    await playF("star");
+                    break;
+                case '#':
+                    await playF("pound");
+                    break;
+                default:
+                    if (c is >= 'A' and <= 'Z' or >= 'a' and <= 'z' or >= '0' and <= '9')
+                    {
+                        await playF(c.ToString(CultureInfo.InvariantCulture));
+                    }
+                    break;
             }
         }
     }

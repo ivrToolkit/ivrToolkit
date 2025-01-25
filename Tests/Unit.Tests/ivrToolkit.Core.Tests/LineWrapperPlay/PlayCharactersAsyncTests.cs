@@ -12,7 +12,7 @@ namespace ivrToolkit.Core.Tests.LineWrapperPlay;
 public class PlayCharactersAsyncTests
 {
     [Fact]
-    public async Task Null()
+    public async Task Null_Does_Nothing()
     {
         var loggerFactory = new NullLoggerFactory();
         var properties = new VoiceProperties(loggerFactory);
@@ -99,5 +99,19 @@ public class PlayCharactersAsyncTests
             () => actual[62].ShouldBe(@"System Recordings\star.wav"),
             () => actual[63].ShouldBe(@"System Recordings\pound.wav")
         );
+    }
+
+    [Fact]
+    public async Task InvalidCharacters()
+    {
+        var loggerFactory = new NullLoggerFactory();
+        var properties = new VoiceProperties(loggerFactory);
+        var fakeLine = new FakeLine();
+        var lineWrapper = new LineWrapper(loggerFactory, properties, 1, fakeLine);
+
+        await lineWrapper.PlayCharactersAsync("{}[];'<>.,",
+            CancellationToken.None);
+        var actual = fakeLine.PlayList;
+        actual.Count.ShouldBe(0);
     }
 }

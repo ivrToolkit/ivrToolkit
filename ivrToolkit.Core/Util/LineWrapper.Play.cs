@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using ivrToolkit.Core.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Core.Util;
@@ -311,6 +312,8 @@ internal partial class LineWrapper
     private async Task PlayCharactersInternalAsync(string characters, 
         Func<string, Task> playF)
     {
+        characters.ThrowIfNull(nameof(characters));
+        
         _logger.LogDebug("{method}({characters})", nameof(PlayCharactersInternalAsync), characters);
         var chars = characters.ToCharArray();
         foreach (var c in chars)

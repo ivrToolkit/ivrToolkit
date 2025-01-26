@@ -380,22 +380,22 @@ internal partial class LineWrapper
         _logger.LogDebug("{method}({number})", nameof(PlayNumberInternalAsync), number);
         var n =number.ToString("G");
         var index = n.IndexOf(".", StringComparison.Ordinal);
-        string w;
-        var f = "";
+        string whole;
+        var fraction = "";
         if (index == -1)
         {
-            w = n;
+            whole = n;
         }
         else
         {
-            w = n.Substring(0, index);
-            f = n.Substring(index + 1);
+            whole = n.Substring(0, index);
+            fraction = n.Substring(index + 1);
         }
-        await playInteger(long.Parse(w));
-        if (f != "")
+        await playInteger(long.Parse(whole));
+        if (fraction != "")
         {
             await playF("point");
-            var chars = f.ToCharArray();
+            var chars = fraction.ToCharArray();
             foreach (var c in chars)
             {
                 await playF(c.ToString(CultureInfo.InvariantCulture));
@@ -546,43 +546,55 @@ internal partial class LineWrapper
         Func<DateTime, string, Task> playDate)
     {
         _logger.LogDebug("{method}({str})", nameof(PlayStringInternalAsync), str);
-        var parts = str.Split(new[]{','});
+        var parts = str.Split(',');
         foreach (var part in parts)
         {
-            var sections = part.Split(new[] { '|' });
+            var sections = part.Split('|');
+            if (sections.Length is not (2 or 3))
+            {
+                throw new FormatException($"Requires 1 or 2 pipes: {part}.");
+            }
+            
             string mask = null;
             var data = sections[0];
-            var command = sections[1];
+            var command = sections[1].ToLower();
             if (sections.Length > 2)
             {
                 mask = sections[2];
             }
-            if (command == "C") // character
+            switch (command)
             {
-                await playCharacters(data);
-            }
-            else if (command == "D") // date
-            {
-                // US english culture does month/day/year instead of day/month/year
-                var dt = DateTime.Parse(data, new CultureInfo("en-US"));
-                await playDate(dt, mask);
-            }
-            else if (command == "F") // file
-            {
-                // TODO these are not system files - legacy todo statement
-                await playFile(data);
-            }
-            else if (command == "M") // money
-            {
-                await playMoney(double.Parse(data));
-            }
-            else if (command == "N") // number
-            {
-                await playNumber(double.Parse(data));
-            }
-            else if (command == "O") // ordinal
-            {
-                await playOrdinal(int.Parse(data));
+                // character
+                case "c":
+                    await playCharacters(data);
+                    break;
+                // date
+                case "d":
+                {
+                    // US english culture does month/day/year instead of day/month/year
+                    var dt = DateTime.Parse(data, new CultureInfo("en-US"));
+                    await playDate(dt, mask);
+                    break;
+                }
+                // file
+                case "f":
+                    // TODO these are not system files - legacy todo statement
+                    await playFile(data);
+                    break;
+                // money
+                case "m":
+                    await playMoney(double.Parse(data));
+                    break;
+                // number
+                case "n":
+                    await playNumber(double.Parse(data));
+                    break;
+                // ordinal
+                case "o":
+                    await playOrdinal(int.Parse(data));
+                    break;
+                default:
+                    throw new FormatException($"Invalid command: {command}");
             }
         }
     }

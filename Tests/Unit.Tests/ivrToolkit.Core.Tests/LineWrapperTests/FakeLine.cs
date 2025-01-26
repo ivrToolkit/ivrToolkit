@@ -7,7 +7,7 @@ using ivrToolkit.Core.Interfaces;
 
 namespace ivrToolkit.Core.Tests.LineWrapperTests;
 
-public class FakeLine : IIvrBaseLine
+public class FakeLine : IIvrBaseLine, IIvrLineManagement
 {
     public List<string> PlayList = new();
     
@@ -16,7 +16,7 @@ public class FakeLine : IIvrBaseLine
         throw new NotImplementedException();
     }
 
-    public IIvrLineManagement Management { get; }
+    public IIvrLineManagement Management => this;
     public string LastTerminator { get; set; }
     public int LineNumber { get; }
     public void WaitRings(int rings)
@@ -105,5 +105,9 @@ public class FakeLine : IIvrBaseLine
     public void Reset()
     {
         throw new NotImplementedException();
+    }
+
+    public void TriggerDispose()
+    {
     }
 }

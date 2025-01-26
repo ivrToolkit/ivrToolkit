@@ -137,7 +137,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
         _logger.LogDebug("CallAnalysis is: {callAnalysis}", result.ToString());
 
-        if (result == CallAnalysis.Stopped) ThrowDisposingException();
+        if (result == CallAnalysis.Stopped) throw ThrowDisposingException();
 
         if (result == CallAnalysis.AnsweringMachine || result == CallAnalysis.Connected)
         {
@@ -167,7 +167,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
         _logger.LogDebug("CallAnalysis is: {callAnalysis}", result.ToString());
 
-        if (result == CallAnalysis.Stopped) ThrowDisposingException();
+        if (result == CallAnalysis.Stopped) throw ThrowDisposingException();
 
         if (result == CallAnalysis.AnsweringMachine || result == CallAnalysis.Connected)
         {
@@ -231,7 +231,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
         }
         catch (DisposingException)
         {
-            ThrowDisposingException();
+            throw ThrowDisposingException();
         }
         catch (HangupException)
         {
@@ -250,7 +250,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
         }
         catch (DisposingException)
         {
-            ThrowDisposingException();
+            throw ThrowDisposingException();
         }
         catch (HangupException)
         {
@@ -297,7 +297,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
         }
         catch (DisposingException)
         {
-            ThrowDisposingException();
+            throw ThrowDisposingException();
         }
         catch (HangupException)
         {
@@ -318,7 +318,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
         }
         catch (DisposingException)
         {
-            ThrowDisposingException();
+            throw ThrowDisposingException();
         }
         catch (HangupException)
         {
@@ -340,7 +340,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
         }
         catch (DisposingException)
         {
-            ThrowDisposingException();
+            throw ThrowDisposingException();
         }
         catch (HangupException)
         {
@@ -412,25 +412,28 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     private void CheckDisposed()
     {
-        if (_disposed) ThrowDisposedException();
+        if (_disposed)
+        {
+            throw ThrowDisposedException();
+        }
     }
 
     private void CheckDisposing()
     {
-        if (_disposeTriggerActivated) ThrowDisposingException();
+        if (_disposeTriggerActivated) throw ThrowDisposingException();
     }
 
-    private void ThrowDisposingException()
+    private DisposingException ThrowDisposingException()
     {
         _logger.LogDebug("{method}()", nameof(ThrowDisposingException));
         _disposeTriggerActivated = false;
-        throw new DisposingException();
+        return new DisposingException();
     }
 
-    private void ThrowDisposedException()
+    private DisposedException ThrowDisposedException()
     {
         _logger.LogDebug("{method}()", nameof(ThrowDisposedException));
-        throw new DisposedException($"Line {_lineNumber} has already been disposed");
+        return new DisposedException($"Line {_lineNumber} has already been disposed");
     }
 
     public void Reset()

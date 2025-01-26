@@ -546,10 +546,10 @@ internal partial class LineWrapper
         Func<DateTime, string, Task> playDate)
     {
         _logger.LogDebug("{method}({str})", nameof(PlayStringInternalAsync), str);
-        var parts = str.Split(',');
+        var parts = str.Split(',', StringSplitOptions.RemoveEmptyEntries);
         foreach (var part in parts)
         {
-            var sections = part.Split('|');
+            var sections = part.Split('|', StringSplitOptions.RemoveEmptyEntries);
             if (sections.Length is not (2 or 3))
             {
                 throw new FormatException($"Requires 1 or 2 pipes: {part}.");

@@ -66,6 +66,9 @@ public class PlayStringTests
     [InlineData("2025-01-26|d|m", new[] {"January"})]
     [InlineData("23|o", new[] { "ord23"})]
     [InlineData("somefile.wav|f", new[] { ">somefile.wav"})]
+    [InlineData("abc|c,23|o", new[] {"a","b","c", "ord23"})]
+    [InlineData("abc|c,", new[] {"a","b","c"})]
+    [InlineData(",,abc||c,,", new[] {"a","b","c"})]
     public async Task Strings(string myString, string[] expect)
     {
         var lineWrapper = GetLineWrapper(out FakeLine fakeLine);

@@ -287,26 +287,18 @@ internal partial class LineWrapper
         Func<string, Task> playF)
     {
         _logger.LogDebug("{method}({number})", nameof(PlayMoneyInternalAsync), number);
-        var n = number.ToString("F"); // two decimal places
-        var index = n.IndexOf(".", StringComparison.Ordinal);
-        string w;
-        var f = "";
-        if (index == -1)
-        {
-            w = n;
-        }
-        else
-        {
-            w = n.Substring(0, index);
-            f = n.Substring(index + 1);
-        }
-        var whole = long.Parse(w);
+        var numberAsString = number.ToString("F"); // two decimal places
+        var index = numberAsString.IndexOf(".", StringComparison.Ordinal);
+        var wholePart = numberAsString.Substring(0, index);
+        var fractionPart = numberAsString.Substring(index + 1);
+            
+        var whole = long.Parse(wholePart);
         await playInteger(whole);
         await playF(whole == 1 ? "dollar" : "dollars");
-        if (f != "")
+        if (fractionPart != "")
         {
             await playF("and");
-            var cents = long.Parse(f);
+            var cents = long.Parse(fractionPart);
             await playInteger(cents);
             await playF( cents == 1 ? "cent" : "cents");
         }

@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.Util;
 using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
@@ -19,6 +17,67 @@ public class PlayMoneyTests
         fakeLine = new FakeLine();
         var testPauser = new TestPause(fakeLine);
         return new LineWrapper(loggerFactory, properties, 1, fakeLine, testPauser);
+    }
+    
+    [Fact]
+    public async Task Say_10_billion()
+    {
+        var lineWrapper = GetLineWrapper(out FakeLine fakeLine);
+        await lineWrapper.PlayMoneyAsync(10_000_000_000, CancellationToken.None);
+
+        var actual = fakeLine.PlayList;
+        
+        var expected = new List<string>()
+        {
+            "System Recordings\\10.wav",
+            "System Recordings\\Billion.wav",
+            "System Recordings\\dollars.wav",
+            "System Recordings\\and.wav",
+            "System Recordings\\0.wav",
+            "System Recordings\\cents.wav",
+        };
+        actual.ShouldBeEquivalentTo(expected);
+    }
+
+    [Fact]
+    public async Task Say_10_million()
+    {
+        var lineWrapper = GetLineWrapper(out FakeLine fakeLine);
+        await lineWrapper.PlayMoneyAsync(10_000_000, CancellationToken.None);
+
+        var actual = fakeLine.PlayList;
+        
+        var expected = new List<string>()
+        {
+            "System Recordings\\10.wav",
+            "System Recordings\\Million.wav",
+            "System Recordings\\dollars.wav",
+            "System Recordings\\and.wav",
+            "System Recordings\\0.wav",
+            "System Recordings\\cents.wav",
+        };
+        actual.ShouldBeEquivalentTo(expected);
+    }
+    
+    [Fact]
+    public async Task Say_negative_10_million()
+    {
+        var lineWrapper = GetLineWrapper(out FakeLine fakeLine);
+        await lineWrapper.PlayMoneyAsync(-10_000_000, CancellationToken.None);
+
+        var actual = fakeLine.PlayList;
+        
+        var expected = new List<string>()
+        {
+            "System Recordings\\negative.wav",
+            "System Recordings\\10.wav",
+            "System Recordings\\Million.wav",
+            "System Recordings\\dollars.wav",
+            "System Recordings\\and.wav",
+            "System Recordings\\0.wav",
+            "System Recordings\\cents.wav",
+        };
+        actual.ShouldBeEquivalentTo(expected);
     }
     
     [Fact]

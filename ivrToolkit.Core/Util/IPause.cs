@@ -6,7 +6,7 @@ namespace ivrToolkit.Core.Util;
 /// <summary>
 /// Used to inject the delay into the LineWrapper. This is to facility unit testing
 /// </summary>
-internal interface IPauser 
+internal interface IPause 
 {
     Task PauseAsync(int delayInMilli, CancellationToken cancellationToken);
 }

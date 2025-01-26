@@ -16,7 +16,7 @@ public class PlayCharactersTests
         var loggerFactory = new NullLoggerFactory();
         var properties = new VoiceProperties(loggerFactory);
         fakeLine = new FakeLine();
-        var testPauser = new TestPauser(fakeLine);
+        var testPauser = new TestPause(fakeLine);
         return new LineWrapper(loggerFactory, properties, 1, fakeLine, testPauser);
     }
     
@@ -112,7 +112,7 @@ public class PlayCharactersTests
         var loggerFactory = new NullLoggerFactory();
         var properties = new VoiceProperties(loggerFactory);
         var fakeLine = new FakeLine();
-        var testPauser = new TestPauser(fakeLine);
+        var testPauser = new TestPause(fakeLine);
         var lineWrapper = new LineWrapper(loggerFactory, properties, 1, fakeLine, testPauser);
 
         await lineWrapper.PlayCharactersAsync("{}[];'<>.,",

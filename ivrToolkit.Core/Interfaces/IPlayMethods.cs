@@ -36,7 +36,7 @@ public interface IPlayMethods
     /// </remarks>
     /// <example>
     /// <code>
-    ///     PlayDate(myDateTime,"m-d-yyy h:m a/p");
+    ///     PlayDate(myDateTime,"m-d-yyy h:n a/p");
     /// </code>
     /// </example>
     void PlayDate(DateTime dateTime, string mask);

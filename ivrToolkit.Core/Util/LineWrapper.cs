@@ -19,7 +19,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 {
 
     private readonly int _lineNumber;
-    private readonly IPauser _pauseHandler;
+    private readonly IPause _pauseHandler;
     private readonly IIvrBaseLine _lineImplementation;
 
     private readonly ILogger<LineWrapper> _logger;
@@ -35,7 +35,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     internal LineWrapper(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, int lineNumber, 
         IIvrBaseLine lineImplementation,
-        IPauser pauseHandler)
+        IPause pauseHandler)
     {
         _lineNumber = lineNumber;
         _pauseHandler = pauseHandler.ThrowIfNull(nameof(LineWrapper));

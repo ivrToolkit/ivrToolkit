@@ -99,90 +99,99 @@ internal partial class LineWrapper
         var parts = mask.Split(' ', ':', '-');
         foreach (var part in parts)
         {
-            if (part == "m" || part == "mm" || part == "mmm" || part == "mmm")
+            switch (part)
             {
-                var m = dateTime.Month;
-                if (m is > 0 and < 13) {
-                    var month = _months[m-1];
-                    await playF(month);
+                case "m" or "mm" or "mmm":
+                {
+                    var m = dateTime.Month;
+                    if (m is > 0 and < 13) {
+                        var month = _months[m-1];
+                        await playF(month);
+                    }
+
+                    break;
                 }
-            }
-            else if (part == "d" || part == "dd")
-            {
-                await playF("ord" + dateTime.Day);
-            }
-            else if (part == "ddd" || part == "dddd")
-            {
-                var dow = dateTime.DayOfWeek;
+                case "d" or "dd":
+                    await playF("ord" + dateTime.Day);
+                    break;
+                case "ddd" or "dddd":
+                {
+                    var dow = dateTime.DayOfWeek;
                     
-                var day = Enum.Format(typeof(DayOfWeek),dow,"G");
-                await playF(day);
-            }
-            else if (part == "yyy" || part == "yyyy")
-            {
-                var year = dateTime.Year.ToString(CultureInfo.InvariantCulture);
-
-                // speak years 2010 to 2099 with the word thousand
-                await speakYearThousands(year);
-
-                // speak years 2010 to 2099 without the word thousand in it.
-                //speakYearBrokenUp(year);
-
-
-            }
-            else if (part == "h" || part == "hh")
-            {
-                var h = dateTime.Hour;
-                if (Is24Hour(mask))
-                {
-                    if (h < 10)
-                    {
-                        await playF("o");
-                    }
-                    if (h > 0)
-                    {
-                        await playInteger(h);
-                    }
-                    var m = dateTime.Minute;
-                    if (m == 0 || h == 0)
-                    {
-                        await playF("00 hours");
-                    }
+                    var day = Enum.Format(typeof(DayOfWeek),dow,"G");
+                    await playF(day);
+                    break;
                 }
-                else
+                case "yyy" or "yyyy":
                 {
-                    if (h == 0)
+                    var year = dateTime.Year.ToString(CultureInfo.InvariantCulture);
+
+                    // speak years 2010 to 2099 with the word thousand
+                    await speakYearThousands(year);
+
+                    // speak years 2010 to 2099 without the word thousand in it.
+                    //speakYearBrokenUp(year);
+                    break;
+                }
+                case "h" or "hh":
+                {
+                    var h = dateTime.Hour;
+                    if (Is24Hour(mask))
                     {
-                        await playF("12");
-                    }
-                    else if (h > 12)
-                    {
-                        await playInteger(h - 12);
+                        if (h < 10)
+                        {
+                            await playF("o");
+                        }
+                        if (h > 0)
+                        {
+                            await playInteger(h);
+                        }
+                        var m = dateTime.Minute;
+                        if (m == 0 || h == 0)
+                        {
+                            await playF("00 hours");
+                        }
                     }
                     else
                     {
-                        await playInteger(h);
+                        switch (h)
+                        {
+                            case 0:
+                                await playF("12");
+                                break;
+                            case > 12:
+                                await playInteger(h - 12);
+                                break;
+                            default:
+                                await playInteger(h);
+                                break;
+                        }
                     }
-                }
 
-            }
-            else if (part == "n" || part == "nn")
-            {
-                var m = dateTime.Minute;
-                if (m is > 0 and < 10)
-                {
-                    await playF("o");
-                    await playF(m.ToString(CultureInfo.InvariantCulture));
+                    break;
                 }
-                else if (m >= 10)
+                case "n" or "nn":
                 {
-                    await playInteger(m);
+                    var m = dateTime.Minute;
+                    switch (m)
+                    {
+                        case > 0 and < 10:
+                            await playF("o");
+                            await playF(m.ToString(CultureInfo.InvariantCulture));
+                            break;
+                        case >= 10:
+                            await playInteger(m);
+                            break;
+                    }
+
+                    break;
                 }
-            }
-            else if (part == "a/p")
-            {
-                var h = dateTime.Hour;
-                await playF( h < 12 ? "am" : "pm");
+                case "a/p":
+                {
+                    var h = dateTime.Hour;
+                    await playF( h < 12 ? "am" : "pm");
+                    break;
+                }
             }
         }
     }

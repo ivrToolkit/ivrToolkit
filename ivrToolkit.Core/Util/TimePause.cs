@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace ivrToolkit.Core.Util;
 
-internal class TimePauser : IPauser
+internal class TimePause : IPause
 {
     public async Task PauseAsync(int delayInMilli, CancellationToken cancellationToken)
     {

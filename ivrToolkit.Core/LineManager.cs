@@ -42,7 +42,7 @@ public class LineManager : ILineManager
         lock (_lockObject)
         {
             var line = _ivrPlugin.GetLine(lineNumber);
-            var pauser = new TimePauser(); // inject the delay so I can better unit test
+            var pauser = new TimePause(); // inject the delay so I can better unit test
             var wrappedLine = new LineWrapper(_loggerFactory, _voiceProperties, lineNumber, line, pauser);
             _lines.Add(line.LineNumber, wrappedLine);
             return wrappedLine;
@@ -56,7 +56,7 @@ public class LineManager : ILineManager
         {
             var lineNumber = NextAvailableLine();
             var line = _ivrPlugin.GetLine(lineNumber);
-            var pauser = new TimePauser(); // inject the delay so I can better unit test
+            var pauser = new TimePause(); // inject the delay so I can better unit test
 
             var wrappedLine = new LineWrapper(_loggerFactory, _voiceProperties, lineNumber, line, pauser);
             _lines.Add(line.LineNumber, wrappedLine);

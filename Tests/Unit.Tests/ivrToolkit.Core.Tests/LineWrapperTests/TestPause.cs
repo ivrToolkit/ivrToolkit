@@ -5,11 +5,11 @@ using ivrToolkit.Core.Util;
 
 namespace ivrToolkit.Core.Tests.LineWrapperTests;
 
-internal class TestPauser : IPauser
+internal class TestPause : IPause
 {
     private readonly IIvrBaseLine _line;
 
-    public TestPauser(IIvrBaseLine line)
+    public TestPause(IIvrBaseLine line)
     {
         _line = line;
     }

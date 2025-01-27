@@ -11,24 +11,17 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     private const string DEBUG_SIP_TRANSPORT_ENABLE_TRACE_LOGS_KEY = "debug.sipTransport.enableTraceLogs";
     private const string DEBUG_SIP_TRANSPORT_ENABLE_TRACE_LOGS_DEFAULT = "true";
 
+    // legacy
     private const string SIP_SIGNALING_PORT_KEY = "sip.sip_signaling_port";
-    private const string SIP_SIGNALING_PORT_DEFAULT = "5060";
-
-    private const string SIP_PROXY_IP_KEY = "sip.proxy_ip";
-    private const string SIP_PROXY_IP_DEFAULT = "";
-
     private const string SIP_ALIAS_KEY = "sip.alias";
-    private const string SIP_ALIAS_DEFAULT = "";
+    private const string SIP_PROXY_IP_KEY = "sip.proxy_ip";
+    private const string SIP_LOCAL_IP_KEY = "sip.local_ip";
+
 
     private const string SIP_PASSWORD_KEY = "sip.password";
-    private const string SIP_PASSWORD_DEFAULT = "";
-    
-    private const string SIP_SERVER = "sip.server";
-    
-    private const string SIP_USERNAME = "sip.username";
-    
-    private const string SIP_LOCAL_ENDPOINT = "sip.localEndpoint";
-    private const string SIP_LOCAL_ENDPOINT_DEFAULT = "0.0.0.0:5060";
+    private const string SIP_SERVER_KEY = "sip.server";
+    private const string SIP_USERNAME_KEY = "sip.username";
+    private const string SIP_LOCAL_ENDPOINT_KEY = "sip.localEndpoint";
 
     public SipVoiceProperties(ILoggerFactory loggerFactory, string fileName) : base(loggerFactory, fileName)
     {
@@ -50,43 +43,14 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
         get => bool.Parse(GetProperty(DEBUG_SIP_TRANSPORT_ENABLE_TRACE_LOGS_KEY, DEBUG_SIP_TRANSPORT_ENABLE_TRACE_LOGS_DEFAULT));
         init => SetProperty(DEBUG_SIP_TRANSPORT_ENABLE_TRACE_LOGS_KEY, value.ToString());
     }
-
-    /// <summary>
-    /// The SIP port used for SIP signaling
-    /// </summary>
-    [Obsolete("Now combined with SipServer")]
-    public ushort SipSignalingPort
-    {
-        get => ushort.Parse(GetProperty(SIP_SIGNALING_PORT_KEY, SIP_SIGNALING_PORT_DEFAULT));
-        init => SetProperty(SIP_SIGNALING_PORT_KEY, value.ToString());
-    }
-
-    /// <summary>
-    /// The SIP proxy IP address. This is the address of the PBX that will be used to connect to the SIP Trunk.
-    /// </summary>
-    [Obsolete("Now combined with SipServer")]
-    public string SipProxyIp
-    {
-        get => GetProperty(SIP_PROXY_IP_KEY, SIP_PROXY_IP_DEFAULT);
-        init => SetProperty(SIP_PROXY_IP_KEY, value);
-    }
-
-    /// <summary>
-    /// The SIP account on the PBX server. This is the account that will be used to make and receive calls for this ADS SIP instance.
-    /// </summary>
-    [Obsolete("Use SipUsername instead")]
-    public string SipAlias
-    {
-        get => GetProperty(SIP_ALIAS_KEY, SIP_ALIAS_DEFAULT);
-        init => SetProperty(SIP_ALIAS_KEY, value);
-    }
+    
 
     /// <summary>
     /// The SIP password for the SipAlias on the PBX server. 
     /// </summary>
     public string SipPassword
     {
-        get => GetProperty(SIP_PASSWORD_KEY, SIP_PASSWORD_DEFAULT);
+        get => GetProperty(SIP_PASSWORD_KEY, string.Empty);
         init => SetProperty(SIP_PASSWORD_KEY, value);
     }
     
@@ -99,25 +63,23 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     {
         get
         {
-            var result = GetProperty(SIP_SERVER, "");
-            if (string.IsNullOrWhiteSpace(result))
+            // legacy support for Dialogic
+            var legacyServerIp = GetProperty(SIP_PROXY_IP_KEY, string.Empty);
+            
+            var result = GetProperty(SIP_SERVER_KEY, $"{legacyServerIp}:{5060}");
+            if (result.StartsWith("sip:", StringComparison.OrdinalIgnoreCase))
             {
-                result = $"{SipProxyIp}:{SipSignalingPort}";
+                result = result.Substring(4); // strip off sip: if there is one.
             }
-            else
+
+            if (!result.Contains(":"))
             {
-                if (result.StartsWith("sip:", StringComparison.OrdinalIgnoreCase))
-                {
-                    result = result.Substring(4); // strip off sip: if there is one.
-                }
-                if (!result.Contains(":"))
-                {
-                    result += ":5060";
-                }
+                result += ":5060";
             }
+
             return result;
         }
-        init => SetProperty(SIP_SERVER, value);
+        init => SetProperty(SIP_SERVER_KEY, value);
     }
 
     ///
@@ -126,29 +88,45 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     /// </summary>
     public string SipUsername
     {
-        get => GetProperty(SIP_USERNAME, SipAlias);
-        init => SetProperty(SIP_USERNAME, value);
+        get
+        {
+            var legacyUsername = GetProperty(SIP_ALIAS_KEY, string.Empty);
+            return GetProperty(SIP_USERNAME_KEY, legacyUsername);
+        }
+        // legacy for Dialogic
+        init => SetProperty(SIP_USERNAME_KEY, value);
     }
-    
+
     /// <summary>
     /// The endpoint for the sip transport. Default is 0.0.0.0:5060.
     /// Format is IpAddress[:port]
     /// You do no need to specify a port. The default is 5060. This port can be any available port on your
-    /// local computer. You can specify 0 to use a dynamic port.
+    /// local computer. You can specify :0 to use a dynamic port.
     /// It can be quicker to use your actual IP rather than 0.0.0.0
     /// </summary>
     public string SipLocalEndpoint
     {
         get
         {
-            var result = GetProperty(SIP_LOCAL_ENDPOINT, SIP_LOCAL_ENDPOINT_DEFAULT);
+            var legacyLocalIp = GetProperty(SIP_LOCAL_IP_KEY, string.Empty);
+            if (string.IsNullOrWhiteSpace(legacyLocalIp))
+            {
+                legacyLocalIp = "0.0.0.0";
+            }
+            var legacyLocalPort = GetProperty(SIP_SIGNALING_PORT_KEY, string.Empty);
+            if (!string.IsNullOrWhiteSpace(legacyLocalIp))
+            {
+                legacyLocalPort = ":" + legacyLocalPort;
+            }
+            
+            var result = GetProperty(SIP_LOCAL_ENDPOINT_KEY, $"{legacyLocalIp}{legacyLocalPort}");
             if (!result.Contains(":"))
             {
                 result += ":5060";
             }
             return result;
         }
-        init => SetProperty(SIP_SERVER, value);
+        init => SetProperty(SIP_SERVER_KEY, value);
     }
     
 

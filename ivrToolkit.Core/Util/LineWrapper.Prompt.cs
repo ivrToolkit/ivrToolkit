@@ -41,7 +41,6 @@ internal partial class LineWrapper
 
     public Task<string> MultiTryPromptAsync(string fileOrPhrase, Func<string, bool> evaluator, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("{method}({fileOrPhrase})", nameof(MultiTryPromptAsync), fileOrPhrase);
         return MultiTryPromptAsync(fileOrPhrase, evaluator, null, cancellationToken);
     }
 

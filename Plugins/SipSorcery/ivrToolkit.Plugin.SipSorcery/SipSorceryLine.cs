@@ -468,57 +468,59 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         _logger.LogDebug("WaitRings({rings})", rings);
         _incomingSemaphore.Setup();
         
-       _userAgent.OnIncomingCall += async (ua, request) =>
-        {
-            _logger.LogDebug("Incoming call from {remoteSIPEndPoint}.", request.RemoteSIPEndPoint);
-
-
-            if (!request.StatusLine.Contains($"sip:{_voiceProperties.SipUsername}@"))
-            {
-                _logger.LogError("We have should not be getting: " + request.StatusLine);
-                ua.Cancel();
-                return;
-            }
-            
-            if (!_inviteManager.IsAvailable(request))
-            {
-                _logger.LogDebug("We have already handled this INVITE");
-                ua.Cancel();
-                return;
-            }
-            
-            ResetLine();
-
-            _logger.LogDebug("About to accept the call");
-            var uas = _userAgent.AcceptCall(request);
-            
-            _logger.LogDebug(request.StatusLine); // INVITE sip:201@192.168.3.193:5060 SIP/2.0
-            
-            _voipMediaSession = new VoIPMediaSession();
-            _voipMediaSession.AcceptRtpFromAny = true;
-            _voipMediaSession.TakeOffHold();
-
-            _voipMediaSession.AudioExtrasSource.AudioSamplePeriodMilliseconds = 20;
-            _voipMediaSession.AudioExtrasSource.SetAudioSourceFormat(new AudioFormat(SDPWellKnownMediaFormatsEnum.PCMU));
-
-            await _voipMediaSession.AudioExtrasSource.StartAudio();
-
-            await Task.Delay(2000, CancellationToken.None); // I want to hear a ring
-            await ua.Answer(uas, _voipMediaSession);
-            
-            // drop through and hope that doesn't cause a hangup
-            _incomingSemaphore.Release();
-        };
+        _userAgent.OnIncomingCall += OnUserAgentOnOnIncomingCall;
         _incomingSemaphore.Wait();
+        _userAgent.OnIncomingCall -= OnUserAgentOnOnIncomingCall;
         _incomingSemaphore.Teardown();
     }
-    
+
     public Task WaitRingsAsync(int rings, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
+    private void OnUserAgentOnOnIncomingCall(SIPUserAgent ua, SIPRequest request)
+    {
+        _logger.LogDebug("Incoming call from {remoteSIPEndPoint}.", request.RemoteSIPEndPoint);
 
+
+        if (!request.StatusLine.Contains($"sip:{_voiceProperties.SipUsername}@"))
+        {
+            _logger.LogError("We have should not be getting: " + request.StatusLine);
+            ua.Cancel();
+            return;
+        }
+
+        if (!_inviteManager.IsAvailable(request))
+        {
+            _logger.LogDebug("We have already handled this INVITE");
+            ua.Cancel();
+            return;
+        }
+
+        ResetLine();
+
+        _logger.LogDebug("About to accept the call");
+        var uas = _userAgent.AcceptCall(request);
+
+        _logger.LogDebug(request.StatusLine); // INVITE sip:201@192.168.3.193:5060 SIP/2.0
+
+        _voipMediaSession = new VoIPMediaSession();
+        _voipMediaSession.AcceptRtpFromAny = true;
+        _voipMediaSession.TakeOffHold();
+
+        _voipMediaSession.AudioExtrasSource.AudioSamplePeriodMilliseconds = 20;
+        _voipMediaSession.AudioExtrasSource.SetAudioSourceFormat(new AudioFormat(SDPWellKnownMediaFormatsEnum.PCMU));
+
+        _voipMediaSession.AudioExtrasSource.StartAudio().GetAwaiter().GetResult();
+
+        Task.Delay(2000); // I want to hear a ring
+        ua.Answer(uas, _voipMediaSession).GetAwaiter().GetResult();
+        
+        _userAgent.OnIncomingCall -= OnUserAgentOnOnIncomingCall;
+        _incomingSemaphore.Release();
+    }
+    
     void IIvrBaseLine.StartIncomingListener(Func<IIvrLine, CancellationToken, Task> callback, IIvrLine line, CancellationToken cancellationToken)
     {
         _logger.LogDebug("StartIncomingListener({lineNo})", line.LineNumber);

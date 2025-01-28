@@ -27,6 +27,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     private bool _digitPressed;
     private readonly object _lockObject = new object();
     private readonly KeypressSemaphore _keypressSemaphore;
+    private readonly IncomingSemaphore _incomingSemaphore;
     private bool _dialResourcesClosed;
     
     private const string ROOT = "System Recordings\\";
@@ -34,6 +35,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     private static WaveFileWriter? _waveFile;
     
     private readonly InviteManager _inviteManager;
+    private readonly ILoggerFactory _loggerFactory;
 
     public SipSorceryLine(ILoggerFactory loggerFactory, 
         SipVoiceProperties voiceProperties, 
@@ -41,7 +43,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         SIPTransport sipTransport,
         InviteManager inviteManager)
     {
-        loggerFactory.ThrowIfNull(nameof(loggerFactory));
+        _loggerFactory = loggerFactory.ThrowIfNull(nameof(loggerFactory));
         _voiceProperties = voiceProperties.ThrowIfNull(nameof(voiceProperties));
         _inviteManager = inviteManager.ThrowIfNull(nameof(inviteManager));
         
@@ -51,6 +53,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         _logger.LogDebug("ctr(ILoggerFactory, VoiceProperties, {0})", lineNumber);
 
         _keypressSemaphore = new KeypressSemaphore(loggerFactory);
+        _incomingSemaphore = new IncomingSemaphore(loggerFactory);
 
         _userAgent = new SIPUserAgent(sipTransport, null);
 
@@ -110,6 +113,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
             }
             
             _keypressSemaphore.Teardown();
+            _incomingSemaphore.Teardown();
             _dialResourcesClosed = true;
             _voipMediaSession?.Dispose();
             _voipMediaSession = null;
@@ -133,6 +137,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 
     private void ResetLine()
     {
+        _logger.LogDebug("{method}", nameof(ResetLine));
         // reset the line
         _dialResourcesClosed = false;
         _keypressSemaphore.Teardown();
@@ -454,16 +459,66 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         Dispose();
     }
 
+    /// <summary>
+    /// Exists for legacy purposes. Use <see cref="IIvrLine.StartIncomingListener"/> instead
+    /// </summary>
+    /// <param name="rings">Not used</param>
     public void WaitRings(int rings)
     {
-        throw new NotImplementedException();
+        _logger.LogDebug("WaitRings({rings})", rings);
+        _incomingSemaphore.Setup();
+        
+       _userAgent.OnIncomingCall += async (ua, request) =>
+        {
+            _logger.LogDebug("Incoming call from {remoteSIPEndPoint}.", request.RemoteSIPEndPoint);
+
+
+            if (!request.StatusLine.Contains($"sip:{_voiceProperties.SipUsername}@"))
+            {
+                _logger.LogError("We have should not be getting: " + request.StatusLine);
+                ua.Cancel();
+                return;
+            }
+            
+            if (!_inviteManager.IsAvailable(request))
+            {
+                _logger.LogDebug("We have already handled this INVITE");
+                ua.Cancel();
+                return;
+            }
+            
+            ResetLine();
+
+            _logger.LogDebug("About to accept the call");
+            var uas = _userAgent.AcceptCall(request);
+            
+            _logger.LogDebug(request.StatusLine); // INVITE sip:201@192.168.3.193:5060 SIP/2.0
+            
+            _voipMediaSession = new VoIPMediaSession();
+            _voipMediaSession.AcceptRtpFromAny = true;
+            _voipMediaSession.TakeOffHold();
+
+            _voipMediaSession.AudioExtrasSource.AudioSamplePeriodMilliseconds = 20;
+            _voipMediaSession.AudioExtrasSource.SetAudioSourceFormat(new AudioFormat(SDPWellKnownMediaFormatsEnum.PCMU));
+
+            await _voipMediaSession.AudioExtrasSource.StartAudio();
+
+            await Task.Delay(2000, CancellationToken.None); // I want to hear a ring
+            await ua.Answer(uas, _voipMediaSession);
+            
+            // drop through and hope that doesn't cause a hangup
+            _incomingSemaphore.Release();
+        };
+        _incomingSemaphore.Wait();
+        _incomingSemaphore.Teardown();
     }
     
     public Task WaitRingsAsync(int rings, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
-    
+
+
     void IIvrBaseLine.StartIncomingListener(Func<IIvrLine, CancellationToken, Task> callback, IIvrLine line, CancellationToken cancellationToken)
     {
         _logger.LogDebug("StartIncomingListener({lineNo})", line.LineNumber);

@@ -14,7 +14,7 @@ class Program
     private const string WAV_FILE_LOCATION = "Voice Files";
     private static ILogger<Program> _logger;
     
-    static void Main()
+    static async Task Main()
     {
         var loggerFactory = BuildLoggerFactory();
         
@@ -35,11 +35,13 @@ class Program
         
         // grab a line
         var line1 = lineManager.GetLine();
-        line1.StartIncomingListener(HandleIncomingCallAsync, cancellationToken);
+        //line1.StartIncomingListener(HandleIncomingCallAsync, cancellationToken);
+        line1.WaitRings(0); // blocks
+        await HandleIncomingCallAsync(line1, cancellationToken);
         
         // grab another line
-        var line2 = lineManager.GetLine();
-        line2.StartIncomingListener(HandleIncomingCallAsync, cancellationToken);
+        //var line2 = lineManager.GetLine();
+        //line2.StartIncomingListener(HandleIncomingCallAsync, cancellationToken);
         
         Console.Write("Press any key to continue...: ");
         Console.ReadKey();

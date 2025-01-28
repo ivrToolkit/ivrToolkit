@@ -58,6 +58,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DoubleOutbound", "Examples\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleInbound", "Examples\SipSorcery\SimpleInbound\SimpleInbound.csproj", "{A2ED922F-537A-477B-8E89-0B14786B0EEE}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utilities", "Utilities", "{5AAC9219-AC90-458A-A1F0-2A9FC17CA3AB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConvertToPCM16Bit8000hz", "Utilities\ConvertToPCM16Bit8000hz\ConvertToPCM16Bit8000hz.csproj", "{66F46692-8A08-40BB-90DA-DD4E46B2AF38}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -278,6 +282,22 @@ Global
 		{A2ED922F-537A-477B-8E89-0B14786B0EEE}.Release|Win32.Build.0 = Release|Any CPU
 		{A2ED922F-537A-477B-8E89-0B14786B0EEE}.Release|x86.ActiveCfg = Release|Any CPU
 		{A2ED922F-537A-477B-8E89-0B14786B0EEE}.Release|x86.Build.0 = Release|Any CPU
+		{66F46692-8A08-40BB-90DA-DD4E46B2AF38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66F46692-8A08-40BB-90DA-DD4E46B2AF38}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66F46692-8A08-40BB-90DA-DD4E46B2AF38}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{66F46692-8A08-40BB-90DA-DD4E46B2AF38}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{66F46692-8A08-40BB-90DA-DD4E46B2AF38}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{66F46692-8A08-40BB-90DA-DD4E46B2AF38}.Debug|Win32.Build.0 = Debug|Any CPU
+		{66F46692-8A08-40BB-90DA-DD4E46B2AF38}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{66F46692-8A08-40BB-90DA-DD4E46B2AF38}.Debug|x86.Build.0 = Debug|Any CPU
+		{66F46692-8A08-40BB-90DA-DD4E46B2AF38}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66F46692-8A08-40BB-90DA-DD4E46B2AF38}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66F46692-8A08-40BB-90DA-DD4E46B2AF38}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{66F46692-8A08-40BB-90DA-DD4E46B2AF38}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{66F46692-8A08-40BB-90DA-DD4E46B2AF38}.Release|Win32.ActiveCfg = Release|Any CPU
+		{66F46692-8A08-40BB-90DA-DD4E46B2AF38}.Release|Win32.Build.0 = Release|Any CPU
+		{66F46692-8A08-40BB-90DA-DD4E46B2AF38}.Release|x86.ActiveCfg = Release|Any CPU
+		{66F46692-8A08-40BB-90DA-DD4E46B2AF38}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -301,6 +321,7 @@ Global
 		{24DA0653-6053-4A68-AAD2-F7E623580393} = {CE489DF0-06A2-4D32-A92D-00CB4639B813}
 		{D32CFAF5-5AA2-46C7-B111-7F3B17D76AB0} = {CE489DF0-06A2-4D32-A92D-00CB4639B813}
 		{A2ED922F-537A-477B-8E89-0B14786B0EEE} = {CE489DF0-06A2-4D32-A92D-00CB4639B813}
+		{66F46692-8A08-40BB-90DA-DD4E46B2AF38} = {5AAC9219-AC90-458A-A1F0-2A9FC17CA3AB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A5C71D1A-0ABE-437B-89FB-59EE74035D64}

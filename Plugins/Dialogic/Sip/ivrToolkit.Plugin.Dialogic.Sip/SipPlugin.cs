@@ -62,7 +62,7 @@ public class SipPlugin : IIvrPlugin
 
         SetupGlobalCallParameterBlock();
         SetAuthenticationInfo();
-        Register();
+        Register(3600); // 1 hour
     }
 
     private void _boardEventListener_OnMetaEvent(object sender, MetaEventArgs e)
@@ -99,7 +99,11 @@ public class SipPlugin : IIvrPlugin
 
         try
         {
-            _boardEventListener?.Dispose();
+            if (_boardEventListener != null)
+            {
+                Register(0); // unregister
+                _boardEventListener.Dispose();
+            }
             var result = gclib_h.gc_Close(_boardDev);
             result.ThrowIfGlobalCallError();
 
@@ -251,7 +255,7 @@ public class SipPlugin : IIvrPlugin
         _unmanagedMemoryService.Free(pData);
     }
 
-    private void Register()
+    private void Register(int timeout)
     {
         _logger.LogDebug("Register()");
 
@@ -286,7 +290,7 @@ public class SipPlugin : IIvrPlugin
         {
             reg_client = regClient, // me. example: "200@192.168.1.40"
             reg_server = regServer, // FreePBX. example: "192.168.1.40"
-            time_to_live = 3600, // 1 hour
+            time_to_live = timeout,
             max_hops = 30
         };
 

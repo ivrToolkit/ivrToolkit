@@ -35,9 +35,7 @@ class Program
         
         // grab a line
         var line1 = lineManager.GetLine();
-        //line1.StartIncomingListener(HandleIncomingCallAsync, cancellationToken);
-        line1.WaitRings(0); // blocks
-        await HandleIncomingCallAsync(line1, cancellationToken);
+        line1.StartIncomingListener(HandleIncomingCallAsync, cancellationToken);
         
         // grab another line
         //var line2 = lineManager.GetLine();

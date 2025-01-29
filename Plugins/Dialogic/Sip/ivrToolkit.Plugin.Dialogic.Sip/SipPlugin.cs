@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 using ivrToolkit.Core;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
@@ -102,6 +103,7 @@ public class SipPlugin : IIvrPlugin
             if (_boardEventListener != null)
             {
                 UnRegister();
+                Thread.Sleep(2000); // give it a chance to respond
                 _boardEventListener.Dispose();
             }
             var result = gclib_h.gc_Close(_boardDev);

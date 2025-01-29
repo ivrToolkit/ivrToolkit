@@ -101,7 +101,7 @@ public class SipPlugin : IIvrPlugin
         {
             if (_boardEventListener != null)
             {
-                Register(0); // unregister
+                UnRegister();
                 _boardEventListener.Dispose();
             }
             var result = gclib_h.gc_Close(_boardDev);
@@ -257,7 +257,7 @@ public class SipPlugin : IIvrPlugin
 
     private void Register(int timeout)
     {
-        _logger.LogDebug("Register()");
+        _logger.LogDebug("Register({timeout})", timeout);
 
         var proxy = _voiceProperties.SipProxyIp;
         var alias = _voiceProperties.SipAlias;
@@ -333,6 +333,54 @@ public class SipPlugin : IIvrPlugin
 
     }
 
+    private void UnRegister()
+    {
+        _logger.LogDebug("UnRegister()");
+
+        var proxy = _voiceProperties.SipProxyIp;
+        var alias = _voiceProperties.SipAlias;
+
+        var regServer = $"{proxy}"; // Request-URI
+        var regClient = $"{alias}@{proxy}";
+
+        _logger.LogDebug("UnRegister() - regServer = {0}, regClient = {1}", regServer,
+            regClient);
+
+        var gcParmBlkPtr = IntPtr.Zero;
+
+        var result = 
+                 gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gccfgparm_h.GCSET_SERVREQ,
+            gccfgparm_h.PARM_REQTYPE, sizeof(byte), gcip_defs_h.IP_REQTYPE_REGISTRATION);
+        result.ThrowIfGlobalCallError();
+
+        result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gccfgparm_h.GCSET_SERVREQ, 
+            gccfgparm_h.PARM_ACK, sizeof(byte), gcip_defs_h.IP_REQTYPE_REGISTRATION);
+        result.ThrowIfGlobalCallError();
+
+        result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gcip_defs_h.IPSET_PROTOCOL,
+            gcip_defs_h.IPPARM_PROTOCOL_BITMASK, sizeof(byte), gcip_defs_h.IP_PROTOCOL_SIP);
+        result.ThrowIfGlobalCallError();
+
+        result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gcip_defs_h.IPSET_REG_INFO,
+            gcip_defs_h.IPPARM_OPERATION_DEREGISTER, sizeof(byte), gcip_defs_h.IP_REG_DELETE_ALL);
+        result.ThrowIfGlobalCallError();
+
+        uint serviceId = 1;
+        var respDataPp = IntPtr.Zero;
+
+        _boardEventListener.SetEventToWaitFor(gclib_h.GCEV_SERVICERESP);
+        _logger.LogDebug("UnRegister() - about to call gc_ReqService asynchronously");
+        result = gclib_h.gc_ReqService(gclib_h.GCTGT_CCLIB_NETIF, _boardDev, ref serviceId, gcParmBlkPtr,
+            ref respDataPp,
+            DXXXLIB_H.EV_ASYNC);
+        result.ThrowIfGlobalCallError();
+        _logger.LogDebug("UnRegister() - called gc_ReqService asynchronously");
+        gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
+
+        var eventWaitEnum = _boardEventListener.WaitForEvent(10); // wait for 10 seconds 
+        _logger.LogDebug("Result for gc_ReqService is {0}", eventWaitEnum);
+    }
+    
     private void HandleEvent(METAEVENT metaEvt)
     {
         switch (metaEvt.evttype)

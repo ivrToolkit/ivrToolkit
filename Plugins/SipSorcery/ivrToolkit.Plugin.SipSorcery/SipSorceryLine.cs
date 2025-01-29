@@ -35,7 +35,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     private static WaveFileWriter? _waveFile;
     
     private readonly InviteManager _inviteManager;
-    private readonly ILoggerFactory _loggerFactory;
+    private int _volume;
 
     public SipSorceryLine(ILoggerFactory loggerFactory, 
         SipVoiceProperties voiceProperties, 
@@ -43,7 +43,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         SIPTransport sipTransport,
         InviteManager inviteManager)
     {
-        _loggerFactory = loggerFactory.ThrowIfNull(nameof(loggerFactory));
+        loggerFactory.ThrowIfNull(nameof(loggerFactory));
         _voiceProperties = voiceProperties.ThrowIfNull(nameof(voiceProperties));
         _inviteManager = inviteManager.ThrowIfNull(nameof(inviteManager));
         
@@ -125,9 +125,22 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     public IIvrLineManagement Management => this;
 
     public int LineNumber => _lineNumber;
-    public LineStatusTypes Status { get; }
 
-    public int Volume { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public int Volume
+    {
+        // todo do something with the volume
+        get => _volume;
+        set
+        {
+            if (value < -10 || value > 10)
+            {
+                throw new VoiceException("size must be between -10 to 10");
+            }
+
+            _volume = value;
+        }
+    }
+    
     public string LastTerminator { get; set; } = string.Empty;
 
     public CallAnalysis Dial(string number, int answeringMachineLengthInMilliseconds)
@@ -445,7 +458,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 
     public void Reset()
     {
-        throw new NotImplementedException();
+        // todo - should implement this
     }
 
     public void TakeOffHook()
@@ -465,7 +478,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     /// <param name="rings">Not used</param>
     public void WaitRings(int rings)
     {
-        _logger.LogDebug("WaitRings({rings})", rings);
+        _logger.LogDebug("{method}({rings})", nameof(WaitRings), rings);
         _incomingSemaphore.Setup();
         
         _userAgent.OnIncomingCall += OnUserAgentOnOnIncomingCall;
@@ -474,9 +487,20 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         _incomingSemaphore.Teardown();
     }
 
-    public Task WaitRingsAsync(int rings, CancellationToken cancellationToken)
+    /// <summary>
+    /// Exists for legacy purposes. Use <see cref="IIvrLine.StartIncomingListener"/> instead
+    /// </summary>
+    /// <param name="rings">Not used</param>
+    /// <param name="cancellationToken"></param>
+    public async Task WaitRingsAsync(int rings, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        _logger.LogDebug("{method}({rings})", nameof(WaitRingsAsync), rings);
+        _incomingSemaphore.Setup();
+        
+        _userAgent.OnIncomingCall += OnUserAgentOnOnIncomingCall;
+        await _incomingSemaphore.WaitAsync(cancellationToken);
+        _userAgent.OnIncomingCall -= OnUserAgentOnOnIncomingCall;
+        _incomingSemaphore.Teardown();
     }
 
     private void OnUserAgentOnOnIncomingCall(SIPUserAgent ua, SIPRequest request)

@@ -7,7 +7,6 @@
 
 using System;
 using System.Globalization;
-using ivrToolkit.Core;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.Util;
@@ -74,7 +73,7 @@ public class AnalogPlugin : IIvrPlugin
             
     }
 
-    public IIvrBaseLine GetLine(int lineNumber)
+    IIvrBaseLine IIvrPlugin.GetLine(int lineNumber)
     {
         lock (_lockObject)
         {

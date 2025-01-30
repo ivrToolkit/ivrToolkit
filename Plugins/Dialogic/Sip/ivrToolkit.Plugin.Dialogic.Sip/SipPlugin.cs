@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using System.Threading;
+using System.Threading.Tasks;
 using ivrToolkit.Core;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
@@ -102,8 +102,8 @@ public class SipPlugin : IIvrPlugin
         {
             if (_boardEventListener != null)
             {
-                UnRegister();
-                Thread.Sleep(2000); // give it a chance to respond
+                Register(0); // unregister
+                Task.Delay(2000).GetAwaiter().GetResult();
                 _boardEventListener.Dispose();
             }
             var result = gclib_h.gc_Close(_boardDev);
@@ -284,31 +284,44 @@ public class SipPlugin : IIvrPlugin
             gcip_defs_h.IPPARM_PROTOCOL_BITMASK, sizeof(byte), gcip_defs_h.IP_PROTOCOL_SIP);
         result.ThrowIfGlobalCallError();
 
-        result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gcip_defs_h.IPSET_REG_INFO,
-            gcip_defs_h.IPPARM_OPERATION_REGISTER, sizeof(byte), gcip_defs_h.IP_REG_SET_INFO);
-        result.ThrowIfGlobalCallError();
-
-        var ipRegisterAddress = new IP_REGISTER_ADDRESS
+        if (timeout == 0)
         {
-            reg_client = regClient, // me. example: "200@192.168.1.40"
-            reg_server = regServer, // FreePBX. example: "192.168.1.40"
-            time_to_live = timeout,
-            max_hops = 30
-        };
+            // for unregister
+            result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gcip_defs_h.IPSET_REG_INFO,
+                gcip_defs_h.IPPARM_OPERATION_DEREGISTER, sizeof(byte), gcip_defs_h.IP_REG_DELETE_ALL);
+            result.ThrowIfGlobalCallError();
+        }
+        else
+        {
+            // for register
+            result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gcip_defs_h.IPSET_REG_INFO,
+                gcip_defs_h.IPPARM_OPERATION_REGISTER, sizeof(byte), gcip_defs_h.IP_REG_SET_INFO);
+            result.ThrowIfGlobalCallError();
+            
+            var ipRegisterAddress = new IP_REGISTER_ADDRESS
+            {
+                reg_client = regClient, // me. example: "200@192.168.1.40"
+                reg_server = regServer, // FreePBX. example: "192.168.1.40"
+                time_to_live = timeout,
+                max_hops = 30
+            };
 
-        var dataSize = (byte)Marshal.SizeOf<IP_REGISTER_ADDRESS>();
+            var dataSizeRegister = (byte)Marshal.SizeOf<IP_REGISTER_ADDRESS>();
 
-        var pData = _unmanagedMemoryService.Create(nameof(IP_REGISTER_ADDRESS), ipRegisterAddress);
+            var pDataRegister = _unmanagedMemoryService.Create(nameof(IP_REGISTER_ADDRESS), ipRegisterAddress);
 
-        result = gclib_h.gc_util_insert_parm_ref(ref gcParmBlkPtr, gcip_defs_h.IPSET_REG_INFO,
-            gcip_defs_h.IPPARM_REG_ADDRESS,
-            dataSize, pData);
-        result.ThrowIfGlobalCallError();
+            result = gclib_h.gc_util_insert_parm_ref(ref gcParmBlkPtr, gcip_defs_h.IPSET_REG_INFO,
+                gcip_defs_h.IPPARM_REG_ADDRESS,
+                dataSizeRegister, pDataRegister);
+            result.ThrowIfGlobalCallError();
+            _unmanagedMemoryService.Free(pDataRegister);
 
+        }
+        
         // set up the contact
         var contact = $"{_voiceProperties.SipContact}\0"; // contact. example: {alias}@{proxy_ip}:{sip_signaling_port}
         var pContact = _unmanagedMemoryService.StringToHGlobalAnsi("pContact", contact);
-        dataSize = (byte)contact.Length;
+        var dataSize = (byte)contact.Length;
 
         result = gclib_h.gc_util_insert_parm_ref(ref gcParmBlkPtr, gcip_defs_h.IPSET_LOCAL_ALIAS,
             gcip_defs_h.IPPARM_ADDRESS_TRANSPARENT, dataSize, pContact);
@@ -331,92 +344,6 @@ public class SipPlugin : IIvrPlugin
         _logger.LogDebug("Result for gc_ReqService is {0}", eventWaitEnum);
 
         _unmanagedMemoryService.Free(pContact);
-        _unmanagedMemoryService.Free(pData);
-
-    }
-
-    private void UnRegister()
-    {
-        _logger.LogDebug("UnRegister()");
-
-        var proxy = _voiceProperties.SipProxyIp;
-        var alias = _voiceProperties.SipAlias;
-
-        var regServer = $"{proxy}"; // Request-URI
-        var regClient = $"{alias}@{proxy}";
-
-        _logger.LogDebug("UnRegister() - regServer = {0}, regClient = {1}", regServer,
-            regClient);
-
-        var gcParmBlkPtr = IntPtr.Zero;
-
-        var result = 
-                 gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gccfgparm_h.GCSET_SERVREQ,
-            gccfgparm_h.PARM_REQTYPE, sizeof(byte), gcip_defs_h.IP_REQTYPE_REGISTRATION);
-        result.ThrowIfGlobalCallError();
-
-        result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gccfgparm_h.GCSET_SERVREQ, 
-            gccfgparm_h.PARM_ACK, sizeof(byte), gcip_defs_h.IP_REQTYPE_REGISTRATION);
-        result.ThrowIfGlobalCallError();
-
-        result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gcip_defs_h.IPSET_PROTOCOL,
-            gcip_defs_h.IPPARM_PROTOCOL_BITMASK, sizeof(byte), gcip_defs_h.IP_PROTOCOL_SIP);
-        result.ThrowIfGlobalCallError();
-
-        result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gcip_defs_h.IPSET_REG_INFO,
-            gcip_defs_h.IPPARM_OPERATION_DEREGISTER, sizeof(byte), gcip_defs_h.IP_REG_DELETE_ALL);
-        result.ThrowIfGlobalCallError();
-        
-        
-        
-        
-
-        var ipRegisterAddress = new IP_REGISTER_ADDRESS
-        {
-            reg_client = regClient, // me. example: "200@192.168.1.40"
-            reg_server = regServer, // FreePBX. example: "192.168.1.40"
-            time_to_live = 0,
-            max_hops = 30
-        };
-
-        var dataSize = (byte)Marshal.SizeOf<IP_REGISTER_ADDRESS>();
-
-        var pData = _unmanagedMemoryService.Create(nameof(IP_REGISTER_ADDRESS), ipRegisterAddress);
-
-        result = gclib_h.gc_util_insert_parm_ref(ref gcParmBlkPtr, gcip_defs_h.IPSET_REG_INFO,
-            gcip_defs_h.IPPARM_REG_ADDRESS,
-            dataSize, pData);
-        result.ThrowIfGlobalCallError();
-
-        // set up the contact
-        var contact = $"{_voiceProperties.SipContact}\0"; // contact. example: {alias}@{proxy_ip}:{sip_signaling_port}
-        var pContact = _unmanagedMemoryService.StringToHGlobalAnsi("pContact", contact);
-        dataSize = (byte)contact.Length;
-
-        result = gclib_h.gc_util_insert_parm_ref(ref gcParmBlkPtr, gcip_defs_h.IPSET_LOCAL_ALIAS,
-            gcip_defs_h.IPPARM_ADDRESS_TRANSPARENT, dataSize, pContact);
-        result.ThrowIfGlobalCallError();
-        
-        
-        
-        
-        
-        
-
-        uint serviceId = 1;
-        var respDataPp = IntPtr.Zero;
-
-        _boardEventListener.SetEventToWaitFor(gclib_h.GCEV_SERVICERESP);
-        _logger.LogDebug("UnRegister() - about to call gc_ReqService asynchronously");
-        result = gclib_h.gc_ReqService(gclib_h.GCTGT_CCLIB_NETIF, _boardDev, ref serviceId, gcParmBlkPtr,
-            ref respDataPp,
-            DXXXLIB_H.EV_ASYNC);
-        result.ThrowIfGlobalCallError();
-        _logger.LogDebug("UnRegister() - called gc_ReqService asynchronously");
-        gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
-
-        var eventWaitEnum = _boardEventListener.WaitForEvent(10); // wait for 10 seconds 
-        _logger.LogDebug("Result for gc_ReqService is {0}", eventWaitEnum);
     }
     
     private void HandleEvent(METAEVENT metaEvt)
@@ -512,7 +439,7 @@ public class SipPlugin : IIvrPlugin
 
     private string GetStringFromPtr(IntPtr ptr, int size)
     {
-        return Marshal.PtrToStringAnsi(ptr, size).TrimEnd('\0'); ;
+        return Marshal.PtrToStringAnsi(ptr, size).TrimEnd('\0');
     }
 
     private int GetValueFromPtr(IntPtr ptr, byte size)

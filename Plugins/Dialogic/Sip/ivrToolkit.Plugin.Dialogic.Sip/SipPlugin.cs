@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using ivrToolkit.Core;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
@@ -26,7 +25,7 @@ public class SipPlugin : IIvrPlugin
     private bool _disposed;
     private int _boardDev;
     private IEventListener _boardEventListener;
-    private ProcessExtension _processExtension;
+    private readonly ProcessExtension _processExtension;
     public VoiceProperties VoiceProperties => _voiceProperties;
 
     public SipPlugin(ILoggerFactory loggerFactory, DialogicSipVoiceProperties voiceProperties)

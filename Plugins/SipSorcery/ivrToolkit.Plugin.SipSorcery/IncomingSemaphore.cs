@@ -33,9 +33,8 @@ public void Wait()
         {
             _semaphoreSlim?.Wait(_cts.Token);
         }
-        catch (OperationCanceledException)
-        {
-        }
+        catch (OperationCanceledException) { }
+        catch (ObjectDisposedException) { }
     }
         
     public async Task<bool> WaitAsync(CancellationToken cancellationToken)
@@ -49,6 +48,10 @@ public void Wait()
             }
         }
         catch (OperationCanceledException)
+        {
+            return false;
+        }
+        catch (ObjectDisposedException)
         {
             return false;
         }

@@ -198,12 +198,21 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 
         return CallAnalysis.Connected;
     }
-        
+
+    private bool _disposed;
     public void Dispose()
     {
+        if (_disposed)
+        {
+            _logger.LogDebug("{method}() - Already disposed of the line", nameof(Dispose));
+            return;
+        }
+        _disposed = true;
+        
         _logger.LogDebug("{method}() - Disposing of the line", nameof(Dispose));
         CloseDialResources();
         _userAgent.Dispose();
+        Task.Delay(1000).GetAwaiter().GetResult(); // give dispose time to complete
     }
 
         
@@ -478,6 +487,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     /// <param name="rings">Not used</param>
     public void WaitRings(int rings)
     {
+        ResetLine();
         _logger.LogDebug("{method}({rings})", nameof(WaitRings), rings);
         _incomingSemaphore.Setup();
         
@@ -494,6 +504,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     /// <param name="cancellationToken"></param>
     public async Task WaitRingsAsync(int rings, CancellationToken cancellationToken)
     {
+        ResetLine();
         _logger.LogDebug("{method}({rings})", nameof(WaitRingsAsync), rings);
         _incomingSemaphore.Setup();
         

@@ -116,7 +116,6 @@ class Program
                 }).AddFilter("*", LogLevel.Debug));
 
         _logger = loggerFactory.CreateLogger<Program>();
-        SIPSorcery.LogFactory.Set(loggerFactory);
         return loggerFactory;
     }
 }

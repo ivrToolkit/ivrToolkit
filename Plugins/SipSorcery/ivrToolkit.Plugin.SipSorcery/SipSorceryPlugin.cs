@@ -22,6 +22,8 @@ public class SipSorceryPlugin : IIvrPlugin
     public SipSorceryPlugin(ILoggerFactory loggerFactory, SipVoiceProperties voiceProperties)
     {
         loggerFactory.ThrowIfNull(nameof(loggerFactory));
+        SIPSorcery.LogFactory.Set(loggerFactory);
+        
         voiceProperties.ThrowIfNull(nameof(voiceProperties));
         
         _inviteManager = new InviteManager(loggerFactory);

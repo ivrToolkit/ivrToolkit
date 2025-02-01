@@ -22,6 +22,9 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
     private const string SIP_SERVER_KEY = "sip.server";
     private const string SIP_USERNAME_KEY = "sip.username";
     private const string SIP_LOCAL_ENDPOINT_KEY = "sip.localEndpoint";
+    
+    private const string SIP_RING_TIMEOUT_IN_SECONDS_KEY = "sip.ringTimeoutInSeconds";
+    private const string SIP_RING_TIMEOUT_IN_SECONDS_DEFAULT = "30";
 
     public SipVoiceProperties(ILoggerFactory loggerFactory, string fileName) : base(loggerFactory, fileName)
     {
@@ -44,6 +47,14 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
         init => SetProperty(DEBUG_SIP_TRANSPORT_ENABLE_TRACE_LOGS_KEY, value.ToString());
     }
     
+    /// <summary>
+    /// Display the Sipsorcery log information in the log. Default is True.
+    /// </summary>
+    public int SipRingTimeoutInSeconds
+    {
+        get => int.Parse(GetProperty(SIP_RING_TIMEOUT_IN_SECONDS_KEY, SIP_RING_TIMEOUT_IN_SECONDS_DEFAULT));
+        init => SetProperty(SIP_RING_TIMEOUT_IN_SECONDS_KEY, value.ToString());
+    }
 
     /// <summary>
     /// The SIP password for the SipAlias on the PBX server. 

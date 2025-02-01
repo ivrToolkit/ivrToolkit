@@ -36,6 +36,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     
     private readonly InviteManager _inviteManager;
     private int _volume;
+    private SIPResponseStatusCodesEnum _responseStatus;
 
     public SipSorceryLine(ILoggerFactory loggerFactory, 
         SipVoiceProperties voiceProperties, 
@@ -57,8 +58,24 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 
         _userAgent = new SIPUserAgent(sipTransport, null);
 
-        _userAgent.ClientCallFailed += (_, error, _) => _logger.LogDebug("Call failed {error}.", error);
-        _userAgent.ClientCallAnswered += (_, _) => _logger.LogDebug("Answered");
+        _userAgent.ClientCallFailed += (_, error, response) =>
+        {
+            _logger.LogDebug("Call failed: {error}.", error);
+            if (response == null)
+            {
+                _logger.LogWarning("Call failed but the response was null.");
+                // This happens if the call timed out before there was an answer
+                _responseStatus = SIPResponseStatusCodesEnum.RequestTimeout;
+                return;
+            }
+            _responseStatus = response.Status;
+        };
+        
+        _userAgent.ClientCallAnswered += (_, response) =>
+        {
+            _responseStatus = response.Status;
+            _logger.LogDebug("Answered");
+        };
         _userAgent.ClientCallRinging += (_, _) => _logger.LogDebug("Ringing");
         _userAgent.ClientCallTrying += (_, _) => _logger.LogDebug("Trying");
         
@@ -91,9 +108,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
             }
         };
 
-        //_userAgent.OnIncomingCall += (_, _) => _logger.LogDebug("OnIncomingCall");
         _userAgent.OnReinviteRequest += (_) => _logger.LogDebug("OnReinviteRequest");
-        //_userAgent.OnRtpEvent += (rptEvent, header) => _logger.LogDebug("OnRtpEvent");
         _userAgent.RemotePutOnHold += () => _logger.LogDebug("RemotePutOnHold");
     }
 
@@ -143,11 +158,6 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     
     public string LastTerminator { get; set; } = string.Empty;
 
-    public CallAnalysis Dial(string number, int answeringMachineLengthInMilliseconds)
-    {
-        return DialAsync(number, answeringMachineLengthInMilliseconds, CancellationToken.None).GetAwaiter().GetResult(); // blocking
-    }
-
     private void ResetLine()
     {
         _logger.LogDebug("{method}", nameof(ResetLine));
@@ -157,6 +167,11 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         _digitBuffer = "";
         _digitPressed = false;
         _waveFile = null;
+    }
+
+    public CallAnalysis Dial(string number, int answeringMachineLengthInMilliseconds)
+    {
+        return DialAsync(number, answeringMachineLengthInMilliseconds, CancellationToken.None).GetAwaiter().GetResult(); // blocking
     }
     
     public async Task<CallAnalysis> DialAsync(string number, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken)
@@ -170,32 +185,33 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 
         // Place the call and wait for the result.
         var startTime = Stopwatch.GetTimestamp();
-        var callResult = await _userAgent.Call(to, _voiceProperties.SipUsername, _voiceProperties.SipPassword, _voipMediaSession);
+        var callResult = await _userAgent.Call(
+            to, _voiceProperties.SipUsername, _voiceProperties.SipPassword, 
+            _voipMediaSession, _voiceProperties.SipRingTimeoutInSeconds);
         var duration = Stopwatch.GetElapsedTime(startTime);
         _logger.LogInformation("Dial call duration: {duration}", duration);
 
         if (!callResult)
         {
-            _logger.LogDebug("The call failed!");
-            return CallAnalysis.Error; // not really. It could be for some other reason
+            _logger.LogDebug("The call failed: {status}", _responseStatus);
+            switch (_responseStatus)
+            {
+                case SIPResponseStatusCodesEnum.BusyHere:
+                    return CallAnalysis.Busy;
+                case SIPResponseStatusCodesEnum.RequestTimeout:
+                    return CallAnalysis.NoAnswer;
+                case SIPResponseStatusCodesEnum.NotFound:
+                case SIPResponseStatusCodesEnum.Forbidden:
+                case SIPResponseStatusCodesEnum.Gone:
+                case SIPResponseStatusCodesEnum.ServiceUnavailable:
+                    return CallAnalysis.OperatorIntercept;
+                default:
+                    return CallAnalysis.Error;
+            }
         }
 
         _voipMediaSession.AudioExtrasSource.AudioSamplePeriodMilliseconds = 20;
-        
-        
-        
         await _voipMediaSession.AudioExtrasSource.StartAudio();
-
-        
-        
-
-        
-
-        if (!_userAgent.IsCallActive)
-        {
-            // break area for testing
-        }
-
         return CallAnalysis.Connected;
     }
 

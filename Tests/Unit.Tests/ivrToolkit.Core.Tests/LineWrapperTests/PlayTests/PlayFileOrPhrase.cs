@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
 using Xunit;
 
-namespace ivrToolkit.Core.Tests.LineWrapperTests;
+namespace ivrToolkit.Core.Tests.LineWrapperTests.PlayTests;
 
 public class PlayFileOrPhraseTests
 {

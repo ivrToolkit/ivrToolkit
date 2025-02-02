@@ -10,6 +10,7 @@ namespace ivrToolkit.Core.Tests.LineWrapperTests;
 public class FakeLine : IIvrBaseLine, IIvrLineManagement
 {
     public List<string> PlayList = new();
+    public List<string> _digitsList = new();
     
     public void Dispose()
     {
@@ -87,18 +88,20 @@ public class FakeLine : IIvrBaseLine, IIvrLineManagement
 
     public string GetDigits(int numberOfDigits, string terminators, int timeoutMilliseconds = 0)
     {
-        throw new NotImplementedException();
+        return ""; // todo read from _pushDigits
     }
 
-    public Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken,
+    public async Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken,
         int timeoutMilliseconds = 0)
     {
-        throw new NotImplementedException();
+        await Task.CompletedTask;
+        return ""; // todo read from _pushDigits
     }
 
     public string FlushDigitBuffer()
     {
-        throw new NotImplementedException();
+        // todo need to look into this
+        return "";
     }
 
     public int Volume { get; set; }
@@ -109,5 +112,10 @@ public class FakeLine : IIvrBaseLine, IIvrLineManagement
 
     public void TriggerDispose()
     {
+    }
+
+    public void PushDigits(string digits)
+    {
+        _digitsList.Add(digits);
     }
 }

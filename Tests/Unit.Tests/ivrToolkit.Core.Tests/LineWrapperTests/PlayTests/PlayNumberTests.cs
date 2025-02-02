@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Util;
@@ -7,7 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
 using Xunit;
 
-namespace ivrToolkit.Core.Tests.LineWrapperTests;
+namespace ivrToolkit.Core.Tests.LineWrapperTests.PlayTests;
 
 public class PlayNumberTests
 {

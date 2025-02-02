@@ -1,5 +1,4 @@
 ﻿using System.Threading;
-using System.Threading.Tasks;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.Util;
@@ -8,7 +7,7 @@ using Moq;
 using Shouldly;
 using Xunit;
 
-namespace ivrToolkit.Core.Tests.LineWrapperTests;
+namespace ivrToolkit.Core.Tests.LineWrapperTests.PlayTests;
 
 public class PlayFileTests
 {

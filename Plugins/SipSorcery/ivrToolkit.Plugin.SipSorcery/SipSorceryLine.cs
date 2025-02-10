@@ -406,11 +406,65 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     private async Task PlayFileInternalAsync(string filename)
     {
         if (_voipMediaSession == null) return;
-            
-        await _voipMediaSession.AudioExtrasSource.SendAudioFromStream(new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read),
+        
+        var memoryStream = GetFileStream(filename);
+        var headerSize = GetWavHeaderSize(memoryStream);
+        memoryStream = SkipFirstBytes(memoryStream, headerSize);
+        
+        await _voipMediaSession.AudioExtrasSource.SendAudioFromStream(memoryStream,
             AudioSamplingRatesEnum.Rate8KHz);
     }
+
+    private MemoryStream GetFileStream(string filename)
+    {
+        using FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
+        // Now you can read the raw audio data
+        var audioData = new byte[fs.Length];
+        fs.ReadExactly(audioData, 0, audioData.Length);
+        return new MemoryStream(audioData);
+    }
     
+    private MemoryStream SkipFirstBytes(MemoryStream originalStream, int bytesToSkip)
+    {
+        originalStream.Seek(0, SeekOrigin.Begin);
+        if (originalStream.Length <= bytesToSkip) return originalStream;
+
+        var buffer = originalStream.ToArray();
+        return new MemoryStream(buffer, bytesToSkip, (int)originalStream.Length - bytesToSkip, writable: false);
+    }
+    
+    private int GetWavHeaderSize(Stream wavStream)
+    {
+        wavStream.Seek(0, SeekOrigin.Begin);
+        using (var reader = new BinaryReader(wavStream, System.Text.Encoding.UTF8, leaveOpen: true))
+        {
+            // Read the "RIFF" chunk descriptor
+            if (new string(reader.ReadChars(4)) != "RIFF")
+                throw new InvalidDataException("Invalid WAV file: Missing RIFF header");
+
+            reader.ReadInt32(); // Skip file size
+            if (new string(reader.ReadChars(4)) != "WAVE")
+                throw new InvalidDataException("Invalid WAV file: Missing WAVE format");
+
+            // Search for the "data" chunk
+            while (wavStream.Position < wavStream.Length)
+            {
+                string chunkId = new string(reader.ReadChars(4));
+                int chunkSize = reader.ReadInt32();
+
+                if (chunkId == "data")
+                {
+                    return (int)wavStream.Position; // Current position is the header size
+                }
+
+                // Skip this chunk and move to the next
+                wavStream.Seek(chunkSize, SeekOrigin.Current);
+            }
+
+            throw new InvalidDataException("Invalid WAV file: No data chunk found");
+        }
+    }
+ 
     public void PlayWavStream(MemoryStream audioStream)
     {
         PlayWavStreamAsync(audioStream, CancellationToken.None).GetAwaiter().GetResult();

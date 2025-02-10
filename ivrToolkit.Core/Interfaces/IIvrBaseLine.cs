@@ -6,6 +6,7 @@
 // 
 
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Enums;
@@ -70,6 +71,9 @@ public interface IIvrBaseLine : IDisposable
     /// </summary>
     /// <param name="filename">The wav file to play</param>
     void PlayFile(string filename);
+    
+    protected internal void PlayWavStream(MemoryStream audioStream);
+    protected internal Task PlayWavStreamAsync(MemoryStream audioStream, CancellationToken cancellationToken);
 
     Task PlayFileAsync(string filename, CancellationToken cancellationToken);
 

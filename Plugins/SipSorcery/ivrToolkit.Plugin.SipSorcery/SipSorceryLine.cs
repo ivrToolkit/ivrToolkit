@@ -369,7 +369,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
             throw new HangupException();
         }
         if (_digitPressed) return; // todo there is(should be) a way to stop digit presses during play.
-        PlayFileAsync(filename).GetAwaiter().GetResult();
+        PlayFileInternalAsync(filename).GetAwaiter().GetResult();
         Task.Delay(300).Wait();
         if (!_userAgent.IsCallActive)
         {
@@ -379,6 +379,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
             throw new HangupException();
         }
     }
+
 
     public async Task PlayFileAsync(string filename, CancellationToken cancellationToken)
     {
@@ -391,7 +392,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
             throw new HangupException();
         }
         if (_digitPressed) return;
-        await PlayFileAsync(filename);
+        await PlayFileInternalAsync(filename);
         await Task.Delay(300, cancellationToken);
         if (!_userAgent.IsCallActive)
         {
@@ -402,11 +403,45 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         }
     }
 
-    private async Task PlayFileAsync(string filename)
+    private async Task PlayFileInternalAsync(string filename)
     {
         if (_voipMediaSession == null) return;
             
         await _voipMediaSession.AudioExtrasSource.SendAudioFromStream(new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read),
+            AudioSamplingRatesEnum.Rate8KHz);
+    }
+    
+    public void PlayWavStream(MemoryStream audioStream)
+    {
+        PlayWavStreamAsync(audioStream, CancellationToken.None).GetAwaiter().GetResult();
+    }
+
+    public async Task PlayWavStreamAsync(MemoryStream audioStream, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("{method}() - _digitPressed = {pressed}", nameof(PlayFile), _digitPressed);
+        if (!_userAgent.IsCallActive)
+        {
+            // break area for testing
+            _logger.LogDebug("{method}() - _userAgent is inactive, throwing HangupException", nameof(PlayFile));
+            CloseDialResources();
+            throw new HangupException();
+        }
+        if (_digitPressed) return;
+        await PlayWavStreamInternalAsync(audioStream);
+        await Task.Delay(300, cancellationToken);
+        if (!_userAgent.IsCallActive)
+        {
+            _logger.LogDebug("{method}() - _userAgent is inactive, throwing HangupException", nameof(PlayFile));
+            // break area for testing
+            CloseDialResources();
+            throw new HangupException();
+        }
+    }
+
+    private async Task PlayWavStreamInternalAsync(Stream audioStream)
+    {
+        if (_voipMediaSession == null) return;
+        await _voipMediaSession.AudioExtrasSource.SendAudioFromStream(audioStream,
             AudioSamplingRatesEnum.Rate8KHz);
     }
 

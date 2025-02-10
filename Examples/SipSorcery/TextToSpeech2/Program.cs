@@ -6,11 +6,10 @@ using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.TTS;
-using ivrToolkit.Core.Util;
 using ivrToolkit.Plugin.SipSorcery;
 using Microsoft.Extensions.Logging;
 
-namespace SimpleOutbound;
+namespace TextToSpeech2;
 
 class Program
 {
@@ -28,9 +27,12 @@ class Program
         
         // instantiate the plugin you want to use
         using var sipPlugin = new SipSorceryPlugin(loggerFactory, sipVoiceProperties);
+
+        // i'm using azure TTS
+        var ttsFactory = new AzureTtsFactory(loggerFactory, sipVoiceProperties);
         
         // create a line manager
-        using var lineManager = new LineManager(loggerFactory, sipVoiceProperties, sipPlugin);
+        using var lineManager = new LineManager(loggerFactory, sipVoiceProperties, sipPlugin, ttsFactory);
 
         // grab a line
         var line = lineManager.GetLine();
@@ -54,25 +56,22 @@ class Program
             var callAnalysis = await line.DialAsync(phoneNumber, 3500, cancellationToken);
             if (callAnalysis == CallAnalysis.Connected)
             {
-                // play a wav file
-                await line.PlayFileAsync($"{WAV_FILE_LOCATION}/ThankYou.wav", cancellationToken);
+                // play TTS
+                var message = "Thank you for using the <say-as interpret-as='characters'>IVR</say-as> Toolkit.";
+                await line.PlayTextToSpeechAsync(message,$"{WAV_FILE_LOCATION}/ThankYou.wav", cancellationToken);
 
-                // play a wav file and wait for digits to be pressed
-                var result = await line.PromptAsync($"{WAV_FILE_LOCATION}/Press1234.wav", cancellationToken);
-
-                // play another wav file
-                await line.PlayFileAsync($"{WAV_FILE_LOCATION}/YouPressed.wav", cancellationToken);
-
-                // speak out each digit of the result
-                await line.PlayCharactersAsync(result, cancellationToken);
-
+                // play tts and wait for digits to be pressed
+                message = "For this simple demonstration, press <say-as interpret-as='characters'>1234</say-as> followed by the pound key.";
+                var result = await line.PromptAsync(message,$"{WAV_FILE_LOCATION}/Press1234.wav", cancellationToken);
+                
+                message = $"you pressed <say-as interpret-as='characters'>{result}</say-as> which is";
                 // say Correct or Incorrect
-                await line.PlayFileAsync(
-                    result == "1234" ? $"{WAV_FILE_LOCATION}/Correct.wav" : @"Voice Files\Incorrect.wav",
-                    cancellationToken);
+                message += result == "1234" ? " correct." : " incorrect.";
+                message += " Goodbye.";
 
-                // Say goodbye
-                await line.PlayFileAsync($"{WAV_FILE_LOCATION}/goodbye.wav", cancellationToken);
+                // by leaving fileName as null, no file will be created. This makes sense because there are
+                // many combinations of the message
+                await line.PlayTextToSpeechAsync(message, cancellationToken);
 
                 // finally hang up
                 line.Hangup();

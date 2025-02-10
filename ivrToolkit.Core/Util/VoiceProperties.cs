@@ -17,12 +17,16 @@ public class VoiceProperties : Properties, IDisposable
     private readonly ILogger<VoiceProperties> _logger;
 
     private const string PROMPT_ATTEMPTS_KEY = "prompt.attempts";
-    private const string PROMPT_BLANK_ATTEMPTS_KEY = "prompt.blankAttempts";
-    private const string DIGITS_TIMEOUT_KEY = "getDigits.timeoutInMilliseconds";
-
     private const string DEFAULT_PROMPT_ATTEMPTS = "99";
+
+    private const string PROMPT_BLANK_ATTEMPTS_KEY = "prompt.blankAttempts";
     private const string DEFAULT_PROMPT_BLANK_ATTEMPTS = "5";
+
+    private const string DIGITS_TIMEOUT_KEY = "getDigits.timeoutInMilliseconds";
     private const string DEFAULT_DIGITS_TIMEOUT = "5000";
+
+    private const string TTS_AZURE_SUBSCRIPTION_KEY = "tts.azure.subscriptionKey";
+    private const string TTS_AZURE_REGION_KEY = "tts.azure.region";
 
     protected VoiceProperties(ILoggerFactory loggerFactory, string fileName) : base (loggerFactory, fileName)
     {
@@ -61,6 +65,25 @@ public class VoiceProperties : Properties, IDisposable
     {
         get => int.Parse(GetProperty(DIGITS_TIMEOUT_KEY, DEFAULT_DIGITS_TIMEOUT));
         init => SetProperty(DIGITS_TIMEOUT_KEY, value.ToString());
+    }
+    
+    
+    /// <summary>
+    /// The subscription key for Azure Text-To-Speech
+    /// </summary>
+    public string TtsAzureSubscriptionKey
+    {
+        get => GetProperty(TTS_AZURE_SUBSCRIPTION_KEY, "");
+        init => SetProperty(TTS_AZURE_SUBSCRIPTION_KEY, value);
+    }
+    
+    /// <summary>
+    /// The region for Azure Text-To-Speech
+    /// </summary>
+    public string TtsAzureRegion
+    {
+        get => GetProperty(TTS_AZURE_REGION_KEY, "");
+        init => SetProperty(TTS_AZURE_REGION_KEY, value);
     }
     
     public new void Dispose()

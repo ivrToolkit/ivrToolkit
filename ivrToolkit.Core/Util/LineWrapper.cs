@@ -19,6 +19,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 {
 
     private readonly int _lineNumber;
+    private readonly ITextToSpeech _textToSpeech;
     private readonly IPause _pauseHandler;
     private readonly IIvrBaseLine _lineImplementation;
 
@@ -35,9 +36,11 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     internal LineWrapper(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, int lineNumber, 
         IIvrBaseLine lineImplementation,
-        IPause pauseHandler)
+        IPause pauseHandler,
+        ITextToSpeech textToSpeech = null)
     {
         _lineNumber = lineNumber;
+        _textToSpeech = textToSpeech;
         _pauseHandler = pauseHandler.ThrowIfNull(nameof(LineWrapper));
         _lineImplementation = lineImplementation.ThrowIfNull(nameof(lineImplementation));
         loggerFactory.ThrowIfNull(nameof(loggerFactory));
@@ -325,8 +328,6 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
             _status = LineStatusTypes.OnHook;
             throw;
         }
-
-        return null; // will never get here
     }
 
     public async Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken, int timeoutMilliseconds = 0)
@@ -347,8 +348,6 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
             _status = LineStatusTypes.OnHook;
             throw;
         }
-
-        return null; // will never get here
     }
 
     public string FlushDigitBuffer()

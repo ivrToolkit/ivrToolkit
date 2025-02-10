@@ -740,6 +740,16 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
         PlaySipFile(filename, "0123456789#*abcd");
     }
 
+    public void PlayWavStream(MemoryStream wavStream)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task PlayWavStreamAsync(MemoryStream wavStream, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+    
     public Task PlayFileAsync(string filename, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();

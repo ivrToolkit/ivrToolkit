@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Enums;
@@ -10,7 +11,7 @@ namespace ivrToolkit.Core.Tests.LineWrapperTests;
 public class FakeLine : IIvrBaseLine, IIvrLineManagement
 {
     public List<string> PlayList = new();
-    public List<string> _digitsList = new();
+    private readonly Queue<string> _digitsList = new();
     
     public void Dispose()
     {
@@ -59,6 +60,16 @@ public class FakeLine : IIvrBaseLine, IIvrLineManagement
     {
         PlayFileAsync(filename, CancellationToken.None).GetAwaiter().GetResult();
     }
+    
+    void IIvrBaseLine.PlayWavStream(MemoryStream wavStream)
+    {
+        throw new NotImplementedException();
+    }
+
+    Task IIvrBaseLine.PlayWavStreamAsync(MemoryStream wavStream, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 
     public async Task PlayFileAsync(string filename, CancellationToken cancellationToken)
     {
@@ -94,8 +105,9 @@ public class FakeLine : IIvrBaseLine, IIvrLineManagement
     public async Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken,
         int timeoutMilliseconds = 0)
     {
-        await Task.CompletedTask;
-        return ""; // todo read from _pushDigits
+        await Task.CompletedTask; 
+        var result = _digitsList.Dequeue();
+        return result;
     }
 
     public string FlushDigitBuffer()
@@ -116,6 +128,6 @@ public class FakeLine : IIvrBaseLine, IIvrLineManagement
 
     public void PushDigits(string digits)
     {
-        _digitsList.Add(digits);
+        _digitsList.Enqueue(digits);
     }
 }

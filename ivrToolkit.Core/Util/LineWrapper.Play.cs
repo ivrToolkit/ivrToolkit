@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using ivrToolkit.Core.Exceptions;
+using ivrToolkit.Core.Interfaces;
 using Microsoft.Extensions.Logging;
+using NAudio.Wave;
 
 namespace ivrToolkit.Core.Util;
 
@@ -677,5 +681,60 @@ internal partial class LineWrapper
         {
             await PlayFileAsync(fileNameOrPhrase, cancellationToken);
         }
+    }
+
+    public void PlayTextToSpeech(string textToSpeech, string fileName = null)
+    {
+        PlayTextToSpeechAsync(textToSpeech, fileName, CancellationToken.None).GetAwaiter().GetResult();
+    }
+
+    public async Task PlayTextToSpeechAsync(string textToSpeech, CancellationToken cancellationToken)
+    {
+        await PlayTextToSpeechAsync(textToSpeech, null, cancellationToken);
+    }
+
+    public async Task PlayTextToSpeechAsync(string text, string fileName, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("{method}({text})", nameof(PlayTextToSpeechAsync), text);
+        if (_textToSpeech == null)
+        {
+            throw new VoiceException("Text-To-Speech is not set up.");
+        }
+
+        // if the file is not null and it exists then play it.
+        if (fileName is not null && File.Exists(fileName))
+        {
+            await PlayFileAsync(fileName, cancellationToken);
+            return;
+        }
+
+        var audioStream = await _textToSpeech.TextToSpeechAsync(text, cancellationToken);
+
+        if (fileName is not null)
+        {
+
+            // Create a WaveFormat (16-bit, 8kHz, Mono)
+            var waveFormat = new WaveFormat(8000, 16, 1);  // 8kHz, 16-bit, Mono
+
+            // Use WaveFileWriter to write to the output file
+            await using (var waveFileWriter = new WaveFileWriter(fileName, waveFormat))
+            {
+                // Write PCM data to the WaveFileWriter
+                await audioStream.CopyToAsync(waveFileWriter, cancellationToken);  // Copy raw PCM data to the WAV file
+            }
+            await _lineImplementation.PlayFileAsync(fileName, cancellationToken);
+            return;
+        }
+        await _lineImplementation.PlayWavStreamAsync(audioStream, cancellationToken);
+    }
+    
+    void IIvrBaseLine.PlayWavStream(MemoryStream audioStream)
+    {
+        _lineImplementation.PlayWavStream(audioStream);
+    }
+
+    async Task IIvrBaseLine.PlayWavStreamAsync(MemoryStream audioStream, CancellationToken cancellationToken)
+    {
+        await _lineImplementation.PlayWavStreamAsync(audioStream, cancellationToken);
     }
 }

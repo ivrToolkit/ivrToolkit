@@ -19,7 +19,8 @@ public class SipSorceryPlugin : IIvrPlugin
     private readonly InviteManager _inviteManager;
     private SIPRegistrationUserAgent? _sipRegistrar;
 
-    public SipSorceryPlugin(ILoggerFactory loggerFactory, SipVoiceProperties voiceProperties)
+    public SipSorceryPlugin(ILoggerFactory loggerFactory, 
+        SipVoiceProperties voiceProperties)
     {
         loggerFactory.ThrowIfNull(nameof(loggerFactory));
         SIPSorcery.LogFactory.Set(loggerFactory);

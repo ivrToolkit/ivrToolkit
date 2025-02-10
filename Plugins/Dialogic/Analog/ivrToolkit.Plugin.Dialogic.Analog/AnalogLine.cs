@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Enums;
@@ -156,6 +157,16 @@ public class AnalogLine : IIvrBaseLine, IIvrLineManagement
     public void PlayFile(string filename)
     {
         PlayFile(_voiceh, filename, "0123456789#*abcd", _currentXpb);
+    }
+
+    public void PlayWavStream(MemoryStream wavStream)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task PlayWavStreamAsync(MemoryStream wavStream, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
     }
 
     public Task PlayFileAsync(string filename, CancellationToken cancellationToken)

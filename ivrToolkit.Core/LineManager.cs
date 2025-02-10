@@ -16,6 +16,7 @@ namespace ivrToolkit.Core;
 /// </summary>
 public class LineManager : ILineManager
 {
+    private readonly ITextToSpeechFactory _textToSpeechFactory;
     private readonly VoiceProperties _voiceProperties;
     private readonly Dictionary<int, IIvrLine> _lines = new();
     private readonly object _lockObject = new();
@@ -24,8 +25,10 @@ public class LineManager : ILineManager
     private readonly ILogger<LineManager> _logger;
     private readonly ILoggerFactory _loggerFactory;
 
-    public LineManager(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, IIvrPlugin ivrPlugin)
+    public LineManager(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, IIvrPlugin ivrPlugin,
+        ITextToSpeechFactory textToSpeechFactory = null)
     {
+        _textToSpeechFactory = textToSpeechFactory;
         _voiceProperties = voiceProperties.ThrowIfNull(nameof(voiceProperties));
         _loggerFactory = loggerFactory.ThrowIfNull(nameof(loggerFactory));
         _ivrPlugin = ivrPlugin.ThrowIfNull(nameof(ivrPlugin));
@@ -43,7 +46,16 @@ public class LineManager : ILineManager
         {
             var line = _ivrPlugin.GetLine(lineNumber);
             var pauser = new TimePause(); // inject the delay so I can better unit test
-            var wrappedLine = new LineWrapper(_loggerFactory, _voiceProperties, lineNumber, line, pauser);
+
+            ITextToSpeech textToSpeech = null;
+            if (_textToSpeechFactory != null)
+            {
+                textToSpeech = _textToSpeechFactory.Create();
+            }
+            
+            var wrappedLine = new LineWrapper(_loggerFactory, _voiceProperties, lineNumber, line, 
+                pauser, textToSpeech);
+            
             _lines.Add(line.LineNumber, wrappedLine);
             return wrappedLine;
         }
@@ -58,7 +70,14 @@ public class LineManager : ILineManager
             var line = _ivrPlugin.GetLine(lineNumber);
             var pauser = new TimePause(); // inject the delay so I can better unit test
 
-            var wrappedLine = new LineWrapper(_loggerFactory, _voiceProperties, lineNumber, line, pauser);
+            ITextToSpeech textToSpeech = null;
+            if (_textToSpeechFactory != null)
+            {
+                textToSpeech = _textToSpeechFactory.Create();
+            }
+            
+            var wrappedLine = new LineWrapper(_loggerFactory, _voiceProperties, lineNumber, line, pauser,
+                textToSpeech);
             _lines.Add(line.LineNumber, wrappedLine);
             return wrappedLine;
         }

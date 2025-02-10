@@ -115,7 +115,9 @@ public interface IPlayMethods
     Task PlayOrdinalAsync(int number, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Plays a collection of one or more string parts which are separated with a comma. Each string part is in the format of 'data|code'. You would string them together like: 'data|code,data|code,data|code' etc.
+    /// Plays a collection of one or more string parts which are separated with a comma.
+    /// Each string part is in the format of 'data|code'.
+    /// You would string them together like: 'data|code,data|code,data|code' etc.
     /// </summary>
     /// <remarks>
     /// Each string part is in the format of 'data|code'. You would string them together like: 'data|code,data|code,data|code' etc.
@@ -133,7 +135,9 @@ public interface IPlayMethods
     void PlayString(string str);
 
     /// <summary>
-    /// Plays a collection of one or more string parts asynchronously which are separated with a comma. Each string part is in the format of 'data|code'. You would string them together like: 'data|code,data|code,data|code' etc.
+    /// Plays a collection of one or more string parts asynchronously which are separated with a comma.
+    /// Each string part is in the format of 'data|code'.
+    /// You would string them together like: 'data|code,data|code,data|code' etc.
     /// </summary>
     /// <param name="str">The string to interpret in the format of 'data|code,data|code,data|code'...</param>
     /// <param name="cancellationToken">The cancellation token for the operation.</param>
@@ -151,4 +155,28 @@ public interface IPlayMethods
     /// <param name="fileNameOrPhrase">The name of the file or the phrase to be played.</param>
     /// <param name="cancellationToken">The cancellation token for the operation.</param>
     Task PlayFileOrPhraseAsync(string fileNameOrPhrase, CancellationToken cancellationToken);
+    
+    /// <summary>
+    /// Converts the specified text into a wav stream and plays it.
+    /// </summary>
+    /// <param name="textToSpeech">The text to convert to speech</param>
+    /// <param name="fileName">If specified, will not generate TTS if the file exists. Otherwise,
+    /// it will save the wav stream to the file.</param>
+    void PlayTextToSpeech(string textToSpeech, string fileName = null);
+    
+    /// <summary>
+    /// Converts the specified text into a wav stream and plays it.
+    /// </summary>
+    /// <param name="textToSpeech">The text to convert to speech</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    Task PlayTextToSpeechAsync(string textToSpeech, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Converts the specified text into a wav stream and plays it.
+    /// </summary>
+    /// <param name="textToSpeech">The text to convert to speech</param>
+    /// <param name="fileName">Will not generate TTS if the file exists but instead will play the file. Otherwise,
+    /// it will save the wav stream to the file and then play it.</param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    Task PlayTextToSpeechAsync(string textToSpeech, string fileName, CancellationToken cancellationToken);
 }

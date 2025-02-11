@@ -32,6 +32,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
     private int _volume;
     private bool _disposed;
     private readonly VoiceProperties _voiceProperties;
+    private readonly WavConverter _wavConverter;
 
 
     internal LineWrapper(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, int lineNumber, 
@@ -47,7 +48,9 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
         _voiceProperties = voiceProperties.ThrowIfNull(nameof(voiceProperties));
             
         _logger = loggerFactory.CreateLogger<LineWrapper>();
+        _wavConverter = new WavConverter(loggerFactory);
         _logger.LogDebug("ctr(ILoggerFactory, VoiceProperties, {lineNumber})", lineNumber);
+        
     }
 
     public IIvrLineManagement Management => this;

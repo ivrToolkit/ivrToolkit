@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
-using ivrToolkit.Core.Util;
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.Extensions.Logging;
 
@@ -16,19 +15,20 @@ public class AzureTTS : ITextToSpeech, IDisposable
 {
     private readonly ILogger<AzureTTS> _logger;
     private readonly SpeechSynthesizer _synthesizer;
-    private readonly WavConverter _wavConverter;
+    private readonly string _voiceName;
 
     /// <summary>
     /// An Azure TTS implementation
     /// </summary>
     /// <param name="loggerFactory"></param>
+    /// <param name="voiceName"></param>
     /// <param name="synthesizer"></param>
-    public AzureTTS(ILoggerFactory loggerFactory, SpeechSynthesizer synthesizer)
+    public AzureTTS(ILoggerFactory loggerFactory, string voiceName, SpeechSynthesizer synthesizer)
     {
         _synthesizer = synthesizer.ThrowIfNull(nameof(synthesizer));
         loggerFactory.ThrowIfNull(nameof(loggerFactory));
+        _voiceName = voiceName.ThrowIfNull(nameof(voiceName));
         _logger = loggerFactory.CreateLogger<AzureTTS>();
-        _wavConverter = new WavConverter(loggerFactory);
     }
     
     public MemoryStream TextToSpeech(string text)
@@ -50,15 +50,13 @@ public class AzureTTS : ITextToSpeech, IDisposable
         {
             throw new VoiceException(result.Reason.ToString());
         }
-
-        // it worked, lets convert to the correct format
-        return await _wavConverter.ConvertToPCM16Bit8000hz(new MemoryStream(result.AudioData));
+        return new MemoryStream(result.AudioData);
     }
 
     private async Task<MemoryStream> SpeakTextAsync(string text)
     {
         var ssml = $@"<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>
-                            <voice name='en-US-JennyNeural'>
+                            <voice name='{_voiceName}'>
                                 {text}
                             </voice>
                         </speak>";
@@ -68,9 +66,7 @@ public class AzureTTS : ITextToSpeech, IDisposable
         {
             throw new VoiceException(result.Reason.ToString());
         }
-
-        // it worked, lets convert to the correct format
-        return await _wavConverter.ConvertToPCM16Bit8000hz(new MemoryStream(result.AudioData));
+        return new MemoryStream(result.AudioData);
     }
 
 

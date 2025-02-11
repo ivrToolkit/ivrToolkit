@@ -27,7 +27,13 @@ public class VoiceProperties : Properties, IDisposable
 
     private const string TTS_AZURE_SUBSCRIPTION_KEY = "tts.azure.subscriptionKey";
     private const string TTS_AZURE_REGION_KEY = "tts.azure.region";
-
+    
+    private const string TTS_AZURE_VOICE_KEY = "tts.azure.voice";
+    private const string TTS_AZURE_VOICE_DEFAULT = "en-US-JennyNeural";
+    
+    private const string WAV_SAMPLE_RATE_KEY = "wav.sampleRate";
+    private const string WAV_SAMPLE_RATE_DEFAULT = "8000";
+    
     protected VoiceProperties(ILoggerFactory loggerFactory, string fileName) : base (loggerFactory, fileName)
     {
         _logger = loggerFactory.CreateLogger<VoiceProperties>();
@@ -85,6 +91,26 @@ public class VoiceProperties : Properties, IDisposable
         get => GetProperty(TTS_AZURE_REGION_KEY, "");
         init => SetProperty(TTS_AZURE_REGION_KEY, value);
     }
+
+    /// <summary>
+    /// The region for Azure Text-To-Speech
+    /// </summary>
+    public string TtsAzureVoice
+    {
+        get => GetProperty(TTS_AZURE_VOICE_KEY, TTS_AZURE_VOICE_DEFAULT);
+        init => SetProperty(TTS_AZURE_VOICE_KEY, value);
+    }
+    
+    /// <summary>
+    /// The default wav sample rate to use when writing out wav files with TTS. 8000 or 16000 only.
+    /// Default is 8000
+    /// </summary>
+    public int DefaultWavSampleRate
+    {
+        get => int.Parse(GetProperty(WAV_SAMPLE_RATE_KEY, WAV_SAMPLE_RATE_DEFAULT));
+        init => SetProperty(WAV_SAMPLE_RATE_KEY, value.ToString());
+    }
+    
     
     public new void Dispose()
     {

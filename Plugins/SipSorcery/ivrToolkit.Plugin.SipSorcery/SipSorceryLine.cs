@@ -407,12 +407,8 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     {
         if (_voipMediaSession == null) return;
         
-        var memoryStream = GetFileStream(filename);
-        var headerSize = GetWavHeaderSize(memoryStream);
-        memoryStream = SkipFirstBytes(memoryStream, headerSize);
-        
-        await _voipMediaSession.AudioExtrasSource.SendAudioFromStream(memoryStream,
-            AudioSamplingRatesEnum.Rate8KHz);
+        var audioStream = GetFileStream(filename);
+        await PlayWavStreamInternalAsync(audioStream);
     }
 
     private MemoryStream GetFileStream(string filename)
@@ -436,33 +432,32 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     private int GetWavHeaderSize(Stream wavStream)
     {
         wavStream.Seek(0, SeekOrigin.Begin);
-        using (var reader = new BinaryReader(wavStream, System.Text.Encoding.UTF8, leaveOpen: true))
+        using var reader = new BinaryReader(wavStream, Encoding.UTF8, leaveOpen: true);
+        
+        // Read the "RIFF" chunk descriptor
+        if (new string(reader.ReadChars(4)) != "RIFF")
+            throw new InvalidDataException("Invalid WAV file: Missing RIFF header");
+
+        reader.ReadInt32(); // Skip file size
+        if (new string(reader.ReadChars(4)) != "WAVE")
+            throw new InvalidDataException("Invalid WAV file: Missing WAVE format");
+
+        // Search for the "data" chunk
+        while (wavStream.Position < wavStream.Length)
         {
-            // Read the "RIFF" chunk descriptor
-            if (new string(reader.ReadChars(4)) != "RIFF")
-                throw new InvalidDataException("Invalid WAV file: Missing RIFF header");
+            string chunkId = new string(reader.ReadChars(4));
+            int chunkSize = reader.ReadInt32();
 
-            reader.ReadInt32(); // Skip file size
-            if (new string(reader.ReadChars(4)) != "WAVE")
-                throw new InvalidDataException("Invalid WAV file: Missing WAVE format");
-
-            // Search for the "data" chunk
-            while (wavStream.Position < wavStream.Length)
+            if (chunkId == "data")
             {
-                string chunkId = new string(reader.ReadChars(4));
-                int chunkSize = reader.ReadInt32();
-
-                if (chunkId == "data")
-                {
-                    return (int)wavStream.Position; // Current position is the header size
-                }
-
-                // Skip this chunk and move to the next
-                wavStream.Seek(chunkSize, SeekOrigin.Current);
+                return (int)wavStream.Position; // Current position is the header size
             }
 
-            throw new InvalidDataException("Invalid WAV file: No data chunk found");
+            // Skip this chunk and move to the next
+            wavStream.Seek(chunkSize, SeekOrigin.Current);
         }
+
+        throw new InvalidDataException("Invalid WAV file: No data chunk found");
     }
  
     public void PlayWavStream(MemoryStream audioStream)
@@ -492,11 +487,39 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         }
     }
 
-    private async Task PlayWavStreamInternalAsync(Stream audioStream)
+    private async Task PlayWavStreamInternalAsync(MemoryStream audioStream)
     {
         if (_voipMediaSession == null) return;
-        await _voipMediaSession.AudioExtrasSource.SendAudioFromStream(audioStream,
-            AudioSamplingRatesEnum.Rate8KHz);
+        
+        WaveFormat waveFormat;
+        await using (var reader = new WaveFileReader(audioStream))
+        {
+            waveFormat = reader.WaveFormat;
+        }
+        
+        if ((waveFormat.SampleRate != 8000 && waveFormat.SampleRate != 16000) ||
+            waveFormat.Channels != 1 ||
+            waveFormat.BitsPerSample != 16 ||
+            waveFormat.Encoding != WaveFormatEncoding.Pcm)
+        {
+            throw new VoiceException($"Invalid wav format: {waveFormat}");
+        }
+        
+        // remove the wav header
+        var headerSize = GetWavHeaderSize(audioStream);
+        audioStream = SkipFirstBytes(audioStream, headerSize);
+        
+        switch (waveFormat.SampleRate)
+        {
+            case 8000:
+                await _voipMediaSession.AudioExtrasSource.SendAudioFromStream(audioStream,
+                    AudioSamplingRatesEnum.Rate8KHz);
+                break;
+            case 16000:
+                await _voipMediaSession.AudioExtrasSource.SendAudioFromStream(audioStream,
+                    AudioSamplingRatesEnum.Rate16KHz);
+                break;
+        }
     }
 
     public void RecordToFile(string filename)
@@ -525,7 +548,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         {
             await PlayFileAsync($"{ROOT}beep.wav", cancellationToken);
 
-            var wavFormat = new WaveFormat(8000, 16, 1);
+            var wavFormat = new WaveFormat(_voiceProperties.DefaultWavSampleRate, 16, 1);
     
             _waveFile = new WaveFileWriter(filename, wavFormat);
 

@@ -17,7 +17,13 @@ public class WavConverter
     }
     
     // ReSharper disable once InconsistentNaming
-    public async  Task<MemoryStream> ConvertToPCM16Bit8000hz(MemoryStream wavStream)
+    
+    /// <summary>
+    /// Converts a wav audio stream to PCM 16bit 8000hz
+    /// </summary>
+    /// <param name="wavStream">The audio stream including the wav header</param>
+    /// <returns>The converted audio stream including the wav header</returns>
+    public async Task<MemoryStream> ConvertToPCM16Bit8000hz(MemoryStream wavStream)
     {
         _logger.LogDebug("{method}()", nameof(ConvertToPCM16Bit8000hz));
         
@@ -49,52 +55,7 @@ public class WavConverter
             var outputStream = new MemoryStream();
             WaveFileWriter.WriteWavFileToStream(outputStream, resampler);
 
-            // strip off the wav header
-            var size = GetWavHeaderSize(outputStream);
-            return SkipFirstBytes(outputStream, size); // wav header size
+            return outputStream;            
         }
     }
-
-    private MemoryStream SkipFirstBytes(MemoryStream originalStream, int bytesToSkip)
-    {
-        originalStream.Seek(0, SeekOrigin.Begin);
-        if (originalStream.Length <= bytesToSkip) return originalStream;
-
-        var buffer = originalStream.GetBuffer();
-        return new MemoryStream(buffer, bytesToSkip, (int)originalStream.Length - bytesToSkip, writable: false);
-    }
-    
-    private int GetWavHeaderSize(Stream wavStream)
-    {
-        wavStream.Seek(0, SeekOrigin.Begin);
-        using (var reader = new BinaryReader(wavStream, System.Text.Encoding.UTF8, leaveOpen: true))
-        {
-            // Read the "RIFF" chunk descriptor
-            if (new string(reader.ReadChars(4)) != "RIFF")
-                throw new InvalidDataException("Invalid WAV file: Missing RIFF header");
-
-            reader.ReadInt32(); // Skip file size
-            if (new string(reader.ReadChars(4)) != "WAVE")
-                throw new InvalidDataException("Invalid WAV file: Missing WAVE format");
-
-            // Search for the "data" chunk
-            while (wavStream.Position < wavStream.Length)
-            {
-                string chunkId = new string(reader.ReadChars(4));
-                int chunkSize = reader.ReadInt32();
-
-                if (chunkId == "data")
-                {
-                    return (int)wavStream.Position; // Current position is the header size
-                }
-
-                // Skip this chunk and move to the next
-                wavStream.Seek(chunkSize, SeekOrigin.Current);
-            }
-
-            throw new InvalidDataException("Invalid WAV file: No data chunk found");
-        }
-    }
-    
-    
 }

@@ -72,7 +72,18 @@ public interface IIvrBaseLine : IDisposable
     /// <param name="filename">The wav file to play</param>
     void PlayFile(string filename);
     
+    /// <summary>
+    /// Plays a wav stream.
+    /// </summary>
+    /// <param name="audioStream">including the wav header</param>
     protected internal void PlayWavStream(MemoryStream audioStream);
+    
+    /// <summary>
+    /// Plays a wav stream.
+    /// </summary>
+    /// <param name="audioStream">including the wav header</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     protected internal Task PlayWavStreamAsync(MemoryStream audioStream, CancellationToken cancellationToken);
 
     Task PlayFileAsync(string filename, CancellationToken cancellationToken);

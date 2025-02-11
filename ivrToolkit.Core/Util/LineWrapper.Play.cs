@@ -712,16 +712,7 @@ internal partial class LineWrapper
 
         if (fileName is not null)
         {
-
-            // Create a WaveFormat (16-bit, 8kHz, Mono)
-            var waveFormat = new WaveFormat(8000, 16, 1);  // 8kHz, 16-bit, Mono
-
-            // Use WaveFileWriter to write to the output file
-            await using (var waveFileWriter = new WaveFileWriter(fileName, waveFormat))
-            {
-                // Write PCM data to the WaveFileWriter
-                await audioStream.CopyToAsync(waveFileWriter, cancellationToken);  // Copy raw PCM data to the WAV file
-            }
+            await File.WriteAllBytesAsync(fileName, audioStream.ToArray(), cancellationToken);
             await _lineImplementation.PlayFileAsync(fileName, cancellationToken);
             return;
         }

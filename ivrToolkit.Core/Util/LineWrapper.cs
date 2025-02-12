@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Enums;
@@ -32,7 +33,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
     private int _volume;
     private bool _disposed;
     private readonly VoiceProperties _voiceProperties;
-    private readonly WavConverter _wavConverter;
+    private readonly string _root;
 
 
     internal LineWrapper(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, int lineNumber, 
@@ -45,12 +46,12 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
         _pauseHandler = pauseHandler.ThrowIfNull(nameof(LineWrapper));
         _lineImplementation = lineImplementation.ThrowIfNull(nameof(lineImplementation));
         loggerFactory.ThrowIfNull(nameof(loggerFactory));
-        _voiceProperties = voiceProperties.ThrowIfNull(nameof(voiceProperties));
-            
-        _logger = loggerFactory.CreateLogger<LineWrapper>();
-        _wavConverter = new WavConverter(loggerFactory);
-        _logger.LogDebug("ctr(ILoggerFactory, VoiceProperties, {lineNumber})", lineNumber);
         
+        _voiceProperties = voiceProperties.ThrowIfNull(nameof(voiceProperties));
+        _root = Path.Combine("System Recordings", _voiceProperties.SystemRecordingSubfolder);
+
+        _logger = loggerFactory.CreateLogger<LineWrapper>();
+        _logger.LogDebug("ctr(ILoggerFactory, VoiceProperties, {lineNumber})", lineNumber);
     }
 
     public IIvrLineManagement Management => this;

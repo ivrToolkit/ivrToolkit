@@ -30,7 +30,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     private readonly IncomingSemaphore _incomingSemaphore;
     private bool _dialResourcesClosed;
     
-    private const string ROOT = "System Recordings\\";
+    private readonly string _root;
     
     private static WaveFileWriter? _waveFile;
     
@@ -46,6 +46,9 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     {
         loggerFactory.ThrowIfNull(nameof(loggerFactory));
         _voiceProperties = voiceProperties.ThrowIfNull(nameof(voiceProperties));
+
+        _root = Path.Combine("System Recordings", _voiceProperties.SystemRecordingSubfolder);
+        
         _inviteManager = inviteManager.ThrowIfNull(nameof(inviteManager));
         
         _lineNumber = lineNumber;
@@ -104,7 +107,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
                         _digitBuffer += aByte.ToString();
                         break;
                 }
-                _keypressSemaphore.ReleaseMaybe(_digitBuffer);
+                _keypressSemaphore.CheckDigits(_digitBuffer);
             }
         };
 
@@ -248,19 +251,19 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     public string GetDigits(int numberOfDigits, string terminators, int timeoutMilliseconds = 0)
     {
         return GetDigitsInternalAsync(numberOfDigits, terminators, timeoutMilliseconds,
-            ms => { var result = _keypressSemaphore.Wait(ms); return Task.FromResult(result); }
+            ms => { var result = _keypressSemaphore.WaitForDigits(ms); return Task.FromResult(result); }
         ).GetAwaiter().GetResult();
     }
 
     public async Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken, int timeoutMilliseconds = 0)
     {
         return await GetDigitsInternalAsync(numberOfDigits, terminators, timeoutMilliseconds,
-            async (ms) => await _keypressSemaphore.WaitAsync(ms, cancellationToken));
+            async (ms) => await _keypressSemaphore.WaitForDigitsAsync(ms, cancellationToken));
     }
 
 
-    private async Task<string> GetDigitsInternalAsync(int numberOfDigits, string terminators, int timeoutMilliseconds,
-        Func<int, Task<bool>> wait)
+    private async Task<string> GetDigitsInternalAsync(int numberOfDigits, string terminators, int interDigitTimeoutMilliseconds,
+        Func<int, Task<string>> waitForDigitsFunc)
     {
         if (!_userAgent.IsCallActive)
         {
@@ -289,25 +292,34 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
             
         _keypressSemaphore.Setup( numberOfDigits, terminators);
 
-        if (timeoutMilliseconds == 0) timeoutMilliseconds = _voiceProperties.DigitsTimeoutInMilli;
+        if (interDigitTimeoutMilliseconds == 0) interDigitTimeoutMilliseconds = _voiceProperties.DigitsTimeoutInMilli;
 
-        _logger.LogDebug("_semaphore wait for {} milliseconds", timeoutMilliseconds);
-        var worked = await wait(timeoutMilliseconds);
-        if (!worked)
+        _logger.LogDebug("_semaphore inter-digit timeout is {} milliseconds", interDigitTimeoutMilliseconds);
+
+        try
+        {
+            // handles inter-digit timeout
+            var answer = await waitForDigitsFunc(interDigitTimeoutMilliseconds);
+            SetLastTerminator(answer, terminators);
+            return answer;
+        }
+        catch (GetDigitsTimeoutException)
+        {
+            throw;
+        }
+        catch (Exception)
         {
             // A teardown must have happened during hangup
-            _logger.LogDebug("{method}({digits}, {terminators}) - _keypressSemaphore.Wait was cancelled, throwing HangupException", nameof(GetDigits), numberOfDigits, terminators);
+            _logger.LogDebug("{method}({digits}, {terminators}) - _keypressSemaphore.waitForDigitsFunc was cancelled, throwing HangupException", nameof(GetDigits), numberOfDigits, terminators);
             throw new HangupException();
         }
-
-        _keypressSemaphore.Teardown();
-
-        // reset this so that messages can be played again
-        _logger.LogDebug("setting _digitPressed=false and returning FlushDigitBuffer()");
-        _digitPressed = false;
-        var answer = FlushDigitBuffer();
-        SetLastTerminator(answer, terminators);
-        return answer;
+        finally
+        {
+            // reset for next time
+            _keypressSemaphore.Teardown();
+            _digitPressed = false;
+            FlushDigitBuffer();
+        }
     }
     
     private void SetLastTerminator(string answer, string? terminators)
@@ -370,7 +382,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         }
         if (_digitPressed) return; // todo there is(should be) a way to stop digit presses during play.
         PlayFileInternalAsync(filename).GetAwaiter().GetResult();
-        Task.Delay(300).Wait();
+        //Task.Delay(300).Wait();
         if (!_userAgent.IsCallActive)
         {
             _logger.LogDebug("{method}({filename}) - _userAgent is inactive, throwing HangupException", nameof(PlayFile), filename);
@@ -393,7 +405,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         }
         if (_digitPressed) return;
         await PlayFileInternalAsync(filename);
-        await Task.Delay(300, cancellationToken);
+        //await Task.Delay(300, cancellationToken);
         if (!_userAgent.IsCallActive)
         {
             _logger.LogDebug("{method}({filename}) - _userAgent is inactive, throwing HangupException", nameof(PlayFile), filename);
@@ -477,7 +489,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         }
         if (_digitPressed) return;
         await PlayWavStreamInternalAsync(audioStream);
-        await Task.Delay(300, cancellationToken);
+        //await Task.Delay(300, cancellationToken);
         if (!_userAgent.IsCallActive)
         {
             _logger.LogDebug("{method}() - _userAgent is inactive, throwing HangupException", nameof(PlayFile));
@@ -546,7 +558,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 
         try
         {
-            await PlayFileAsync($"{ROOT}beep.wav", cancellationToken);
+            await PlayFileAsync(Path.Combine(_root,"beep.wav"), cancellationToken);
 
             var wavFormat = new WaveFormat(_voiceProperties.DefaultWavSampleRate, 16, 1);
     

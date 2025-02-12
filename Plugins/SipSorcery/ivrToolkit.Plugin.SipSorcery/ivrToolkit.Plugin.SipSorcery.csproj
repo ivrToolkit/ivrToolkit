@@ -9,9 +9,9 @@
 		<Description>A SipSorcery plugin for the IvrToolkit</Description>
 		<Copyright>Copyright 2013-2025 Troy Makaro</Copyright>
 		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-		<PackageProjectUrl>http://www.ivrtoolkit.com</PackageProjectUrl>
-		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageProjectUrl>https://www.ivrtoolkit.com</PackageProjectUrl>
 		<PackageIcon>icon.jpg</PackageIcon>
+		<PackageTags>voip; sip; sipsorcery; telephony</PackageTags>
 		<PackageIconUrl />
 
 

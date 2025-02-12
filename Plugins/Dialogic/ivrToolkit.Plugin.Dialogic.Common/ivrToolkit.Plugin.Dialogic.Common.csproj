@@ -4,12 +4,11 @@
     <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
     <Version>1.0.0</Version>
     <Description>Common functionality between the Dialogic SIP plugin and the Dialogic Analog plugin</Description>
-    <Copyright>Copyright 2013-2021 Troy Makaro</Copyright>
+    <Copyright>Copyright 2013-2025 Troy Makaro</Copyright>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageProjectUrl>http://www.ivrtoolkit.com</PackageProjectUrl>
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageProjectUrl>https://www.ivrtoolkit.com</PackageProjectUrl>
+    <PackageTags>voip; sip; telephony; dialogic</PackageTags>
     <PackageIcon>icon.jpg</PackageIcon>
-    <PackageIconUrl />
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

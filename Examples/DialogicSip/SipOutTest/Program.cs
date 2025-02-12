@@ -30,7 +30,7 @@ class Program
 
         var dialogicSipVoiceProperties = new DialogicSipVoiceProperties(loggerFactory, @"c:\repos\Config\DialogicSip\voice.properties");
 
-        var sipPlugin = new SipPlugin(loggerFactory, dialogicSipVoiceProperties);
+        using var sipPlugin = new SipPlugin(loggerFactory, dialogicSipVoiceProperties);
 
         LineManager lineManager = null;
         try
@@ -131,7 +131,6 @@ class Program
                     line.Hangup();
                 }
                 _logger.LogDebug("Disposing of line");
-                Thread.Sleep(5000); // todo remove me
                 line.Dispose();
                 _logger.LogDebug("Line is now disposed");
                 return;

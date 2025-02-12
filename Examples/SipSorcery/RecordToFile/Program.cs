@@ -30,13 +30,15 @@ class Program
         var sipServer = propertiesFromFile.SipServer;
         var sipUsername = propertiesFromFile.SipUsername;
         var password = propertiesFromFile.SipPassword;
+        var sipLocalEndpoint = propertiesFromFile.SipLocalEndpoint;
         
         // otherwise, you can just set up your properties this way
         var sipVoiceProperties = new SipVoiceProperties(loggerFactory)
         {
             SipServer = sipServer,
             SipUsername = sipUsername,
-            SipPassword = password
+            SipPassword = password,
+            SipLocalEndpoint = sipLocalEndpoint,
         };
         
         // instantiate the plugin you want to use
@@ -64,10 +66,7 @@ class Program
                 await line.RecordToFileAsync("myRecording.wav", cancellationToken);
                 
                 // play another wav file
-                await line.PlayFileAsync($"{WAV_FILE_LOCATION}/YouPressed.wav", cancellationToken);
-
-                // speak out the last terminator that was pressed
-                await line.PlayCharactersAsync(line.LastTerminator, cancellationToken);
+                await line.PlayFileAsync($"{WAV_FILE_LOCATION}/YouRecorded.wav", cancellationToken);
                 
                 // speak out the recorded message
                 await line.PlayFileAsync("myRecording.wav", cancellationToken);

@@ -34,7 +34,7 @@ public class PlayNumberTests
 
         for (var index = 0; index < min; index++)
         {
-            actual[index].ShouldBeEquivalentTo($"System Recordings\\{expect[index]}.wav");
+            actual[index].ShouldBeEquivalentTo($"System Recordings\\en-US-JennyNeural\\{expect[index]}.wav");
         }
         actual.Count.ShouldBe(expect.Length);
     }

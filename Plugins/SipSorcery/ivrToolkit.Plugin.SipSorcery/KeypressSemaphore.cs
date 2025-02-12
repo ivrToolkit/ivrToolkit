@@ -1,4 +1,5 @@
-﻿using ivrToolkit.Core.Extensions;
+﻿using ivrToolkit.Core.Exceptions;
+using ivrToolkit.Core.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Plugin.SipSorcery;
@@ -7,9 +8,11 @@ public class KeypressSemaphore
 {
     private readonly ILogger<KeypressSemaphore> _logger;
     private SemaphoreSlim? _semaphoreSlim;
-    private CancellationTokenSource _cts = null!;
+    private CancellationTokenSource? _cts;
     private int? _maxDigits;
     private string? _terminators;
+
+    private string _buffer = string.Empty;
 
     public KeypressSemaphore(ILoggerFactory loggerFactory)
     {
@@ -18,58 +21,91 @@ public class KeypressSemaphore
         _logger.LogDebug("{method}()", nameof(KeypressSemaphore));
     }
 
-    public void ReleaseMaybe(string buffer)
+    public void CheckDigits(string buffer)
     {
-        _logger.LogDebug("{method}({buffer}) - semaphoreSlim setup = {setup}", nameof(ReleaseMaybe), buffer, _semaphoreSlim != null);
+        _logger.LogDebug("{method}({buffer}) - semaphoreSlim setup = {setup}", nameof(CheckDigits), buffer, _semaphoreSlim != null);
         if (_semaphoreSlim == null || _terminators == null) return;
 
-        var count = 0;
-        ReadOnlySpan<char> span = buffer.AsSpan();
-        foreach (char c in span)
-        {
-            count++;
-            if (count == _maxDigits || _terminators.Contains(c))
-            {
-                _logger.LogDebug("{method}({buffer}) - wakey wakey!", nameof(ReleaseMaybe), buffer);
-                _semaphoreSlim.Release();
-                return;
-            }
-        }
-        // did not find a terminator and did not hit the number of digits required
-        _logger.LogDebug("{method}({buffer}) - did not find a terminator and did not hit the number of digits required", nameof(ReleaseMaybe), buffer);
+        _buffer = buffer;
+        // this method happens on every keypress. I now want to release on every keypress.
+        _semaphoreSlim.Release();
     }
 
-    public bool Wait(int milliseconds)
+    public string WaitForDigits(int milliseconds)
     {
-        _logger.LogDebug("{method}({buffer})", nameof(Wait), milliseconds);
-        try
+        if (_semaphoreSlim == null || _terminators == null)
         {
-            _semaphoreSlim?.Wait(milliseconds, _cts.Token);
+            throw new VoiceException("Unlikely to ever happen. _semaphoreSlim or _terminators are null.");
         }
-        catch (OperationCanceledException)
-        {
-            return false;
-        }
-        return true;
+
+        return WaitForDigitsInternalAsync(milliseconds,
+            (ms, tks) =>
+            {
+                var result = _semaphoreSlim.Wait(ms, tks);
+                return Task.FromResult(result);
+            }, CancellationToken.None).GetAwaiter().GetResult();
     }
+
+    public async Task<string> WaitForDigitsAsync(int milliseconds, CancellationToken cancellationToken)
+    {
+        if (_semaphoreSlim == null|| _terminators == null)
+        {
+            throw new VoiceException("Unlikely to ever happen. _semaphoreSlim or _terminators are null.");
+        }
+
+        return await WaitForDigitsInternalAsync(milliseconds,
+            async (ms, tks) => await _semaphoreSlim.WaitAsync(ms, tks), cancellationToken);
+    }
+
+    private async Task<string> WaitForDigitsInternalAsync(int milliseconds,
+        Func<int, CancellationToken, Task<bool>> waitFunc,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("{method}({milliseconds})", nameof(WaitForDigitsInternalAsync), milliseconds);
+
+        if (_semaphoreSlim == null|| _terminators == null || _cts == null)
+        {
+            throw new VoiceException("Unlikely to ever happen. _semaphoreSlim, _terminators or _cts are null.");
+        }
         
-    public async Task<bool> WaitAsync(int milliseconds, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("{method}({buffer})", nameof(WaitAsync), milliseconds);
-        try
+        // every time a key is pressed the semaphore is released so the time can restart
+        while (!_cts.IsCancellationRequested)
         {
-            if (_semaphoreSlim != null)
+            var acquired = await waitFunc(milliseconds, _cts.Token);
+            if (acquired)
             {
-                await _semaphoreSlim.WaitAsync(milliseconds, _cts.Token);
+                // detect max digits or a terminator
+                var count = 0;
+                var span = _buffer.ToArray();
+                foreach (var c in span)
+                {
+                    count++;
+                    if (count == _maxDigits || _terminators.Contains(c))
+                    {
+                        _logger.LogDebug("{method}({buffer}) - wakey wakey!", nameof(WaitForDigitsInternalAsync), _buffer);
+                        return _buffer;
+                    }
+                }
+                // did not find a terminator and did not hit the number of digits required
+                _logger.LogDebug("{method}({buffer}) - did not find a terminator and did not hit the number of digits required", nameof(WaitForDigitsInternalAsync), _buffer);
+            }
+            else
+            {
+                // timed out
+                _logger.LogDebug("{method}({buffer}) - inter-digit timeout", nameof(WaitForDigitsInternalAsync), _buffer);
+                if (_terminators.Contains('t'))
+                {
+                    // inter digit timeout acts like a terminator
+                    _buffer += 't';
+                    return _buffer;
+                }
+                throw new GetDigitsTimeoutException();
             }
         }
-        catch (OperationCanceledException)
-        {
-            return false;
-        }
-        return true;
-    }
 
+        throw new OperationCanceledException();
+    }
+    
     public void Setup(int maxDigits, string terminators)
     {
         _logger.LogDebug("{method}({max}, {terminators})", nameof(Setup), maxDigits, terminators);

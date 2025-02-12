@@ -9,21 +9,6 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   
-  <ItemGroup>
-    <None Remove="Voice Files\Correct.wav" />
-    <None Remove="Voice Files\Goodbye.wav" />
-    <None Remove="Voice Files\Incorrect.wav" />
-    <None Remove="Voice Files\Press1234.wav" />
-    <None Remove="Voice Files\ThankYou.wav" />
-    <None Remove="Voice Files\TryAgain.wav" />
-    <None Remove="Voice Files\YouPressed.wav" />
-    <None Update="voice.properties">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Voice Files\RecordMessage.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
 
   <ItemGroup>
     <Content Include="Voice Files\Goodbye.wav">
@@ -44,6 +29,24 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\ivrToolkit.Core\ivrToolkit.Core.csproj" />
     <ProjectReference Include="..\..\..\Plugins\SipSorcery\ivrToolkit.Plugin.SipSorcery\ivrToolkit.Plugin.SipSorcery.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Voice Files\Correct.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Voice Files\Incorrect.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Voice Files\Press1234.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Voice Files\RecordMessage.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Voice Files\YouRecorded.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

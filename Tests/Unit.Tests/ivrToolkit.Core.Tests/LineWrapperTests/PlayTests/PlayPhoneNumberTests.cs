@@ -35,14 +35,14 @@ public class PlayPhoneNumberTests
         
         var expected = new List<string>()
         {
-            "System Recordings\\3.wav",
-            "System Recordings\\3.wav",
-            "System Recordings\\3.wav",
+            "System Recordings\\en-US-JennyNeural\\3.wav",
+            "System Recordings\\en-US-JennyNeural\\3.wav",
+            "System Recordings\\en-US-JennyNeural\\3.wav",
             "Delay(500)",
-            "System Recordings\\4.wav",
-            "System Recordings\\4.wav",
-            "System Recordings\\4.wav",
-            "System Recordings\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
         };
         
         actual.ShouldBeEquivalentTo(expected);
@@ -57,18 +57,18 @@ public class PlayPhoneNumberTests
         
         var expected = new List<string>()
         {
-            "System Recordings\\2.wav",
-            "System Recordings\\2.wav",
-            "System Recordings\\2.wav",
+            "System Recordings\\en-US-JennyNeural\\2.wav",
+            "System Recordings\\en-US-JennyNeural\\2.wav",
+            "System Recordings\\en-US-JennyNeural\\2.wav",
             "Delay(500)",
-            "System Recordings\\3.wav",
-            "System Recordings\\3.wav",
-            "System Recordings\\3.wav",
+            "System Recordings\\en-US-JennyNeural\\3.wav",
+            "System Recordings\\en-US-JennyNeural\\3.wav",
+            "System Recordings\\en-US-JennyNeural\\3.wav",
             "Delay(500)",
-            "System Recordings\\4.wav",
-            "System Recordings\\4.wav",
-            "System Recordings\\4.wav",
-            "System Recordings\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
         };
         
         actual.ShouldBeEquivalentTo(expected);
@@ -83,20 +83,20 @@ public class PlayPhoneNumberTests
 
         var expected = new List<string>()
         {
-            "System Recordings\\1.wav",
+            "System Recordings\\en-US-JennyNeural\\1.wav",
             "Delay(500)",
-            "System Recordings\\2.wav",
-            "System Recordings\\2.wav",
-            "System Recordings\\2.wav",
+            "System Recordings\\en-US-JennyNeural\\2.wav",
+            "System Recordings\\en-US-JennyNeural\\2.wav",
+            "System Recordings\\en-US-JennyNeural\\2.wav",
             "Delay(500)",
-            "System Recordings\\3.wav",
-            "System Recordings\\3.wav",
-            "System Recordings\\3.wav",
+            "System Recordings\\en-US-JennyNeural\\3.wav",
+            "System Recordings\\en-US-JennyNeural\\3.wav",
+            "System Recordings\\en-US-JennyNeural\\3.wav",
             "Delay(500)",
-            "System Recordings\\4.wav",
-            "System Recordings\\4.wav",
-            "System Recordings\\4.wav",
-            "System Recordings\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
         };
         
         actual.ShouldBeEquivalentTo(expected);
@@ -111,20 +111,20 @@ public class PlayPhoneNumberTests
         
         var expected = new List<string>()
         {
-            "System Recordings\\1.wav",
+            "System Recordings\\en-US-JennyNeural\\1.wav",
             "Delay(500)",
-            "System Recordings\\1.wav",
-            "System Recordings\\2.wav",
-            "System Recordings\\2.wav",
+            "System Recordings\\en-US-JennyNeural\\1.wav",
+            "System Recordings\\en-US-JennyNeural\\2.wav",
+            "System Recordings\\en-US-JennyNeural\\2.wav",
             "Delay(500)",
-            "System Recordings\\2.wav",
-            "System Recordings\\3.wav",
-            "System Recordings\\3.wav",
+            "System Recordings\\en-US-JennyNeural\\2.wav",
+            "System Recordings\\en-US-JennyNeural\\3.wav",
+            "System Recordings\\en-US-JennyNeural\\3.wav",
             "Delay(500)",
-            "System Recordings\\3.wav",
-            "System Recordings\\4.wav",
-            "System Recordings\\4.wav",
-            "System Recordings\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\3.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
         };
         
         actual.ShouldBeEquivalentTo(expected);
@@ -139,9 +139,9 @@ public class PlayPhoneNumberTests
         
         var expected = new List<string>()
         {
-            "System Recordings\\4.wav",
-            "System Recordings\\4.wav",
-            "System Recordings\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
         };
         
         actual.ShouldBeEquivalentTo(expected);
@@ -156,12 +156,12 @@ public class PlayPhoneNumberTests
         
         var expected = new List<string>()
         {
-            "System Recordings\\3.wav",
+            "System Recordings\\en-US-JennyNeural\\3.wav",
             "Delay(500)",
-            "System Recordings\\4.wav",
-            "System Recordings\\4.wav",
-            "System Recordings\\4.wav",
-            "System Recordings\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
         };
         
         actual.ShouldBeEquivalentTo(expected);

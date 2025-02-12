@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
 using Microsoft.Extensions.Logging;
-using NAudio.Wave;
 
 namespace ivrToolkit.Core.Util;
 
@@ -17,8 +16,6 @@ internal partial class LineWrapper
         "January","February","March","April","May","June","July","August","September","October",
         "November","December"
     };
-
-    private const string ROOT = "System Recordings\\";
 
     private bool Is24Hour(string mask) {
         _logger.LogDebug("{method}({mask})", nameof(Is24Hour), mask);
@@ -648,13 +645,13 @@ internal partial class LineWrapper
     private void PlayF(string filename)
     {
         _logger.LogDebug("{method}({fileName})", nameof(PlayF), filename);
-        PlayFile(ROOT + filename + ".wav");
+        PlayFile(Path.Combine(_root, $"{filename}.wav"));
     }
         
     private async Task PlayFAsync(string filename, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{method}({fileName})", nameof(PlayFAsync), filename);
-        await PlayFileAsync(ROOT + filename + ".wav", cancellationToken);
+        await PlayFileAsync(Path.Combine(_root, $"{filename}.wav"), cancellationToken);
     }
     
     public void PlayFileOrPhrase(string fileNameOrPhrase)

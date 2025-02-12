@@ -137,7 +137,7 @@ public class SipVoiceProperties : VoiceProperties, IDisposable
             }
             return result;
         }
-        init => SetProperty(SIP_SERVER_KEY, value);
+        init => SetProperty(SIP_LOCAL_ENDPOINT_KEY, value);
     }
     
 

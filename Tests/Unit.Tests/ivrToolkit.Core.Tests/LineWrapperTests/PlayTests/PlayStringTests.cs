@@ -82,7 +82,7 @@ public class PlayStringTests
         {
             actual[index].ShouldBeEquivalentTo(expect[index].StartsWith(">")
                 ? expect[index].Substring(1)
-                : $"System Recordings\\{expect[index]}.wav");
+                : $"System Recordings\\en-US-JennyNeural\\{expect[index]}.wav");
         }
         actual.Count.ShouldBe(expect.Length);
     }

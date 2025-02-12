@@ -31,15 +31,15 @@ public class PlayDateTests
         
         var expected = new List<string>()
         {
-            "System Recordings\\January.wav",
-            "System Recordings\\ord25.wav",
-            "System Recordings\\2.wav",
-            "System Recordings\\Thousand.wav",
-            "System Recordings\\20.wav",
-            "System Recordings\\5.wav",
-            "System Recordings\\4.wav",
-            "System Recordings\\20.wav",
-            "System Recordings\\pm.wav"
+            "System Recordings\\en-US-JennyNeural\\January.wav",
+            "System Recordings\\en-US-JennyNeural\\ord25.wav",
+            "System Recordings\\en-US-JennyNeural\\2.wav",
+            "System Recordings\\en-US-JennyNeural\\Thousand.wav",
+            "System Recordings\\en-US-JennyNeural\\20.wav",
+            "System Recordings\\en-US-JennyNeural\\5.wav",
+            "System Recordings\\en-US-JennyNeural\\4.wav",
+            "System Recordings\\en-US-JennyNeural\\20.wav",
+            "System Recordings\\en-US-JennyNeural\\pm.wav"
         };
         actual.ShouldBeEquivalentTo(expected);
     }
@@ -77,7 +77,7 @@ public class PlayDateTests
 
         for (var index = 0; index < min; index++)
         {
-            actual[index].ShouldBeEquivalentTo($"System Recordings\\{expect[index]}.wav");
+            actual[index].ShouldBeEquivalentTo($"System Recordings\\en-US-JennyNeural\\{expect[index]}.wav");
         }
         actual.Count.ShouldBe(expect.Length);
     }

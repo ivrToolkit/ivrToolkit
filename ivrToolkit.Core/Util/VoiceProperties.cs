@@ -34,6 +34,9 @@ public class VoiceProperties : Properties, IDisposable
     private const string WAV_SAMPLE_RATE_KEY = "wav.sampleRate";
     private const string WAV_SAMPLE_RATE_DEFAULT = "8000";
     
+    private const string SYSTEM_RECORDING_SUBFOLDER_KEY = "system.recording.subfolder";
+    private const string SYSTEM_RECORDING_SUBFOLDER_DEFAULT = "en-US-JennyNeural";
+    
     protected VoiceProperties(ILoggerFactory loggerFactory, string fileName) : base (loggerFactory, fileName)
     {
         _logger = loggerFactory.CreateLogger<VoiceProperties>();
@@ -46,6 +49,16 @@ public class VoiceProperties : Properties, IDisposable
         _logger.LogDebug("ctr(ILoggerFactory)");
     }
 
+    /// <summary>
+    /// The sub-folder location under "System Recordings" that contains the system recordings.
+    /// Current options are "Original" or "en-US-JennyNeural"
+    /// </summary>
+    public string SystemRecordingSubfolder
+    {
+        get => GetProperty(SYSTEM_RECORDING_SUBFOLDER_KEY, SYSTEM_RECORDING_SUBFOLDER_DEFAULT);
+        init => SetProperty(SYSTEM_RECORDING_SUBFOLDER_KEY, value);
+    }
+    
     /// <summary>
     /// Total number of attempts to try at a prompt before 'TooManyAttemptsException' is thrown. Default is '99'.
     /// </summary>

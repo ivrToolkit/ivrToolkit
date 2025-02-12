@@ -29,12 +29,12 @@ public class PlayMoneyTests
         
         var expected = new List<string>()
         {
-            "System Recordings\\10.wav",
-            "System Recordings\\Billion.wav",
-            "System Recordings\\dollars.wav",
-            "System Recordings\\and.wav",
-            "System Recordings\\0.wav",
-            "System Recordings\\cents.wav",
+            "System Recordings\\en-US-JennyNeural\\10.wav",
+            "System Recordings\\en-US-JennyNeural\\Billion.wav",
+            "System Recordings\\en-US-JennyNeural\\dollars.wav",
+            "System Recordings\\en-US-JennyNeural\\and.wav",
+            "System Recordings\\en-US-JennyNeural\\0.wav",
+            "System Recordings\\en-US-JennyNeural\\cents.wav",
         };
         actual.ShouldBeEquivalentTo(expected);
     }
@@ -49,12 +49,12 @@ public class PlayMoneyTests
         
         var expected = new List<string>()
         {
-            "System Recordings\\10.wav",
-            "System Recordings\\Million.wav",
-            "System Recordings\\dollars.wav",
-            "System Recordings\\and.wav",
-            "System Recordings\\0.wav",
-            "System Recordings\\cents.wav",
+            "System Recordings\\en-US-JennyNeural\\10.wav",
+            "System Recordings\\en-US-JennyNeural\\Million.wav",
+            "System Recordings\\en-US-JennyNeural\\dollars.wav",
+            "System Recordings\\en-US-JennyNeural\\and.wav",
+            "System Recordings\\en-US-JennyNeural\\0.wav",
+            "System Recordings\\en-US-JennyNeural\\cents.wav",
         };
         actual.ShouldBeEquivalentTo(expected);
     }
@@ -69,13 +69,13 @@ public class PlayMoneyTests
         
         var expected = new List<string>()
         {
-            "System Recordings\\negative.wav",
-            "System Recordings\\10.wav",
-            "System Recordings\\Million.wav",
-            "System Recordings\\dollars.wav",
-            "System Recordings\\and.wav",
-            "System Recordings\\0.wav",
-            "System Recordings\\cents.wav",
+            "System Recordings\\en-US-JennyNeural\\negative.wav",
+            "System Recordings\\en-US-JennyNeural\\10.wav",
+            "System Recordings\\en-US-JennyNeural\\Million.wav",
+            "System Recordings\\en-US-JennyNeural\\dollars.wav",
+            "System Recordings\\en-US-JennyNeural\\and.wav",
+            "System Recordings\\en-US-JennyNeural\\0.wav",
+            "System Recordings\\en-US-JennyNeural\\cents.wav",
         };
         actual.ShouldBeEquivalentTo(expected);
     }
@@ -90,12 +90,12 @@ public class PlayMoneyTests
         
         var expected = new List<string>()
         {
-            "System Recordings\\1.wav",
-            "System Recordings\\dollar.wav",
-            "System Recordings\\and.wav",
-            "System Recordings\\20.wav",
-            "System Recordings\\5.wav",
-            "System Recordings\\cents.wav",
+            "System Recordings\\en-US-JennyNeural\\1.wav",
+            "System Recordings\\en-US-JennyNeural\\dollar.wav",
+            "System Recordings\\en-US-JennyNeural\\and.wav",
+            "System Recordings\\en-US-JennyNeural\\20.wav",
+            "System Recordings\\en-US-JennyNeural\\5.wav",
+            "System Recordings\\en-US-JennyNeural\\cents.wav",
         };
         actual.ShouldBeEquivalentTo(expected);
     }
@@ -110,11 +110,11 @@ public class PlayMoneyTests
         
         var expected = new List<string>()
         {
-            "System Recordings\\0.wav",
-            "System Recordings\\dollars.wav",
-            "System Recordings\\and.wav",
-            "System Recordings\\14.wav",
-            "System Recordings\\cents.wav",
+            "System Recordings\\en-US-JennyNeural\\0.wav",
+            "System Recordings\\en-US-JennyNeural\\dollars.wav",
+            "System Recordings\\en-US-JennyNeural\\and.wav",
+            "System Recordings\\en-US-JennyNeural\\14.wav",
+            "System Recordings\\en-US-JennyNeural\\cents.wav",
         };
         actual.ShouldBeEquivalentTo(expected);
     }
@@ -129,14 +129,14 @@ public class PlayMoneyTests
         
         var expected = new List<string>()
         {
-            "System Recordings\\1.wav",
-            "System Recordings\\Thousand.wav",
-            "System Recordings\\100.wav",
-            "System Recordings\\3.wav",
-            "System Recordings\\dollars.wav",
-            "System Recordings\\and.wav",
-            "System Recordings\\8.wav",
-            "System Recordings\\cents.wav",
+            "System Recordings\\en-US-JennyNeural\\1.wav",
+            "System Recordings\\en-US-JennyNeural\\Thousand.wav",
+            "System Recordings\\en-US-JennyNeural\\100.wav",
+            "System Recordings\\en-US-JennyNeural\\3.wav",
+            "System Recordings\\en-US-JennyNeural\\dollars.wav",
+            "System Recordings\\en-US-JennyNeural\\and.wav",
+            "System Recordings\\en-US-JennyNeural\\8.wav",
+            "System Recordings\\en-US-JennyNeural\\cents.wav",
         };
         actual.ShouldBeEquivalentTo(expected);
     }
@@ -151,14 +151,14 @@ public class PlayMoneyTests
         
         var expected = new List<string>()
         {
-            "System Recordings\\1.wav",
-            "System Recordings\\Thousand.wav",
-            "System Recordings\\100.wav",
-            "System Recordings\\3.wav",
-            "System Recordings\\dollars.wav",
-            "System Recordings\\and.wav",
-            "System Recordings\\0.wav",
-            "System Recordings\\cents.wav",
+            "System Recordings\\en-US-JennyNeural\\1.wav",
+            "System Recordings\\en-US-JennyNeural\\Thousand.wav",
+            "System Recordings\\en-US-JennyNeural\\100.wav",
+            "System Recordings\\en-US-JennyNeural\\3.wav",
+            "System Recordings\\en-US-JennyNeural\\dollars.wav",
+            "System Recordings\\en-US-JennyNeural\\and.wav",
+            "System Recordings\\en-US-JennyNeural\\0.wav",
+            "System Recordings\\en-US-JennyNeural\\cents.wav",
         };
         actual.ShouldBeEquivalentTo(expected);
     }
@@ -173,14 +173,14 @@ public class PlayMoneyTests
         
         var expected = new List<string>()
         {
-            "System Recordings\\1.wav",
-            "System Recordings\\Thousand.wav",
-            "System Recordings\\100.wav",
-            "System Recordings\\3.wav",
-            "System Recordings\\dollars.wav",
-            "System Recordings\\and.wav",
-            "System Recordings\\1.wav",
-            "System Recordings\\cent.wav",
+            "System Recordings\\en-US-JennyNeural\\1.wav",
+            "System Recordings\\en-US-JennyNeural\\Thousand.wav",
+            "System Recordings\\en-US-JennyNeural\\100.wav",
+            "System Recordings\\en-US-JennyNeural\\3.wav",
+            "System Recordings\\en-US-JennyNeural\\dollars.wav",
+            "System Recordings\\en-US-JennyNeural\\and.wav",
+            "System Recordings\\en-US-JennyNeural\\1.wav",
+            "System Recordings\\en-US-JennyNeural\\cent.wav",
         };
         actual.ShouldBeEquivalentTo(expected);
     }
@@ -195,11 +195,11 @@ public class PlayMoneyTests
         
         var expected = new List<string>()
         {
-            "System Recordings\\200.wav",
-            "System Recordings\\dollars.wav",
-            "System Recordings\\and.wav",
-            "System Recordings\\0.wav",
-            "System Recordings\\cents.wav",
+            "System Recordings\\en-US-JennyNeural\\200.wav",
+            "System Recordings\\en-US-JennyNeural\\dollars.wav",
+            "System Recordings\\en-US-JennyNeural\\and.wav",
+            "System Recordings\\en-US-JennyNeural\\0.wav",
+            "System Recordings\\en-US-JennyNeural\\cents.wav",
         };
         actual.ShouldBeEquivalentTo(expected);
     }

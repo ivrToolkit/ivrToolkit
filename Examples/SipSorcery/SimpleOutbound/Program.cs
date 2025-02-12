@@ -58,7 +58,9 @@ class Program
                 await line.PlayFileAsync($"{WAV_FILE_LOCATION}/ThankYou.wav", cancellationToken);
 
                 // play a wav file and wait for digits to be pressed
-                var result = await line.PromptAsync($"{WAV_FILE_LOCATION}/Press1234.wav", cancellationToken);
+                var result = await line.MultiTryPromptAsync($"{WAV_FILE_LOCATION}/Press1234.wav", 
+                    value => !string.IsNullOrEmpty(value),
+                    cancellationToken);
 
                 // play another wav file
                 await line.PlayFileAsync($"{WAV_FILE_LOCATION}/YouPressed.wav", cancellationToken);

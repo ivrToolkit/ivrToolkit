@@ -6,6 +6,7 @@ using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.TTS;
+using ivrToolkit.Core.Util;
 using ivrToolkit.Plugin.SipSorcery;
 using Microsoft.Extensions.Logging;
 
@@ -62,7 +63,9 @@ class Program
 
                 // play tts and wait for digits to be pressed
                 message = "For this simple demonstration, press <say-as interpret-as='characters'>1234</say-as> followed by the pound key.";
-                var result = await line.PromptAsync(message,$"{WAV_FILE_LOCATION}/Press1234.wav", cancellationToken);
+                var result = await line.MultiTryPromptAsync(message, $"{WAV_FILE_LOCATION}/Press1234.wav", 
+                    value => !string.IsNullOrEmpty(value),
+                    cancellationToken);
                 
                 message = $"you pressed <say-as interpret-as='characters'>{result}</say-as> which is";
                 // say Correct or Incorrect

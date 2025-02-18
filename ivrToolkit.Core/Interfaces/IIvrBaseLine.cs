@@ -141,14 +141,19 @@ public interface IIvrBaseLine : IDisposable
     /// </summary>
     /// <param name="numberOfDigits">The maximum number of digits to capture.</param>
     /// <param name="terminators">The valid terminator keys.</param>
-    /// <param name="timeoutMilliseconds">The timeout duration in milliseconds (0 to use default).</param>
+    /// <param name="interDigitTimeoutMilliseconds">The timeout duration between keypresses in milliseconds (0 to use default).</param>
     /// <returns>The collected digits, excluding the terminator if used.</returns>
-    string GetDigits(int numberOfDigits, string terminators, int timeoutMilliseconds = 0);
+    string GetDigits(int numberOfDigits, string terminators, int interDigitTimeoutMilliseconds = 0);
 
     /// <summary>
     /// Asynchronously collects digits from the user until the specified number is reached or a terminator is pressed.
     /// </summary>
-    Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken, int timeoutMilliseconds = 0);
+    /// <param name="numberOfDigits">The maximum number of digits to capture.</param>
+    /// <param name="terminators">The valid terminator keys.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <param name="interDigitTimeoutMilliseconds">The timeout duration between keypresses in milliseconds (0 to use default).</param>
+    /// <returns>The collected digits, excluding the terminator if used.</returns>
+    Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken, int interDigitTimeoutMilliseconds = 0);
 
     /// <summary>
     /// Clears the digit buffer and returns all previously collected digits, including terminators.

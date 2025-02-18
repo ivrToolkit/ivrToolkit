@@ -202,12 +202,12 @@ public class AnalogLine : IIvrBaseLine, IIvrLineManagement
     /// <param name="numberOfDigits">Maximum number of digits allowed in the buffer.</param>
     /// <param name="terminators">Terminators</param>
     /// <returns>Returns the digits pressed not including the terminator if there was one</returns>
-    public string GetDigits(int numberOfDigits, string terminators, int timeoutMilliSeconds = 0)
+    public string GetDigits(int numberOfDigits, string terminators, int interDigitTimeoutMilliseconds = 0)
     {
         return GetDigits(_voiceh, numberOfDigits, terminators);
     }
 
-    public Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken, int timeoutMilliSeconds = 0)
+    public Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken, int interDigitTimeoutMilliseconds = 0)
     {
         throw new NotImplementedException();
     }

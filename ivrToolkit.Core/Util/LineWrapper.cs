@@ -315,13 +315,13 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
     }
 
 
-    public string GetDigits(int numberOfDigits, string terminators, int timeoutMilliseconds = 0)
+    public string GetDigits(int numberOfDigits, string terminators, int interDigitTimeoutMilliseconds = 0)
     {
         _logger.LogDebug("{method}({numberOfDigits}, {terminators})", nameof(GetDigits), numberOfDigits, terminators);
         CheckDispose();
         try
         {
-            var answer = _lineImplementation.GetDigits(numberOfDigits, terminators, timeoutMilliseconds);
+            var answer = _lineImplementation.GetDigits(numberOfDigits, terminators, interDigitTimeoutMilliseconds);
             return StripOffTerminator(answer, terminators);
         }
         catch (DisposingException)
@@ -335,13 +335,13 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
         }
     }
 
-    public async Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken, int timeoutMilliseconds = 0)
+    public async Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken, int interDigitTimeoutMilliseconds = 0)
     {
         _logger.LogDebug("{method}({numberOfDigits}, {terminators})", nameof(GetDigitsAsync), numberOfDigits, terminators);
         CheckDispose();
         try
         {
-            var answer = await _lineImplementation.GetDigitsAsync(numberOfDigits, terminators, cancellationToken, timeoutMilliseconds);
+            var answer = await _lineImplementation.GetDigitsAsync(numberOfDigits, terminators, cancellationToken, interDigitTimeoutMilliseconds);
             return StripOffTerminator(answer, terminators);
         }
         catch (DisposingException)

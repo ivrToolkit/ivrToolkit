@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
-using ivrToolkit.Core.TTS;
 using ivrToolkit.Core.Util;
 using ivrToolkit.Plugin.Dialogic.Common;
 using ivrToolkit.Plugin.Dialogic.Common.DialogicDefs;
@@ -894,13 +893,13 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
         FlushDigitBuffer();
     }
 
-    public string GetDigits(int numberOfDigits, string terminators, int timeoutMilliSeconds = 0)
+    public string GetDigits(int numberOfDigits, string terminators, int interDigitTimeoutMilliseconds = 0)
     {
         _logger.LogDebug("GetDigits({0}, {1})", numberOfDigits, terminators);
         return GetDigits(_dxDev, numberOfDigits, terminators);
     }
 
-    public Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken, int timeoutMilliSeconds = 0)
+    public Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken, int interDigitTimeoutMilliseconds = 0)
     {
         throw new NotImplementedException();
     }

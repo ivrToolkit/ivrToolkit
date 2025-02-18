@@ -5,6 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Interfaces;
+using ivrToolkit.Core.TTS;
+using ivrToolkit.Core.Util;
 
 namespace ivrToolkit.Core.Tests.LineWrapperTests;
 
@@ -61,12 +63,12 @@ public class FakeLine : IIvrBaseLine, IIvrLineManagement
         PlayFileAsync(filename, CancellationToken.None).GetAwaiter().GetResult();
     }
     
-    void IIvrBaseLine.PlayWavStream(MemoryStream wavStream)
+    void IIvrBaseLine.PlayWavStream(WavStream wavStream)
     {
         throw new NotImplementedException();
     }
 
-    Task IIvrBaseLine.PlayWavStreamAsync(MemoryStream wavStream, CancellationToken cancellationToken)
+    Task IIvrBaseLine.PlayWavStreamAsync(WavStream wavStream, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

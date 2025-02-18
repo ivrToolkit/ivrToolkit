@@ -1,6 +1,6 @@
-﻿using System.IO;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
+using ivrToolkit.Core.Util;
 
 namespace ivrToolkit.Core.Interfaces;
 
@@ -14,13 +14,13 @@ public interface ITextToSpeech
     /// </summary>
     /// <param name="text">The text to convert to a wav stream</param>
     /// <returns>A wav stream representing the text. Includes the wav header too.</returns>
-    MemoryStream TextToSpeech(string text);
+    WavStream TextToSpeech(string text);
     
     /// <summary>
     /// Converts the text to Speech and returns a wav audio stream including the wav header.
     /// </summary>
     /// <param name="text">The text to convert to a wav stream</param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A wav stream representing the text. Includes the wav header too.</returns>
-    Task<MemoryStream> TextToSpeechAsync(string text, CancellationToken cancellationToken);
+    Task<WavStream> TextToSpeechAsync(string text, CancellationToken cancellationToken);
 }

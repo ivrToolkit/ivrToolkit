@@ -10,6 +10,7 @@ using System.Text;
 using ivrToolkit.Core.Exceptions;
 using System.Diagnostics;
 using System.Net;
+using ivrToolkit.Core.Util;
 using NAudio.Wave;
 using SIPSorcery.Net;
 
@@ -423,61 +424,21 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         await PlayWavStreamInternalAsync(audioStream);
     }
 
-    private MemoryStream GetFileStream(string filename)
+    private WavStream GetFileStream(string filename)
     {
         using FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
         // Now you can read the raw audio data
         var audioData = new byte[fs.Length];
         fs.ReadExactly(audioData, 0, audioData.Length);
-        return new MemoryStream(audioData);
+        return new WavStream(audioData);
     }
     
-    private MemoryStream SkipFirstBytes(MemoryStream originalStream, int bytesToSkip)
-    {
-        originalStream.Seek(0, SeekOrigin.Begin);
-        if (originalStream.Length <= bytesToSkip) return originalStream;
-
-        var buffer = originalStream.ToArray();
-        return new MemoryStream(buffer, bytesToSkip, (int)originalStream.Length - bytesToSkip, writable: false);
-    }
-    
-    private int GetWavHeaderSize(Stream wavStream)
-    {
-        wavStream.Seek(0, SeekOrigin.Begin);
-        using var reader = new BinaryReader(wavStream, Encoding.UTF8, leaveOpen: true);
-        
-        // Read the "RIFF" chunk descriptor
-        if (new string(reader.ReadChars(4)) != "RIFF")
-            throw new InvalidDataException("Invalid WAV file: Missing RIFF header");
-
-        reader.ReadInt32(); // Skip file size
-        if (new string(reader.ReadChars(4)) != "WAVE")
-            throw new InvalidDataException("Invalid WAV file: Missing WAVE format");
-
-        // Search for the "data" chunk
-        while (wavStream.Position < wavStream.Length)
-        {
-            string chunkId = new string(reader.ReadChars(4));
-            int chunkSize = reader.ReadInt32();
-
-            if (chunkId == "data")
-            {
-                return (int)wavStream.Position; // Current position is the header size
-            }
-
-            // Skip this chunk and move to the next
-            wavStream.Seek(chunkSize, SeekOrigin.Current);
-        }
-
-        throw new InvalidDataException("Invalid WAV file: No data chunk found");
-    }
- 
-    public void PlayWavStream(MemoryStream audioStream)
+    public void PlayWavStream(WavStream audioStream)
     {
         PlayWavStreamAsync(audioStream, CancellationToken.None).GetAwaiter().GetResult();
     }
 
-    public async Task PlayWavStreamAsync(MemoryStream audioStream, CancellationToken cancellationToken)
+    public async Task PlayWavStreamAsync(WavStream audioStream, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{method}() - _digitPressed = {pressed}", nameof(PlayFile), _digitPressed);
         if (!_userAgent.IsCallActive)
@@ -499,36 +460,18 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         }
     }
 
-    private async Task PlayWavStreamInternalAsync(MemoryStream audioStream)
+    private async Task PlayWavStreamInternalAsync(WavStream audioStream)
     {
         if (_voipMediaSession == null) return;
-        
-        WaveFormat waveFormat;
-        await using (var reader = new WaveFileReader(audioStream))
-        {
-            waveFormat = reader.WaveFormat;
-        }
-        
-        if ((waveFormat.SampleRate != 8000 && waveFormat.SampleRate != 16000) ||
-            waveFormat.Channels != 1 ||
-            waveFormat.BitsPerSample != 16 ||
-            waveFormat.Encoding != WaveFormatEncoding.Pcm)
-        {
-            throw new VoiceException($"Invalid wav format: {waveFormat}");
-        }
-        
-        // remove the wav header
-        var headerSize = GetWavHeaderSize(audioStream);
-        audioStream = SkipFirstBytes(audioStream, headerSize);
-        
-        switch (waveFormat.SampleRate)
+
+        switch (audioStream.WavFormat.SampleRate)
         {
             case 8000:
-                await _voipMediaSession.AudioExtrasSource.SendAudioFromStream(audioStream,
+                await _voipMediaSession.AudioExtrasSource.SendAudioFromStream(audioStream.GetAudioDataOnly(),
                     AudioSamplingRatesEnum.Rate8KHz);
                 break;
             case 16000:
-                await _voipMediaSession.AudioExtrasSource.SendAudioFromStream(audioStream,
+                await _voipMediaSession.AudioExtrasSource.SendAudioFromStream(audioStream.GetAudioDataOnly(),
                     AudioSamplingRatesEnum.Rate16KHz);
                 break;
         }
@@ -641,7 +584,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
     /// Exists for legacy purposes. Use <see cref="IIvrLine.StartIncomingListener"/> instead
     /// </summary>
     /// <param name="rings">Not used</param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     public async Task WaitRingsAsync(int rings, CancellationToken cancellationToken)
     {
         ResetLine();

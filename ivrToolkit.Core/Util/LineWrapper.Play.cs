@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using ivrToolkit.Core.Exceptions;
+using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -680,48 +680,63 @@ internal partial class LineWrapper
         }
     }
 
-    public void PlayTextToSpeech(string textToSpeech, string fileName = null)
+    public void PlayTextToSpeech(string textToSpeech)
     {
-        PlayTextToSpeechAsync(textToSpeech, fileName, CancellationToken.None).GetAwaiter().GetResult();
+        PlayTextToSpeechAsync(textToSpeech, CancellationToken.None).GetAwaiter().GetResult();
+    }
+    
+    public void PlayTextToSpeech(ITextToSpeechBuilder textToSpeechBuilder)
+    {
+        PlayTextToSpeechAsync(textToSpeechBuilder, CancellationToken.None).GetAwaiter().GetResult();
     }
 
     public async Task PlayTextToSpeechAsync(string textToSpeech, CancellationToken cancellationToken)
     {
-        await PlayTextToSpeechAsync(textToSpeech, null, cancellationToken);
-    }
+        _logger.LogDebug("{method}({textToSpeech})", nameof(PlayTextToSpeechAsync), textToSpeech);
+        CheckDispose();
+        
+        var textToSpeechBuilder = _textToSpeechGenerator.GetTextToSpeechBuilder(textToSpeech);
 
-    public async Task PlayTextToSpeechAsync(string text, string fileName, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("{method}({text})", nameof(PlayTextToSpeechAsync), text);
-        if (_textToSpeech == null)
-        {
-            throw new VoiceException("Text-To-Speech is not set up.");
-        }
-
-        // if the file is not null and it exists then play it.
-        if (fileName is not null && File.Exists(fileName))
-        {
-            await PlayFileAsync(fileName, cancellationToken);
-            return;
-        }
-
-        var audioStream = await _textToSpeech.TextToSpeechAsync(text, cancellationToken);
-
-        if (fileName is not null)
-        {
-            await File.WriteAllBytesAsync(fileName, audioStream.ToArray(), cancellationToken);
-            await _lineImplementation.PlayFileAsync(fileName, cancellationToken);
-            return;
-        }
+        var audioStream = await textToSpeechBuilder.GetWavStreamAsync(cancellationToken);
         await _lineImplementation.PlayWavStreamAsync(audioStream, cancellationToken);
     }
+
+    public async Task PlayTextToSpeechAsync(ITextToSpeechBuilder textToSpeechBuilder, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("{method}({textToSpeechBuilder})", nameof(PlayTextToSpeechAsync), textToSpeechBuilder);
+        CheckDispose();
+        textToSpeechBuilder.ThrowIfNull(nameof(textToSpeechBuilder));
+
+        var audioStream = await textToSpeechBuilder.GetWavStreamAsync(cancellationToken);
+        await _lineImplementation.PlayWavStreamAsync(audioStream, cancellationToken);
+    }
+
+    public void PlayFile(ITextToSpeechBuilder textToSpeechBuilder)
+    {
+        PlayFileAsync(textToSpeechBuilder, CancellationToken.None).GetAwaiter().GetResult();
+    }
+
+    public async Task PlayFileAsync(ITextToSpeechBuilder textToSpeechBuilder,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("{method}({textToSpeechBuilder})", nameof(PlayFileAsync), textToSpeechBuilder);
+        CheckDispose();
+        
+        textToSpeechBuilder.ThrowIfNull(nameof(textToSpeechBuilder));
+        // legacy plugins don't have PlayWavStreamAsync implemented
+        // but we still want to give them the ability to do TTS
+        
+        // throws VoiceException if FileName is missing
+        await textToSpeechBuilder.GenerateWavFileAsync(cancellationToken);
+        await _lineImplementation.PlayFileAsync(textToSpeechBuilder.GetFileName(), cancellationToken);
+    }
     
-    void IIvrBaseLine.PlayWavStream(MemoryStream audioStream)
+    void IIvrBaseLine.PlayWavStream(WavStream audioStream)
     {
         _lineImplementation.PlayWavStream(audioStream);
     }
 
-    async Task IIvrBaseLine.PlayWavStreamAsync(MemoryStream audioStream, CancellationToken cancellationToken)
+    async Task IIvrBaseLine.PlayWavStreamAsync(WavStream audioStream, CancellationToken cancellationToken)
     {
         await _lineImplementation.PlayWavStreamAsync(audioStream, cancellationToken);
     }

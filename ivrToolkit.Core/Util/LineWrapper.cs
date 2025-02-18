@@ -20,7 +20,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 {
 
     private readonly int _lineNumber;
-    private readonly ITextToSpeech _textToSpeech;
+    private readonly ITextToSpeechGenerator _textToSpeechGenerator;
     private readonly IPause _pauseHandler;
     private readonly IIvrBaseLine _lineImplementation;
 
@@ -39,10 +39,10 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
     internal LineWrapper(ILoggerFactory loggerFactory, VoiceProperties voiceProperties, int lineNumber, 
         IIvrBaseLine lineImplementation,
         IPause pauseHandler,
-        ITextToSpeech textToSpeech = null)
+        ITextToSpeechGenerator textToSpeechGenerator = null)
     {
         _lineNumber = lineNumber;
-        _textToSpeech = textToSpeech;
+        _textToSpeechGenerator = textToSpeechGenerator;
         _pauseHandler = pauseHandler.ThrowIfNull(nameof(LineWrapper));
         _lineImplementation = lineImplementation.ThrowIfNull(nameof(lineImplementation));
         loggerFactory.ThrowIfNull(nameof(loggerFactory));
@@ -57,6 +57,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
     public IIvrLineManagement Management => this;
 
     public LineStatusTypes Status => _status;
+    public ITextToSpeechGenerator TextToSpeechGenerator => _textToSpeechGenerator;
 
     public string LastTerminator
     {
@@ -449,4 +450,5 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
         _logger.LogDebug("{method}() - Disposing and recreate the line from scratch", nameof(Reset));
         _lineImplementation.Reset();
     }
+
 }

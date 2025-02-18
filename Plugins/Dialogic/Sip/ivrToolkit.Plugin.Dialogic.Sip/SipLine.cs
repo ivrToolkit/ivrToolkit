@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
+using ivrToolkit.Core.TTS;
+using ivrToolkit.Core.Util;
 using ivrToolkit.Plugin.Dialogic.Common;
 using ivrToolkit.Plugin.Dialogic.Common.DialogicDefs;
 using ivrToolkit.Plugin.Dialogic.Common.Exceptions;
@@ -740,12 +742,12 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
         PlaySipFile(filename, "0123456789#*abcd");
     }
 
-    public void PlayWavStream(MemoryStream wavStream)
+    public void PlayWavStream(WavStream wavStream)
     {
         throw new NotImplementedException();
     }
 
-    public Task PlayWavStreamAsync(MemoryStream wavStream, CancellationToken cancellationToken)
+    public Task PlayWavStreamAsync(WavStream wavStream, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

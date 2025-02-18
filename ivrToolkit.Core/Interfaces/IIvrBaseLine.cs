@@ -6,128 +6,163 @@
 // 
 
 using System;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Enums;
+using ivrToolkit.Core.Util;
 
 namespace ivrToolkit.Core.Interfaces;
 
 /// <summary>
-/// This interface exposes the main methods used to control the selected plugin.
-/// It is meant to be used by the LineWrapper class only.
+/// This interface provides methods to control the selected IVR plugin.
+/// It is primarily used by the <see cref="LineWrapper"/> class.
 /// </summary>
 public interface IIvrBaseLine : IDisposable
 {
     /// <summary>
-    /// Functionality for managing the line from another thread.
+    /// Provides functionality for managing the line from another thread.
     /// </summary>
     IIvrLineManagement Management { get; }
 
     /// <summary>
-    /// The last terminator key that was pressed
+    /// Gets or sets the last terminator key that was pressed.
     /// </summary>
     string LastTerminator { get; set; }
 
     /// <summary>
-    /// The attached line number.
+    /// Gets the attached line number.
     /// </summary>
-    int LineNumber
-    {
-        get;
-    }
+    int LineNumber { get; }
 
     /// <summary>
-    /// The number of rings to wait before answering
+    /// Waits for a specified number of rings before answering.
     /// </summary>
-    /// <param name="rings">The number of rings to wait before answering</param>
+    /// <param name="rings">The number of rings to wait.</param>
     void WaitRings(int rings);
+
+    /// <summary>
+    /// Asynchronously waits for a specified number of rings before answering.
+    /// </summary>
+    /// <param name="rings">The number of rings to wait.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     Task WaitRingsAsync(int rings, CancellationToken cancellationToken);
 
-    protected internal void StartIncomingListener(Func<IIvrLine, CancellationToken, Task> callback, IIvrLine line, CancellationToken cancellationToken);
-    
     /// <summary>
-    /// Forces a hangup on the line.
+    /// Starts an incoming call listener with a callback function.
+    /// </summary>
+    /// <param name="callback">The function to execute when a call is received.</param>
+    /// <param name="line">The line instance.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    protected internal void StartIncomingListener(Func<IIvrLine, CancellationToken, Task> callback, IIvrLine line, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Forces a hangup on the current line.
     /// </summary>
     void Hangup();
 
     /// <summary>
-    /// Pick up the line.
+    /// Takes the line off hook.
     /// </summary>
     void TakeOffHook();
 
     /// <summary>
     /// Dials a phone number using call progress analysis.
     /// </summary>
-    /// <param name="number">The phone number to call</param>
-    /// <param name="answeringMachineLengthInMilliseconds">A greeting longer than this time indicates a possible answering machine.</param>
-    /// <returns>The Call analysis enumeration</returns>
-    CallAnalysis Dial(string number, int answeringMachineLengthInMilliseconds);
+    /// <param name="phoneNumber">The phone number to call.</param>
+    /// <param name="answeringMachineLengthInMilliseconds">The threshold for determining an answering machine.</param>
+    /// <returns>A <see cref="CallAnalysis"/> object containing call results.</returns>
+    CallAnalysis Dial(string phoneNumber, int answeringMachineLengthInMilliseconds);
 
+    /// <summary>
+    /// Asynchronously dials a phone number using call progress analysis.
+    /// </summary>
+    /// <param name="phoneNumber">The phone number to call.</param>
+    /// <param name="answeringMachineLengthInMilliseconds">The threshold for determining an answering machine.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task representing the asynchronous operation, returning a <see cref="CallAnalysis"/> object.</returns>
     Task<CallAnalysis> DialAsync(string phoneNumber, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Plays a wav file which must be in the format of 8000hz 1 channel signed 16 bit PCM.
+    /// Plays a WAV file (8000Hz, mono, signed 16-bit PCM).
     /// </summary>
-    /// <param name="filename">The wav file to play</param>
+    /// <param name="filename">The path to the WAV file.</param>
     void PlayFile(string filename);
-    
-    /// <summary>
-    /// Plays a wav stream.
-    /// </summary>
-    /// <param name="audioStream">including the wav header</param>
-    protected internal void PlayWavStream(MemoryStream audioStream);
-    
-    /// <summary>
-    /// Plays a wav stream.
-    /// </summary>
-    /// <param name="audioStream">including the wav header</param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    protected internal Task PlayWavStreamAsync(MemoryStream audioStream, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Asynchronously plays a WAV file (8000Hz, mono, signed 16-bit PCM).
+    /// </summary>
+    /// <param name="filename">The path to the WAV file.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     Task PlayFileAsync(string filename, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Records a wav file to the disk in the format of 8000hz 1 channel signed 16 bit PCM. Has a default timeout of 5 minutes.
+    /// Plays a WAV audio stream.
     /// </summary>
-    /// <param name="filename">The file name to record to</param>
+    /// <param name="audioStream">The audio stream, including the WAV header.</param>
+    protected internal void PlayWavStream(WavStream audioStream);
+
+    /// <summary>
+    /// Asynchronously plays a WAV audio stream.
+    /// </summary>
+    /// <param name="audioStream">The audio stream, including the WAV header.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    Task PlayWavStreamAsync(WavStream audioStream, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Records a WAV file (8000Hz, mono, signed 16-bit PCM) to disk.
+    /// </summary>
+    /// <param name="filename">The output file path.</param>
     void RecordToFile(string filename);
-    
+
+    /// <summary>
+    /// Asynchronously records a WAV file (8000Hz, mono, signed 16-bit PCM) to disk.
+    /// </summary>
+    /// <param name="filename">The output file path.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     Task RecordToFileAsync(string filename, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Records a wav file to the disk in the format of 8000hz 1 channel signed 16 bit PCM.
+    /// Records a WAV file with a specified timeout (8000Hz, mono, signed 16-bit PCM) to disk.
     /// </summary>
-    /// <param name="filename">The file name to record to</param>
-    /// <param name="timeoutMilliseconds">Maximum time to record in milliseconds</param>
+    /// <param name="filename">The output file path.</param>
+    /// <param name="timeoutMilliseconds">The maximum recording duration in milliseconds.</param>
     void RecordToFile(string filename, int timeoutMilliseconds);
+
+    /// <summary>
+    /// Asynchronously records a WAV file with a specified timeout (8000Hz, mono, signed 16-bit PCM) to disk.
+    /// </summary>
+    /// <param name="filename">The output file path.</param>
+    /// <param name="timeoutMilliseconds">The maximum recording duration in milliseconds.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     Task RecordToFileAsync(string filename, int timeoutMilliseconds, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Keep prompting for digits until number of digits is pressed or a terminator digit is pressed.
+    /// Collects digits from the user until the specified number is reached or a terminator is pressed.
     /// </summary>
-    /// <param name="numberOfDigits">Maximum number of digits allowed in the buffer.</param>
-    /// <param name="terminators">The terminator keys</param>
-    /// <param name="timeoutMilliseconds">Override the default timeout if not zero.</param>
-    /// <returns>Returns the digits pressed not including the terminator if there was one</returns>
+    /// <param name="numberOfDigits">The maximum number of digits to capture.</param>
+    /// <param name="terminators">The valid terminator keys.</param>
+    /// <param name="timeoutMilliseconds">The timeout duration in milliseconds (0 to use default).</param>
+    /// <returns>The collected digits, excluding the terminator if used.</returns>
     string GetDigits(int numberOfDigits, string terminators, int timeoutMilliseconds = 0);
+
+    /// <summary>
+    /// Asynchronously collects digits from the user until the specified number is reached or a terminator is pressed.
+    /// </summary>
     Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken, int timeoutMilliseconds = 0);
 
     /// <summary>
-    /// Returns every character including the terminator
+    /// Clears the digit buffer and returns all previously collected digits, including terminators.
     /// </summary>
-    /// <returns>All the digits in the buffer including terminators</returns>
+    /// <returns>All digits in the buffer.</returns>
     string FlushDigitBuffer();
 
     /// <summary>
-    /// Gets or sets the Volume. Value can be in the range of -10 to 10. Zero being the regular volume.
+    /// Gets or sets the volume level. Valid range: -10 to 10 (0 is default volume).
     /// </summary>
     int Volume { get; set; }
 
     /// <summary>
-    /// Disposes of the line and then recreates it.
+    /// Disposes of the line and re-initializes it.
     /// </summary>
     void Reset();
-
 }

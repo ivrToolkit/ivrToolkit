@@ -14,6 +14,8 @@ using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
+using ivrToolkit.Core.TTS;
+using ivrToolkit.Core.Util;
 using ivrToolkit.Plugin.Dialogic.Common;
 using Microsoft.Extensions.Logging;
 
@@ -159,12 +161,12 @@ public class AnalogLine : IIvrBaseLine, IIvrLineManagement
         PlayFile(_voiceh, filename, "0123456789#*abcd", _currentXpb);
     }
 
-    public void PlayWavStream(MemoryStream wavStream)
+    public void PlayWavStream(WavStream wavStream)
     {
         throw new NotImplementedException();
     }
 
-    public Task PlayWavStreamAsync(MemoryStream wavStream, CancellationToken cancellationToken)
+    public Task PlayWavStreamAsync(WavStream wavStream, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

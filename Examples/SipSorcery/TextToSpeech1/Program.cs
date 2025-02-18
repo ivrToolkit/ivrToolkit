@@ -6,7 +6,6 @@ using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.TTS;
-using ivrToolkit.Core.Util;
 using ivrToolkit.Plugin.SipSorcery;
 using Microsoft.Extensions.Logging;
 
@@ -51,6 +50,8 @@ class Program
 
     private static async Task MakeOutBoundCallAsync(string phoneNumber, IIvrLine line, CancellationToken cancellationToken)
     {
+        var ttsGenerator = line.TextToSpeechGenerator;
+        
         try
         {
             // make a call out
@@ -58,32 +59,36 @@ class Program
             if (callAnalysis == CallAnalysis.Connected)
             {
                 // play TTS
-                var message = "Thank you for using the <say-as interpret-as='characters'>IVR</say-as> Toolkit.";
-                await line.PlayTextToSpeechAsync(message,$"{WAV_FILE_LOCATION}/ThankYou.wav", cancellationToken);
+                var ttsBuilder = ttsGenerator.GetTextToSpeechBuilder("Thank you for using the <say-as interpret-as='characters'>IVR</say-as> Toolkit.", $"{WAV_FILE_LOCATION}/ThankYou.wav");
+                await line.PlayFileAsync(ttsBuilder, cancellationToken);
 
                 // play tts and wait for digits to be pressed
-                message = "For this simple demonstration, press <say-as interpret-as='characters'>1234</say-as> followed by the pound key.";
-                var result = await line.MultiTryPromptAsync(message, $"{WAV_FILE_LOCATION}/Press1234.wav", 
+                var message = "For this simple demonstration, press <say-as interpret-as='characters'>1234</say-as> followed by the pound key.";
+                ttsBuilder = ttsGenerator.GetTextToSpeechBuilder(message, $"{WAV_FILE_LOCATION}/Press1234.wav");
+                var result = await line.MultiTryPromptAsync(ttsBuilder, 
                     value => !string.IsNullOrEmpty(value),
                     cancellationToken);
 
-                await line.PlayTextToSpeechAsync("You pressed", $"{WAV_FILE_LOCATION}/YouPressed.wav", cancellationToken);
-
+                ttsBuilder = ttsGenerator.GetTextToSpeechBuilder("You pressed", $"{WAV_FILE_LOCATION}/YouPressed.wav");
+                await line.PlayFileAsync(ttsBuilder, cancellationToken);
+                
                 // speak out each digit of the result
                 await line.PlayCharactersAsync(result, cancellationToken);
 
                 // say Correct or Incorrect
                 if (result == "1234")
                 {
-                    await line.PlayTextToSpeechAsync("Which is correct.", $"{WAV_FILE_LOCATION}/Correct.wav", cancellationToken);
+                    ttsBuilder = ttsGenerator.GetTextToSpeechBuilder("Which is correct.", $"{WAV_FILE_LOCATION}/correct.wav");
                 }
                 else
                 {
-                    await line.PlayTextToSpeechAsync("Which is incorrect.", $"{WAV_FILE_LOCATION}/Incorrect.wav", cancellationToken);
+                    ttsBuilder = ttsGenerator.GetTextToSpeechBuilder("Which is incorrect.", $"{WAV_FILE_LOCATION}/Incorrect.wav");
                 }
+                await line.PlayTextToSpeechAsync(ttsBuilder, cancellationToken);
 
                 // Say goodbye
-                await line.PlayTextToSpeechAsync("Goodbye.", $"{WAV_FILE_LOCATION}/goodbye.wav", cancellationToken);
+                ttsBuilder = ttsGenerator.GetTextToSpeechBuilder("Goodbye.", $"{WAV_FILE_LOCATION}/goodbye.wav");
+                await line.PlayTextToSpeechAsync(ttsBuilder, cancellationToken);
 
                 // finally hang up
                 line.Hangup();

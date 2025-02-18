@@ -18,12 +18,15 @@ public interface ILineManager : IDisposable
 
     /// <summary>
     /// Gets an available line. With SipSorcery, there is no need to specify a line number however,
-    /// the line manager still uses them internally to manage themm.
+    /// the line manager still uses them internally to manage them.
     /// </summary>
     /// 
     /// <returns>A class that represents the phone line</returns>
     IIvrLine GetLine();
 
+    /// <summary>
+    /// Returns the voice properties definition.
+    /// </summary>
     VoiceProperties VoiceProperties { get; }
 
     /// <summary>

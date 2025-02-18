@@ -12,8 +12,6 @@
 		<PackageIcon>icon.jpg</PackageIcon>
 		<PackageTags>voip; sip; sipsorcery; telephony; dialogic</PackageTags>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<!-- Suppress warnings for missing XML comments -->
-		<NoWarn>$(NoWarn);1591</NoWarn>
 	</PropertyGroup>
 	
 	<ItemGroup>

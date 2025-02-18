@@ -41,11 +41,10 @@ while (true)
     }
 
 }
-return;
 
 ILoggerFactory BuildLoggerFactory()
 {
-    var loggerFactory =
+    var loggerFactoryInner =
         LoggerFactory.Create(builder =>
             builder.AddSimpleConsole(options =>
             {
@@ -54,8 +53,8 @@ ILoggerFactory BuildLoggerFactory()
                 options.TimestampFormat = "hh:mm:ss ";
             }).AddFilter("*", LogLevel.Debug));
 
-    SIPSorcery.LogFactory.Set(loggerFactory);
-    return loggerFactory;
+    SIPSorcery.LogFactory.Set(loggerFactoryInner);
+    return loggerFactoryInner;
 }
 
 

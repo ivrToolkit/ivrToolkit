@@ -3,6 +3,9 @@ using ivrToolkit.Core.Util;
 
 namespace ivrToolkit.Core.Interfaces;
 
+/// <summary>
+/// Defines the common methods for different plugin implementations.
+/// </summary>
 public interface IIvrPlugin : IDisposable
 {
     /// <summary>

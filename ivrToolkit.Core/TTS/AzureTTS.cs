@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
+using ivrToolkit.Core.Util;
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.Extensions.Logging;
 
@@ -21,7 +22,7 @@ public class AzureTTS : ITextToSpeech, IDisposable
     /// An Azure TTS implementation
     /// </summary>
     /// <param name="loggerFactory"></param>
-    /// <param name="voiceName"></param>
+    /// <param name="voiceName">The Azure voice name of your choosing. Example: "en-US-JennyNeural"</param>
     /// <param name="synthesizer"></param>
     public AzureTTS(ILoggerFactory loggerFactory, string voiceName, SpeechSynthesizer synthesizer)
     {
@@ -31,29 +32,29 @@ public class AzureTTS : ITextToSpeech, IDisposable
         _logger = loggerFactory.CreateLogger<AzureTTS>();
     }
     
-    public MemoryStream TextToSpeech(string text)
+    public WavStream TextToSpeech(string text)
     {
         _logger.LogDebug("{method}({text})", nameof(TextToSpeech), text);
         return TextToSpeechAsync(text, CancellationToken.None).GetAwaiter().GetResult();
     }
     
-    public async Task<MemoryStream> TextToSpeechAsync(string text, CancellationToken cancellationToken)
+    public async Task<WavStream> TextToSpeechAsync(string text, CancellationToken cancellationToken)
     {
         _logger.LogDebug("{method}({text})", nameof(TextToSpeechAsync), text);
         return text.StartsWith("<speak") ? await SpeakSsmlAsync(text) : await SpeakTextAsync(text);
     }
 
-    private async Task<MemoryStream> SpeakSsmlAsync(string text)
+    private async Task<WavStream> SpeakSsmlAsync(string text)
     {
         using var result = await _synthesizer.SpeakSsmlAsync(text);
         if (result.Reason != ResultReason.SynthesizingAudioCompleted)
         {
             throw new VoiceException(result.Reason.ToString());
         }
-        return new MemoryStream(result.AudioData);
+        return new WavStream(result.AudioData);
     }
 
-    private async Task<MemoryStream> SpeakTextAsync(string text)
+    private async Task<WavStream> SpeakTextAsync(string text)
     {
         var ssml = $@"<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>
                             <voice name='{_voiceName}'>
@@ -66,7 +67,7 @@ public class AzureTTS : ITextToSpeech, IDisposable
         {
             throw new VoiceException(result.Reason.ToString());
         }
-        return new MemoryStream(result.AudioData);
+        return new WavStream(result.AudioData);
     }
 
 

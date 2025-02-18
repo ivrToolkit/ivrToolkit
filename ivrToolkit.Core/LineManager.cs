@@ -6,6 +6,7 @@
 using System.Collections.Generic;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
+using ivrToolkit.Core.TTS;
 using ivrToolkit.Core.Util;
 using Microsoft.Extensions.Logging;
 
@@ -45,19 +46,7 @@ public class LineManager : ILineManager
         lock (_lockObject)
         {
             var line = _ivrPlugin.GetLine(lineNumber);
-            var pauser = new TimePause(); // inject the delay so I can better unit test
-
-            ITextToSpeech textToSpeech = null;
-            if (_textToSpeechFactory != null)
-            {
-                textToSpeech = _textToSpeechFactory.Create();
-            }
-            
-            var wrappedLine = new LineWrapper(_loggerFactory, _voiceProperties, lineNumber, line, 
-                pauser, textToSpeech);
-            
-            _lines.Add(line.LineNumber, wrappedLine);
-            return wrappedLine;
+            return GetLineWrapper(line);
         }
     }
 
@@ -68,19 +57,26 @@ public class LineManager : ILineManager
         {
             var lineNumber = NextAvailableLine();
             var line = _ivrPlugin.GetLine(lineNumber);
-            var pauser = new TimePause(); // inject the delay so I can better unit test
-
-            ITextToSpeech textToSpeech = null;
-            if (_textToSpeechFactory != null)
-            {
-                textToSpeech = _textToSpeechFactory.Create();
-            }
-            
-            var wrappedLine = new LineWrapper(_loggerFactory, _voiceProperties, lineNumber, line, pauser,
-                textToSpeech);
-            _lines.Add(line.LineNumber, wrappedLine);
-            return wrappedLine;
+            return GetLineWrapper(line);
         }
+    }
+
+    private IIvrLine GetLineWrapper(IIvrBaseLine line)
+    {
+        var pauser = new TimePause(); // inject the delay so I can better unit test
+
+        ITextToSpeech textToSpeech = null;
+        if (_textToSpeechFactory != null)
+        {
+            textToSpeech = _textToSpeechFactory.Create();
+        }
+        var textToSpeechGenerator = new TextToSpeechGenerator(_loggerFactory, textToSpeech, new RegularFileHandler());
+        
+        var wrappedLine = new LineWrapper(_loggerFactory, _voiceProperties, line.LineNumber, line, pauser,
+            textToSpeechGenerator);
+        _lines.Add(line.LineNumber, wrappedLine);
+        return wrappedLine;
+        
     }
 
     // SipSorcery Doesn't use line numbers but the LineManager still works with them

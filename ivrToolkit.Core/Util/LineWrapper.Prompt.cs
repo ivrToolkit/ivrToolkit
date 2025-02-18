@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Exceptions;
+using ivrToolkit.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Core.Util;
@@ -19,18 +20,15 @@ internal partial class LineWrapper
         return Ask(null);
     }
 
-    public string Prompt(string textToSpeech, string fileName, PromptOptions promptOptions = null)
+    public string Prompt(ITextToSpeechBuilder textToSpeechBuilder, PromptOptions promptOptions = null)
     {
-        _logger.LogDebug("{method}({tts}, {fileName})", nameof(Prompt), textToSpeech, fileName);
+        _logger.LogDebug("{method}({tts})", nameof(Prompt), textToSpeechBuilder);
         _options = new FullPromptOptions(_voiceProperties);
-        _options.Load(promptOptions, textToSpeech, fileName);
+        _options.Load(promptOptions, textToSpeechBuilder, null);
         
         return Ask(null);
     }
-
-
-
-
+    
     public async Task<string> PromptAsync(string fileOrPhrase, CancellationToken cancellationToken, PromptOptions promptOptions = null)
     {
         _logger.LogDebug("{method}({fileOrPhrase})", nameof(PromptAsync), fileOrPhrase);
@@ -40,12 +38,12 @@ internal partial class LineWrapper
         return await AskAsync(null, cancellationToken);
     }
 
-    public async Task<string> PromptAsync(string textToSpeech, string fileName, CancellationToken cancellationToken,
+    public async Task<string> PromptAsync(ITextToSpeechBuilder textToSpeechBuilder, CancellationToken cancellationToken,
         PromptOptions promptOptions = null)
     {
-        _logger.LogDebug("{method}({tts}, {fileName})", nameof(PromptAsync), textToSpeech, fileName);
+        _logger.LogDebug("{method}({tts})", nameof(PromptAsync),textToSpeechBuilder);
         _options = new FullPromptOptions(_voiceProperties);
-        _options.Load(promptOptions, textToSpeech, fileName);
+        _options.Load(promptOptions, textToSpeechBuilder, null);
 
         return await AskAsync(null, cancellationToken);
     }
@@ -60,24 +58,32 @@ internal partial class LineWrapper
         return Ask(evaluator);
     }
     
-    public string MultiTryPrompt(string textToSpeech, string fileName, Func<string, bool> evaluator,
+    public string MultiTryPrompt(ITextToSpeechBuilder textToSpeechBuilder, Func<string, bool> evaluator,
         MultiTryPromptOptions multiTryPromptOptions = null)
     {
-        _logger.LogDebug("{method}({tts}, {fileName})", nameof(MultiTryPrompt), textToSpeech, fileName);
+        _logger.LogDebug("{method}({tts})", nameof(MultiTryPrompt), textToSpeechBuilder);
         _options = new FullPromptOptions(_voiceProperties);
-        _options.Load(multiTryPromptOptions, textToSpeech, fileName);
+        _options.Load(multiTryPromptOptions, textToSpeechBuilder, null);
         
         return Ask(evaluator);
     }
     
-    public Task<string> MultiTryPromptAsync(string fileOrPhrase, Func<string, bool> evaluator, CancellationToken cancellationToken)
+    public async Task<string> MultiTryPromptAsync(string fileOrPhrase, Func<string, bool> evaluator, CancellationToken cancellationToken)
     {
-        return MultiTryPromptAsync(fileOrPhrase, evaluator, null, cancellationToken);
+        _logger.LogDebug("{method}({fileOrPhrase})", nameof(MultiTryPromptAsync), fileOrPhrase);
+        _options = new FullPromptOptions(_voiceProperties);
+        _options.Load(new MultiTryPromptOptions(), null, fileOrPhrase);
+        
+        return await AskAsync(evaluator, cancellationToken);
     }
 
-    public Task<string> MultiTryPromptAsync(string textToSpeech, string fileName, Func<string, bool> evaluator, CancellationToken cancellationToken)
+    public async Task<string> MultiTryPromptAsync(ITextToSpeechBuilder textToSpeechBuilder, Func<string, bool> evaluator, CancellationToken cancellationToken)
     {
-        return MultiTryPromptAsync(textToSpeech, fileName, evaluator, null, cancellationToken);
+        _logger.LogDebug("{method}({textToSpeechBuilder})", nameof(MultiTryPromptAsync), textToSpeechBuilder);
+        _options = new FullPromptOptions(_voiceProperties);
+        _options.Load(new MultiTryPromptOptions(), textToSpeechBuilder, null);
+        
+        return await AskAsync(evaluator, cancellationToken);
     }
 
     public async Task<string> MultiTryPromptAsync(string fileOrPhrase, Func<string, bool> evaluator, MultiTryPromptOptions multiTryPromptOptions,
@@ -90,12 +96,12 @@ internal partial class LineWrapper
         return await AskAsync(evaluator, cancellationToken);
     }
 
-    public async Task<string> MultiTryPromptAsync(string textToSpeech, string fileName, Func<string, bool> evaluator,
+    public async Task<string> MultiTryPromptAsync(ITextToSpeechBuilder textToSpeechBuilder, Func<string, bool> evaluator,
         MultiTryPromptOptions multiTryPromptOptions, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("{method}({tts}, {fileName})", nameof(MultiTryPromptAsync), textToSpeech, fileName);
+        _logger.LogDebug("{method}({tts})", nameof(MultiTryPromptAsync), textToSpeechBuilder);
         _options = new FullPromptOptions(_voiceProperties);
-        _options.Load(multiTryPromptOptions, textToSpeech, fileName);
+        _options.Load(multiTryPromptOptions, textToSpeechBuilder, null);
         
         return await AskAsync(evaluator, cancellationToken);
     }
@@ -105,7 +111,8 @@ internal partial class LineWrapper
         _logger.LogDebug("{method}()", nameof(Ask));
         return AskInternalAsync(evaluator,
             fileOrPhrase => { PlayFileOrPhrase(fileOrPhrase); return Task.CompletedTask; },
-            (tts, fileName) => { PlayTextToSpeech(tts, fileName); return Task.CompletedTask; },
+            (tts) => { PlayTextToSpeech(tts); return Task.CompletedTask; },
+            (tts) => { PlayFile(tts); return Task.CompletedTask; },
             (numberOfDigits, terminators) => { var result = GetDigits(numberOfDigits, terminators); return Task.FromResult(result); }
         ).GetAwaiter().GetResult();
     }
@@ -115,22 +122,24 @@ internal partial class LineWrapper
         _logger.LogDebug("{method}()", nameof(AskAsync));
         return await AskInternalAsync(evaluator,
             async fileOrPhrase => await PlayFileOrPhraseAsync(fileOrPhrase, cancellationToken),
-            async (tts, fileName) => await PlayTextToSpeechAsync(tts, fileName, cancellationToken),
+            async (tts) => await PlayTextToSpeechAsync(tts, cancellationToken),
+            async (tts) => await PlayFileAsync(tts, cancellationToken),
             async (numberOfDigits, terminators) => await GetDigitsAsync(numberOfDigits, terminators, cancellationToken));
     }
 
     private async Task<string> AskInternalAsync(
-        Func<string, bool> evaluator,
-        Func<string, Task> playFileOrPhrase,
-        Func<string, string, Task> playTextToSpeech,
+        Func<string, bool> evaluatorFunc,
+        Func<string, Task> playFileOrPhraseFunc,
+        Func<ITextToSpeechBuilder, Task> playTextToSpeechFunc,
+        Func<ITextToSpeechBuilder, Task> playFileFunc,
         Func<int, string, Task<string>> getDigits)
     {
         _logger.LogDebug("{method}()", nameof(AskInternalAsync));
 
         // we are in single digit mode so set up an evaluator to check allowed digits
-        if (evaluator == null && _options.MaxLength == 1 && !string.IsNullOrWhiteSpace(_options.AllowedDigits))
+        if (evaluatorFunc == null && _options.MaxLength == 1 && !string.IsNullOrWhiteSpace(_options.AllowedDigits))
         {
-            evaluator = answer => _options.AllowedDigits.IndexOf(answer, StringComparison.Ordinal) != -1;
+            evaluatorFunc = answer => _options.AllowedDigits.IndexOf(answer, StringComparison.Ordinal) != -1;
         }
          
         var count = 0;
@@ -143,13 +152,22 @@ internal partial class LineWrapper
             var answer = "";
             try
             {
-                if (!string.IsNullOrWhiteSpace(_options.TextToSpeech))
+                if (_options.TextToSpeechBuilder != null)
                 {
-                    await playTextToSpeech(_options.TextToSpeech, _options.PromptMessage);
+                    if (_options.TextToSpeechBuilder.GetFileName() != null)
+                    {
+                        await playFileFunc(_options.TextToSpeechBuilder);
+                    }
+                    else
+                    {
+                        // only supported by SipSorcery plugin when GetFileName is null
+                        // because Dialogic plugins do not support the ability to play a wave stream
+                        await playTextToSpeechFunc(_options.TextToSpeechBuilder);
+                    }
                 }
                 else
                 {
-                    await playFileOrPhrase(_options.PromptMessage);
+                    await playFileOrPhraseFunc(_options.PromptMessage);
                 }
                 answer = await getDigits(_options.MaxLength, myTerminators + "t");
 
@@ -177,9 +195,9 @@ internal partial class LineWrapper
                 }
                 else
                 {
-                    if (evaluator != null)
+                    if (evaluatorFunc != null)
                     {
-                        if (evaluator(answer))
+                        if (evaluatorFunc(answer))
                         {
                             return answer;
                         }
@@ -191,7 +209,7 @@ internal partial class LineWrapper
 
                     if (_options.InvalidAnswerMessage != null)
                     {
-                        await playFileOrPhrase(_options.InvalidAnswerMessage);
+                        await playFileOrPhraseFunc(_options.InvalidAnswerMessage);
                     }
                 }
             }
@@ -224,13 +242,14 @@ internal partial class LineWrapper
         }
         
         public string PromptMessage { get; set; }
-        public string TextToSpeech { get; set; }
+        
+        public ITextToSpeechBuilder TextToSpeechBuilder { get; set; }
 
-        public void Load(MultiTryPromptOptions promptOptions, string textToSpeech, string fileOrPhrase)
+        public void Load(MultiTryPromptOptions promptOptions, ITextToSpeechBuilder textToSpeechBuilder, string fileOrPhrase)
         {
             promptOptions ??= new MultiTryPromptOptions();
             
-            TextToSpeech = textToSpeech;
+            TextToSpeechBuilder = textToSpeechBuilder;
             PromptMessage = fileOrPhrase;
             Terminators = string.IsNullOrWhiteSpace(promptOptions.Terminators) ? "#" : promptOptions.Terminators;
             MaxLength = promptOptions.MaxLength > 0 ? promptOptions.MaxLength : 30;
@@ -239,11 +258,11 @@ internal partial class LineWrapper
             BlankMaxAttempts = promptOptions.BlankMaxAttempts > 0 ? promptOptions.BlankMaxAttempts : _voiceProperties.PromptBlankAttempts;
         }
         
-        public void Load(PromptOptions promptOptions, string textToSpeech, string fileOrPhrase)
+        public void Load(PromptOptions promptOptions, ITextToSpeechBuilder textToSpeechBuilder, string fileOrPhrase)
         {
             promptOptions ??= new PromptOptions();
             
-            TextToSpeech = textToSpeech;
+            TextToSpeechBuilder = textToSpeechBuilder;
             PromptMessage = fileOrPhrase;
             Terminators = string.IsNullOrWhiteSpace(promptOptions.Terminators) ? "#" : promptOptions.Terminators;
             MaxLength = promptOptions.MaxLength > 0 ? promptOptions.MaxLength : 30;

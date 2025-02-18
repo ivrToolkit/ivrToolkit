@@ -16,7 +16,7 @@ namespace ivrToolkit.Core.Interfaces;
 /// 
 /// <remarks>
 /// <code>
-/// An example of a simple IVR program usingscript blocks would be:
+/// An example of a simple IVR program using script blocks would be:
 /// 
 /// ScriptBlocks\Welcome.cs
 /// ScriptBlocks\MainMenu.cs
@@ -28,7 +28,7 @@ namespace ivrToolkit.Core.Interfaces;
 /// <example>
 /// <code language="C#">
 ///        // create the script manager
-///        ScriptManager scriptManager = new ScriptManager(line, startingScript);
+///        var scriptManager = new ScriptManager(line, startingScript);
 ///
 ///        // run the script blocks
 ///        while (scriptManager.hasNext())
@@ -60,5 +60,9 @@ public interface IScript
     /// <returns>The next script block to run or null indicating the scripts are done</returns>
     IScript Execute();
 
+    /// <summary>
+    /// Asynchronously executes the script block
+    /// </summary>
+    /// <returns>The next script block to run or null indicating the scripts are done</returns>
     Task<IScript> ExecuteAsync(CancellationToken cancellationToken);
 }

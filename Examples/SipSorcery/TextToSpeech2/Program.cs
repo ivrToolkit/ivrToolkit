@@ -6,7 +6,6 @@ using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.TTS;
-using ivrToolkit.Core.Util;
 using ivrToolkit.Plugin.SipSorcery;
 using Microsoft.Extensions.Logging;
 
@@ -51,6 +50,8 @@ class Program
 
     private static async Task MakeOutBoundCallAsync(string phoneNumber, IIvrLine line, CancellationToken cancellationToken)
     {
+        var ttsGenerator = line.TextToSpeechGenerator;
+        
         try
         {
             // make a call out
@@ -59,11 +60,13 @@ class Program
             {
                 // play TTS
                 var message = "Thank you for using the <say-as interpret-as='characters'>IVR</say-as> Toolkit.";
-                await line.PlayTextToSpeechAsync(message,$"{WAV_FILE_LOCATION}/ThankYou.wav", cancellationToken);
+                var builder = ttsGenerator.GetTextToSpeechBuilder(message, $"{WAV_FILE_LOCATION}/ThankYou.wav");
+                await line.PlayTextToSpeechAsync(builder, cancellationToken);
 
                 // play tts and wait for digits to be pressed
                 message = "For this simple demonstration, press <say-as interpret-as='characters'>1234</say-as> followed by the pound key.";
-                var result = await line.MultiTryPromptAsync(message, $"{WAV_FILE_LOCATION}/Press1234.wav", 
+                var ttsBuilder = ttsGenerator.GetTextToSpeechBuilder(message, $"{WAV_FILE_LOCATION}/Press1234.wav");
+                var result = await line.MultiTryPromptAsync(ttsBuilder, 
                     value => !string.IsNullOrEmpty(value),
                     cancellationToken);
                 
@@ -72,8 +75,7 @@ class Program
                 message += result == "1234" ? " correct." : " incorrect.";
                 message += " Goodbye.";
 
-                // by leaving fileName as null, no file will be created. This makes sense because there are
-                // many combinations of the message
+                // No file will be created. 
                 await line.PlayTextToSpeechAsync(message, cancellationToken);
 
                 // finally hang up

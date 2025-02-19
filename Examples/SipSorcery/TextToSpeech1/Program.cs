@@ -50,7 +50,7 @@ class Program
 
     private static async Task MakeOutBoundCallAsync(string phoneNumber, IIvrLine line, CancellationToken cancellationToken)
     {
-        var ttsGenerator = line.TextToSpeechCacheFactory;
+        var ttsCacheFactory = line.TextToSpeechCacheFactory;
         
         try
         {
@@ -59,18 +59,18 @@ class Program
             if (callAnalysis == CallAnalysis.Connected)
             {
                 // play TTS
-                var ttsBuilder = ttsGenerator.Create("Thank you for using the <say-as interpret-as='characters'>IVR</say-as> Toolkit.", $"{WAV_FILE_LOCATION}/ThankYou.wav");
-                await line.PlayFileAsync(ttsBuilder, cancellationToken);
+                var ttsCache = ttsCacheFactory.Create("Thank you for using the <say-as interpret-as='characters'>IVR</say-as> Toolkit.", $"{WAV_FILE_LOCATION}/ThankYou.wav");
+                await line.PlayFileAsync(ttsCache, cancellationToken);
 
                 // play tts and wait for digits to be pressed
                 var message = "For this simple demonstration, press <say-as interpret-as='characters'>1234</say-as> followed by the pound key.";
-                ttsBuilder = ttsGenerator.Create(message, $"{WAV_FILE_LOCATION}/Press1234.wav");
-                var result = await line.MultiTryPromptAsync(ttsBuilder, 
+                ttsCache = ttsCacheFactory.Create(message, $"{WAV_FILE_LOCATION}/Press1234.wav");
+                var result = await line.MultiTryPromptAsync(ttsCache, 
                     value => !string.IsNullOrEmpty(value),
                     cancellationToken);
 
-                ttsBuilder = ttsGenerator.Create("You pressed", $"{WAV_FILE_LOCATION}/YouPressed.wav");
-                await line.PlayFileAsync(ttsBuilder, cancellationToken);
+                ttsCache = ttsCacheFactory.Create("You pressed", $"{WAV_FILE_LOCATION}/YouPressed.wav");
+                await line.PlayFileAsync(ttsCache, cancellationToken);
                 
                 // speak out each digit of the result
                 await line.PlayCharactersAsync(result, cancellationToken);
@@ -78,17 +78,17 @@ class Program
                 // say Correct or Incorrect
                 if (result == "1234")
                 {
-                    ttsBuilder = ttsGenerator.Create("Which is correct.", $"{WAV_FILE_LOCATION}/correct.wav");
+                    ttsCache = ttsCacheFactory.Create("Which is correct.", $"{WAV_FILE_LOCATION}/correct.wav");
                 }
                 else
                 {
-                    ttsBuilder = ttsGenerator.Create("Which is incorrect.", $"{WAV_FILE_LOCATION}/Incorrect.wav");
+                    ttsCache = ttsCacheFactory.Create("Which is incorrect.", $"{WAV_FILE_LOCATION}/Incorrect.wav");
                 }
-                await line.PlayTextToSpeechAsync(ttsBuilder, cancellationToken);
+                await line.PlayTextToSpeechAsync(ttsCache, cancellationToken);
 
                 // Say goodbye
-                ttsBuilder = ttsGenerator.Create("Goodbye.", $"{WAV_FILE_LOCATION}/goodbye.wav");
-                await line.PlayTextToSpeechAsync(ttsBuilder, cancellationToken);
+                ttsCache = ttsCacheFactory.Create("Goodbye.", $"{WAV_FILE_LOCATION}/goodbye.wav");
+                await line.PlayTextToSpeechAsync(ttsCache, cancellationToken);
 
                 // finally hang up
                 line.Hangup();

@@ -50,7 +50,7 @@ class Program
 
     private static async Task MakeOutBoundCallAsync(string phoneNumber, IIvrLine line, CancellationToken cancellationToken)
     {
-        var ttsGenerator = line.TextToSpeechGenerator;
+        var ttsGenerator = line.TextToSpeechCacheFactory;
         
         try
         {
@@ -60,12 +60,12 @@ class Program
             {
                 // play TTS
                 var message = "Thank you for using the <say-as interpret-as='characters'>IVR</say-as> Toolkit.";
-                var builder = ttsGenerator.GetTextToSpeechBuilder(message, $"{WAV_FILE_LOCATION}/ThankYou.wav");
+                var builder = ttsGenerator.Create(message, $"{WAV_FILE_LOCATION}/ThankYou.wav");
                 await line.PlayTextToSpeechAsync(builder, cancellationToken);
 
                 // play tts and wait for digits to be pressed
                 message = "For this simple demonstration, press <say-as interpret-as='characters'>1234</say-as> followed by the pound key.";
-                var ttsBuilder = ttsGenerator.GetTextToSpeechBuilder(message, $"{WAV_FILE_LOCATION}/Press1234.wav");
+                var ttsBuilder = ttsGenerator.Create(message, $"{WAV_FILE_LOCATION}/Press1234.wav");
                 var result = await line.MultiTryPromptAsync(ttsBuilder, 
                     value => !string.IsNullOrEmpty(value),
                     cancellationToken);

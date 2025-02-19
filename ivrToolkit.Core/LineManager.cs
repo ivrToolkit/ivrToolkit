@@ -70,7 +70,7 @@ public class LineManager : ILineManager
         {
             textToSpeech = _textToSpeechFactory.Create();
         }
-        var textToSpeechGenerator = new TextToSpeechGenerator(_loggerFactory, textToSpeech, new RegularFileHandler());
+        var textToSpeechGenerator = new TextToSpeechCacheFactory(_loggerFactory, textToSpeech, new RegularFileHandler());
         
         var wrappedLine = new LineWrapper(_loggerFactory, _voiceProperties, line.LineNumber, line, pauser,
             textToSpeechGenerator);

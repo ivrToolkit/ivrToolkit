@@ -26,7 +26,7 @@ public interface IIvrLine : IIvrBaseLine, IPromptMethods, IPlayMethods
     /// <summary>
     /// Gets the Text To Speech generator being used.
     /// </summary>
-    ITextToSpeechGenerator TextToSpeechGenerator { get; }
+    ITextToSpeechCacheFactory TextToSpeechCacheFactory { get; }
 
     /// <summary>
     /// Use this within long computational methods to check if the line has hung-up or stopped.

@@ -96,7 +96,7 @@ public class PlayFileTests
     {
         var lineWrapper = GetLineWrapper();
 
-        var action = async () => await lineWrapper.PlayFileAsync((ITextToSpeechBuilder)null, CancellationToken.None);
+        var action = async () => await lineWrapper.PlayFileAsync((ITextToSpeechCache)null, CancellationToken.None);
         action.ShouldThrow<ArgumentNullException>()
             .Message.ShouldBe("Value cannot be null. (Parameter 'textToSpeechBuilder')");
     }
@@ -108,9 +108,9 @@ public class PlayFileTests
         lineWrapper.Dispose();
         lineWrapper.Management.TriggerDispose();
 
-        var textToSpeechGenerator = new TextToSpeechGenerator(new NullLoggerFactory(), null, null!);
+        var textToSpeechGenerator = new TextToSpeechCacheFactory(new NullLoggerFactory(), null, null!);
 
-        var action = () => textToSpeechGenerator.GetTextToSpeechBuilder(null!);
+        var action = () => textToSpeechGenerator.Create(null!);
         action.ShouldThrow<ArgumentNullException>()
             .Message.ShouldBe("Value cannot be null. (Parameter 'text')");
     }
@@ -120,9 +120,9 @@ public class PlayFileTests
     {
         var lineWrapper = GetLineWrapper();
 
-        var textToSpeechGenerator = new TextToSpeechGenerator(new NullLoggerFactory(), null, new RegularFileHandler());
+        var textToSpeechGenerator = new TextToSpeechCacheFactory(new NullLoggerFactory(), null, new RegularFileHandler());
 
-        var textToSpeechBuilder = textToSpeechGenerator.GetTextToSpeechBuilder("say Something");
+        var textToSpeechBuilder = textToSpeechGenerator.Create("say Something");
         
         var action = async () => await lineWrapper.PlayFileAsync(textToSpeechBuilder, CancellationToken.None);
         action.ShouldThrow<VoiceException>()
@@ -141,9 +141,9 @@ public class PlayFileTests
         mockFileHandler.Setup(x => x.ReadAllTextAsync("test.txt", 
             It.IsAny<CancellationToken>())).ReturnsAsync("something different");
 
-        var textToSpeechGenerator = new TextToSpeechGenerator(new NullLoggerFactory(), null, mockFileHandler.Object);
+        var textToSpeechGenerator = new TextToSpeechCacheFactory(new NullLoggerFactory(), null, mockFileHandler.Object);
 
-        var textToSpeechBuilder = textToSpeechGenerator.GetTextToSpeechBuilder("say Something", "test.wav");
+        var textToSpeechBuilder = textToSpeechGenerator.Create("say Something", "test.wav");
         
         var action = async () => await lineWrapper.PlayFileAsync(textToSpeechBuilder, CancellationToken.None);
         action.ShouldThrow<VoiceException>()
@@ -158,9 +158,9 @@ public class PlayFileTests
         var mockFileHandler = new Mock<IFileHandler>(MockBehavior.Strict);
         mockFileHandler.Setup(x => x.Exists(It.IsAny<string>())).Returns(false);
 
-        var textToSpeechGenerator = new TextToSpeechGenerator(new NullLoggerFactory(), null, mockFileHandler.Object);
+        var textToSpeechGenerator = new TextToSpeechCacheFactory(new NullLoggerFactory(), null, mockFileHandler.Object);
 
-        var textToSpeechBuilder = textToSpeechGenerator.GetTextToSpeechBuilder("say Something", "test.wav");
+        var textToSpeechBuilder = textToSpeechGenerator.Create("say Something", "test.wav");
         
         var action = async () => await lineWrapper.PlayFileAsync(textToSpeechBuilder, CancellationToken.None);
         action.ShouldThrow<VoiceException>()
@@ -172,23 +172,23 @@ public class PlayFileTests
     {
         var lineWrapper = GetLineWrapper();
         
-        var mockTextToSpeechBuilder = new Mock<ITextToSpeechBuilder>();
+        var mockTextToSpeechBuilder = new Mock<ITextToSpeechCache>();
         
-        var mockTextToSpeechGenerator = new Mock<ITextToSpeechGenerator>(MockBehavior.Strict);
-        mockTextToSpeechGenerator.Setup(x => x.GetTextToSpeechBuilder(It.IsAny<string>(),
+        var mockTextToSpeechGenerator = new Mock<ITextToSpeechCacheFactory>(MockBehavior.Strict);
+        mockTextToSpeechGenerator.Setup(x => x.Create(It.IsAny<string>(),
             It.IsAny<string>())).Returns(mockTextToSpeechBuilder.Object);
 
         var textToSpeechGenerator = mockTextToSpeechGenerator.Object;
-        var textToSpeechBuilder = textToSpeechGenerator.GetTextToSpeechBuilder("say something", "Test.wav");
+        var textToSpeechBuilder = textToSpeechGenerator.Create("say something", "Test.wav");
         
         //act
         await lineWrapper.PlayFileAsync(textToSpeechBuilder, CancellationToken.None);
         
         // assert
-        mockTextToSpeechBuilder.Verify(x => x.GenerateWavFileAsync(
+        mockTextToSpeechBuilder.Verify(x => x.GenerateCacheAsync(
             It.IsAny<CancellationToken>()), Times.Once);
-        mockTextToSpeechBuilder.Verify(x => x.GetFileName(), Times.Once);
-        mockTextToSpeechBuilder.Verify(x => x.GetWavStreamAsync(
+        mockTextToSpeechBuilder.Verify(x => x.GetCacheFileName(), Times.Once);
+        mockTextToSpeechBuilder.Verify(x => x.GetOrGenerateCacheAsync(
             It.IsAny<CancellationToken>()), Times.Never);
     }
     
@@ -207,11 +207,11 @@ public class PlayFileTests
         mockFileHandler.Setup(x => x.ReadAllTextAsync("Test.txt", 
             It.IsAny<CancellationToken>())).ReturnsAsync(message);
 
-        var textToSpeechGenerator = new TextToSpeechGenerator(new NullLoggerFactory(), 
+        var textToSpeechGenerator = new TextToSpeechCacheFactory(new NullLoggerFactory(), 
             mockTextToSpeech.Object, 
             mockFileHandler.Object);
 
-        var textToSpeechBuilder = textToSpeechGenerator.GetTextToSpeechBuilder(message, "Test.wav");
+        var textToSpeechBuilder = textToSpeechGenerator.Create(message, "Test.wav");
         
         await lineWrapper.PlayFileAsync(textToSpeechBuilder, CancellationToken.None);
         // once for test.wav and once for test.txt

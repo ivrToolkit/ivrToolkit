@@ -10,25 +10,25 @@ using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Core.TTS;
 
-public class TextToSpeechBuilder : ITextToSpeechBuilder
+public class TextToSpeechCache : ITextToSpeechCache
 {
     private readonly ITextToSpeech? _textToSpeech;
     private readonly string _text;
     private readonly string? _wavFileName;
     private readonly IFileHandler _fileHandler;
 
-    private readonly ILogger<ITextToSpeechBuilder> _logger;
+    private readonly ILogger<ITextToSpeechCache> _logger;
 
     public bool FileExists { get; private set; }
 
-    public TextToSpeechBuilder(ILoggerFactory loggerFactory, ITextToSpeech? textToSpeech, 
+    public TextToSpeechCache(ILoggerFactory loggerFactory, ITextToSpeech? textToSpeech, 
         string text, 
         string? wavFileName,
         IFileHandler fileHandler)
     {
         loggerFactory.ThrowIfNull(nameof(loggerFactory));
         _text = text.ThrowIfNull(nameof(text));
-        _logger = loggerFactory.CreateLogger<TextToSpeechBuilder>();
+        _logger = loggerFactory.CreateLogger<TextToSpeechCache>();
         _fileHandler = fileHandler.ThrowIfNull(nameof(fileHandler));
         
         // these two are allowed to be null
@@ -36,9 +36,9 @@ public class TextToSpeechBuilder : ITextToSpeechBuilder
         _wavFileName = wavFileName;
     }
     
-    public async Task<WavStream> GetWavStreamAsync(CancellationToken cancellationToken)
+    public async Task<WavStream> GetOrGenerateCacheAsync(CancellationToken cancellationToken)
     {
-        _logger.LogTrace("{method}()", nameof(GetWavStreamAsync));
+        _logger.LogTrace("{method}()", nameof(GetOrGenerateCacheAsync));
         
         // see if there is a wav file existing and the text hasn't changed
         if (await IsNotChangedAsync(_text, _wavFileName, cancellationToken))
@@ -68,9 +68,9 @@ public class TextToSpeechBuilder : ITextToSpeechBuilder
         return audioStream;
     }
 
-    public async Task GenerateWavFileAsync(CancellationToken cancellationToken)
+    public async Task GenerateCacheAsync(CancellationToken cancellationToken)
     {
-        _logger.LogTrace("{method}()", nameof(GetWavStreamAsync));
+        _logger.LogTrace("{method}()", nameof(GetOrGenerateCacheAsync));
         if (_wavFileName is null)
         {
             throw new VoiceException("Requires fileName.");
@@ -101,7 +101,7 @@ public class TextToSpeechBuilder : ITextToSpeechBuilder
         FileExists = true;
     }
 
-    public string? GetFileName()
+    public string? GetCacheFileName()
     {
         return _wavFileName;
     }

@@ -239,11 +239,11 @@ public interface IPlayMethods
     void PlayTextToSpeech(string textToSpeech);
     
     /// <summary>
-    /// Converts the specified text into a wav stream and plays it using <see cref="ITextToSpeechBuilder"/>
+    /// Converts the specified text into a wav stream and plays it using <see cref="ITextToSpeechCache"/>
     /// </summary>
-    /// <param name="textToSpeechBuilder">Used to generated TTS and possibly save it to a wav file for later use.
+    /// <param name="textToSpeechCache">Used to generated TTS and possibly save it to a wav file for later use.
     /// Will only generate TTS if a wav file is not specified, missing or changed.</param>
-    void PlayTextToSpeech(ITextToSpeechBuilder textToSpeechBuilder);
+    void PlayTextToSpeech(ITextToSpeechCache textToSpeechCache);
     
     /// <summary>
     /// Asynchronously converts the specified text into a wav stream and plays it.
@@ -253,25 +253,25 @@ public interface IPlayMethods
     Task PlayTextToSpeechAsync(string textToSpeech, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Asynchronously converts the specified text into a wav stream and plays it using <see cref="ITextToSpeechBuilder"/>
+    /// Asynchronously converts the specified text into a wav stream and plays it using <see cref="ITextToSpeechCache"/>
     /// </summary>
-    /// <param name="textToSpeechBuilder">Used to generated TTS and possibly save it to a wav file for later use.
+    /// <param name="textToSpeechCache">Used to generated TTS and possibly save it to a wav file for later use.
     /// Will only generate TTS if a wav file is not specified, missing or changed.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    Task PlayTextToSpeechAsync(ITextToSpeechBuilder textToSpeechBuilder, CancellationToken cancellationToken);
+    Task PlayTextToSpeechAsync(ITextToSpeechCache textToSpeechCache, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Converts the specified text into a wav stream and plays it using <see cref="ITextToSpeechBuilder"/>
+    /// Converts the specified text into a wav stream and plays it using <see cref="ITextToSpeechCache"/>
     /// </summary>
-    /// <param name="textToSpeechBuilder">Used to generated TTS and possibly save it to a wav file for later use.
+    /// <param name="textToSpeechCache">Used to generated TTS and possibly save it to a wav file for later use.
     /// Will only generate TTS if a wav file is not specified, missing or changed.</param>
-    void PlayFile(ITextToSpeechBuilder textToSpeechBuilder);
+    void PlayFile(ITextToSpeechCache textToSpeechCache);
     
     /// <summary>
-    /// Asynchronously converts the specified text into a wav stream and plays it using <see cref="ITextToSpeechBuilder"/>
+    /// Asynchronously converts the specified text into a wav stream and plays it using <see cref="ITextToSpeechCache"/>
     /// </summary>
-    /// <param name="textToSpeechBuilder">Used to generated TTS and possibly save it to a wav file for later use.
+    /// <param name="textToSpeechCache">Used to generated TTS and possibly save it to a wav file for later use.
     /// Will only generate TTS if a wav file is not specified, missing or changed.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    Task PlayFileAsync(ITextToSpeechBuilder textToSpeechBuilder, CancellationToken cancellationToken);
+    Task PlayFileAsync(ITextToSpeechCache textToSpeechCache, CancellationToken cancellationToken);
 }

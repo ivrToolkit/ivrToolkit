@@ -685,9 +685,9 @@ internal partial class LineWrapper
         PlayTextToSpeechAsync(textToSpeech, CancellationToken.None).GetAwaiter().GetResult();
     }
     
-    public void PlayTextToSpeech(ITextToSpeechBuilder textToSpeechBuilder)
+    public void PlayTextToSpeech(ITextToSpeechCache textToSpeechCache)
     {
-        PlayTextToSpeechAsync(textToSpeechBuilder, CancellationToken.None).GetAwaiter().GetResult();
+        PlayTextToSpeechAsync(textToSpeechCache, CancellationToken.None).GetAwaiter().GetResult();
     }
 
     public async Task PlayTextToSpeechAsync(string textToSpeech, CancellationToken cancellationToken)
@@ -695,40 +695,40 @@ internal partial class LineWrapper
         _logger.LogDebug("{method}({textToSpeech})", nameof(PlayTextToSpeechAsync), textToSpeech);
         CheckDispose();
         
-        var textToSpeechBuilder = _textToSpeechGenerator.GetTextToSpeechBuilder(textToSpeech);
+        var textToSpeechBuilder = _textToSpeechCacheFactory.Create(textToSpeech);
 
-        var audioStream = await textToSpeechBuilder.GetWavStreamAsync(cancellationToken);
+        var audioStream = await textToSpeechBuilder.GetOrGenerateCacheAsync(cancellationToken);
         await _lineImplementation.PlayWavStreamAsync(audioStream, cancellationToken);
     }
 
-    public async Task PlayTextToSpeechAsync(ITextToSpeechBuilder textToSpeechBuilder, CancellationToken cancellationToken)
+    public async Task PlayTextToSpeechAsync(ITextToSpeechCache textToSpeechCache, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("{method}({textToSpeechBuilder})", nameof(PlayTextToSpeechAsync), textToSpeechBuilder);
+        _logger.LogDebug("{method}({textToSpeechBuilder})", nameof(PlayTextToSpeechAsync), textToSpeechCache);
         CheckDispose();
-        textToSpeechBuilder.ThrowIfNull(nameof(textToSpeechBuilder));
+        textToSpeechCache.ThrowIfNull(nameof(textToSpeechCache));
 
-        var audioStream = await textToSpeechBuilder.GetWavStreamAsync(cancellationToken);
+        var audioStream = await textToSpeechCache.GetOrGenerateCacheAsync(cancellationToken);
         await _lineImplementation.PlayWavStreamAsync(audioStream, cancellationToken);
     }
 
-    public void PlayFile(ITextToSpeechBuilder textToSpeechBuilder)
+    public void PlayFile(ITextToSpeechCache textToSpeechCache)
     {
-        PlayFileAsync(textToSpeechBuilder, CancellationToken.None).GetAwaiter().GetResult();
+        PlayFileAsync(textToSpeechCache, CancellationToken.None).GetAwaiter().GetResult();
     }
 
-    public async Task PlayFileAsync(ITextToSpeechBuilder textToSpeechBuilder,
+    public async Task PlayFileAsync(ITextToSpeechCache textToSpeechCache,
         CancellationToken cancellationToken)
     {
-        _logger.LogDebug("{method}({textToSpeechBuilder})", nameof(PlayFileAsync), textToSpeechBuilder);
+        _logger.LogDebug("{method}({textToSpeechBuilder})", nameof(PlayFileAsync), textToSpeechCache);
         CheckDispose();
         
-        textToSpeechBuilder.ThrowIfNull(nameof(textToSpeechBuilder));
+        textToSpeechCache.ThrowIfNull(nameof(textToSpeechCache));
         // legacy plugins don't have PlayWavStreamAsync implemented
         // but we still want to give them the ability to do TTS
         
         // throws VoiceException if FileName is missing
-        await textToSpeechBuilder.GenerateWavFileAsync(cancellationToken);
-        await _lineImplementation.PlayFileAsync(textToSpeechBuilder.GetFileName(), cancellationToken);
+        await textToSpeechCache.GenerateCacheAsync(cancellationToken);
+        await _lineImplementation.PlayFileAsync(textToSpeechCache.GetCacheFileName(), cancellationToken);
     }
     
     void IIvrBaseLine.PlayWavStream(WavStream audioStream)

@@ -22,13 +22,13 @@ public interface IPromptMethods
     string Prompt(string fileOrPhrase, PromptOptions promptOptions = null);
     
     /// <summary>
-    /// Speaks out the text-to-speech message using <see cref="ITextToSpeechBuilder"/>  and then expects digits to be pressed.
+    /// Speaks out the text-to-speech message using <see cref="ITextToSpeechCache"/>  and then expects digits to be pressed.
     /// </summary>
-    /// <param name="textToSpeechBuilder">Used to generated TTS and possibly save it to a wav file for later use.
+    /// <param name="textToSpeechCache">Used to generated TTS and possibly save it to a wav file for later use.
     /// Will only generate TTS if a wav file is not specified, missing or changed.</param>
     /// <param name="promptOptions">Defines prompt options to override the default ones. See <see cref="PromptOptions"/></param>
     /// <returns>The answer to the prompt</returns>
-    string Prompt(ITextToSpeechBuilder textToSpeechBuilder, PromptOptions promptOptions = null);
+    string Prompt(ITextToSpeechCache textToSpeechCache, PromptOptions promptOptions = null);
     
     /// <summary>
     /// Asynchronously speaks a file/phrase to a person on the call and then expects digits to be pressed.
@@ -42,14 +42,14 @@ public interface IPromptMethods
         PromptOptions promptOptions = null);
 
     /// <summary>
-    /// Asynchronously speaks out the text-to-speech message using <see cref="ITextToSpeechBuilder"/>  and then expects digits to be pressed.
+    /// Asynchronously speaks out the text-to-speech message using <see cref="ITextToSpeechCache"/>  and then expects digits to be pressed.
     /// </summary>
-    /// <param name="textToSpeechBuilder">Used to generated TTS and possibly save it to a wav file for later use.
+    /// <param name="textToSpeechCache">Used to generated TTS and possibly save it to a wav file for later use.
     /// Will only generate TTS if a wav file is not specified, missing or changed.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <param name="promptOptions">Defines prompt options to override the default ones. See <see cref="PromptOptions"/></param>
     /// <returns>The answer to the prompt</returns>
-    Task<string> PromptAsync(ITextToSpeechBuilder textToSpeechBuilder, CancellationToken cancellationToken,
+    Task<string> PromptAsync(ITextToSpeechCache textToSpeechCache, CancellationToken cancellationToken,
         PromptOptions promptOptions = null);
     
     /// <summary>
@@ -64,15 +64,15 @@ public interface IPromptMethods
     string MultiTryPrompt(string fileOrPhrase, Func<string, bool> evaluator, MultiTryPromptOptions multiTryPromptOptions = null);
 
     /// <summary>
-    /// Same as <see cref="Prompt(ITextToSpeechBuilder,ivrToolkit.Core.Util.PromptOptions)"/> but will ask x number of times before the answer is either accepted or there
+    /// Same as <see cref="Prompt(ITextToSpeechCache,ivrToolkit.Core.Util.PromptOptions)"/> but will ask x number of times before the answer is either accepted or there
     /// </summary>
-    /// <param name="textToSpeechBuilder">Used to generated TTS and possibly save it to a wav file for later use.
+    /// <param name="textToSpeechCache">Used to generated TTS and possibly save it to a wav file for later use.
     /// Will only generate TTS if a wav file is not specified, missing or changed.</param>
     /// <param name="evaluator">Pass in a function that will validate the answer. Return true if it is correct or
     /// false if incorrect.</param>
     /// <param name="multiTryPromptOptions">Defines prompt options to override the default ones. See <see cref="MultiTryPromptOptions"/></param>
     /// <returns>The answer to the prompt</returns>
-    string MultiTryPrompt(ITextToSpeechBuilder textToSpeechBuilder, Func<string, bool> evaluator, MultiTryPromptOptions multiTryPromptOptions = null);
+    string MultiTryPrompt(ITextToSpeechCache textToSpeechCache, Func<string, bool> evaluator, MultiTryPromptOptions multiTryPromptOptions = null);
     
     /// <summary>
     /// Same as <see cref="Prompt(string,ivrToolkit.Core.Util.PromptOptions)"/> but will ask x number of times before the answer is either accepted or there
@@ -85,15 +85,15 @@ public interface IPromptMethods
     Task<string> MultiTryPromptAsync(string fileOrPhrase, Func<string, bool> evaluator, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Same as <see cref="Prompt(ITextToSpeechBuilder,ivrToolkit.Core.Util.PromptOptions)"/> but will ask x number of times before the answer is either accepted or there
+    /// Same as <see cref="Prompt(ITextToSpeechCache,ivrToolkit.Core.Util.PromptOptions)"/> but will ask x number of times before the answer is either accepted or there
     /// </summary>
-    /// <param name="textToSpeechBuilder">Used to generated TTS and possibly save it to a wav file for later use.
+    /// <param name="textToSpeechCache">Used to generated TTS and possibly save it to a wav file for later use.
     /// Will only generate TTS if a wav file is not specified, missing or changed.</param>
     /// <param name="evaluator">Pass in a function that will validate the answer. Return true if it is correct or
     /// false if incorrect.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>The answer to the prompt</returns>
-    Task<string> MultiTryPromptAsync(ITextToSpeechBuilder textToSpeechBuilder, Func<string, bool> evaluator, CancellationToken cancellationToken);
+    Task<string> MultiTryPromptAsync(ITextToSpeechCache textToSpeechCache, Func<string, bool> evaluator, CancellationToken cancellationToken);
 
     /// <summary>
     /// Same as <see cref="Prompt(string,ivrToolkit.Core.Util.PromptOptions)"/> but will ask x number of times before the answer is either accepted or there
@@ -109,15 +109,15 @@ public interface IPromptMethods
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Same as <see cref="Prompt(ITextToSpeechBuilder,ivrToolkit.Core.Util.PromptOptions)"/> but will ask x number of times before the answer is either accepted or there
+    /// Same as <see cref="Prompt(ITextToSpeechCache,ivrToolkit.Core.Util.PromptOptions)"/> but will ask x number of times before the answer is either accepted or there
     /// </summary>
-    /// <param name="textToSpeechBuilder">Used to generated TTS and possibly save it to a wav file for later use.
+    /// <param name="textToSpeechCache">Used to generated TTS and possibly save it to a wav file for later use.
     /// Will only generate TTS if a wav file is not specified, missing or changed.</param>
     /// <param name="evaluator">Pass in a function that will validate the answer. Return true if it is correct or
     /// false if incorrect.</param>
     /// <param name="multiTryPromptOptions">Defines prompt options to override the default ones. See <see cref="MultiTryPromptOptions"/></param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>The answer to the prompt</returns>
-    Task<string> MultiTryPromptAsync(ITextToSpeechBuilder textToSpeechBuilder, Func<string, bool> evaluator, MultiTryPromptOptions multiTryPromptOptions,
+    Task<string> MultiTryPromptAsync(ITextToSpeechCache textToSpeechCache, Func<string, bool> evaluator, MultiTryPromptOptions multiTryPromptOptions,
         CancellationToken cancellationToken);
 }

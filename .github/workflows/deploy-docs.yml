@@ -38,7 +38,7 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "github-actions@github.com"
           git add .
-          git commit -m "Update documentation [skip ci]"
-          git push
+          git commit -m "Update documentation [skip ci]" || echo "No changes to commit, skipping push"
+          git push || echo "Nothing to push"
         env:
           GITHUB_TOKEN: ${{ secrets.DEPLOY_TOKEN }}

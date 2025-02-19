@@ -60,12 +60,12 @@ class Program
             {
                 // play TTS
                 var message = "Thank you for using the <say-as interpret-as='characters'>IVR</say-as> Toolkit.";
-                var builder = ttsCacheFactory.Create(message, $"{WAV_FILE_LOCATION}/ThankYou.wav");
-                await line.PlayTextToSpeechAsync(builder, cancellationToken);
+                var ttsCache = ttsCacheFactory.Create(message, $"{WAV_FILE_LOCATION}/ThankYou.wav");
+                await line.PlayTextToSpeechAsync(ttsCache, cancellationToken);
 
                 // play tts and wait for digits to be pressed
                 message = "For this simple demonstration, press <say-as interpret-as='characters'>1234</say-as> followed by the pound key.";
-                var ttsCache = ttsCacheFactory.Create(message, $"{WAV_FILE_LOCATION}/Press1234.wav");
+                ttsCache = ttsCacheFactory.Create(message, $"{WAV_FILE_LOCATION}/Press1234.wav");
                 var result = await line.MultiTryPromptAsync(ttsCache, 
                     value => !string.IsNullOrEmpty(value),
                     cancellationToken);

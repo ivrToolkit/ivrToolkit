@@ -99,7 +99,7 @@ public interface IIvrBaseLine : IDisposable
     /// Plays a WAV audio stream.
     /// </summary>
     /// <param name="audioStream">The audio stream, including the WAV header.</param>
-    protected internal void PlayWavStream(WavStream audioStream);
+    void PlayWavStream(WavStream audioStream);
 
     /// <summary>
     /// Asynchronously plays a WAV audio stream.

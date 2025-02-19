@@ -731,12 +731,12 @@ internal partial class LineWrapper
         await _lineImplementation.PlayFileAsync(textToSpeechCache.GetCacheFileName(), cancellationToken);
     }
     
-    void IIvrBaseLine.PlayWavStream(WavStream audioStream)
+    public void PlayWavStream(WavStream audioStream)
     {
         _lineImplementation.PlayWavStream(audioStream);
     }
 
-    async Task IIvrBaseLine.PlayWavStreamAsync(WavStream audioStream, CancellationToken cancellationToken)
+    public async Task PlayWavStreamAsync(WavStream audioStream, CancellationToken cancellationToken)
     {
         await _lineImplementation.PlayWavStreamAsync(audioStream, cancellationToken);
     }

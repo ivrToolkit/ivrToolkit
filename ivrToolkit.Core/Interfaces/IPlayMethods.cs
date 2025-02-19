@@ -265,6 +265,7 @@ public interface IPlayMethods
     /// </summary>
     /// <param name="textToSpeechCache">Used to generated TTS and possibly save it to a wav file for later use.
     /// Will only generate TTS if a wav file is not specified, missing or changed.</param>
+    /// <exception cref="VoiceException">If ITextToSpeechCache doesn't have a wav file name.</exception>
     void PlayFile(ITextToSpeechCache textToSpeechCache);
     
     /// <summary>
@@ -273,5 +274,6 @@ public interface IPlayMethods
     /// <param name="textToSpeechCache">Used to generated TTS and possibly save it to a wav file for later use.
     /// Will only generate TTS if a wav file is not specified, missing or changed.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <exception cref="VoiceException">If ITextToSpeechCache doesn't have a wav file name.</exception>
     Task PlayFileAsync(ITextToSpeechCache textToSpeechCache, CancellationToken cancellationToken);
 }

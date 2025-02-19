@@ -10,43 +10,6 @@ using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Core.TTS;
 
-public interface IFileHandler
-{
-    bool Exists(string fullPath);
-    Task WriteAllBytesAsync(string fileName, byte[] bytes, CancellationToken cancellationToken);
-    Task WriteAllTextAsync(string fileName, string text, CancellationToken cancellationToken);
-    Task<string> ReadAllTextAsync(string fileName, CancellationToken cancellationToken);
-    Stream GetFileStream(string fileName, FileMode fileMode, FileAccess fileAccess, FileShare fileShare);
-}
-
-public class RegularFileHandler : IFileHandler
-{
-    public bool Exists(string fullPath)
-    {
-        return File.Exists(fullPath);
-    }
-
-    public async Task WriteAllBytesAsync(string fileName, byte[] bytes, CancellationToken cancellationToken)
-    {
-        await File.WriteAllBytesAsync(fileName, bytes, cancellationToken);
-    }
-
-    public async Task WriteAllTextAsync(string fileName, string text, CancellationToken cancellationToken)
-    {
-        await File.WriteAllTextAsync(fileName, text, cancellationToken);
-    }
-
-    public async Task<string> ReadAllTextAsync(string fileName, CancellationToken cancellationToken)
-    {
-        return await File.ReadAllTextAsync(fileName, cancellationToken);
-    }
-
-    public Stream GetFileStream(string fileName, FileMode fileMode, FileAccess fileAccess, FileShare fileShare)
-    {
-        return new FileStream(fileName, fileMode, fileAccess, fileShare);
-    }
-}
-
 public class TextToSpeechBuilder : ITextToSpeechBuilder
 {
     private readonly ITextToSpeech? _textToSpeech;

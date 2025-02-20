@@ -5,12 +5,14 @@
 // 
 // 
 using System;
+using Google.Cloud.TextToSpeech.V1;
+using ivrToolkit.Core.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace ivrToolkit.Core.Util;
 
 /// <summary>
-/// Holds the voice.properties in a static Properties class.
+/// Holds the voice.properties in a Properties class.
 /// </summary>
 public class VoiceProperties : Properties, IDisposable
 {
@@ -37,12 +39,33 @@ public class VoiceProperties : Properties, IDisposable
     private const string SYSTEM_RECORDING_SUBFOLDER_KEY = "system.recording.subfolder";
     private const string SYSTEM_RECORDING_SUBFOLDER_DEFAULT = "en-US-JennyNeural";
     
+    private const string TTS_GOOGLE_CREDENTIALS_PATH_KEY = "tts.google.credentials.path";
+    
+    private const string TTS_GOOGLE_LANGUAGE_CODE_KEY = "tts.google.languageCode";
+    private const string TTS_GOOGLE_LANGUAGE_CODE_DEFAULT = "en-US";
+    
+    private const string TTS_GOOGLE_NAME_KEY = "tts.google.name";
+    private const string TTS_GOOGLE_NAME_DEFAULT = "";
+    
+    private const string TTS_GOOGLE_GENDER_KEY = "tts.google.gender";
+    private const string TTS_GOOGLE_GENDER_DEFAULT = "Female";
+    
+    
+    /// <summary>
+    /// Constructs a VoiceProperties object given the text file that contains the definitions.
+    /// </summary>
+    /// <param name="loggerFactory"></param>
+    /// <param name="fileName">The text file that contains the definitions</param>
     protected VoiceProperties(ILoggerFactory loggerFactory, string fileName) : base (loggerFactory, fileName)
     {
         _logger = loggerFactory.CreateLogger<VoiceProperties>();
         _logger.LogDebug("ctr(ILoggerFactory, {0})", fileName);
     }
 
+    /// <summary>
+    /// Construct a VoiceProperties object without a text file for the defaults.
+    /// </summary>
+    /// <param name="loggerFactory"></param>
     public VoiceProperties(ILoggerFactory loggerFactory) : base (loggerFactory)
     {
         _logger = loggerFactory.CreateLogger<VoiceProperties>();
@@ -123,8 +146,46 @@ public class VoiceProperties : Properties, IDisposable
         get => int.Parse(GetProperty(WAV_SAMPLE_RATE_KEY, WAV_SAMPLE_RATE_DEFAULT));
         init => SetProperty(WAV_SAMPLE_RATE_KEY, value.ToString());
     }
+
+    /// <summary>
+    /// The Google application credentials path for use with TTS
+    /// </summary>
+    public string TtsGoogleApplicationCredentialsPath
+    {
+        get => GetProperty(TTS_GOOGLE_CREDENTIALS_PATH_KEY, "");
+        init => SetProperty(TTS_GOOGLE_CREDENTIALS_PATH_KEY, value);
+    }
+
+    public string TtsGoogleLanguageCode
+    {
+        get => GetProperty(TTS_GOOGLE_LANGUAGE_CODE_KEY, TTS_GOOGLE_LANGUAGE_CODE_DEFAULT);
+        init => SetProperty(TTS_GOOGLE_LANGUAGE_CODE_KEY, value);
+    }
     
-    
+    public string TtsGoogleName
+    {
+        get => GetProperty(TTS_GOOGLE_NAME_KEY, TTS_GOOGLE_NAME_DEFAULT);
+        init => SetProperty(TTS_GOOGLE_NAME_KEY, value);
+    }
+
+
+    public SsmlVoiceGender TtsGoogleGender
+    {
+        get
+        {
+            var input = GetProperty(TTS_GOOGLE_GENDER_KEY, TTS_GOOGLE_GENDER_DEFAULT);
+            if (Enum.TryParse<SsmlVoiceGender>(input, out var status))
+            {
+                return status;
+            }
+
+            throw new VoiceException($"Invalid voice gender: {input}");
+        }
+        init => SetProperty(TTS_GOOGLE_GENDER_KEY, value.ToString());
+    }
+
+
+    /// <inheritdoc />
     public new void Dispose()
     {
         _logger.LogDebug("{method}()", nameof(Dispose));

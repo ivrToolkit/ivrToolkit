@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Exceptions;
@@ -61,13 +60,7 @@ public class AzureTTS : ITextToSpeech, IDisposable
                                 {text}
                             </voice>
                         </speak>";
-        
-        using var result = await _synthesizer.SpeakSsmlAsync(ssml);
-        if (result.Reason != ResultReason.SynthesizingAudioCompleted)
-        {
-            throw new VoiceException(result.Reason.ToString());
-        }
-        return new WavStream(result.AudioData);
+        return await SpeakSsmlAsync(ssml);
     }
 
 

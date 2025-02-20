@@ -28,8 +28,8 @@ class Program
         // instantiate the plugin you want to use
         using var sipPlugin = new SipSorceryPlugin(loggerFactory, sipVoiceProperties);
 
-        // i'm using azure TTS
         var ttsFactory = new AzureTtsFactory(loggerFactory, sipVoiceProperties);
+        //var ttsFactory = new GoogleTtsFactory(loggerFactory, sipVoiceProperties);
         
         // create a line manager
         using var lineManager = new LineManager(loggerFactory, sipVoiceProperties, sipPlugin, ttsFactory);

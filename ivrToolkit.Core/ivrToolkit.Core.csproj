@@ -12,6 +12,7 @@
 		<PackageIcon>icon.jpg</PackageIcon>
 		<PackageTags>voip; sip; sipsorcery; telephony; dialogic</PackageTags>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>CS1591</NoWarn>
 	</PropertyGroup>
 	
 	<ItemGroup>
@@ -839,6 +840,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="Google.Cloud.TextToSpeech.V1" Version="3.10.0" />
 	  <PackageReference Include="Microsoft.CognitiveServices.Speech" Version="1.42.0" />
 	  <PackageReference Include="NAudio.Core" Version="2.2.1" />
 	  <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />

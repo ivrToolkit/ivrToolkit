@@ -7,7 +7,8 @@
     <Copyright>Copyright 2013-2025 Troy Makaro</Copyright>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://www.ivrtoolkit.com</PackageProjectUrl>
-    <PackageTags>voip; sip; telephony; dialogic</PackageTags>
+    <RepositoryUrl>https://github.com/ivrToolkit/ivrToolkit</RepositoryUrl>
+    <PackageTags>voip; sip; telephony; ivr; dialogic</PackageTags>
     <PackageIcon>icon.jpg</PackageIcon>
   </PropertyGroup>
 

@@ -1,0 +1,1 @@
+A common ivrToolkit package used with both the Dialogic plugins.

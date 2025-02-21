@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net8.0</TargetFrameworks>
+		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 
@@ -10,8 +10,9 @@
 		<Copyright>Copyright 2013-2025 Troy Makaro</Copyright>
 		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 		<PackageProjectUrl>https://www.ivrtoolkit.com</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/ivrToolkit/ivrToolkit</RepositoryUrl>
 		<PackageIcon>icon.jpg</PackageIcon>
-		<PackageTags>voip; sip; sipsorcery; telephony</PackageTags>
+		<PackageTags>voip; sip; sipsorcery; telephony; ivr</PackageTags>
 		<PackageIconUrl />
 
 

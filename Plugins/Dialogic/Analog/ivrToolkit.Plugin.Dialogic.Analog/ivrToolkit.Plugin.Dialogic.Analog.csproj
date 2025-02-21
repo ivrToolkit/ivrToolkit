@@ -7,8 +7,9 @@
     <Description>An analog implementation using Dialogic System Release 6.0. For use with ivrToolkit.Core. Originally tested with Dialogic build 271</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://www.ivrtoolkit.com</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ivrToolkit/ivrToolkit</RepositoryUrl>
     <PackageIcon>icon.jpg</PackageIcon>
-    <PackageTags>telephony; dialogic</PackageTags>
+    <PackageTags>telephony; ivr; dialogic</PackageTags>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

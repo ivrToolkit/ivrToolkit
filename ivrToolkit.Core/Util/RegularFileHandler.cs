@@ -3,7 +3,6 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Interfaces;
-using ivrToolkit.Core.TTS;
 
 namespace ivrToolkit.Core.Util;
 

@@ -5,7 +5,7 @@ SIP. You will need two packages
 - ivrToolkit.Plugin.SipSorcery
 
 Example:
-```
+```csharp
 // instantiate the plugin you want to use
 using var sipPlugin = new SipSorceryPlugin(loggerFactory, sipVoiceProperties);
 

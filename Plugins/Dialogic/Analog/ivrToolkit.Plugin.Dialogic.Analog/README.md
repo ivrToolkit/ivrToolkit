@@ -7,7 +7,7 @@ Here are the ivrToolkit nuget packages you need:
 - ivrToolkit.Plugin.Dialogic.Analog
 
 Example:
-```
+```csharp
 // instantiate the plugin you want to use
 using var sipPlugin = new AnalogPlugin(loggerFactory, sipVoiceProperties);
 

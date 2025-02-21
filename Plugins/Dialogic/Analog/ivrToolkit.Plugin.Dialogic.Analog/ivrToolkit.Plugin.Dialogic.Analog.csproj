@@ -8,6 +8,7 @@
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://www.ivrtoolkit.com</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ivrToolkit/ivrToolkit</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.jpg</PackageIcon>
     <PackageTags>telephony; ivr; dialogic</PackageTags>
   </PropertyGroup>

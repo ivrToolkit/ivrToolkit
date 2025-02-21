@@ -11,6 +11,7 @@
 		<Copyright>Copyright 2013-2025 Troy Makaro</Copyright>
 		<PackageProjectUrl>https://www.ivrtoolkit.com</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/ivrToolkit/ivrToolkit</RepositoryUrl>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageIcon>icon.jpg</PackageIcon>
 		<PackageTags>voip; sip; sipsorcery; telephony; ivr; dialogic</PackageTags>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>

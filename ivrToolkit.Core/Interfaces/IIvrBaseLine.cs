@@ -69,7 +69,7 @@ public interface IIvrBaseLine : IDisposable
     /// Dials a phone number using call progress analysis.
     /// </summary>
     /// <param name="phoneNumber">The phone number to call.</param>
-    /// <param name="answeringMachineLengthInMilliseconds">The threshold for determining an answering machine.</param>
+    /// <param name="answeringMachineLengthInMilliseconds">The threshold for determining an answering machine. Detects the callee's greeting duration.0 = no answering machine detection.</param>
     /// <returns>A <see cref="CallAnalysis"/> object containing call results.</returns>
     CallAnalysis Dial(string phoneNumber, int answeringMachineLengthInMilliseconds);
 
@@ -77,7 +77,7 @@ public interface IIvrBaseLine : IDisposable
     /// Asynchronously dials a phone number using call progress analysis.
     /// </summary>
     /// <param name="phoneNumber">The phone number to call.</param>
-    /// <param name="answeringMachineLengthInMilliseconds">The threshold for determining an answering machine.</param>
+    /// <param name="answeringMachineLengthInMilliseconds">The threshold for determining an answering machine. Detects the callee's greeting duration.0 = no answering machine detection.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation, returning a <see cref="CallAnalysis"/> object.</returns>
     Task<CallAnalysis> DialAsync(string phoneNumber, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken);

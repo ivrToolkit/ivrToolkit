@@ -28,7 +28,7 @@ using var lineManager = new LineManager(loggerFactory, sipVoiceProperties, sipPl
 var line = lineManager.GetLine();
 
 // dial out
-var callAnalysis = await line.DialAsync(phoneNumber, 3500, cancellationToken);
+var callAnalysis = await line.DialAsync(phoneNumber, 0, cancellationToken);
 if (callAnalysis == CallAnalysis.Connected)
 {
     // say something

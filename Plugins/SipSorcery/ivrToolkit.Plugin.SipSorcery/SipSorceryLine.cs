@@ -186,7 +186,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         _voipMediaSession = new VoIPMediaSession();
         _voipMediaSession.AcceptRtpFromAny = true;
         _voipMediaSession.TakeOffHold();
-
+        
         // Place the call and wait for the result.
         var startTime = Stopwatch.GetTimestamp();
         var callResult = await _userAgent.Call(
@@ -213,10 +213,163 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
                     return CallAnalysis.Error;
             }
         }
-
+        
         _voipMediaSession.AudioExtrasSource.AudioSamplePeriodMilliseconds = 20;
         await _voipMediaSession.AudioExtrasSource.StartAudio();
-        return CallAnalysis.Connected;
+
+        // either Connected or AnsweringMachine
+        return await ConnectedTypeAsync(_voipMediaSession, answeringMachineLengthInMilliseconds, cancellationToken);
+    }
+
+    private async Task<CallAnalysis> ConnectedTypeAsync(VoIPMediaSession mediaSession, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken)
+    {
+        // 0 means no answering machine detection
+        if (answeringMachineLengthInMilliseconds <= 0) return CallAnalysis.Connected;
+        
+        var speechDurationMs = 0;
+        // Parameters:
+        // - silenceThreshold: samples with an absolute value below 0.1f are considered silent.
+        // - requiredSilenceDuration: x seconds of continuous silence marks the end of speech.
+        // - speechStartTimeout: if no speech is detected within x seconds, give up.
+        // - maxSpeechDuration: speech is cut off at x seconds.
+        var speechBoundaries = await DetectSpeechBoundariesFromRtpAsync(
+            mediaSession, 
+            silenceThreshold: _voiceProperties.AnsweringMachineSilenceThresholdAmplitude, 
+            requiredSilenceDuration: _voiceProperties.AnsweringMachineEndSpeechSilenceDurationSeconds, 
+            speechStartTimeout: _voiceProperties.AnsweringMachineMaxStartSilenceSeconds, 
+            maxSpeechDuration: _voiceProperties.AnsweringMachineGiveUpAfterSeconds,
+            cancellationToken: cancellationToken
+        );
+
+        if (speechBoundaries.start == TimeSpan.Zero)
+        {
+            // callee didn't say hello?
+            _logger.LogDebug("No speech detected within the first 3 seconds.");
+            // go ahead and treat like a proper connected call
+        }
+        else
+        {
+            speechDurationMs = (int)(speechBoundaries.end - speechBoundaries.start).TotalMilliseconds;
+            _logger.LogDebug("Detected speech starts at: {start} and ends at: {end} ({duration} ms)", 
+                speechBoundaries.start, speechBoundaries.end, speechDurationMs);
+        }
+
+        return speechDurationMs >= answeringMachineLengthInMilliseconds ? 
+            CallAnalysis.AnsweringMachine : CallAnalysis.Connected;
+    }
+    
+    /// <summary>
+    /// Uses the media session’s RTP packet event to detect the start and end times of speech.
+    /// Speech start is marked when a sample exceeds the silenceThreshold.
+    /// Speech end is detected when either:
+    ///   - A continuous period of silence lasting requiredSilenceDuration seconds is observed, or
+    ///   - The speech reaches maxSpeechDuration seconds.
+    /// If no speech is detected within speechStartTimeout seconds, the method gives up.
+    /// </summary>
+    private Task<(TimeSpan start, TimeSpan end)> DetectSpeechBoundariesFromRtpAsync(
+        VoIPMediaSession mediaSession,
+        float silenceThreshold,
+        double requiredSilenceDuration,
+        double speechStartTimeout,
+        double maxSpeechDuration,
+        CancellationToken cancellationToken)
+    {
+        var tcs = new TaskCompletionSource<(TimeSpan, TimeSpan)>();
+        var sampleRate = 8000; // I don't support G722 which is 16000
+        long totalSamples = 0;
+        var speechStarted = false;
+        long speechStartSample = -1;
+        long speechEndSample;
+        long silenceSamplesCount = 0;
+        var requiredSilenceSamples = (long)(requiredSilenceDuration * sampleRate);
+        var speechStartTimeoutSamples = (long)(speechStartTimeout * sampleRate);
+        var maxSpeechDurationSamples = (long)(maxSpeechDuration * sampleRate);
+
+        Action<IPEndPoint, SDPMediaTypesEnum, RTPPacket> rtpHandler = (_, mediaType, rtpPacket) =>
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                tcs.TrySetCanceled();
+                return;
+            }
+
+            if (mediaType != SDPMediaTypesEnum.audio)
+            {
+                return; // Only process audio packets.
+            }
+
+            try
+            {
+                foreach (var aByte in rtpPacket.Payload)
+                {
+                    var pcm = rtpPacket.Header.PayloadType == (int)SDPWellKnownMediaFormatsEnum.PCMA ? 
+                        NAudio.Codecs.ALawDecoder.ALawToLinearSample(aByte) : NAudio.Codecs.MuLawDecoder.MuLawToLinearSample(aByte);
+
+                    var sample = pcm / 32768f;
+
+                    if (!speechStarted)
+                    {
+                        if (Math.Abs(sample) > silenceThreshold)
+                        {
+                            speechStarted = true;
+                            speechStartSample = totalSamples;
+                            silenceSamplesCount = 0;
+                        }
+                    }
+                    else
+                    {
+                        if (Math.Abs(sample) < silenceThreshold)
+                        {
+                            silenceSamplesCount++;
+                        }
+                        else
+                        {
+                            silenceSamplesCount = 0;
+                        }
+
+                        if (totalSamples - speechStartSample >= maxSpeechDurationSamples)
+                        {
+                            speechEndSample = speechStartSample + maxSpeechDurationSamples;
+                            tcs.TrySetResult((
+                                TimeSpan.FromSeconds((double)speechStartSample / sampleRate),
+                                TimeSpan.FromSeconds((double)speechEndSample / sampleRate)
+                            ));
+                            return;
+                        }
+
+                        if (silenceSamplesCount >= requiredSilenceSamples)
+                        {
+                            speechEndSample = totalSamples - silenceSamplesCount;
+                            tcs.TrySetResult((
+                                TimeSpan.FromSeconds((double)speechStartSample / sampleRate),
+                                TimeSpan.FromSeconds((double)speechEndSample / sampleRate)
+                            ));
+                            return;
+                        }
+                    }
+
+                    totalSamples++;
+
+                    if (!speechStarted && totalSamples >= speechStartTimeoutSamples)
+                    {
+                        tcs.TrySetResult((TimeSpan.Zero, TimeSpan.Zero));
+                        return;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                tcs.TrySetException(ex);
+            }
+        };
+
+        // Subscribe to the RTP event.
+        mediaSession.OnRtpPacketReceived += rtpHandler;
+
+        // Ensure that the event is unsubscribed when the task completes.
+        tcs.Task.ContinueWith(_ => { mediaSession.OnRtpPacketReceived -= rtpHandler; }, TaskScheduler.Default);
+
+        return tcs.Task;
     }
 
     private bool _disposed;
@@ -235,7 +388,6 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         Task.Delay(1000).GetAwaiter().GetResult(); // give dispose time to complete
     }
 
-        
     public string FlushDigitBuffer()
     {
         string currentDigitBuffer;

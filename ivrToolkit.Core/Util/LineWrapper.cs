@@ -161,7 +161,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     public async Task<CallAnalysis> DialAsync(string number, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken)
     {
-        answeringMachineLengthInMilliseconds.ThrowIfLessThanOrEqualTo(999, nameof(answeringMachineLengthInMilliseconds));
+        answeringMachineLengthInMilliseconds.ThrowIfLessThanOrEqualTo(-1, nameof(answeringMachineLengthInMilliseconds));
         number.ThrowIfNullOrWhiteSpace(nameof(number));
 
         _logger.LogDebug("{method}({number}, {answeringMachineLength})", nameof(DialAsync), number, answeringMachineLengthInMilliseconds);

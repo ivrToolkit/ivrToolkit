@@ -51,7 +51,7 @@ class Program
         try
         {
             // make a call out
-            var callAnalysis = await line.DialAsync(phoneNumber, 3500, cancellationToken);
+            var callAnalysis = await line.DialAsync(phoneNumber, 0, cancellationToken);
             if (callAnalysis == CallAnalysis.Connected)
             {
                 // play a wav file

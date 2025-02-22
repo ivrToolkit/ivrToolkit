@@ -5,6 +5,7 @@
 // 
 // 
 using System;
+using System.Globalization;
 using Google.Cloud.TextToSpeech.V1;
 using ivrToolkit.Core.Exceptions;
 using Microsoft.Extensions.Logging;
@@ -35,6 +36,18 @@ public class VoiceProperties : Properties, IDisposable
     
     private const string WAV_SAMPLE_RATE_KEY = "wav.sampleRate";
     private const string WAV_SAMPLE_RATE_DEFAULT = "8000";
+    
+    private const string AM_SILENCE_AMPLITUDE_KEY = "answeringMachine.silenceThresholdAmplitude";
+    private const string AM_SILENCE_AMPLITUDE_DEFAULT = "0.1";
+    
+    private const string AM_MAX_START_SILENCE_SECONDS_KEY = "answeringMachine.maxStartSilenceSeconds";
+    private const string AM_MAX_START_SILENCE_SECONDS_DEFAULT = "3.0";
+    
+    private const string AM_END_SPEECH_SILENCE_SECONDS_KEY = "answeringMachine.endSpeechSilenceDurationSeconds";
+    private const string AM_END_SPEECH_SILENCE_SECONDS_DEFAULT = "1.5";
+    
+    private const string AM_GIVE_UP_AFTER_SECONDS_KEY = "answeringMachine.giveUpAfterSeconds";
+    private const string AM_GIVE_UP_AFTER_SECONDS_DEFAULT = "10.0";
     
     private const string SYSTEM_RECORDING_SUBFOLDER_KEY = "system.recording.subfolder";
     private const string SYSTEM_RECORDING_SUBFOLDER_DEFAULT = "en-US-JennyNeural";
@@ -183,8 +196,47 @@ public class VoiceProperties : Properties, IDisposable
         }
         init => SetProperty(TTS_GOOGLE_GENDER_KEY, value.ToString());
     }
-
-
+    
+    /// <summary>
+    /// The silence threshold amplitude. The higher the number the more sound it thinks is background noise
+    /// and should be considered silence. Default is 0.1
+    /// </summary>
+    public float AnsweringMachineSilenceThresholdAmplitude
+    {
+        get => float.Parse(GetProperty(AM_SILENCE_AMPLITUDE_KEY, AM_SILENCE_AMPLITUDE_DEFAULT));
+        init => SetProperty(AM_SILENCE_AMPLITUDE_KEY, value.ToString(CultureInfo.InvariantCulture));
+    }
+    
+    /// <summary>
+    /// The maximum amount of time to wait for speech to begin in seconds. Default is 3.0 seconds. After which,
+    /// the software will give up waiting for speech to happen and just return call analysis as connected.
+    /// </summary>
+    public double AnsweringMachineMaxStartSilenceSeconds
+    {
+        get => double.Parse(GetProperty(AM_MAX_START_SILENCE_SECONDS_KEY, AM_MAX_START_SILENCE_SECONDS_DEFAULT));
+        init => SetProperty(AM_MAX_START_SILENCE_SECONDS_KEY, value.ToString(CultureInfo.InvariantCulture));
+    }
+    
+    /// <summary>
+    /// The amount of time between spoken words in seconds. Used to calculate when the person on the call
+    /// stops speaking. This will be used to calculate the duration of the greeting. Default is 1.5 seconds.
+    /// </summary>
+    public double AnsweringMachineEndSpeechSilenceDurationSeconds
+    {
+        get => double.Parse(GetProperty(AM_END_SPEECH_SILENCE_SECONDS_KEY, AM_END_SPEECH_SILENCE_SECONDS_DEFAULT));
+        init => SetProperty(AM_END_SPEECH_SILENCE_SECONDS_KEY, value.ToString(CultureInfo.InvariantCulture));
+    }
+    
+    /// <summary>
+    /// The amount of time before the answering machine calculation gives up in seconds. Default is 10.0 seconds. This
+    /// could happen if the user rambles on and on. I think this is unlikely but there needs to be a time to stop.
+    /// </summary>
+    public double AnsweringMachineGiveUpAfterSeconds
+    {
+        get => double.Parse(GetProperty(AM_GIVE_UP_AFTER_SECONDS_KEY, AM_GIVE_UP_AFTER_SECONDS_DEFAULT));
+        init => SetProperty(AM_GIVE_UP_AFTER_SECONDS_KEY, value.ToString(CultureInfo.InvariantCulture));
+    }
+    
     /// <inheritdoc />
     public new void Dispose()
     {

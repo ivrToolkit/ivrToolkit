@@ -72,6 +72,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemRecordingsGenerator",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextToWavGenerator", "Utilities\TextToWavGenerator\TextToWavGenerator.csproj", "{8151171C-86CD-4455-9BE4-91BF71987C71}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnsweringMachineDetection", "Examples\SipSorcery\AnsweringMachineDetection\AnsweringMachineDetection.csproj", "{03C16106-4087-4D24-A892-6EACD07CC6CA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -388,6 +390,22 @@ Global
 		{8151171C-86CD-4455-9BE4-91BF71987C71}.Release|Win32.Build.0 = Release|Any CPU
 		{8151171C-86CD-4455-9BE4-91BF71987C71}.Release|x86.ActiveCfg = Release|Any CPU
 		{8151171C-86CD-4455-9BE4-91BF71987C71}.Release|x86.Build.0 = Release|Any CPU
+		{03C16106-4087-4D24-A892-6EACD07CC6CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03C16106-4087-4D24-A892-6EACD07CC6CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03C16106-4087-4D24-A892-6EACD07CC6CA}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{03C16106-4087-4D24-A892-6EACD07CC6CA}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{03C16106-4087-4D24-A892-6EACD07CC6CA}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{03C16106-4087-4D24-A892-6EACD07CC6CA}.Debug|Win32.Build.0 = Debug|Any CPU
+		{03C16106-4087-4D24-A892-6EACD07CC6CA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{03C16106-4087-4D24-A892-6EACD07CC6CA}.Debug|x86.Build.0 = Debug|Any CPU
+		{03C16106-4087-4D24-A892-6EACD07CC6CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03C16106-4087-4D24-A892-6EACD07CC6CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03C16106-4087-4D24-A892-6EACD07CC6CA}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{03C16106-4087-4D24-A892-6EACD07CC6CA}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{03C16106-4087-4D24-A892-6EACD07CC6CA}.Release|Win32.ActiveCfg = Release|Any CPU
+		{03C16106-4087-4D24-A892-6EACD07CC6CA}.Release|Win32.Build.0 = Release|Any CPU
+		{03C16106-4087-4D24-A892-6EACD07CC6CA}.Release|x86.ActiveCfg = Release|Any CPU
+		{03C16106-4087-4D24-A892-6EACD07CC6CA}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -417,6 +435,7 @@ Global
 		{E10A57FB-A04A-4F56-8EB8-76688BAACD49} = {CE489DF0-06A2-4D32-A92D-00CB4639B813}
 		{75A3FB30-A39E-4026-B5E6-D025F0C2BD4F} = {5AAC9219-AC90-458A-A1F0-2A9FC17CA3AB}
 		{8151171C-86CD-4455-9BE4-91BF71987C71} = {5AAC9219-AC90-458A-A1F0-2A9FC17CA3AB}
+		{03C16106-4087-4D24-A892-6EACD07CC6CA} = {CE489DF0-06A2-4D32-A92D-00CB4639B813}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A5C71D1A-0ABE-437B-89FB-59EE74035D64}

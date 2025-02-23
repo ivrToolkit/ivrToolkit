@@ -58,7 +58,7 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
 
     public string LastTerminator { get; set; } = string.Empty;
     
-    private static readonly object _lockObject = new object();
+    private static readonly object LockObject = new();
 
     public SipLine(ILoggerFactory loggerFactory, DialogicSipVoiceProperties voiceProperties, int lineNumber)
     {
@@ -254,11 +254,19 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
 
     public Task WaitRingsAsync(int rings, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        return Task.Run(() =>
+        {
+            // Check for cancellation before starting.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Execute the synchronous WaitRings method.
+            WaitRings(rings);
+        }, cancellationToken);
     }
 
     void IIvrBaseLine.StartIncomingListener(Func<IIvrLine, CancellationToken, Task> callback, IIvrLine line, CancellationToken cancellationToken)
     {
+        // I can't support this
         throw new NotImplementedException();
     }
 
@@ -374,14 +382,16 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
 
     public Task<CallAnalysis> DialAsync(string phoneNumber, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
-    }
+        return Task.Run(() =>
+        {
+            // Check for cancellation before starting.
+            cancellationToken.ThrowIfCancellationRequested();
 
-    public Task<CallAnalysis> DialAsync(string phoneNumber, int answeringMachineLengthInMilliseconds)
-    {
-        throw new NotImplementedException();
+            // Execute the synchronous Dial method.
+            return Dial(phoneNumber, answeringMachineLengthInMilliseconds);
+        }, cancellationToken);
     }
-
+    
     /// <summary>
     /// Dials a phone number using call progress analysis.
     /// </summary>
@@ -512,7 +522,6 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
     // to = dnis = dialed number identification service. Example: "2348675309@192.168.1.40"
     private void MakeCall(string from, string to)
     {
-        var startTime = DateTimeOffset.Now;
         _logger.LogDebug("MakeCall({0}, {1})", from, to);
         DisplayCallState();
 
@@ -743,24 +752,27 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
 
     public void PlayWavStream(WavStream wavStream)
     {
+        // I can't support this
         throw new NotImplementedException();
     }
 
     public Task PlayWavStreamAsync(WavStream wavStream, CancellationToken cancellationToken)
     {
+        // I can't support this
         throw new NotImplementedException();
     }
     
     public Task PlayFileAsync(string filename, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
-    }
+        return Task.Run(() =>
+        {
+            // Check for cancellation before starting.
+            cancellationToken.ThrowIfCancellationRequested();
 
-    public Task PlayFileAsync(string filename)
-    {
-        throw new NotImplementedException();
+            // Execute the synchronous PlayFile method.
+            PlayFile(filename);
+        }, cancellationToken);
     }
-
 
     public void RecordToFile(string filename)
     {
@@ -769,7 +781,14 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
 
     public Task RecordToFileAsync(string filename, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        return Task.Run(() =>
+        {
+            // Check for cancellation before starting.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Execute the synchronous RecordToFile method.
+            RecordToFile(filename);
+        }, cancellationToken);
     }
 
     public void RecordToFile(string filename, int timeoutMilliseconds)
@@ -780,7 +799,14 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
 
     public Task RecordToFileAsync(string filename, int timeoutMilliseconds, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        return Task.Run(() =>
+        {
+            // Check for cancellation before starting.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Execute the synchronous RecordToFile method.
+            RecordToFile(filename, timeoutMilliseconds);
+        }, cancellationToken);
     }
 
     /// <summary>
@@ -901,7 +927,14 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
 
     public Task<string> GetDigitsAsync(int numberOfDigits, string terminators, CancellationToken cancellationToken, int interDigitTimeoutMilliseconds = 0)
     {
-        throw new NotImplementedException();
+        return Task.Run(() =>
+        {
+            // Check for cancellation before starting.
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Execute the synchronous GetDigits method.
+            return GetDigits(numberOfDigits, terminators, interDigitTimeoutMilliseconds);
+        }, cancellationToken);
     }
     
     public string FlushDigitBuffer()
@@ -954,7 +987,7 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
 
         // and I have had "Bad Tone Template ID" errors.
 
-        lock (_lockObject)
+        lock (LockObject)
         {
             if (tone.ToneType == CustomToneType.Single)
             {

@@ -110,6 +110,75 @@ public class SinglePromptMultiDigitMultiDigitTests
             promptOptions);
         actual.ShouldBe("");
     }
+
+    [Fact]
+    public void DoNotAllowEmptyAndTimeout_PressNothing_Returns_Empty()
+    {
+        var lineWrapper = GetLineWrapper("t");
+
+        // not sure why you would ever do this
+        var promptOptions = new PromptOptions
+        {
+            Terminators = "#t", // allowed a timeout
+            AllowEmpty = false
+        };
+        
+        var action = async () => await lineWrapper.PromptAsync("Doesn'tMatter", CancellationToken.None,
+            promptOptions);
+        action.ShouldThrow<TooManyAttempts>();
+    }
+
+    [Fact]
+    public void PoundOnly_Throws_TooManyAttempts()
+    {
+        var lineWrapper = GetLineWrapper("#");
+
+        // not sure why you would ever do this
+        var promptOptions = new PromptOptions
+        {
+            Terminators = "#", // allowed a timeout
+            AllowEmpty = false
+        };
+        
+        var action = async () => await lineWrapper.PromptAsync("Doesn'tMatter", CancellationToken.None,
+            promptOptions);
+        action.ShouldThrow<TooManyAttempts>();
+    }
+    
+    [Fact]
+    public async Task PoundOnly_Returns_Empty()
+    {
+        var lineWrapper = GetLineWrapper("#");
+
+        // not sure why you would ever do this
+        var promptOptions = new PromptOptions
+        {
+            Terminators = "#", // allowed a timeout
+            AllowEmpty = true
+        };
+        
+        var actual = await lineWrapper.PromptAsync("Doesn'tMatter", CancellationToken.None,
+            promptOptions);
+        actual.ShouldBe("");
+    }
+
+    [Fact]
+    public async Task PoundOnly_CatchTooManyAttemptsFalse_Returns_Empty()
+    {
+        var lineWrapper = GetLineWrapper("#");
+
+        // not sure why you would ever do this
+        var promptOptions = new PromptOptions
+        {
+            Terminators = "#", // allowed a timeout
+            AllowEmpty = false,
+            CatchTooManyAttempts = false
+        };
+        
+        var actual = await lineWrapper.PromptAsync("Doesn'tMatter", CancellationToken.None,
+            promptOptions);
+        actual.ShouldBe("");
+    }
     
 }
 

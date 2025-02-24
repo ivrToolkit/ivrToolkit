@@ -45,11 +45,11 @@ public class PromptOptions
     /// Lets blank be a valid answer. Only works if the evaluator parameter is null. If you supply the evaluator parameter then you are in total
     /// control of the validation. Default is true.
     /// </summary>
-    public bool AllowEmpty { get; set; } = true;
+    public bool? AllowEmpty { get; set; }
     
     /// <summary>
     /// Set to false and the prompt will return a value of "". Set to true and TooManyAttemptsException will be thrown.
     /// Default is true.
     /// </summary>
-    public bool CatchTooManyAttempts { get; set; } = true;
+    public bool? CatchTooManyAttempts { get; set; }
 }

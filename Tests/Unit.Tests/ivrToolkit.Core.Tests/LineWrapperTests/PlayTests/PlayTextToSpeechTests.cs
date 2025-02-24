@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Google.Cloud.TextToSpeech.V1;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.TTS;
@@ -35,20 +36,26 @@ public class PlayTextToSpeechTests
         mock.Setup(x => x.Management.TriggerDispose());
         
         mock
-            .Setup(x => x.PlayWavStreamAsync(It.IsAny<WavStream>(), It.IsAny<CancellationToken>()))
-            .Callback<WavStream, CancellationToken>((stream, token) =>
-            {
-                if (stream == null) throw new HangupException();
-            })
-            .Returns(Task.CompletedTask);
+            .Setup(x => x.PlayWavStreamAsync(null, 
+                It.IsAny<CancellationToken>())).ThrowsAsync(new HangupException());
+        mock
+            .Setup(x => x.PlayWavStreamAsync(_wavStream, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         
         
         var testPauser = new TestPause(mock.Object);
         
         var mockTextToSpeech = new Mock<ITextToSpeech>();
         
-        var textToSpeechGenerator = new TextToSpeechCacheFactory(loggerFactory, mockTextToSpeech.Object, new RegularFileHandler());
-        return new LineWrapper(loggerFactory, properties, 1, mock.Object, testPauser, textToSpeechGenerator);
+        var mockTextToSpeechCacheFactory = new Mock<ITextToSpeechCacheFactory>();
+        var mockTextToSpeechCache = new Mock<ITextToSpeechCache>();
+        var mockTextToSpeechCache2 = new Mock<ITextToSpeechCache>();
+        
+        mockTextToSpeechCacheFactory.Setup(x => x.Create("test.wav", It.IsAny<string>())).Returns(mockTextToSpeechCache.Object);
+        mockTextToSpeechCacheFactory.Setup(x => x.Create("hangupTest.wav", It.IsAny<string>())).Returns(mockTextToSpeechCache2.Object);
+        mockTextToSpeechCache.Setup(x => x.GetOrGenerateCacheAsync(It.IsAny<CancellationToken>())).ReturnsAsync(_wavStream);
+        mockTextToSpeechCache2.Setup(x => x.GetOrGenerateCacheAsync(It.IsAny<CancellationToken>())).ReturnsAsync((WavStream)null);
+        
+        return new LineWrapper(loggerFactory, properties, 1, mock.Object, testPauser, mockTextToSpeechCacheFactory.Object);
     }
     
     [Fact]
@@ -72,11 +79,10 @@ public class PlayTextToSpeechTests
     }
     
     [Fact]
-    public void TriggerHangupDuringPlayFile()
+    public void TriggerHangupDuringPlayTextToSpeech()
     {
         var lineWrapper = GetLineWrapper(); 
-        
-        var action = async () => await lineWrapper.PlayTextToSpeechAsync("Test3.wav", CancellationToken.None);
+        var action = async () => await lineWrapper.PlayTextToSpeechAsync("hangupTest.wav", CancellationToken.None);
         action.ShouldThrow<HangupException>();
     }
     
@@ -119,7 +125,7 @@ public class PlayTextToSpeechTests
 
         var action = async () => await lineWrapper.PlayTextToSpeechAsync((ITextToSpeechCache)null, CancellationToken.None);
         action.ShouldThrow<ArgumentNullException>()
-            .Message.ShouldBe("Value cannot be null. (Parameter 'textToSpeechBuilder')");
+            .Message.ShouldBe("Value cannot be null. (Parameter 'textToSpeechCache')");
     }
     
     [Fact]
@@ -346,5 +352,12 @@ public class PlayTextToSpeechTests
         mockFileHandler.Verify(x => x.Exists(txtFileName), Times.Once);
         mockFileHandler.Verify(x => x.WriteAllBytesAsync(wavFileName, It.IsAny<byte[]>(), It.IsAny<CancellationToken>()), Times.Once);
         mockFileHandler.Verify(x => x.WriteAllTextAsync(txtFileName, message, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public void PlayTextToSpeech_test_wav_works()
+    {
+        var lineWrapper = GetLineWrapper();
+        lineWrapper.PlayTextToSpeech("test.wav");
     }
 }

@@ -98,7 +98,7 @@ public class PlayFileTests
 
         var action = async () => await lineWrapper.PlayFileAsync((ITextToSpeechCache)null, CancellationToken.None);
         action.ShouldThrow<ArgumentNullException>()
-            .Message.ShouldBe("Value cannot be null. (Parameter 'textToSpeechBuilder')");
+            .Message.ShouldBe("Value cannot be null. (Parameter 'textToSpeechCache')");
     }
     
     [Fact]

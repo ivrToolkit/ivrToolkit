@@ -178,7 +178,7 @@ internal partial class LineWrapper
                         throw new GetDigitsTimeoutException();
                     }
 
-                    if (!_options.AllowEmpty && answer == "")
+                    if (!_options.AllowEmpty.Value && answer == "")
                     {
                         throw new GetDigitsTimeoutException();
                     }
@@ -204,7 +204,7 @@ internal partial class LineWrapper
                     }
                     else
                     {
-                        if (answer != "" || _options.AllowEmpty) return answer;
+                        if (answer != "" || _options.AllowEmpty.Value) return answer;
                     }
 
                     if (_options.InvalidAnswerMessage != null)
@@ -225,7 +225,7 @@ internal partial class LineWrapper
         } // while
 
         // too many attempts
-        if (!_options.CatchTooManyAttempts)
+        if (!_options.CatchTooManyAttempts.Value)
         {
             return "";
         }
@@ -254,6 +254,9 @@ internal partial class LineWrapper
             Terminators = string.IsNullOrWhiteSpace(promptOptions.Terminators) ? "#" : promptOptions.Terminators;
             MaxLength = promptOptions.MaxLength > 0 ? promptOptions.MaxLength : 30;
             AllowedDigits = string.IsNullOrWhiteSpace(promptOptions.AllowedDigits) ? "0123456789*#" : promptOptions.AllowedDigits;
+            AllowEmpty = promptOptions.AllowEmpty ?? true;
+            CatchTooManyAttempts = promptOptions.CatchTooManyAttempts ?? true;
+            InvalidAnswerMessage = string.IsNullOrWhiteSpace(promptOptions.InvalidAnswerMessage) ? null : promptOptions.InvalidAnswerMessage;
             MaxAttempts = promptOptions.MaxAttempts > 0 ? promptOptions.MaxAttempts : _voiceProperties.PromptAttempts;
             BlankMaxAttempts = promptOptions.BlankMaxAttempts > 0 ? promptOptions.BlankMaxAttempts : _voiceProperties.PromptBlankAttempts;
         }
@@ -267,6 +270,9 @@ internal partial class LineWrapper
             Terminators = string.IsNullOrWhiteSpace(promptOptions.Terminators) ? "#" : promptOptions.Terminators;
             MaxLength = promptOptions.MaxLength > 0 ? promptOptions.MaxLength : 30;
             AllowedDigits = string.IsNullOrWhiteSpace(promptOptions.AllowedDigits) ? "0123456789*#" : promptOptions.AllowedDigits;
+            AllowEmpty = promptOptions.AllowEmpty ?? true;
+            CatchTooManyAttempts = promptOptions.CatchTooManyAttempts ?? true;
+            InvalidAnswerMessage = string.IsNullOrWhiteSpace(promptOptions.InvalidAnswerMessage) ? null : promptOptions.InvalidAnswerMessage;
             MaxAttempts = 1;
             BlankMaxAttempts = 1;
         }

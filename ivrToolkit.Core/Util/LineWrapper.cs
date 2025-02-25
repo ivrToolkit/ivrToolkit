@@ -59,11 +59,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
     public LineStatusTypes Status => _status;
     public ITextToSpeechCacheFactory TextToSpeechCacheFactory => _textToSpeechCacheFactory;
 
-    public string LastTerminator
-    {
-        get => _lineImplementation.LastTerminator;
-        set => _lineImplementation.LastTerminator = value;
-    }
+    public string LastTerminator { get; set; }
 
     public int LineNumber => _lineNumber;
 

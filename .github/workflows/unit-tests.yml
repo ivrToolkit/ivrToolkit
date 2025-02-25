@@ -1,0 +1,24 @@
+name: Unit Tests
+
+on:
+  workflow_run:
+    workflows: [".NET Core Desktop"]
+    types:
+      - completed
+
+jobs:
+  unit_tests:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: ./build-artifacts
+
+      - name: Run Unit Tests
+        run: dotnet test --no-restore --verbosity normal

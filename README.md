@@ -8,6 +8,7 @@ I recommend the ivrToolkit.Plugin.SipSorcery plugin because it is 100% c# and do
 https://www.ivrToolkit.com
 
 [![.NET Core Desktop](https://github.com/ivrToolkit/ivrToolkit/actions/workflows/dotnet-desktop.yml/badge.svg)](https://github.com/ivrToolkit/ivrToolkit/actions/workflows/dotnet-desktop.yml)
+[![Unit Tests](https://github.com/ivrToolkit/ivrToolkit/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/ivrToolkit/ivrToolkit/actions/workflows/unit-tests.yml)
 
 Example
 -------

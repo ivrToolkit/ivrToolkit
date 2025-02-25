@@ -1,9 +1,6 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
-using ivrToolkit.Core.TTS;
 using ivrToolkit.Core.Util;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -22,6 +19,8 @@ public class GetDigitsTests
         var mock = new Mock<IIvrBaseLine>();
         mock.Setup(x => x.Management.TriggerDispose());
         mock.Setup(x => x.GetDigitsAsync(10, "#", CancellationToken.None, 0)).ReturnsAsync("1234");
+        mock.Setup(x => x.GetDigitsAsync(20, "#", CancellationToken.None, 0)).ThrowsAsync(new HangupException());
+        mock.Setup(x => x.GetDigitsAsync(30, "#", CancellationToken.None, 0)).ThrowsAsync(new DisposingException());
         
         var testPauser = new TestPause(mock.Object);
         return new LineWrapper(loggerFactory, properties, 1, mock.Object, testPauser);
@@ -42,7 +41,7 @@ public class GetDigitsTests
     {
         var lineWrapper = GetLineWrapper();
         
-        var action = async () => await lineWrapper.GetDigitsAsync(10, "#", CancellationToken.None);
+        var action = async () => await lineWrapper.GetDigitsAsync(30, "#", CancellationToken.None);
         action.ShouldThrow<DisposingException>();
     }
     
@@ -51,7 +50,7 @@ public class GetDigitsTests
     {
         var lineWrapper = GetLineWrapper();
         
-        var action = async () => await lineWrapper.GetDigitsAsync(10, "#", CancellationToken.None);
+        var action = async () => await lineWrapper.GetDigitsAsync(20, "#", CancellationToken.None);
         action.ShouldThrow<HangupException>();
     }
     

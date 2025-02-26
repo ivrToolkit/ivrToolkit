@@ -1,4 +1,5 @@
 ﻿using System;
+using ivrToolkit.Core.Interfaces;
 
 namespace ivrToolkit.Core.Util;
 
@@ -21,7 +22,7 @@ public class PromptOptions
     /// <summary>
     /// The digits you are allowed to press in single digit mode.
     /// When you are set to single digit mode(MaxDigits=1) and you are not using an evaluator parameter,
-    /// then this will a list of digits that you are allowed to press.
+    /// then this will be a list of digits that you are allowed to press.
     /// </summary>
     public string AllowedDigits { get; set; }
 
@@ -37,9 +38,15 @@ public class PromptOptions
     public Action OnSpecialTerminator { get; set; }
 
     /// <summary>
-    /// A message to be played if the answer is incorrect. If null then no message will be played.
+    /// A wav file to be played if the answer is incorrect. If null then no message will be played.
     /// </summary>
     public string InvalidAnswerMessage { get; set; }
+    
+    /// <summary>
+    /// The TextToSpeechCache to use to play/generate an Invalidate Answer message. If null then no message
+    /// will be played. <see cref="ITextToSpeechCache"/>
+    /// </summary>
+    public ITextToSpeechCache InvalidAnswerTtsCache { get; set; }
 
     /// <summary>
     /// Lets blank be a valid answer. Only works if the evaluator parameter is null. If you supply the evaluator parameter then you are in total

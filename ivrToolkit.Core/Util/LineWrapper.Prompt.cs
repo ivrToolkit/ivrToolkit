@@ -207,9 +207,17 @@ internal partial class LineWrapper
                         if (answer != "" || _options.AllowEmpty.Value) return answer;
                     }
 
-                    if (_options.InvalidAnswerMessage != null)
+                    if (_options.InvalidAnswerMessage != null || _options.InvalidAnswerTtsCache != null)
                     {
-                        await playFileOrPhraseFunc(_options.InvalidAnswerMessage);
+                        // should not have both but if there is, prioritize TTS
+                        if (_options.InvalidAnswerTtsCache != null)
+                        {
+                            await playTextToSpeechFunc(_options.InvalidAnswerTtsCache);
+                        }
+                        else
+                        {
+                            await playFileOrPhraseFunc(_options.InvalidAnswerMessage);
+                        }
                     }
                 }
             }
@@ -257,6 +265,7 @@ internal partial class LineWrapper
             AllowEmpty = promptOptions.AllowEmpty ?? true;
             CatchTooManyAttempts = promptOptions.CatchTooManyAttempts ?? true;
             InvalidAnswerMessage = promptOptions.InvalidAnswerMessage;
+            InvalidAnswerTtsCache = promptOptions.InvalidAnswerTtsCache;
             SpecialTerminator = promptOptions.SpecialTerminator;
             OnSpecialTerminator = promptOptions.OnSpecialTerminator;
             MaxAttempts = promptOptions.MaxAttempts > 0 ? promptOptions.MaxAttempts : _voiceProperties.PromptAttempts;
@@ -275,6 +284,7 @@ internal partial class LineWrapper
             AllowEmpty = promptOptions.AllowEmpty ?? true;
             CatchTooManyAttempts = promptOptions.CatchTooManyAttempts ?? true;
             InvalidAnswerMessage = promptOptions.InvalidAnswerMessage;
+            InvalidAnswerTtsCache = promptOptions.InvalidAnswerTtsCache;
             SpecialTerminator = promptOptions.SpecialTerminator;
             OnSpecialTerminator = promptOptions.OnSpecialTerminator;
             MaxAttempts = 1;

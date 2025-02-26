@@ -74,6 +74,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextToWavGenerator", "Utili
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnsweringMachineDetection", "Examples\SipSorcery\AnsweringMachineDetection\AnsweringMachineDetection.csproj", "{03C16106-4087-4D24-A892-6EACD07CC6CA}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{BBB4D34F-18C0-4F34-BCAB-D66717BCFDCF}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\deploy-docs.yml = .github\workflows\deploy-docs.yml
+		.github\workflows\unit-tests.yml = .github\workflows\unit-tests.yml
+		.github\workflows\dotnet-core.yml = .github\workflows\dotnet-core.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -436,6 +443,7 @@ Global
 		{75A3FB30-A39E-4026-B5E6-D025F0C2BD4F} = {5AAC9219-AC90-458A-A1F0-2A9FC17CA3AB}
 		{8151171C-86CD-4455-9BE4-91BF71987C71} = {5AAC9219-AC90-458A-A1F0-2A9FC17CA3AB}
 		{03C16106-4087-4D24-A892-6EACD07CC6CA} = {CE489DF0-06A2-4D32-A92D-00CB4639B813}
+		{BBB4D34F-18C0-4F34-BCAB-D66717BCFDCF} = {C69C987F-E124-47F5-8609-E49D47EE2788}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A5C71D1A-0ABE-437B-89FB-59EE74035D64}

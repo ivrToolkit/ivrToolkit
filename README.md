@@ -51,12 +51,7 @@ https://github.com/ivrToolkit/ivrToolkit/issues
 
 Nuget
 -----
-
 https://nuget.org/profiles/ivrToolkit
-
-Source Code
------------
-https://github.com/ivrToolkit/ivrToolkit
 
 Example Source Code
 -------------------

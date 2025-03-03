@@ -14,7 +14,7 @@ class Program
     private const string WAV_FILE_LOCATION = "Voice Files";
     private static ILogger<Program> _logger;
     
-    static async Task Main()
+    static Task Main()
     {
         var loggerFactory = BuildLoggerFactory();
         
@@ -32,15 +32,15 @@ class Program
         
         // create a line manager
         using var lineManager = new LineManager(loggerFactory, propertiesFromFile, sipPlugin);
-
-        lineManager.OnInboundCall += async (connectedLine, ct) =>
+        lineManager.OnInboundCallConnected += async (connectedLine) =>
         {
-            HandleIncomingCallAsync(connectedLine, ct);
+            await HandleIncomingCallAsync(connectedLine, cancellationToken);
         };
         lineManager.StartInboundCallListening();
         
         Console.Write("Press any key to continue...: ");
         Console.ReadKey();
+        return Task.CompletedTask;
     }
 
     private static async Task HandleIncomingCallAsync(IIvrLine line, CancellationToken cancellationToken)

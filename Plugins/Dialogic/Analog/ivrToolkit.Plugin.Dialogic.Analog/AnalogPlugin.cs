@@ -98,7 +98,7 @@ public class AnalogPlugin : IIvrPlugin
         return new AnalogLine(_loggerFactory, _voiceProperties, handles.Devh, handles.Voiceh, lineNumber);
     }
 
-    public event Func<IIvrBaseLine, CancellationToken, Task> OnInboundCall;
+    public event IIvrPlugin.OnInboundCalHandler OnInboundCall;
 
     public VoiceProperties VoiceProperties => _voiceProperties;
 

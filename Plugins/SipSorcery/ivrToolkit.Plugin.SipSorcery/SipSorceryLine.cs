@@ -645,6 +645,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
                     AudioSamplingRatesEnum.Rate8KHz);
                 break;
             case 16000:
+                throw new Exception("stop!");
                 await _voipMediaSession.AudioExtrasSource.SendAudioFromStream(audioStream.GetAudioDataOnly(),
                     AudioSamplingRatesEnum.Rate16KHz);
                 break;

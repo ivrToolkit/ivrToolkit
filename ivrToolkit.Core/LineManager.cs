@@ -144,18 +144,20 @@ public VoiceProperties VoiceProperties => _ivrPlugin.VoiceProperties;
         _logger.LogDebug("{method}()", nameof(Dispose));
     }
 
-    public event Func<IIvrLine, CancellationToken, Task> OnInboundCall;
+    public event Func<IIvrLine, Task> OnInboundCallConnected;
 
 
     public void StartInboundCallListening()
     {
-        _ivrPlugin.OnInboundCall += async (baseLine, token) =>
+        _ivrPlugin.OnInboundCall += (baseLine) =>
         {
-            if (OnInboundCall != null)
+            if (OnInboundCallConnected != null)
             {
                 var line = GetWrappedLine(baseLine);
-                await OnInboundCall(line, token);
+                // don't await response
+                OnInboundCallConnected(line);
             }
+            return Task.CompletedTask;
         };
     }
     private IIvrLine GetWrappedLine(IIvrBaseLine line)

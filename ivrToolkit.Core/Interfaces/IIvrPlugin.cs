@@ -16,7 +16,8 @@ public interface IIvrPlugin : IDisposable
     /// <param name="lineNumber">The line number you want to create a line for</param>
     protected internal IIvrBaseLine GetLine(int lineNumber);
     
-    protected internal event Func<IIvrBaseLine, CancellationToken, Task> OnInboundCall;
+    public delegate Task OnInboundCalHandler(IIvrBaseLine baseLine);
+    protected internal event OnInboundCalHandler OnInboundCall;
 
     
     /// <summary>

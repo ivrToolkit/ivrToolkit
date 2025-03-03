@@ -86,7 +86,7 @@ public class SipPlugin : IIvrPlugin
         return new SipLine(_loggerFactory, _voiceProperties, lineNumber);
     }
 
-    public event Func<IIvrBaseLine, CancellationToken, Task> OnInboundCall;
+    public event IIvrPlugin.OnInboundCalHandler OnInboundCall;
 
     public void Dispose()
     {

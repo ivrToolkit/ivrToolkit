@@ -94,11 +94,12 @@ public class SipSorceryPlugin : IIvrPlugin
                         var incomingCallHandshake = new IncomingCallHandshake(_loggerFactory, 
                             _voiceProperties, _sipTransport,
                             sipRequest.Header.CallId);
-                        incomingCallHandshake.Response = (userAgent,voipMediaSession) =>
+                        
+                        // this is not an event
+                        incomingCallHandshake.Response = async (userAgent,voipMediaSession) =>
                         {
                             var line = GetLine(userAgent, voipMediaSession);
-                            OnInboundCall.Invoke(line, CancellationToken.None);
-                            return Task.CompletedTask;
+                            await OnInboundCall.Invoke(line);
                         };
                         
                         incomingCallHandshake.Start();
@@ -167,7 +168,7 @@ public class SipSorceryPlugin : IIvrPlugin
         return new SipSorceryLine(_loggerFactory, _voiceProperties, userAgent, voipMediaSession, _inviteManager);
     }
     
-    public event Func<IIvrBaseLine, CancellationToken, Task>? OnInboundCall;
+    public event IIvrPlugin.OnInboundCalHandler? OnInboundCall;
 
     public void Dispose()
     {
@@ -233,9 +234,9 @@ public class IncomingCallHandshake
         userAgent.OnReinviteRequest += (_) => _logger.LogDebug("OnReinviteRequest");
         userAgent.RemotePutOnHold += () => _logger.LogDebug("RemotePutOnHold");
         
-        userAgent. OnIncomingCall += OnUserAgentOnIncomingCall;
+        userAgent.OnIncomingCall += OnUserAgentOnIncomingCall;
     }
-    
+
     private void OnUserAgentOnIncomingCall(SIPUserAgent ua, SIPRequest request)
     {
         _logger.LogDebug("got here");

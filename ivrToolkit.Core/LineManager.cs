@@ -3,7 +3,11 @@
 // 
 // This file is part of ivrToolkit, distributed under the Apache-2.0 license.
 // 
+
+using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.TTS;
@@ -139,4 +143,31 @@ public VoiceProperties VoiceProperties => _ivrPlugin.VoiceProperties;
         ReleaseAll();
         _logger.LogDebug("{method}()", nameof(Dispose));
     }
+
+    public event Func<IIvrLine, CancellationToken, Task> OnInboundCall;
+
+
+    public void StartInboundCallListening()
+    {
+        _ivrPlugin.OnInboundCall += async (baseLine, token) =>
+        {
+            if (OnInboundCall != null)
+            {
+                var line = GetWrappedLine(baseLine);
+                await OnInboundCall(line, token);
+            }
+        };
+    }
+    private IIvrLine GetWrappedLine(IIvrBaseLine line)
+    {
+        _logger.LogDebug("{method}()", nameof(GetWrappedLine));
+        lock (_lockObject)
+        {
+            var lineNumber = NextAvailableLine();
+            line.LineNumber = lineNumber;
+            
+            return GetLineWrapper(line);
+        }
+    }
+
 }

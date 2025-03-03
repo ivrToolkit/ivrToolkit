@@ -1,5 +1,4 @@
 ﻿using ivrToolkit.Core.Enums;
-using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 using SIPSorcery.Media;
@@ -19,7 +18,7 @@ namespace ivrToolkit.Plugin.SipSorcery;
 internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 {
     private readonly SipVoiceProperties _voiceProperties;
-    private readonly int _lineNumber;
+    private int _lineNumber;
     private readonly ILogger<SipSorceryLine> _logger;
     private readonly SIPUserAgent _userAgent;
     private VoIPMediaSession? _voipMediaSession;
@@ -45,23 +44,42 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         SIPTransport sipTransport,
         InviteManager inviteManager)
     {
-        loggerFactory.ThrowIfNull(nameof(loggerFactory));
-        _voiceProperties = voiceProperties.ThrowIfNull(nameof(voiceProperties));
-
-        _root = Path.Combine("System Recordings", _voiceProperties.SystemRecordingSubfolder);
-        
-        _inviteManager = inviteManager.ThrowIfNull(nameof(inviteManager));
-        
+        _voiceProperties = voiceProperties;
         _lineNumber = lineNumber;
-
-        _logger = loggerFactory.CreateLogger<SipSorceryLine>();
-        _logger.LogDebug("ctr(ILoggerFactory, VoiceProperties, {0})", lineNumber);
-
-        _keypressSemaphore = new KeypressSemaphore(loggerFactory);
-        _incomingSemaphore = new IncomingSemaphore(loggerFactory);
+        _inviteManager = inviteManager;
 
         _userAgent = new SIPUserAgent(sipTransport, null);
+        
+        _root = Path.Combine("System Recordings", _voiceProperties.SystemRecordingSubfolder);
+        _logger = loggerFactory.CreateLogger<SipSorceryLine>();
+        _logger.LogDebug("ctr(ILoggerFactory, VoiceProperties, {lineNumber})", lineNumber);
+        _keypressSemaphore = new KeypressSemaphore(loggerFactory);
+        _incomingSemaphore = new IncomingSemaphore(loggerFactory);
+        Setup();
+    }
 
+    public SipSorceryLine(ILoggerFactory loggerFactory,
+        SipVoiceProperties voiceProperties,
+        SIPUserAgent userAgent,
+        VoIPMediaSession voipMediaSession,
+        InviteManager inviteManager) 
+    {
+        _voiceProperties = voiceProperties;
+        _userAgent = userAgent;
+        _voipMediaSession = voipMediaSession;
+        _inviteManager = inviteManager;
+        
+        _root = Path.Combine("System Recordings", _voiceProperties.SystemRecordingSubfolder);
+        _logger = loggerFactory.CreateLogger<SipSorceryLine>();
+        _logger.LogDebug("ctr(ILoggerFactory, VoiceProperties, LineNumber not defined yet)");
+        _keypressSemaphore = new KeypressSemaphore(loggerFactory);
+        _incomingSemaphore = new IncomingSemaphore(loggerFactory);
+        Setup();
+    }
+
+
+    private void Setup()
+    {
         _userAgent.ClientCallFailed += (_, error, response) =>
         {
             _logger.LogDebug("Call failed: {error}.", error);
@@ -143,7 +161,11 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 
     public IIvrLineManagement Management => this;
 
-    public int LineNumber => _lineNumber;
+    public int LineNumber
+    {
+        get => _lineNumber;
+        set => _lineNumber = value;
+    }
 
     public int Volume
     {
@@ -726,9 +748,9 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         _logger.LogDebug("{method}({rings})", nameof(WaitRings), rings);
         _incomingSemaphore.Setup();
         
-        _userAgent.OnIncomingCall += OnUserAgentOnOnIncomingCall;
+        _userAgent.OnIncomingCall += OnUserAgentOnIncomingCall;
         _incomingSemaphore.Wait();
-        _userAgent.OnIncomingCall -= OnUserAgentOnOnIncomingCall;
+        _userAgent.OnIncomingCall -= OnUserAgentOnIncomingCall;
         _incomingSemaphore.Teardown();
     }
 
@@ -743,13 +765,13 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         _logger.LogDebug("{method}({rings})", nameof(WaitRingsAsync), rings);
         _incomingSemaphore.Setup();
         
-        _userAgent.OnIncomingCall += OnUserAgentOnOnIncomingCall;
+        _userAgent.OnIncomingCall += OnUserAgentOnIncomingCall;
         await _incomingSemaphore.WaitAsync(cancellationToken);
-        _userAgent.OnIncomingCall -= OnUserAgentOnOnIncomingCall;
+        _userAgent.OnIncomingCall -= OnUserAgentOnIncomingCall;
         _incomingSemaphore.Teardown();
     }
 
-    private void OnUserAgentOnOnIncomingCall(SIPUserAgent ua, SIPRequest request)
+    private void OnUserAgentOnIncomingCall(SIPUserAgent ua, SIPRequest request)
     {
         _logger.LogDebug("Incoming call from {remoteSIPEndPoint}.", request.RemoteSIPEndPoint);
 
@@ -787,7 +809,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         Task.Delay(2000); // I want to hear a ring
         ua.Answer(uas, _voipMediaSession).GetAwaiter().GetResult();
         
-        _userAgent.OnIncomingCall -= OnUserAgentOnOnIncomingCall;
+        _userAgent.OnIncomingCall -= OnUserAgentOnIncomingCall;
         _incomingSemaphore.Release();
     }
     

@@ -32,7 +32,7 @@ public interface IIvrBaseLine : IDisposable
     /// <summary>
     /// Gets the attached line number.
     /// </summary>
-    int LineNumber { get; }
+    int LineNumber { get; protected internal set; }
 
     /// <summary>
     /// Waits for a specified number of rings before answering.

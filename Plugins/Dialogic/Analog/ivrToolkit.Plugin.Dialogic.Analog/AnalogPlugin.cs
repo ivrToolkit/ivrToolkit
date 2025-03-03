@@ -7,6 +7,8 @@
 
 using System;
 using System.Globalization;
+using System.Threading;
+using System.Threading.Tasks;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.Util;
@@ -95,6 +97,8 @@ public class AnalogPlugin : IIvrPlugin
         var handles = _voiceProperties.UseGc ? OpenDeviceWithGc(deviceName): OpenDeviceWithDx(deviceName);
         return new AnalogLine(_loggerFactory, _voiceProperties, handles.Devh, handles.Voiceh, lineNumber);
     }
+
+    public event Func<IIvrBaseLine, CancellationToken, Task> OnInboundCall;
 
     public VoiceProperties VoiceProperties => _voiceProperties;
 

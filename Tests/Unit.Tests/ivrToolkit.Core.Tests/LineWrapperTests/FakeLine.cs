@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Interfaces;
-using ivrToolkit.Core.TTS;
 using ivrToolkit.Core.Util;
 
 namespace ivrToolkit.Core.Tests.LineWrapperTests;
@@ -22,7 +20,8 @@ public class FakeLine : IIvrBaseLine, IIvrLineManagement
 
     public IIvrLineManagement Management => this;
     public string LastTerminator { get; set; }
-    public int LineNumber { get; }
+    public int LineNumber { get; set; }
+
     public void WaitRings(int rings)
     {
         throw new NotImplementedException();

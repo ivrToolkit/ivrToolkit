@@ -51,7 +51,11 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
 
     public IIvrLineManagement Management => this;
 
-    public int LineNumber => _lineNumber;
+    public int LineNumber
+    {
+        get => _lineNumber;
+        set => throw new NotImplementedException();
+    }
 
     private bool _inCallProgressAnalysis;
     private bool _disconnectionHappening;

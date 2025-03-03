@@ -46,7 +46,7 @@ public class AnalogLine : IIvrBaseLine, IIvrLineManagement
 
     public string LastTerminator { get; set; } = string.Empty;
 
-    public int LineNumber { get; }
+    public int LineNumber { get; set; }
 
     private DialogicDef.DX_XPB _currentXpb;
 

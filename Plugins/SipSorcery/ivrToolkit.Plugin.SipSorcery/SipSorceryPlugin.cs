@@ -4,8 +4,10 @@ using ivrToolkit.Core.Extensions;
 using ivrToolkit.Core.Interfaces;
 using ivrToolkit.Core.Util;
 using Microsoft.Extensions.Logging;
+using SIPSorcery.Media;
 using SIPSorcery.SIP;
 using SIPSorcery.SIP.App;
+using SIPSorceryMedia.Abstractions;
 
 namespace ivrToolkit.Plugin.SipSorcery;
 
@@ -83,6 +85,29 @@ public class SipSorceryPlugin : IIvrPlugin
                     }
                     await _sipTransport.SendResponseAsync(response);
                     break;
+                case SIPMethodsEnum.INVITE:
+                    if (OnInboundCall == null) return;
+                    
+                    if (_inviteManager.IsAvailable(sipRequest))
+                    {
+                        _logger.LogDebug("start processing this call");
+                        var incomingCallHandshake = new IncomingCallHandshake(_loggerFactory, 
+                            _voiceProperties, _sipTransport,
+                            sipRequest.Header.CallId);
+                        incomingCallHandshake.Response = (userAgent,voipMediaSession) =>
+                        {
+                            var line = GetLine(userAgent, voipMediaSession);
+                            OnInboundCall.Invoke(line, CancellationToken.None);
+                            return Task.CompletedTask;
+                        };
+                        
+                        incomingCallHandshake.Start();
+                    }
+                    else
+                    {
+                        _logger.LogDebug("Call is already being processed");
+                    }
+                    break;
             }
         };
     }
@@ -132,7 +157,18 @@ public class SipSorceryPlugin : IIvrPlugin
 
         return new SipSorceryLine(_loggerFactory, _voiceProperties, lineNumber, _sipTransport, _inviteManager);
     }
+
+    private IIvrBaseLine GetLine(SIPUserAgent userAgent, VoIPMediaSession voipMediaSession)
+    {
+        _logger.LogDebug("GetLine(SIPUserAgent, voipMediaSession)");
+
+        if (_disposed) throw new DisposedException("You cannot get a line from a disposed plugin");
+
+        return new SipSorceryLine(_loggerFactory, _voiceProperties, userAgent, voipMediaSession, _inviteManager);
+    }
     
+    public event Func<IIvrBaseLine, CancellationToken, Task>? OnInboundCall;
+
     public void Dispose()
     {
         if (_disposed)
@@ -150,4 +186,96 @@ public class SipSorceryPlugin : IIvrPlugin
         
         _sipTransport.Dispose();
     }
+}
+
+
+public class IncomingCallHandshake
+{
+    private readonly ILogger<IncomingCallHandshake> _logger;
+    private readonly SipVoiceProperties _sipVoiceProperties;
+    private readonly SIPTransport _sipTransport;
+    private readonly string _callId;
+
+    public IncomingCallHandshake(ILoggerFactory loggerFactory,
+        SipVoiceProperties sipVoiceProperties,
+        SIPTransport sipTransport,
+        string callId)
+    {
+        _logger = loggerFactory.ThrowIfNull(nameof(loggerFactory)).CreateLogger<IncomingCallHandshake>();
+        _sipVoiceProperties = sipVoiceProperties.ThrowIfNull(nameof(sipVoiceProperties));
+        _sipTransport = sipTransport.ThrowIfNull(nameof(sipTransport));
+        _callId = callId.ThrowIfNull(nameof(callId));
+
+    }
+
+    public Func<SIPUserAgent, VoIPMediaSession, Task> Response;
+
+    public void Start()
+    {
+        var userAgent = new SIPUserAgent(_sipTransport, null);
+        userAgent.ClientCallFailed += (_, error, response) =>
+        {
+            _logger.LogDebug("Call failed: {error}.", error);
+        };
+        userAgent.ClientCallRinging += (_, _) => _logger.LogDebug("Ringing");
+        userAgent.ClientCallTrying += (_, _) => _logger.LogDebug("Trying");
+        
+        userAgent.OnCallHungup += (_) =>
+        {
+            _logger.LogDebug("OnCallHungup");
+        };
+        userAgent.OnDtmfTone += (aByte, aInt) =>
+        {
+            _logger.LogDebug("OnDtmfTone - {byte},{int}", aByte, aInt);
+        };
+        
+        userAgent.ServerCallCancelled += (_, _) => _logger.LogDebug("ServerCallCancelled");
+        userAgent.OnReinviteRequest += (_) => _logger.LogDebug("OnReinviteRequest");
+        userAgent.RemotePutOnHold += () => _logger.LogDebug("RemotePutOnHold");
+        
+        userAgent. OnIncomingCall += OnUserAgentOnIncomingCall;
+    }
+    
+    private void OnUserAgentOnIncomingCall(SIPUserAgent ua, SIPRequest request)
+    {
+        _logger.LogDebug("got here");
+        
+        if (request.Header.CallId != _callId)
+        {
+            _logger.LogDebug("We are only listening for callId = {callId}", _callId);
+            return;
+        }
+        
+        _logger.LogDebug("Incoming call from {remoteSIPEndPoint}.", request.RemoteSIPEndPoint);
+
+        if (!request.StatusLine.Contains($"sip:{_sipVoiceProperties.SipUsername}@"))
+        {
+            _logger.LogError("We should not be getting: " + request.StatusLine);
+            ua.Cancel();
+            return;
+        }
+
+        _logger.LogDebug("About to accept the call");
+        var uas = ua.AcceptCall(request);
+
+        
+        _logger.LogDebug(request.StatusLine); // INVITE sip:201@192.168.3.193:5060 SIP/2.0
+
+        var voipMediaSession = new VoIPMediaSession();
+        voipMediaSession.AcceptRtpFromAny = true;
+        voipMediaSession.TakeOffHold();
+
+        voipMediaSession.AudioExtrasSource.AudioSamplePeriodMilliseconds = 20;
+        voipMediaSession.AudioExtrasSource.SetAudioSourceFormat(new AudioFormat(SDPWellKnownMediaFormatsEnum.PCMU));
+
+        voipMediaSession.AudioExtrasSource.StartAudio().GetAwaiter().GetResult();
+
+        Task.Delay(2000); // I want to hear a ring
+        ua.Answer(uas, voipMediaSession).GetAwaiter().GetResult();
+        
+        ua.OnIncomingCall -= OnUserAgentOnIncomingCall;
+
+        Response.Invoke(ua, voipMediaSession);
+    }
+
 }

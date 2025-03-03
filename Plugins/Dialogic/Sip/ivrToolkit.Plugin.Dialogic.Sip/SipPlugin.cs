@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Extensions;
@@ -84,6 +85,8 @@ public class SipPlugin : IIvrPlugin
 
         return new SipLine(_loggerFactory, _voiceProperties, lineNumber);
     }
+
+    public event Func<IIvrBaseLine, CancellationToken, Task> OnInboundCall;
 
     public void Dispose()
     {

@@ -19,7 +19,7 @@ namespace ivrToolkit.Core.Util;
 internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 {
 
-    private readonly int _lineNumber;
+    private int _lineNumber;
     private readonly ITextToSpeechCacheFactory _textToSpeechCacheFactory;
     private readonly IPause _pauseHandler;
     private readonly IIvrBaseLine _lineImplementation;
@@ -61,7 +61,11 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     public string LastTerminator { get; set; }
 
-    public int LineNumber => _lineNumber;
+    public int LineNumber
+    {
+        get => _lineNumber;
+        set => _lineNumber = value;
+    }
 
     public void CheckDispose()
     {

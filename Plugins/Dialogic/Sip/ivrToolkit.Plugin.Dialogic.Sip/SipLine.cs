@@ -253,6 +253,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         public void Hangup()
         {
             _logger.LogDebug("Hangup(); - crn = {0}", _callReferenceNumber);
+            DisplayCallState();
             if (_callReferenceNumber == 0) return; // line is not in use
 
             var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
@@ -283,7 +284,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             try
             {
                 // okay, now lets wait for the release call event
-                var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 5, new[] { _dxDev, _gcDev }); // Should fire a hangup exception
+                var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 30, new[] { _dxDev, _gcDev }); // Should fire a hangup exception
+                _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 30, _dxDev, _gcDev ) = {0}", eventWaitEnum);
 
                 switch (eventWaitEnum)
                 {
@@ -293,6 +295,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                         break;
                     case EventWaitEnum.Expired:
                         _logger.LogWarning("The hangup method did not receive the releaseCall event");
+                        ResetLineDev();
                         break;
                     case EventWaitEnum.Error:
                         _logger.LogError("The hangup method failed waiting for the releaseCall event");
@@ -573,6 +576,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private void ResetLineDev()
         {
             _logger.LogDebug("ResetLineDev()");
+            DisplayCallState();
             try
             {
                 if (!_inCallProgressAnalysis)
@@ -599,7 +603,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                         _waitCallSet = false;
                         break;
                 }
-
+                DisplayCallState();
             }
             catch (Exception e)
             {
@@ -1192,8 +1196,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = gclib_h.gc_ReleaseCallEx(_callReferenceNumber, DXXXLIB_H.EV_ASYNC);
             result.ThrowIfGlobalCallError();
 
-            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, new[] { _dxDev, _gcDev }); // 10 seconds
-            _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, _dxDev, _gcDev ) = {0}", eventWaitEnum);
+            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 30, new[] { _dxDev, _gcDev }); // 10 seconds
+            _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 30, _dxDev, _gcDev ) = {0}", eventWaitEnum);
         }
 
 

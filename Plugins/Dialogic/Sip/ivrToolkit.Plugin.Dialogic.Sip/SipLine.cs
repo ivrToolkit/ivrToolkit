@@ -45,23 +45,25 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private readonly ILoggerFactory _loggerFactory;
         private bool _capDisplayed;
         private readonly EventWaiter _eventWaiter;
-        private ProcessExtension _processExtension;
+        private readonly ProcessExtension _processExtension;
 
         public IIvrLineManagement Management => this;
+        public string LastTerminator { get; }
 
-        public string LastTerminator { get; set; }
 
         public int LineNumber => _lineNumber;
 
         private bool _inCallProgressAnalysis;
         private bool _disconnectionHappening;
 
-        private static readonly object _lockObject = new object();
+        // ReSharper disable once InconsistentNaming
+        private static readonly object _lockObject = new();
 
         public SipLine(ILoggerFactory loggerFactory, DialogicSipVoiceProperties voiceProperties, int lineNumber)
         {
             _voiceProperties = voiceProperties;
             _lineNumber = lineNumber;
+            LastTerminator = "";
             _logger = loggerFactory.CreateLogger<SipLine>();
             _loggerFactory = loggerFactory;
             _logger.LogDebug("ctr(ILoggerFactory, VoiceProperties, {0})", lineNumber);
@@ -409,7 +411,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             MakeCall(ani, dnis);
 
-            var preCallState = GetCallState();
             // check the CPA
             var startTime = DateTimeOffset.Now;
 
@@ -526,7 +527,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         // to = dnis = dialed number identification service. Example: "2348675309@192.168.1.40"
         private void MakeCall(string from, string to)
         {
-            var startTime = DateTimeOffset.Now;
             _logger.LogDebug("MakeCall({0}, {1})", from, to);
             DisplayCallState();
 
@@ -535,7 +535,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             InsertSipHeader(ref gcParmBlkp, $"Contact: <sip:{_voiceProperties.SipContact}>");
             SetUserInfo(ref gcParmBlkp); // set user info and delete the parameter block
 
-            var result = 0;
+            int result;
             try
             {
                 gcParmBlkp = IntPtr.Zero;
@@ -1217,8 +1217,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             _disconnectionHappening = true;
 
-            var preCallState = GetCallState();
-            
             // we don't want to stop call progress analysis
             if (!_inCallProgressAnalysis)
             {

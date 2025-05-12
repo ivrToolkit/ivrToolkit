@@ -453,18 +453,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 case DXCALLP_H.CR_CEPT:
                     return CallAnalysis.OperatorIntercept;
                 case DXCALLP_H.CR_CNCT:
-                    if (callState != gclib_h.GCST_CONNECTED)
-                    {
-                        // i've seen cpa say "connected" but the call state was stuck on "alerting"
-                        // note, this may have been because I didn't start cpa until recieving the alerting event.
-                        //       I now start cpa immediately. Note: Old cpp SIP version did this too.
-                        _logger.LogWarning("TraceMe - Expected CONNECTED state but we are in {0}", callState.CallStateDescription());
-                        ResetLineDev();
-                        // the old cpp SIP version never used to check state here but it would catch it on playfile or getdigits and
-                        // hangup, so I now hangup to be the same as the old version. Ultimately, I would like to get confirmation
-                        // from dialogic as to why this state happens.
-                        throw new HangupException();
-                    }
                     var connType = DXXXLIB_H.ATDX_CONNTYPE(devh);
                     switch (connType)
                     {
@@ -483,6 +471,22 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                         case DXCALLP_H.CON_PVD:
                             _logger.LogDebug("Connection due to Positive Voice Detection");
                             break;
+                        default:
+                            _logger.LogDebug("Connection due to unknown connection type: {connType}", connType);
+                            break;
+                    }
+                    
+                    if (callState != gclib_h.GCST_CONNECTED)
+                    {
+                        // i've seen cpa say "connected" but the call state was stuck on "alerting"
+                        // note, this may have been because I didn't start cpa until recieving the alerting event.
+                        //       I now start cpa immediately. Note: Old cpp SIP version did this too.
+                        _logger.LogWarning("TraceMe - Expected CONNECTED state but we are in {0}", callState.CallStateDescription());
+                        ResetLineDev();
+                        // the old cpp SIP version never used to check state here but it would catch it on playfile or getdigits and
+                        // hangup, so I now hangup to be the same as the old version. Ultimately, I would like to get confirmation
+                        // from dialogic as to why this state happens.
+                        throw new HangupException();
                     }
 
                     // TODO this code doesn't work with SIP
@@ -512,7 +516,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     return CallAnalysis.Stopped;
             }
 
-            throw new VoiceException("Unknown dail response: " + callProgressResult);
+            throw new VoiceException($"Unknown dail response: {callProgressResult}");
         }
 
         /**

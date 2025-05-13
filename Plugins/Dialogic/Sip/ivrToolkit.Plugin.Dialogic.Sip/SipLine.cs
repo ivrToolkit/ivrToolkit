@@ -572,7 +572,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
                 TraceCallStateChange(() =>
                 {
-                    result = gclib_h.gc_MakeCall(_gcDev, ref _callReferenceNumber, to, ref gcMakeCallBlk, 30, DXXXLIB_H.EV_ASYNC);
+                    result = gclib_h.gc_MakeCall(_gcDev, ref _callReferenceNumber, to, ref gcMakeCallBlk, 70, DXXXLIB_H.EV_ASYNC);
                     result.ThrowIfGlobalCallError();
                 }, "gc_MakeCall");
             }

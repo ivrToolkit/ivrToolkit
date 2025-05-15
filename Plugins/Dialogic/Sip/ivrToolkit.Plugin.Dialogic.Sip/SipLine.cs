@@ -315,7 +315,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             {
                 // okay, now lets wait for the release call event
                 var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 30, new[] { _dxDev, _gcDev }); // Should fire a hangup exception
-                _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 30, _dxDev, _gcDev ) = {0}", eventWaitEnum);
+                _logger.LogDebug("The result of the wait for GCEV_RELEASECALL(30 seconds) = {0}", eventWaitEnum);
 
                 switch (eventWaitEnum)
                 {
@@ -472,21 +472,42 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                             _logger.LogDebug("Connection due to Positive Voice Detection");
                             break;
                         default:
-                            _logger.LogDebug("Connection due to unknown connection type: {connType}", connType);
+                            _logger.LogDebug("Unknown connection type: {connType}", connType);
                             break;
                     }
-                    
                     if (callState != gclib_h.GCST_CONNECTED)
                     {
-                        // i've seen cpa say "connected" but the call state was stuck on "alerting"
-                        // note, this may have been because I didn't start cpa until recieving the alerting event.
-                        //       I now start cpa immediately. Note: Old cpp SIP version did this too.
-                        _logger.LogWarning("TraceMe - Expected CONNECTED state but we are in {0}", callState.CallStateDescription());
-                        ResetLineDev();
-                        // the old cpp SIP version never used to check state here but it would catch it on playfile or getdigits and
-                        // hangup, so I now hangup to be the same as the old version. Ultimately, I would like to get confirmation
-                        // from dialogic as to why this state happens.
-                        throw new HangupException();
+                        if (_callReferenceNumber == 0)
+                        {
+                            // this can happen if someone picks up and then immediately hangs up. Treat as a noAnswer
+                            // the software will hang up even before call progress has completed
+                            _logger.LogDebug("TraceMe - CPA result = connected but crn = 0. This happens if a hangup is detected before call progress has completed. Will treat this as a NoAnswer");
+                            return CallAnalysis.NoAnswer;
+                        }
+
+
+                        if (callState == gclib_h.GCST_ALERTING)
+                        {
+                            _logger.LogDebug("TraceMe - CPA result = connected but state = alerting. This happens if a callee rings then immediately disconnects");
+                            // this can happen if the callee rings and then immediately disconnectes
+                            // it leaves the state in alerting
+                            var response = _voiceProperties.ConnectedAlertHandling;
+                            if (response != CallAnalysis.Connected)
+                            {
+                                // default is NoAnswer
+                                _inCallProgressAnalysis = false;
+                                Hangup();
+                                return response;
+                            }
+                        } else
+                        {
+                            _logger.LogWarning("TraceMe - CPA result = connected but state = {0}. Hangup and return CallAnalysis.Error", callState.CallStateDescription());
+
+                            _inCallProgressAnalysis = false;
+                            Hangup();
+                            return CallAnalysis.Error;
+
+                        }
                     }
 
                     // TODO this code doesn't work with SIP
@@ -509,7 +530,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     ResetLineDev();
                     return CallAnalysis.NoDialTone;
                 case DXCALLP_H.CR_NORB:
-                    ResetLineDev();
+                    //ResetLineDev();
                     return CallAnalysis.NoRingback;
                 case DXCALLP_H.CR_STOPD:
                     // calling method will check and throw the stopException
@@ -1239,7 +1260,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }, "gc_DropCall (from disconnected event)");
 
             var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, new[] { _dxDev, _gcDev }); // 10 seconds
-            _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, _dxDev, _gcDev ) = {0}", eventWaitEnum);
+            _logger.LogDebug("The result of the wait for GCEV_DROPCALL(10 seconds) = {0}", eventWaitEnum);
         }
 
         /**
@@ -1256,7 +1277,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }, "gc_ReleaseCallEx");
 
             var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 30, new[] { _dxDev, _gcDev }); // 10 seconds
-            _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 30, _dxDev, _gcDev ) = {0}", eventWaitEnum);
+            _logger.LogDebug("The result of the wait for GCEV_RELEASECALL(30 seconds) = {0}", eventWaitEnum);
         }
 
 

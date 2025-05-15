@@ -495,18 +495,12 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                             if (response != CallAnalysis.Connected)
                             {
                                 // default is NoAnswer
-                                _inCallProgressAnalysis = false;
-                                Hangup();
                                 return response;
                             }
                         } else
                         {
                             _logger.LogWarning("TraceMe - CPA result = connected but state = {0}. Hangup and return CallAnalysis.Error", callState.CallStateDescription());
-
-                            _inCallProgressAnalysis = false;
-                            Hangup();
                             return CallAnalysis.Error;
-
                         }
                     }
 

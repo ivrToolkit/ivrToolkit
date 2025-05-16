@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
@@ -277,6 +278,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             _logger.LogDebug("Hangup(); - TraceMe - crn = {0}", _callReferenceNumber);
             if (_callReferenceNumber == 0) return; // line is not in use
+            Thread.Sleep(1000); // wait a second before attempting a hangup
 
             // note: I suspect that calling dx_stopch may be causing issues with the gc_dropcall
             // commenting it out to see what happens
@@ -660,8 +662,10 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 {
                     case EventWaitEnum.Error:
                         _logger.LogError("Failed to Reset the line. Failed");
+                        _disconnectionHappening = false; // let the hangup try again.
                         break;
                     case EventWaitEnum.Expired:
+                        _disconnectionHappening = false; // let the hangup try again.
                         _logger.LogError("Failed to Reset the line. Timeout waiting for GCEV_RESETLINEDEV");
                         break;
                     case EventWaitEnum.Success:
@@ -1183,6 +1187,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 case gclib_h.GCEV_TASKFAIL:
                     _logger.LogWarning("GCEV_TASKFAIL");
                     LogWarningMessage(metaEvt);
+                    // todo Maybe try something else because this causes an event wait inside of an event wait
                     ResetLineDev();
                     // todo should I move the line reset here and handle
                     throw new TaskFailException();
@@ -1234,11 +1239,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             if (_callReferenceNumber == 0) return; // line is idle
 
-            if (_disconnectionHappening)
-            {
-                _logger.LogDebug("A disconnect is already in progress. Can't hangup twice");
-                return;
-            }
+            //if (_disconnectionHappening)
+            //{
+            //    _logger.LogDebug("A disconnect is already in progress. Can't hangup twice");
+            //    return;
+            //}
             _disconnectionHappening = true;
 
             // we don't want to stop call progress analysis
@@ -1260,8 +1265,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 result.ThrowIfGlobalCallError();
             }, "gc_DropCall (from disconnected event)");
 
-            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, new[] { _dxDev, _gcDev }); // 10 seconds
-            _logger.LogDebug("The result of the wait for GCEV_DROPCALL(10 seconds) = {0}", eventWaitEnum);
+            //var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, new[] { _dxDev, _gcDev }); // 10 seconds
+            //_logger.LogDebug("The result of the wait for GCEV_DROPCALL(10 seconds) = {0}", eventWaitEnum);
         }
 
         /**
@@ -1277,8 +1282,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 result.ThrowIfGlobalCallError();
             }, "gc_ReleaseCallEx");
 
-            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 30, new[] { _dxDev, _gcDev }); // 10 seconds
-            _logger.LogDebug("The result of the wait for GCEV_RELEASECALL(30 seconds) = {0}", eventWaitEnum);
+            //var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 30, new[] { _dxDev, _gcDev }); // 10 seconds
+            //_logger.LogDebug("The result of the wait for GCEV_RELEASECALL(30 seconds) = {0}", eventWaitEnum);
         }
 
 

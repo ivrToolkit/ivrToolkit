@@ -1239,11 +1239,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             if (_callReferenceNumber == 0) return; // line is idle
 
-            //if (_disconnectionHappening)
-            //{
-            //    _logger.LogDebug("A disconnect is already in progress. Can't hangup twice");
-            //    return;
-            //}
+            if (_disconnectionHappening)
+            {
+                _logger.LogDebug("A disconnect is already in progress. Can't hangup twice");
+                return;
+            }
             _disconnectionHappening = true;
 
             // we don't want to stop call progress analysis

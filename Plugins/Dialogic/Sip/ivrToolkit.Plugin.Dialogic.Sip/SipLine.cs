@@ -278,18 +278,20 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _logger.LogDebug("Hangup(); - TraceMe - crn = {0}", _callReferenceNumber);
             if (_callReferenceNumber == 0) return; // line is not in use
 
-            TraceCallStateChange(() =>
-            {
-                try
-                {
-                    var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
-                    result.LogIfGlobalCallError(_logger);
-                }
-                catch (Exception e)
-                {
-                    _logger.LogWarning(e, "Hangup() - dx_stopch");
-                }
-            }, "dx_stopch");
+            // note: I suspect that calling dx_stopch may be causing issues with the gc_dropcall
+            // commenting it out to see what happens
+            //TraceCallStateChange(() =>
+            //{
+            //    try
+            //    {
+            //        var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
+            //        result.LogIfGlobalCallError(_logger);
+            //    }
+            //    catch (Exception e)
+            //    {
+            //        _logger.LogWarning(e, "Hangup() - dx_stopch");
+            //    }
+            //}, "dx_stopch");
 
 
 
@@ -314,8 +316,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             try
             {
                 // okay, now lets wait for the release call event
-                var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 30, new[] { _dxDev, _gcDev }); // Should fire a hangup exception
-                _logger.LogDebug("The result of the wait for GCEV_RELEASECALL(30 seconds) = {0}", eventWaitEnum);
+                // 60 seconds should be way overkill but I want to see if longer times solves my hangup problem
+                var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 60, new[] { _dxDev, _gcDev }); // Should fire a hangup exception
+                _logger.LogDebug("The result of the wait for GCEV_RELEASECALL(60 seconds) = {0}", eventWaitEnum);
 
                 switch (eventWaitEnum)
                 {
@@ -634,14 +637,16 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             try
             {
-                if (!_inCallProgressAnalysis)
-                {
-                    TraceCallStateChange(() =>
-                    {
-                        var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
-                        result.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
-                    }, "dx_stopch");
-                }
+                // we don't want to stop call progress analysis
+                // note: I suspect that calling dx_stopch may be causing issues with the gc_dropcall
+                //if (!_inCallProgressAnalysis)
+                //{
+                //    TraceCallStateChange(() =>
+                //    {
+                //        var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
+                //        result.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
+                //    }, "dx_stopch");
+                //}
 
 
                 TraceCallStateChange(() =>
@@ -1237,14 +1242,16 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _disconnectionHappening = true;
 
             // we don't want to stop call progress analysis
-            if (!_inCallProgressAnalysis)
-            {
-                TraceCallStateChange(() =>
-                {
-                    var stopResult = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
-                    stopResult.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
-                }, "dx_stopch");
-            }
+            // note: I suspect that calling dx_stopch may be causing issues with the gc_dropcall
+            // commenting it out to see what happens
+            //if (!_inCallProgressAnalysis)
+            //{
+            //    TraceCallStateChange(() =>
+            //    {
+            //        var stopResult = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
+            //        stopResult.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
+            //    }, "dx_stopch");
+            //}
 
 
             TraceCallStateChange(() =>

@@ -287,15 +287,14 @@ public class SipPlugin : IIvrPlugin
             // for unregister
             result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gcip_defs_h.IPSET_REG_INFO,
                 gcip_defs_h.IPPARM_OPERATION_DEREGISTER, sizeof(byte), gcip_defs_h.IP_REG_DELETE_ALL);
-            result.ThrowIfGlobalCallError();
         }
         else
         {
             // for register
             result = gclib_h.gc_util_insert_parm_val(ref gcParmBlkPtr, gcip_defs_h.IPSET_REG_INFO,
                 gcip_defs_h.IPPARM_OPERATION_REGISTER, sizeof(byte), gcip_defs_h.IP_REG_SET_INFO);
-            result.ThrowIfGlobalCallError();
         }
+        result.ThrowIfGlobalCallError();
 
         var ipRegisterAddress = new IP_REGISTER_ADDRESS
         {

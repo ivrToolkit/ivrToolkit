@@ -93,6 +93,10 @@ public static class DescriptionExtensions
     {
         switch (callState)
         {
+            case -1:
+                return "crn = 0";
+            case -2:
+                return "GCST_EXCEPTION";
             case gclib_h.GCST_NULL:
                 return "GCST_NULL";
             case gclib_h.GCST_ACCEPTED:

@@ -1,4 +1,5 @@
-﻿using ivrToolkit.Plugin.Dialogic.Common;
+﻿using ivrToolkit.Core.Enums;
+using ivrToolkit.Plugin.Dialogic.Common;
 using Microsoft.Extensions.Logging;
 using System;
 
@@ -35,6 +36,10 @@ public class DialogicSipVoiceProperties : DialogicVoiceProperties, IDisposable
 
     private const string SIP_CONTACT_KEY = "sip.contact";
     private const string SIP_CONTACT_DEFAULT = "{alias}@{local_ip}:{sip_signaling_port}";
+
+    private const string SIP_CONNECT_ALERT_HANDLING = "sip.connectedAlertHandling";
+    private const string SIP_CONNECT_ALERT_HANDLING_DEFAULT = "NoAnswer";
+
 
     public DialogicSipVoiceProperties(ILoggerFactory loggerFactory, string fileName) : base(loggerFactory, fileName)
     {
@@ -77,11 +82,7 @@ public class DialogicSipVoiceProperties : DialogicVoiceProperties, IDisposable
     /// <summary>
     /// The SIP realm for the SipAlias on the PBX server. 
     /// </summary>
-    public string SipRealm
-    {
-        get => GetProperty(SIP_REALM_KEY, SIP_REALM_DEFAULT);
-        set => SetProperty(SIP_REALM_KEY, value);
-    }
+    public string SipRealm => GetProperty(SIP_REALM_KEY, SIP_REALM_DEFAULT);
 
     /// <summary>
     /// The SIP contact
@@ -95,6 +96,21 @@ public class DialogicSipVoiceProperties : DialogicVoiceProperties, IDisposable
                 .Replace("{local_ip}", SipLocalIp)
                 .Replace("{sip_signaling_port}", SipSignalingPort.ToString());
             return result;
+        }
+    }
+
+    public CallAnalysis ConnectedAlertHandling
+    {
+        get
+        {
+            var result = GetProperty(SIP_CONNECT_ALERT_HANDLING, SIP_CONNECT_ALERT_HANDLING_DEFAULT);
+
+            if (result is { } strValue && Enum.TryParse<CallAnalysis>(strValue, ignoreCase: true, out var analysis))
+            {
+                return analysis;
+            }
+
+            return CallAnalysis.NoAnswer;
         }
     }
 

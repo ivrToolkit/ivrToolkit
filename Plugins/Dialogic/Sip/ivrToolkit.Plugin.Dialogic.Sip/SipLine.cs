@@ -47,23 +47,25 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
     private readonly ILoggerFactory _loggerFactory;
     private bool _capDisplayed;
     private readonly EventWaiter _eventWaiter;
-    private ProcessExtension _processExtension;
+    private readonly ProcessExtension _processExtension;
 
     public IIvrLineManagement Management => this;
+    public string LastTerminator { get; set; }
+
 
     public int LineNumber => _lineNumber;
 
     private bool _inCallProgressAnalysis;
     private bool _disconnectionHappening;
 
-    public string LastTerminator { get; set; } = string.Empty;
-    
-    private static readonly object LockObject = new();
+    // ReSharper disable once InconsistentNaming
+    private static readonly object _lockObject = new();
 
     public SipLine(ILoggerFactory loggerFactory, DialogicSipVoiceProperties voiceProperties, int lineNumber)
     {
         _voiceProperties = voiceProperties;
         _lineNumber = lineNumber;
+        LastTerminator = "";
         _logger = loggerFactory.CreateLogger<SipLine>();
         _loggerFactory = loggerFactory;
         _logger.LogDebug("ctr(ILoggerFactory, VoiceProperties, {0})", lineNumber);
@@ -214,7 +216,7 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
 
     public void WaitRings(int rings)
     {
-        _logger.LogDebug("WaitRings({0})", rings);
+        _logger.LogDebug("WaitRings({0}) - TraceMe", rings);
 
         // a hangup can interupt a TDX_PLAY,TDX_RECORD or TDX_GETDIG. I try and clear the buffer then but the event doesn't always happen in time
         // so this is one more attempt to clear _dxDev events. Not that it really matters because I don't action on those events anyways. 
@@ -227,15 +229,17 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
         var crnPtr = IntPtr.Zero;
 
 
-        DisplayCallState();
         int result;
 
         if (!_waitCallSet)
         {
             // this method only needs to be called once unless the line is reset or closed.
             _waitCallSet = true;
-            result = gclib_h.gc_WaitCall(_gcDev, crnPtr, IntPtr.Zero, 0, DXXXLIB_H.EV_ASYNC);
-            result.ThrowIfGlobalCallError();
+            TraceCallStateChange(() =>
+            {
+                result = gclib_h.gc_WaitCall(_gcDev, crnPtr, IntPtr.Zero, 0, DXXXLIB_H.EV_ASYNC);
+                result.ThrowIfGlobalCallError();
+            }, "gc_WaitCall");
         }
 
         // asynchronously start waiting for a call to come in
@@ -270,22 +274,44 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
         throw new NotImplementedException();
     }
 
-    public void Hangup()
+    private void TraceCallStateChange(Action operation, string operationName)
     {
-        _logger.LogDebug("Hangup(); - crn = {0}", _callReferenceNumber);
-        if (_callReferenceNumber == 0) return; // line is not in use
+        var preCallState = GetCallState();
+        var postCallState = -2; // an exception
 
-        var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
         try
         {
-            result.ThrowIfStandardRuntimeLibraryError(_dxDev);
+            operation();
+            postCallState = GetCallState();
         }
-        catch (Exception e)
+        finally
         {
-            _logger.LogWarning(e, "Hangup() - dx_stopch");
+            _logger.LogDebug("TraceMe - {0} - Pre: {1}, Post: {2}",
+                operationName,
+                preCallState.CallStateDescription(),
+                postCallState.CallStateDescription());
         }
+    }
 
-        DisplayCallState();
+    public void Hangup()
+    {
+        _logger.LogDebug("Hangup(); - TraceMe - crn = {0}", _callReferenceNumber);
+
+        // this hangup method never happens during a play, record or getdigits so it should be safe
+        TraceCallStateChange(() =>
+        {
+            var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
+            result.LogIfGlobalCallError(_logger);
+        }, "dx_stopch (from hangup())");
+        Thread.Sleep(1000);
+
+
+        if (_callReferenceNumber == 0) return; // line is not in use
+
+
+
+
+
 
         if (_disconnectionHappening)
         {
@@ -294,16 +320,19 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
         }
         _disconnectionHappening = true;
 
-        _logger.LogDebug(
-            "gclib_h.gc_DropCall(_callReferenceNumber, gclib_h.GC_NORMAL_CLEARING, DXXXLIB_H.EV_ASYNC);");
-        result = gclib_h.gc_DropCall(_callReferenceNumber, gclib_h.GC_NORMAL_CLEARING, DXXXLIB_H.EV_ASYNC);
-        result.LogIfGlobalCallError(_logger);
 
-        // note:When the GCEV_DROPCALL is caught it automatically calls ReleaseCall and waits for GCEV_RELEASECALL. Thus the call we want to wait for is GCEV_RELEASECALL.
+        TraceCallStateChange(() =>
+        {
+            var result = gclib_h.gc_DropCall(_callReferenceNumber, gclib_h.GC_NORMAL_CLEARING, DXXXLIB_H.EV_ASYNC);
+            result.ThrowIfGlobalCallError();
+        }, "gc_DropCall (from hangup method)");
+
         try
         {
             // okay, now lets wait for the release call event
-            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 5, new[] { _dxDev, _gcDev }); // Should fire a hangup exception
+            // 60 seconds should be way overkill but I want to see if longer times solves my hangup problem
+            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 60, new[] { _dxDev, _gcDev }); // Should fire a hangup exception
+            _logger.LogDebug("The result of the wait for GCEV_RELEASECALL(60 seconds) = {0}", eventWaitEnum);
 
             switch (eventWaitEnum)
             {
@@ -313,6 +342,7 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
                     break;
                 case EventWaitEnum.Expired:
                     _logger.LogWarning("The hangup method did not receive the releaseCall event");
+                    ResetLineDev();
                     break;
                 case EventWaitEnum.Error:
                     _logger.LogError("The hangup method failed waiting for the releaseCall event");
@@ -338,17 +368,24 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
         _inCallProgressAnalysis = true;
         try
         {
-            _logger.LogDebug("Dial({0}, {1})", number, answeringMachineLengthInMilliseconds);
+            _logger.LogDebug("Dial({0}, {1}) - TraceMe", number, answeringMachineLengthInMilliseconds);
             _unmanagedMemoryServicePerCall.Dispose(); // there is unlikely anything to release, this is just a failsafe.
+
+            // this Dial method never happens during a play, record or getdigits so it should be safe
+            TraceCallStateChange(() =>
+            {
+                var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
+                result.LogIfGlobalCallError(_logger);
+            }, "dx_stopch (from Dial)");
+            Thread.Sleep(1000);
 
             // a hangup can interupt a TDX_PLAY,TDX_RECORD or TDX_GETDIG. I try and clear the buffer then but the event doesn't always happen in time
             // so this is one more attempt to clear _dxDev events. Not that it really matters because I don't action on those events anyways. 
-            ClearEventBuffer(_dxDev);
+            ClearEventBuffer(_dxDev, 1000);
 
             ClearDigits(_dxDev); // make sure we are starting with an empty digit buffer
 
             var dialToneTid = _voiceProperties.DialTone.Tid;
-
             var dialToneEnabled = false;
 
             if (_voiceProperties.PreTestDialTone)
@@ -413,9 +450,12 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
         // check the CPA
         var startTime = DateTimeOffset.Now;
 
-        var result = DXXXLIB_H.dx_dial(devh, "", ref cap, DXCALLP_H.DX_CALLP | DXXXLIB_H.EV_ASYNC);
-        result.ThrowIfStandardRuntimeLibraryError(devh);
-        DisplayCallState();
+
+        TraceCallStateChange(() =>
+        {
+            var result = DXXXLIB_H.dx_dial(devh, "", ref cap, DXCALLP_H.DX_CALLP | DXXXLIB_H.EV_ASYNC);
+            result.ThrowIfStandardRuntimeLibraryError(devh);
+        }, "dx_dial");
 
         var eventWaitEnum = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_CALLP, 60, new[] { _dxDev, _gcDev }); // 60 seconds
         switch (eventWaitEnum)
@@ -434,12 +474,14 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
                 ResetLineDev();
                 return CallAnalysis.Error;
         }
-        DisplayCallState();
+        var callState = GetCallState();
 
         // get the CPA result
         var callProgressResult = DXXXLIB_H.ATDX_CPTERM(devh);
 
-        _logger.LogDebug("Call Progress Analysis Result {0}:{1}", callProgressResult, callProgressResult.CallProgressDescription());
+        _logger.LogDebug("Call Progress Analysis Result - TraceMe - {0}:{1} - {2}", callProgressResult, 
+            callProgressResult.CallProgressDescription(),
+            callState.CallStateDescription());
         switch (callProgressResult)
         {
             case DXCALLP_H.CR_BUSY:
@@ -447,19 +489,6 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
             case DXCALLP_H.CR_CEPT:
                 return CallAnalysis.OperatorIntercept;
             case DXCALLP_H.CR_CNCT:
-                var callState = GetCallState();
-                if (callState != gclib_h.GCST_CONNECTED)
-                {
-                    // i've seen cpa say "connected" but the call state was stuck on "alerting"
-                    // note, this may have been because I didn't start cpa until recieving the alerting event.
-                    //       I now start cpa immediately. Note: Old cpp SIP version did this too.
-                    _logger.LogWarning("Expected CONNECTED state but we are in {0}", callState.CallStateDescription());
-                    ResetLineDev();
-                    // the old cpp SIP version never used to check state here but it would catch it on playfile or getdigits and
-                    // hangup, so I now hangup to be the same as the old version. Ultimately, I would like to get confirmation
-                    // from dialogic as to why this state happens.
-                    throw new HangupException();
-                }
                 var connType = DXXXLIB_H.ATDX_CONNTYPE(devh);
                 switch (connType)
                 {
@@ -478,6 +507,37 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
                     case DXCALLP_H.CON_PVD:
                         _logger.LogDebug("Connection due to Positive Voice Detection");
                         break;
+                    default:
+                        _logger.LogDebug("Unknown connection type: {connType}", connType);
+                        break;
+                }
+                if (callState != gclib_h.GCST_CONNECTED)
+                {
+                    if (_callReferenceNumber == 0)
+                    {
+                        // this can happen if someone picks up and then immediately hangs up. Treat as a noAnswer
+                        // the software will hang up even before call progress has completed
+                        _logger.LogDebug("TraceMe - CPA result = connected but crn = 0. This happens if a hangup is detected before call progress has completed. Will treat this as a NoAnswer");
+                        return CallAnalysis.NoAnswer;
+                    }
+
+
+                    if (callState == gclib_h.GCST_ALERTING)
+                    {
+                        _logger.LogDebug("TraceMe - CPA result = connected but state = alerting. This happens if a callee rings then immediately disconnects");
+                        // this can happen if the callee rings and then immediately disconnectes
+                        // it leaves the state in alerting
+                        var response = _voiceProperties.ConnectedAlertHandling;
+                        if (response != CallAnalysis.Connected)
+                        {
+                            // default is NoAnswer
+                            return response;
+                        }
+                    } else
+                    {
+                        _logger.LogWarning("TraceMe - CPA result = connected but state = {0}. Hangup and return CallAnalysis.Error", callState.CallStateDescription());
+                        return CallAnalysis.Error;
+                    }
                 }
 
                 // TODO this code doesn't work with SIP
@@ -500,14 +560,14 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
                 ResetLineDev();
                 return CallAnalysis.NoDialTone;
             case DXCALLP_H.CR_NORB:
-                ResetLineDev();
+                //ResetLineDev();
                 return CallAnalysis.NoRingback;
             case DXCALLP_H.CR_STOPD:
                 // calling method will check and throw the stopException
                 return CallAnalysis.Stopped;
         }
 
-        throw new VoiceException("Unknown dail response: " + callProgressResult);
+        throw new VoiceException($"Unknown dail response: {callProgressResult}");
     }
 
     /**
@@ -561,8 +621,11 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
 
             SetCodec(gclib_h.GCTGT_GCLIB_CHAN);
 
-            result = gclib_h.gc_MakeCall(_gcDev, ref _callReferenceNumber, to, ref gcMakeCallBlk, 30, DXXXLIB_H.EV_ASYNC);
-            result.ThrowIfGlobalCallError();
+            TraceCallStateChange(() =>
+            {
+                result = gclib_h.gc_MakeCall(_gcDev, ref _callReferenceNumber, to, ref gcMakeCallBlk, 70, DXXXLIB_H.EV_ASYNC);
+                result.ThrowIfGlobalCallError();
+            }, "gc_MakeCall");
         }
         finally
         {
@@ -604,24 +667,35 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
     private void ResetLineDev()
     {
         _logger.LogDebug("ResetLineDev()");
+
         try
         {
             if (!_inCallProgressAnalysis)
             {
-                var result2 = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
-                result2.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
+                TraceCallStateChange(() =>
+                {
+                    var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
+                    result.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
+                }, "dx_stopch (from ResetLineDev)");
+                Thread.Sleep(1000);
             }
 
-            var result = gclib_h.gc_ResetLineDev(_gcDev, DXXXLIB_H.EV_ASYNC);
-            result.ThrowIfGlobalCallError();
+
+            TraceCallStateChange(() =>
+            {
+                var result = gclib_h.gc_ResetLineDev(_gcDev, DXXXLIB_H.EV_ASYNC);
+                result.ThrowIfGlobalCallError();
+            }, "gc_ResetLineDev");
 
             var eventWaitEnum = _eventWaiter.WaitForThisEventOnly(gclib_h.GCEV_RESETLINEDEV, 60, new[] { _dxDev, _gcDev }); // 60 seconds
             switch (eventWaitEnum)
             {
                 case EventWaitEnum.Error:
                     _logger.LogError("Failed to Reset the line. Failed");
+                    _disconnectionHappening = false; // let the hangup try again.
                     break;
                 case EventWaitEnum.Expired:
+                    _disconnectionHappening = false; // let the hangup try again.
                     _logger.LogError("Failed to Reset the line. Timeout waiting for GCEV_RESETLINEDEV");
                     break;
                 case EventWaitEnum.Success:
@@ -630,7 +704,7 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
                     _waitCallSet = false;
                     break;
             }
-
+            DisplayCallState();
         }
         catch (Exception e)
         {
@@ -708,8 +782,11 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
     {
         _logger.LogDebug("ILineManagement.TriggerDispose() for line: {0}", _lineNumber);
 
-        var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
-        result.ThrowIfStandardRuntimeLibraryError(_dxDev);
+        TraceCallStateChange(() =>
+        {
+            var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
+            result.ThrowIfStandardRuntimeLibraryError(_dxDev);
+        }, "dx_stopch (from TriggerDispose)");
         _eventWaiter.DisposeTriggerActivated = true;
     }
 
@@ -886,6 +963,7 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
         }
         catch (HangupException)
         {
+            _logger.LogDebug("Hangup exception caught from RecordToFile");
             ClearEventBuffer(_dxDev, 2000); // Did not get the TDX_RECORD event so clear the buffer so it isn't captured later
             DXXXLIB_H.dx_fileclose(iott.io_fhandle);
             _logger.LogDebug(
@@ -987,7 +1065,7 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
 
         // and I have had "Bad Tone Template ID" errors.
 
-        lock (LockObject)
+        lock (_lockObject)
         {
             if (tone.ToneType == CustomToneType.Single)
             {
@@ -1120,7 +1198,10 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
 
     private void HandleGcEvents(METAEVENT metaEvt)
     {
-        _logger.LogDebug("HandleGcEvents() - {0}: {1}", metaEvt.evttype, metaEvt.evttype.EventTypeDescription());
+        var callState = GetCallState();
+        _logger.LogDebug("HandleGcEvents() TraceMe - {0}: {1} - {2}", metaEvt.evttype, metaEvt.evttype.EventTypeDescription(),
+            callState.CallStateDescription());
+
         switch (metaEvt.evttype)
         {
             case gclib_h.GCEV_ALERTING:
@@ -1165,20 +1246,30 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
             #region Handle hangup detection
             case gclib_h.GCEV_DISCONNECTED:
                 _logger.LogDebug("GCEV_DISCONNECTED");
-                DisconnectedEvent(); // will block for gcev_dropcall
+                DisconnectedEvent();
                 break;
             case gclib_h.GCEV_DROPCALL:
                 _logger.LogDebug("GCEV_DROPCALL");
-                ReleaseCall(); // will block for gcev_releasecall
+                ReleaseCall();
                 break;
             case gclib_h.GCEV_RELEASECALL:
                 _logger.LogDebug("GCEV_RELEASECALL - set crn = 0");
+
                 _callReferenceNumber = 0;
                 _disconnectionHappening = false;
 
                 // need to let call analysis finish
-                if (!_inCallProgressAnalysis) throw new HangupException();
-
+                if (!_inCallProgressAnalysis)
+                {
+                    Thread.Sleep(1000);
+                    TraceCallStateChange(() =>
+                    {
+                        var stopResult = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
+                        stopResult.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
+                    }, "dx_stopch (from releaseCall event)");
+                    Thread.Sleep(1000);
+                    throw new HangupException();
+                }
                 break;
             #endregion
 
@@ -1199,6 +1290,7 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
             case gclib_h.GCEV_TASKFAIL:
                 _logger.LogWarning("GCEV_TASKFAIL");
                 LogWarningMessage(metaEvt);
+                // todo Maybe try something else because this causes an event wait inside of an event wait
                 ResetLineDev();
                 // todo should I move the line reset here and handle
                 throw new TaskFailException();
@@ -1257,20 +1349,11 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
         }
         _disconnectionHappening = true;
 
-        DisplayCallState();
-
-        // we don't want to stop call progress analysis
-        if (!_inCallProgressAnalysis)
+        TraceCallStateChange(() =>
         {
-            var stopResult = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
-            stopResult.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
-        }
-
-        var result = gclib_h.gc_DropCall(_callReferenceNumber, gclib_h.GC_NORMAL_CLEARING, DXXXLIB_H.EV_ASYNC);
-        result.ThrowIfGlobalCallError();
-
-        var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, new[] { _dxDev, _gcDev }); // 10 seconds
-        _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, _dxDev, _gcDev ) = {0}", eventWaitEnum);
+            var result = gclib_h.gc_DropCall(_callReferenceNumber, gclib_h.GC_NORMAL_CLEARING, DXXXLIB_H.EV_ASYNC);
+            result.ThrowIfGlobalCallError();
+        }, "gc_DropCall (from disconnected event)");
     }
 
     /**
@@ -1279,11 +1362,12 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
     private void ReleaseCall()
     {
         _logger.LogDebug("ReleaseCall()");
-        var result = gclib_h.gc_ReleaseCallEx(_callReferenceNumber, DXXXLIB_H.EV_ASYNC);
-        result.ThrowIfGlobalCallError();
 
-        var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, new[] { _dxDev, _gcDev }); // 10 seconds
-        _logger.LogDebug("_eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, _dxDev, _gcDev ) = {0}", eventWaitEnum);
+        TraceCallStateChange(() =>
+        {
+            var result = gclib_h.gc_ReleaseCallEx(_callReferenceNumber, DXXXLIB_H.EV_ASYNC);
+            result.ThrowIfGlobalCallError();
+        }, "gc_ReleaseCallEx");
     }
 
 
@@ -1298,8 +1382,12 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
         {
             type = gclib_h.GCACK_SERVICE_PROC
         };
-        var result = gclib_h.gc_CallAck(_callReferenceNumber, ref gcCallackBlk, DXXXLIB_H.EV_ASYNC);
-        result.ThrowIfGlobalCallError();
+
+        TraceCallStateChange(() =>
+        {
+            var result = gclib_h.gc_CallAck(_callReferenceNumber, ref gcCallackBlk, DXXXLIB_H.EV_ASYNC);
+            result.ThrowIfGlobalCallError();
+        }, "gc_CallAck");
     }
 
     /**
@@ -1308,8 +1396,12 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
     private void AcceptCallAsync()
     {
         _logger.LogDebug("AcceptCallAsync()");
-        var result = gclib_h.gc_AcceptCall(_callReferenceNumber, 2, DXXXLIB_H.EV_ASYNC);
-        result.ThrowIfGlobalCallError();
+
+        TraceCallStateChange(() =>
+        {
+            var result = gclib_h.gc_AcceptCall(_callReferenceNumber, 2, DXXXLIB_H.EV_ASYNC);
+            result.ThrowIfGlobalCallError();
+        }, "gc_AcceptCall");
     }
 
     /**
@@ -1319,8 +1411,12 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
     {
         _logger.LogDebug("AnswerCallAsync()");
         SetCodec(gclib_h.GCTGT_GCLIB_CRN);
-        var result = gclib_h.gc_AnswerCall(_callReferenceNumber, 2, DXXXLIB_H.EV_ASYNC);
-        result.ThrowIfGlobalCallError();
+
+        TraceCallStateChange(() =>
+        {
+            var result = gclib_h.gc_AnswerCall(_callReferenceNumber, 2, DXXXLIB_H.EV_ASYNC);
+            result.ThrowIfGlobalCallError();
+        }, "gc_AnswerCall");
     }
 
     /**
@@ -1624,6 +1720,7 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
         }
         catch (HangupException)
         {
+            _logger.LogDebug("Hangup exception caught from PlaySipFile");
             ClearEventBuffer(_dxDev, 2000); // Did not get the TDX_PLAY event so clear the buffer so it isn't captured later
             DXXXLIB_H.dx_fileclose(iott.io_fhandle);
             _logger.LogDebug(
@@ -1659,17 +1756,22 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
      */
     private void DisplayCallState()
     {
-        _logger.LogDebug("DisplayCallState() - crn = {0}", _callReferenceNumber);
-        if (_callReferenceNumber == 0) return;
+        if (_callReferenceNumber == 0)
+        {
+            _logger.LogDebug("DisplayCallState() - crn = 0");
+            return;
+        }
 
-        var callState = GetCallState();
-        _logger.LogDebug("DisplayCallState: Call State {0}", callState.CallStateDescription());
+        var callState = 0; /* current state of call */
+        var result = gclib_h.gc_GetCallState(_callReferenceNumber, ref callState);
+        result.ThrowIfGlobalCallError();
+
+        _logger.LogDebug("DisplayCallState() - crn = {0} - {1}", _callReferenceNumber, callState.CallStateDescription());
     }
 
     private int GetCallState()
     {
-        _logger.LogDebug("GetCallState() - crn = {0}", _callReferenceNumber);
-        if (_callReferenceNumber == 0) return 0;
+        if (_callReferenceNumber == 0) return -1; // indicates that crn = 0;
 
         var callState = 0; /* current state of call */
         var result = gclib_h.gc_GetCallState(_callReferenceNumber, ref callState);
@@ -1781,6 +1883,7 @@ public class SipLine : IIvrBaseLine, IIvrLineManagement
         }
         catch (HangupException)
         {
+            _logger.LogDebug("Hangup exception caught from GetDigits");
             ClearEventBuffer(_dxDev, 2000); // Did not get the TDX_GETDIG event so clear the buffer so it isn't captured later
             _unmanagedMemoryServicePerCall.Free(digitPtr);
             throw;

@@ -277,23 +277,18 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         public void Hangup()
         {
             _logger.LogDebug("Hangup(); - TraceMe - crn = {0}", _callReferenceNumber);
-            if (_callReferenceNumber == 0) return; // line is not in use
-            Thread.Sleep(1000); // wait a second before attempting a hangup
 
-            // note: I suspect that calling dx_stopch may be causing issues with the gc_dropcall
-            // commenting it out to see what happens
-            //TraceCallStateChange(() =>
-            //{
-            //    try
-            //    {
-            //        var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
-            //        result.LogIfGlobalCallError(_logger);
-            //    }
-            //    catch (Exception e)
-            //    {
-            //        _logger.LogWarning(e, "Hangup() - dx_stopch");
-            //    }
-            //}, "dx_stopch");
+            // this hangup method never happens during a play, record or getdigits so it should be safe
+            TraceCallStateChange(() =>
+            {
+                var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
+                result.LogIfGlobalCallError(_logger);
+            }, "dx_stopch (from hangup())");
+            Thread.Sleep(1000);
+
+
+            if (_callReferenceNumber == 0) return; // line is not in use
+
 
 
 
@@ -313,8 +308,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 result.ThrowIfGlobalCallError();
             }, "gc_DropCall (from hangup method)");
 
-
-            // note:When the GCEV_DROPCALL is caught it automatically calls ReleaseCall and waits for GCEV_RELEASECALL. Thus the call we want to wait for is GCEV_RELEASECALL.
             try
             {
                 // okay, now lets wait for the release call event
@@ -359,14 +352,21 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 _logger.LogDebug("Dial({0}, {1}) - TraceMe", number, answeringMachineLengthInMilliseconds);
                 _unmanagedMemoryServicePerCall.Dispose(); // there is unlikely anything to release, this is just a failsafe.
 
+                // this Dial method never happens during a play, record or getdigits so it should be safe
+                TraceCallStateChange(() =>
+                {
+                    var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
+                    result.LogIfGlobalCallError(_logger);
+                }, "dx_stopch (from Dial)");
+                Thread.Sleep(1000);
+
                 // a hangup can interupt a TDX_PLAY,TDX_RECORD or TDX_GETDIG. I try and clear the buffer then but the event doesn't always happen in time
                 // so this is one more attempt to clear _dxDev events. Not that it really matters because I don't action on those events anyways. 
-                ClearEventBuffer(_dxDev);
+                ClearEventBuffer(_dxDev, 1000);
 
                 ClearDigits(_dxDev); // make sure we are starting with an empty digit buffer
 
                 var dialToneTid = _voiceProperties.DialTone.Tid;
-
                 var dialToneEnabled = false;
 
                 if (_voiceProperties.PreTestDialTone)
@@ -639,16 +639,15 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             try
             {
-                // we don't want to stop call progress analysis
-                // note: I suspect that calling dx_stopch may be causing issues with the gc_dropcall
-                //if (!_inCallProgressAnalysis)
-                //{
-                //    TraceCallStateChange(() =>
-                //    {
-                //        var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
-                //        result.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
-                //    }, "dx_stopch");
-                //}
+                if (!_inCallProgressAnalysis)
+                {
+                    TraceCallStateChange(() =>
+                    {
+                        var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
+                        result.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
+                    }, "dx_stopch (from ResetLineDev)");
+                    Thread.Sleep(1000);
+                }
 
 
                 TraceCallStateChange(() =>
@@ -752,8 +751,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             _logger.LogDebug("ILineManagement.TriggerDispose() for line: {0}", _lineNumber);
 
-            var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
-            result.ThrowIfStandardRuntimeLibraryError(_dxDev);
+            TraceCallStateChange(() =>
+            {
+                var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
+                result.ThrowIfStandardRuntimeLibraryError(_dxDev);
+            }, "dx_stopch (from TriggerDispose)");
             _eventWaiter.DisposeTriggerActivated = true;
         }
 
@@ -883,6 +885,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             catch (HangupException)
             {
+                _logger.LogDebug("Hangup exception caught from RecordToFile");
                 ClearEventBuffer(_dxDev, 2000); // Did not get the TDX_RECORD event so clear the buffer so it isn't captured later
                 DXXXLIB_H.dx_fileclose(iott.io_fhandle);
                 _logger.LogDebug(
@@ -1153,20 +1156,30 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 #region Handle hangup detection
                 case gclib_h.GCEV_DISCONNECTED:
                     _logger.LogDebug("GCEV_DISCONNECTED");
-                    DisconnectedEvent(); // will block for gcev_dropcall
+                    DisconnectedEvent();
                     break;
                 case gclib_h.GCEV_DROPCALL:
                     _logger.LogDebug("GCEV_DROPCALL");
-                    ReleaseCall(); // will block for gcev_releasecall
+                    ReleaseCall();
                     break;
                 case gclib_h.GCEV_RELEASECALL:
                     _logger.LogDebug("GCEV_RELEASECALL - set crn = 0");
+
                     _callReferenceNumber = 0;
                     _disconnectionHappening = false;
 
                     // need to let call analysis finish
-                    if (!_inCallProgressAnalysis) throw new HangupException();
-
+                    if (!_inCallProgressAnalysis)
+                    {
+                        Thread.Sleep(1000);
+                        TraceCallStateChange(() =>
+                        {
+                            var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
+                            result.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
+                        }, "dx_stopch (from releaseCall event)");
+                        Thread.Sleep(1000);
+                        throw new HangupException();
+                    }
                     break;
                 #endregion
 
@@ -1246,27 +1259,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             _disconnectionHappening = true;
 
-            // we don't want to stop call progress analysis
-            // note: I suspect that calling dx_stopch may be causing issues with the gc_dropcall
-            // commenting it out to see what happens
-            //if (!_inCallProgressAnalysis)
-            //{
-            //    TraceCallStateChange(() =>
-            //    {
-            //        var stopResult = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
-            //        stopResult.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
-            //    }, "dx_stopch");
-            //}
-
-
             TraceCallStateChange(() =>
             {
                 var result = gclib_h.gc_DropCall(_callReferenceNumber, gclib_h.GC_NORMAL_CLEARING, DXXXLIB_H.EV_ASYNC);
                 result.ThrowIfGlobalCallError();
             }, "gc_DropCall (from disconnected event)");
-
-            //var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, new[] { _dxDev, _gcDev }); // 10 seconds
-            //_logger.LogDebug("The result of the wait for GCEV_DROPCALL(10 seconds) = {0}", eventWaitEnum);
         }
 
         /**
@@ -1281,9 +1278,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 var result = gclib_h.gc_ReleaseCallEx(_callReferenceNumber, DXXXLIB_H.EV_ASYNC);
                 result.ThrowIfGlobalCallError();
             }, "gc_ReleaseCallEx");
-
-            //var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 30, new[] { _dxDev, _gcDev }); // 10 seconds
-            //_logger.LogDebug("The result of the wait for GCEV_RELEASECALL(30 seconds) = {0}", eventWaitEnum);
         }
 
 
@@ -1636,6 +1630,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             catch (HangupException)
             {
+                _logger.LogDebug("Hangup exception caught from PlaySipFile");
                 ClearEventBuffer(_dxDev, 2000); // Did not get the TDX_PLAY event so clear the buffer so it isn't captured later
                 DXXXLIB_H.dx_fileclose(iott.io_fhandle);
                 _logger.LogDebug(
@@ -1798,6 +1793,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             catch (HangupException)
             {
+                _logger.LogDebug("Hangup exception caught from GetDigits");
                 ClearEventBuffer(_dxDev, 2000); // Did not get the TDX_GETDIG event so clear the buffer so it isn't captured later
                 _unmanagedMemoryServicePerCall.Free(digitPtr);
                 throw;

@@ -23,8 +23,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private readonly ILogger<SipLine> _logger;
 
         // keep track of state myself
-        private int _lastEventState = gclib_h.GCST_NULL;
-        private int _lastCallState = -1;
+        private StateProgress _stateProgress;
 
         // if I need to keep unmanaged memory in scope for the duration of this class
         private UnmanagedMemoryService _unmanagedMemoryService;
@@ -220,6 +219,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             _logger.LogDebug("WaitRings({0}) - TraceMe", rings);
 
+            _stateProgress = new StateProgress();
+            
             // a hangup can interupt a TDX_PLAY,TDX_RECORD or TDX_GETDIG. I try and clear the buffer then but the event doesn't always happen in time
             // so this is one more attempt to clear _dxDev events. Not that it really matters because I don't action on those events anyways. 
             ClearEventBuffer(_dxDev, 1000);
@@ -345,8 +346,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 _unmanagedMemoryServicePerCall.Dispose(); // there is unlikely anything to release, this is just a failsafe.
 
                 // this Dial method never happens during a play, record or getdigits so it should be safe
-
                 StopPlayRecordGetDigitsImmediately("Dial",true);
+
+                _stateProgress = new StateProgress();
 
                 ClearDigits(_dxDev); // make sure we are starting with an empty digit buffer
 
@@ -429,7 +431,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             
             _logger.LogDebug("Last event was: {lastEventStat}, last call state was: {_lastCallState}", 
-                _lastEventState.EventTypeDescription(), _lastCallState.CallStateDescription());
+                _stateProgress.LastEventState.EventTypeDescription(), _stateProgress.LastCallState.CallStateDescription());
             var callState = GetCallState();
 
             // get the CPA result
@@ -477,7 +479,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                             return CallAnalysis.NoAnswer;
                         }
 
-
                         if (callState == gclib_h.GCST_ALERTING)
                         {
                             _logger.LogDebug("TraceMe - CPA result = connected but state = alerting. This happens if a callee rings then immediately disconnects");
@@ -507,7 +508,16 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     ResetLineDev();
                     return CallAnalysis.NoDialTone;
                 case DXCALLP_H.CR_NORB:
-                    //ResetLineDev();
+                    // see went throught the dialing, proceeding, alerting and connected states
+                    if (_stateProgress.IsRegularDial())
+                    {
+                        // at this point, there was a proper dialing handshake but the CPA wasn't able to complete within
+                        // 40 seconds.
+                        // I've been able to recreate this by simplying answering the phone and saying nothing.
+                        
+                        _logger.LogDebug("TraceMe - CPA result = NoRingback but dialStateProgress is regular dial. One way this happens if the callee picks up the phone and says nothing for 40 seconds. Will treat this as a NoAnswer");
+                        return CallAnalysis.NoAnswer;
+                    }
                     return CallAnalysis.NoRingback;
                 case DXCALLP_H.CR_STOPD:
                     // calling method will check and throw the stopException
@@ -567,7 +577,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 };
 
                 SetCodec(gclib_h.GCTGT_GCLIB_CHAN);
-
+                
                 TraceCallStateChange(() =>
                 {
                     result = gclib_h.gc_MakeCall(_gcDev, ref _callReferenceNumber, to, ref gcMakeCallBlk, 70, DXXXLIB_H.EV_ASYNC);
@@ -1070,8 +1080,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             if (metaEvt.evttype != gclib_h.GCEV_EXTENSION && metaEvt.evttype != gclib_h.GCEV_EXTENSIONCMPLT)
             {
                 // keep track of the state
-                _lastEventState = metaEvt.evttype;
-                _lastCallState = GetCallState();
+                _stateProgress?.SetState(metaEvt.evttype, GetCallState());
             }
             
             switch (metaEvt.evttype)

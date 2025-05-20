@@ -39,6 +39,6 @@ public class StateProgress
         }
     }
 
-    public bool IsRegularDial() => _dialing && _proceeding && _alerting && _connected;
+    public bool IsRegularDial() => _proceeding && _alerting && _connected;
     public bool IsDisconnected() => _disconnected;
 }

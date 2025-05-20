@@ -1,7 +1,5 @@
 ﻿using ivrToolkit.Core.Extensions;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Text;
 
 namespace ivrToolkit.Plugin.SipSorcery
 {
@@ -9,7 +7,7 @@ namespace ivrToolkit.Plugin.SipSorcery
     {
         private readonly ILogger<KeypressSemaphore> _logger;
         private SemaphoreSlim? _semaphoreSlim;
-        private CancellationTokenSource _cts;
+        private CancellationTokenSource? _cts;
         private int? _maxDigits;
         private string? _terminators;
 
@@ -46,7 +44,7 @@ namespace ivrToolkit.Plugin.SipSorcery
             _logger.LogDebug("{name}({buffer})", nameof(Wait), milliseconds);
             try
             {
-                _semaphoreSlim?.Wait(milliseconds, _cts.Token);
+                _semaphoreSlim?.Wait(milliseconds, _cts!.Token);
             }
             catch (OperationCanceledException)
             {

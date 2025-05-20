@@ -22,8 +22,8 @@ namespace ivrToolkit.Plugin.SipSorcery
 
         private string _digitBuffer = "";
         private bool _digitPressed;
-        private object _lockObject = new object();
-        private KeypressSemaphore _keypressSemaphore = null!;
+        private readonly object _lockObject = new object();
+        private readonly KeypressSemaphore _keypressSemaphore;
 
         public SipSorceryLine(ILoggerFactory loggerFactory, SipVoiceProperties voiceProperties, int lineNumber, SIPTransport sipTransport)
         {
@@ -38,12 +38,12 @@ namespace ivrToolkit.Plugin.SipSorcery
 
             _userAgent = new SIPUserAgent(sipTransport, null);
 
-            _userAgent.ClientCallFailed += (uac, error, sipResponse) => _logger.LogDebug("Call failed {error}.", error);
-            _userAgent.ClientCallAnswered += (uac, sipResonse) => _logger.LogDebug("Answered");
-            _userAgent.ClientCallRinging += (uac, sipResonse) => _logger.LogDebug("Ringing");
-            _userAgent.ClientCallTrying += (uac, sipResonse) => _logger.LogDebug("Trying");
+            _userAgent.ClientCallFailed += (_, error, _) => _logger.LogDebug("Call failed {error}.", error);
+            _userAgent.ClientCallAnswered += (_, _) => _logger.LogDebug("Answered");
+            _userAgent.ClientCallRinging += (_, _) => _logger.LogDebug("Ringing");
+            _userAgent.ClientCallTrying += (_, _) => _logger.LogDebug("Trying");
 
-            _userAgent.OnCallHungup += (dialog) =>
+            _userAgent.OnCallHungup += (_) =>
             {
                 _logger.LogDebug("OnCallHungup");
                 CloseDialResources();
@@ -72,8 +72,8 @@ namespace ivrToolkit.Plugin.SipSorcery
                 }
             };
 
-            _userAgent.OnIncomingCall += (uac, sipAction) => _logger.LogDebug("OnIncomingCall");
-            _userAgent.OnReinviteRequest += (inviteTransaction) => _logger.LogDebug("OnReinviteRequest");
+            _userAgent.OnIncomingCall += (_, _) => _logger.LogDebug("OnIncomingCall");
+            _userAgent.OnReinviteRequest += (_) => _logger.LogDebug("OnReinviteRequest");
             //_userAgent.OnRtpEvent += (rptEvent, header) => _logger.LogDebug("OnRtpEvent");
             _userAgent.RemotePutOnHold += () => _logger.LogDebug("RemotePutOnHold");
 
@@ -260,7 +260,7 @@ namespace ivrToolkit.Plugin.SipSorcery
         private async Task PlayFileAsync(string filename)
         {
             var wavConverter = new WavConverter();
-            await _voipMediaSession.AudioExtrasSource.SendAudioFromStream(
+            await _voipMediaSession!.AudioExtrasSource.SendAudioFromStream(
                 wavConverter.NAudioConvert8BitUnsignedTo16BitSignedPCM(
                 filename),
                 AudioSamplingRatesEnum.Rate8KHz);

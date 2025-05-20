@@ -627,16 +627,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             try
             {
-                if (!_inCallProgressAnalysis)
-                {
-                    TraceCallStateChange(() =>
-                    {
-                        var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
-                        result.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
-                    }, "dx_stopch (from ResetLineDev)");
-                    Thread.Sleep(1000);
-                }
-
+                StopPlayRecordGetDigitsImmediately("ResetLineDev");
 
                 TraceCallStateChange(() =>
                 {
@@ -1228,6 +1219,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
                 result.ThrowIfStandardRuntimeLibraryError(_dxDev);
             }, $"dx_stopch ({identifier})");
+            ClearEventBuffer(_dxDev, 1000);
         }
 
         private void LogWarningMessage(METAEVENT metaEvt)

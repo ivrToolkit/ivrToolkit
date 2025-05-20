@@ -4,7 +4,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip;
 
 public class StateProgress
 {
-    private bool _dialing;
     private bool _proceeding;
     private bool _alerting;
     private bool _connected;
@@ -19,9 +18,6 @@ public class StateProgress
         LastCallState = lastCallState;
         switch (eventState)
         {
-            case gclib_h.GCEV_DIALING:
-                _dialing = true;
-                break;
             case gclib_h.GCEV_PROCEEDING:
                 _proceeding = true;
                 break;

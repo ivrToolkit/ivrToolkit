@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Threading;
 using ivrToolkit.Core.Enums;
 using ivrToolkit.Core.Exceptions;
 using ivrToolkit.Core.Interfaces;
@@ -496,15 +495,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                             return CallAnalysis.Error;
                         }
                     }
-
-                    // TODO this code doesn't work with SIP
-                    var len = GetSalutationLength(devh);
-                    _logger.LogDebug("Salutation length is: {0}", len);
-                    if (len > answeringMachineLengthInMilliseconds)
-                    {
-                        return CallAnalysis.AnsweringMachine;
-                    }
-
                     return CallAnalysis.Connected;
                 case DXCALLP_H.CR_ERROR:
                     ResetLineDev();
@@ -659,20 +649,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 _logger.LogError(e, "Failed to Reset the line");
             }
         }
-
-        /// <summary>
-        /// Gets the greeting time in milliseconds.
-        /// </summary>
-        /// <param name="devh">The handle for the Dialogic line.</param>
-        /// <returns>The greeting time in milliseconds.</returns>
-        private static int GetSalutationLength(int devh)
-        {
-            var result = DXXXLIB_H.ATDX_ANSRSIZ(devh);
-            result.ThrowIfStandardRuntimeLibraryError(devh);
-
-            return result * 10;
-        }
-
 
         private DX_CAP GetCap()
         {

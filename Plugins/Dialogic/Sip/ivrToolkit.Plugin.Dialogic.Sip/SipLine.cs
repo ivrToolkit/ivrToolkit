@@ -429,7 +429,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     return CallAnalysis.Error;
             }
             
-            _logger.LogDebug("Last event was: {lastEventState}, last call state was: {_lastCallState}", _lastEventState, _lastCallState);
+            _logger.LogDebug("Last event was: {lastEventStat}, last call state was: {_lastCallState}", 
+                _lastEventState.EventTypeDescription(), _lastCallState.CallStateDescription());
             var callState = GetCallState();
 
             // get the CPA result
@@ -1614,7 +1615,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             try
             {
-                var waitResult = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_PLAY, 60, new[] { _dxDev, _gcDev }); // 1 minute
+                var waitResult = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_PLAY, 300, new[] { _dxDev, _gcDev }); // 5 minutes
                 switch (waitResult)
                 {
                     case EventWaitEnum.Success:

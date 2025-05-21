@@ -308,24 +308,25 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 30, new[] { _dxDev, _gcDev }); // Should fire a hangup exception
                 _logger.LogDebug("The result of the wait for GCEV_RELEASECALL(30 seconds) = {0}", eventWaitEnum);
 
-                if (eventWaitEnum == EventWaitEnum.Expired)
-                {
-                    // I've seen this happen when the calling hangs up just at the same time the caller calls hanup()
-                    // the event log looks like:
-                    //    IPPARM_TX_DISCONNECTED
-                    //    IPPARM_RX_DISCONNECTED
-                    //    Play Completed
-                    // Hangup()
-                    //    gc_DropCall - doesn't get the GCEV_DROPCALL event
-                    _logger.LogWarning("The hangup method did not receive the releaseCall event. Will try to force a release");
-                    // force a release of the call
-                    TraceCallStateChange(() =>
-                    {
-                        var releaseCallResult = gclib_h.gc_ReleaseCallEx(_callReferenceNumber, DXXXLIB_H.EV_ASYNC);
-                        releaseCallResult.LogIfGlobalCallError(_logger);
-                    }, "gc_ReleaseCallEx - force!");
-                    eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 30, new[] { _dxDev, _gcDev }); // Should fire a hangup exception
-                }
+                // doesn't work :( but resetLineDev does.
+                // if (eventWaitEnum == EventWaitEnum.Expired)
+                // {
+                //     // I've seen this happen when the calling hangs up just at the same time the caller calls hanup()
+                //     // the event log looks like:
+                //     //    IPPARM_TX_DISCONNECTED
+                //     //    IPPARM_RX_DISCONNECTED
+                //     //    Play Completed
+                //     // Hangup()
+                //     //    gc_DropCall - doesn't get the GCEV_DROPCALL event
+                //     _logger.LogWarning("The hangup method did not receive the releaseCall event. Will try to force a release");
+                //     // force a release of the call
+                //     TraceCallStateChange(() =>
+                //     {
+                //         var releaseCallResult = gclib_h.gc_ReleaseCallEx(_callReferenceNumber, DXXXLIB_H.EV_ASYNC);
+                //         releaseCallResult.LogIfGlobalCallError(_logger);
+                //     }, "gc_ReleaseCallEx - force!");
+                //     eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 30, new[] { _dxDev, _gcDev }); // Should fire a hangup exception
+                // }
 
                 switch (eventWaitEnum)
                 {

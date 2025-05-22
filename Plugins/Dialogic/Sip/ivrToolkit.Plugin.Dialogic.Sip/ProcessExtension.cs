@@ -71,8 +71,9 @@ public class ProcessExtension
     /**
     * Process a metaevent extension block.
     */
-    public void HandleExtension(METAEVENT metaEvt)
+    public bool HandleExtension(METAEVENT metaEvt)
     {
+        var doStop = false;
         _logger.LogDebug("ProcessExtension(METAEVENT metaEvt) - evtDev = {eventDevice}", metaEvt.evtdev);
 
         var receivedNotify = false;
@@ -104,10 +105,10 @@ public class ProcessExtension
             switch (parmData.set_ID)
             {
                 case gcip_defs_h.IPSET_SWITCH_CODEC:
-                    _logger.LogDebug("{  description} - TraceMe", parmData.parm_ID.IpSetSwitchCodeDescription());
+                    _logger.LogDebug("{  description} - (SIP)", parmData.parm_ID.IpSetSwitchCodeDescription());
                     break;
                 case gcip_defs_h.IPSET_MEDIA_STATE:
-                    _logger.LogDebug("  {description} - TraceMe", parmData.parm_ID.IpSetMediaStateDescription());
+                    _logger.LogDebug("  {description} - (SIP)", parmData.parm_ID.IpSetMediaStateDescription());
 
                     // todo there has got to be a better way than this
                     if (parmData.value_size == Marshal.SizeOf<IP_CAPABILITY>())
@@ -123,7 +124,11 @@ public class ProcessExtension
 
                     break;
                 case gcip_defs_h.IPSET_IPPROTOCOL_STATE:
-                    _logger.LogDebug("  {description} - TraceMe", parmData.parm_ID.IpSetIpProtoolStateDescription());
+                    _logger.LogDebug("  {description} - (SIP)", parmData.parm_ID.IpSetIpProtoolStateDescription());
+                    if (parmData.parm_ID == gcip_defs_h.IPPARM_SIGNALING_DISCONNECTED)
+                    {
+                        doStop = true;
+                    }
                     break;
                 case gcip_defs_h.IPSET_RTP_ADDRESS:
                     _logger.LogDebug("  {description}", parmData.parm_ID.IpSetRptAddressDescription());
@@ -132,25 +137,25 @@ public class ProcessExtension
                         case gcip_defs_h.IPPARM_LOCAL:
                             var ptr = parmDatap + 5;
                             var ipAddr = Marshal.PtrToStructure<RTP_ADDR>(ptr);
-                            _logger.LogDebug("  IPPARM_LOCAL: address:{0}, port {1} - TraceMe", ipAddr.u_ipaddr.ipv4.ToIp(),
+                            _logger.LogDebug("  IPPARM_LOCAL: address:{0}, port {1} - (SIP)", ipAddr.u_ipaddr.ipv4.ToIp(),
                                 ipAddr.port);
                             break;
                         case gcip_defs_h.IPPARM_REMOTE:
                             var ptr2 = parmDatap + 5;
                             var ipAddr2 = Marshal.PtrToStructure<RTP_ADDR>(ptr2);
-                            _logger.LogDebug("  IPPARM_REMOTE: address:{0}, port {1} - TraceMe", ipAddr2.u_ipaddr.ipv4.ToIp(),
+                            _logger.LogDebug("  IPPARM_REMOTE: address:{0}, port {1} - (SIP)", ipAddr2.u_ipaddr.ipv4.ToIp(),
                                 ipAddr2.port);
                             break;
                     }
 
                     break;
                 case gcip_defs_h.IPSET_MSG_SIP:
-                    _logger.LogDebug("  {description} - TraceMe", parmData.parm_ID.IpSetMsgSipDescription());
+                    _logger.LogDebug("  {description} - (SIP)", parmData.parm_ID.IpSetMsgSipDescription());
                     switch (parmData.parm_ID)
                     {
                         case gcip_defs_h.IPPARM_MSGTYPE:
                             var messType = GetValueFromPtr(parmDatap + 5, parmData.value_size);
-                            _logger.LogDebug("  {description} - TraceMe", messType.IpMsgTypeDescription());
+                            _logger.LogDebug("  {description} - (SIP)", messType.IpMsgTypeDescription());
                             if (messType == gcip_defs_h.IP_MSGTYPE_SIP_NOTIFY)
                             {
                                 receivedNotify = true;
@@ -160,7 +165,7 @@ public class ProcessExtension
                     break;
                 case gcip_defs_h.IPSET_SIP_MSGINFO:
                     var str = GetStringFromPtr(parmDatap + 5, parmData.value_size);
-                    _logger.LogDebug("  {0}: {1} - TraceMe", parmData.parm_ID.SipMsgInfo(), str);
+                    _logger.LogDebug("  {0}: {1} - (SIP)", parmData.parm_ID.SipMsgInfo(), str);
                     if (parmData.parm_ID == gcip_defs_h.IPPARM_CALLID_HDR)
                     {
                         callIdHeader = str;
@@ -168,7 +173,7 @@ public class ProcessExtension
 
                     break;
                 case gcip_defs_h.IPSET_MIME:
-                    _logger.LogDebug("  {description} - TraceMe", parmData.parm_ID.IpSetMimeDescription());
+                    _logger.LogDebug("  {description} - (SIP)", parmData.parm_ID.IpSetMimeDescription());
                     switch (parmData.parm_ID)
                     {
                         case gcip_defs_h.IPPARM_MIME_PART:
@@ -197,6 +202,7 @@ public class ProcessExtension
                 _logger.LogError(e, "Failed to respond to notify");
             }
         }
+        return doStop;
     }
 
     private void RespondToNotify(bool accept, string callIdHeader, int eventDev)

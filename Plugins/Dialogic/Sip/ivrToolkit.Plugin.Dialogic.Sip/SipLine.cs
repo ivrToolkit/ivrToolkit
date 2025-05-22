@@ -57,7 +57,16 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         public int LineNumber => _lineNumber;
 
         private bool _inCallProgressAnalysis;
-        private bool _disconnectionHappening;
+        private bool _dropCallHappening;
+
+        private enum HangupStateEnum
+        {
+            NotHungUp,
+            Starting,
+            Completed
+        }
+
+        private HangupStateEnum _hangupState = HangupStateEnum.Completed;
 
         // ReSharper disable once InconsistentNaming
         private static readonly object _lockObject = new();
@@ -217,13 +226,14 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         public void WaitRings(int rings)
         {
-            _logger.LogDebug("WaitRings({0}) - TraceMe", rings);
+            _logger.LogDebug("(SIP) - WaitRings({0})", rings);
 
             _stateProgress = new StateProgress();
-            
+            _hangupState = HangupStateEnum.NotHungUp;
+
             // a hangup can interupt a TDX_PLAY,TDX_RECORD or TDX_GETDIG. I try and clear the buffer then but the event doesn't always happen in time
             // so this is one more attempt to clear _dxDev events. Not that it really matters because I don't action on those events anyways. 
-            ClearEventBuffer(_dxDev, 1000);
+            ClearStopPlayRecordGetDigitEvents(_dxDev, 1000);
 
             ClearDigits(_dxDev); // make sure we are starting with an empty digit buffer
 
@@ -250,10 +260,10 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             switch (eventWaitEnum)
             {
                 case EventWaitEnum.Success:
-                    _logger.LogDebug("The WaitRings method received the GCEV_ANSWERED event");
+                    _logger.LogDebug("(SIP) - The WaitRings method received the GCEV_ANSWERED event");
                     break;
                 case EventWaitEnum.Error:
-                    var message = "The WaitRings method failed waiting for the GCEV_ANSWERED event";
+                    var message = "(SIP) - The WaitRings method failed waiting for the GCEV_ANSWERED event";
                     _logger.LogError(message);
                     throw new VoiceException(message);
             }
@@ -261,38 +271,43 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         private void TraceCallStateChange(Action operation, string operationName)
         {
+
+            var preChannelState = DXXXLIB_H.ATDX_STATE(_dxDev);
+
             var preCallState = GetCallState();
-            var postCallState = -2; // an exception
 
             try
             {
+                _logger.LogDebug("(SIP) - Begin: {operationName} - call state[channel state]: {preCallState}[{preChannelState}]", operationName,
+                    preCallState.CallStateDescription(),
+                    preChannelState.ChannelStateDescription());
                 operation();
-                postCallState = GetCallState();
             }
             finally
             {
-                _logger.LogDebug("TraceMe - {0} - Pre: {1}, Post: {2}",
-                    operationName,
-                    preCallState.CallStateDescription(),
-                    postCallState.CallStateDescription());
+                var postChannelState = DXXXLIB_H.ATDX_STATE(_dxDev); // put this here because I am hoping it will work always
+                var postCallState = GetCallState();
+                _logger.LogDebug("(SIP) -   End: {operationName} - call state[channel state]: {postCallState}[{postChannelState}]", operationName,
+                    postCallState.CallStateDescription(),
+                    postChannelState.ChannelStateDescription());
             }
         }
 
         public void Hangup()
         {
-            _logger.LogDebug("Hangup(); - TraceMe - crn = {0}", _callReferenceNumber);
+            _logger.LogDebug("(SIP) - Hangup(); - crn = {0}", _callReferenceNumber);
 
             // this hangup method never happens during a play, record or getdigits so it should be safe
             StopPlayRecordGetDigitsImmediately("Hangup");
-            
+
             if (_callReferenceNumber == 0) return; // line is not in use
 
-            if (_disconnectionHappening)
+            if (_dropCallHappening)
             {
-                _logger.LogDebug("A disconnect is already in progress. Can't hangup twice");
+                _logger.LogDebug("(SIP) - A gc_dropCall is already in progress. Can't hangup twice");
                 return;
             }
-            _disconnectionHappening = true;
+            _dropCallHappening = true;
 
 
             TraceCallStateChange(() =>
@@ -301,59 +316,31 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 result.ThrowIfGlobalCallError();
             }, "gc_DropCall (from hangup method)");
 
-            try
+            // okay, now lets wait for the release call event
+            // 70 seconds should be way overkill but I want to see if longer times solves my hangup problem
+            var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 70, new[] { _dxDev, _gcDev }); // Should fire a hangup exception
+            _logger.LogDebug("(SIP) - The result of the wait for GCEV_RELEASECALL(70 seconds) = {0}", eventWaitEnum);
+
+            switch (eventWaitEnum)
             {
-                // okay, now lets wait for the release call event
-                // 60 seconds should be way overkill but I want to see if longer times solves my hangup problem
-                var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 30, new[] { _dxDev, _gcDev }); // Should fire a hangup exception
-                _logger.LogDebug("The result of the wait for GCEV_RELEASECALL(30 seconds) = {0}", eventWaitEnum);
-
-                // doesn't work :( but resetLineDev does.
-                // if (eventWaitEnum == EventWaitEnum.Expired)
-                // {
-                //     // I've seen this happen when the calling hangs up just at the same time the caller calls hanup()
-                //     // the event log looks like:
-                //     //    IPPARM_TX_DISCONNECTED
-                //     //    IPPARM_RX_DISCONNECTED
-                //     //    Play Completed
-                //     // Hangup()
-                //     //    gc_DropCall - doesn't get the GCEV_DROPCALL event
-                //     _logger.LogWarning("The hangup method did not receive the releaseCall event. Will try to force a release");
-                //     // force a release of the call
-                //     TraceCallStateChange(() =>
-                //     {
-                //         var releaseCallResult = gclib_h.gc_ReleaseCallEx(_callReferenceNumber, DXXXLIB_H.EV_ASYNC);
-                //         releaseCallResult.LogIfGlobalCallError(_logger);
-                //     }, "gc_ReleaseCallEx - force!");
-                //     eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 30, new[] { _dxDev, _gcDev }); // Should fire a hangup exception
-                // }
-
-                switch (eventWaitEnum)
-                {
-                    case EventWaitEnum.Success:
-                        // this should never happen!
-                        _logger.LogError("The hangup method received the releaseCall event but it should have immediately fired a hangup exception");
-                        break;
-                    case EventWaitEnum.Expired:
-                        _logger.LogWarning("The hangup method did not receive the releaseCall event");
-                        ResetLineDev();
-                        break;
-                    case EventWaitEnum.Error:
-                        _logger.LogError("The hangup method failed waiting for the releaseCall event");
-                        break;
-                }
+                case EventWaitEnum.Success:
+                    // this should never happen!
+                    _logger.LogDebug("(SIP) - The hangup method completed as expected.");
+                    break;
+                case EventWaitEnum.Expired:
+                    _logger.LogWarning("(SIP) - The hangup method did not receive the releaseCall event");
+                    ResetLineDev();
+                    break;
+                case EventWaitEnum.Error:
+                    _logger.LogError("(SIP) - The hangup method failed waiting for the releaseCall event");
+                    break;
             }
-            catch (HangupException)
-            {
-                _logger.LogDebug("The hangup method completed as expected.");
-            }
-
         }
 
         public void TakeOffHook()
         {
             /*
-             * Sip Does not need to take the received off the hook
+             * Sip Does not need to take the receiver off the hook
              */
         }
 
@@ -362,38 +349,18 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _inCallProgressAnalysis = true;
             try
             {
-                _logger.LogDebug("Dial({0}, {1}) - TraceMe", number, answeringMachineLengthInMilliseconds);
+                _logger.LogDebug("Dial({0}, {1})", number, answeringMachineLengthInMilliseconds);
                 _unmanagedMemoryServicePerCall.Dispose(); // there is unlikely anything to release, this is just a failsafe.
 
-                // this Dial method never happens during a play, record or getdigits so it should be safe
+                // should never be in this state but clear it just in case
                 StopPlayRecordGetDigitsImmediately("Dial",true);
+                ClearStopPlayRecordGetDigitEvents(_dxDev, 1000);
 
                 _stateProgress = new StateProgress();
+                _hangupState = HangupStateEnum.NotHungUp;
 
                 ClearDigits(_dxDev); // make sure we are starting with an empty digit buffer
 
-                var dialToneTid = _voiceProperties.DialTone.Tid;
-                var dialToneEnabled = false;
-
-                if (_voiceProperties.PreTestDialTone)
-                {
-                    _logger.LogDebug("We are pre-testing the dial tone");
-                    dialToneEnabled = true;
-                    EnableTone(_dxDev, dialToneTid);
-                    var tid = ListenForCustomTones(_dxDev, 2);
-
-                    if (tid == 0)
-                    {
-                        _logger.LogDebug("No tone was detected");
-                        DisableTone(_dxDev, dialToneTid);
-                        Hangup();
-                        return CallAnalysis.NoDialTone;
-                    }
-                }
-
-                if (dialToneEnabled) DisableTone(_dxDev, dialToneTid);
-
-                _logger.LogDebug("about to dial: {0}", number);
                 return DialWithCpa(_dxDev, number, answeringMachineLengthInMilliseconds);
 
             }
@@ -413,7 +380,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         /// <returns>CallAnalysis Enum</returns>
         private CallAnalysis DialWithCpa(int devh, string number, int answeringMachineLengthInMilliseconds)
         {
-            _logger.LogDebug("DialWithCpa({0}, {1}, {2})", devh, number, answeringMachineLengthInMilliseconds);
+            _logger.LogDebug("(SIP) - DialWithCpa({0}, {1}, {2})", devh, number, answeringMachineLengthInMilliseconds);
 
             var cap = GetCap();
 
@@ -433,31 +400,32 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }, "dx_dial");
 
             var eventWaitEnum = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_CALLP, 60, new[] { _dxDev, _gcDev }); // 60 seconds
+
             switch (eventWaitEnum)
             {
                 case EventWaitEnum.Success:
-                    _logger.LogDebug("Check CPA duration = {0} seconds. Received TDX_CALLP", (DateTimeOffset.Now - startTime).TotalSeconds);
+                    _logger.LogDebug("(SIP) - Check CPA duration = {0} seconds. Received TDX_CALLP", (DateTimeOffset.Now - startTime).TotalSeconds);
                     break;
                 case EventWaitEnum.Expired:
-                    var message = $"Check CPA duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Timed out waiting for TDX_CALLP";
+                    var message = $"(SIP) - Check CPA duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Timed out waiting for TDX_CALLP";
                     _logger.LogError(message);
                     ResetLineDev();
                     return CallAnalysis.Error;
                 case EventWaitEnum.Error:
-                    message = $"Check CPA duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Failed waiting for TDX_CALLP";
+                    message = $"(SIP) - Check CPA duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Failed waiting for TDX_CALLP";
                     _logger.LogError(message);
                     ResetLineDev();
                     return CallAnalysis.Error;
             }
             
-            _logger.LogDebug("Last event was: {lastEventStat}, last call state was: {_lastCallState}", 
+            _logger.LogDebug("(SIP) - Last event was: {lastEventStat}, last call state was: {_lastCallState}", 
                 _stateProgress.LastEventState.EventTypeDescription(), _stateProgress.LastCallState.CallStateDescription());
             var callState = GetCallState();
 
             // get the CPA result
             var callProgressResult = DXXXLIB_H.ATDX_CPTERM(devh);
 
-            _logger.LogDebug("Call Progress Analysis Result - TraceMe - {0}:{1} - {2}", callProgressResult, 
+            _logger.LogDebug("(SIP) - Call Progress Analysis Result - {0}:{1} - {2}", callProgressResult, 
                 callProgressResult.CallProgressDescription(),
                 callState.CallStateDescription());
             switch (callProgressResult)
@@ -495,13 +463,13 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                         {
                             // this can happen if someone picks up and then immediately hangs up. Treat as a noAnswer
                             // the software will hang up even before call progress has completed
-                            _logger.LogDebug("TraceMe - CPA result = connected but crn = 0. This happens if a hangup is detected before call progress has completed. Will treat this as a NoAnswer");
+                            _logger.LogDebug("(SIP) - CPA result = connected but crn = 0. This happens if a hangup is detected before call progress has completed. Will treat this as a NoAnswer");
                             return CallAnalysis.NoAnswer;
                         }
 
                         if (callState == gclib_h.GCST_ALERTING)
                         {
-                            _logger.LogDebug("TraceMe - CPA result = connected but state = alerting. This happens if a callee rings then immediately disconnects");
+                            _logger.LogDebug("(SIP) - CPA result = connected but state = alerting. This happens if a callee rings then immediately disconnects");
                             // this can happen if the callee rings and then immediately disconnectes
                             // it leaves the state in alerting
                             var response = _voiceProperties.ConnectedAlertHandling;
@@ -512,7 +480,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                             }
                         } else
                         {
-                            _logger.LogWarning("TraceMe - CPA result = connected but state = {0}. Hangup and return CallAnalysis.Error", callState.CallStateDescription());
+                            _logger.LogWarning("(SIP) - CPA result = connected but state = {0}. Hangup and return CallAnalysis.Error", callState.CallStateDescription());
                             return CallAnalysis.Error;
                         }
                     }
@@ -535,7 +503,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                         // 40 seconds.
                         // I've been able to recreate this by simplying answering the phone and saying nothing.
                         
-                        _logger.LogDebug("TraceMe - CPA result = NoRingback but dialStateProgress is regular dial. One way this happens if the callee picks up the phone and says nothing for 40 seconds. Will treat this as a NoAnswer");
+                        _logger.LogDebug("(SIP) - CPA result = NoRingback but dialStateProgress is regular dial. One way this happens if the callee picks up the phone and says nothing for 40 seconds. Will treat this as a NoAnswer");
                         return CallAnalysis.NoAnswer;
                     }
                     return CallAnalysis.NoRingback;
@@ -643,7 +611,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         private void ResetLineDev()
         {
-            _logger.LogDebug("ResetLineDev()");
+            _logger.LogDebug("(SIP) - ResetLineDev()");
 
             try
             {
@@ -659,16 +627,16 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 switch (eventWaitEnum)
                 {
                     case EventWaitEnum.Error:
-                        _logger.LogError("Failed to Reset the line. Failed");
-                        _disconnectionHappening = false; // let the hangup try again.
+                        _logger.LogError("(SIP) - Failed to Reset the line. Failed");
+                        _dropCallHappening = false; // let the hangup try again.
                         break;
                     case EventWaitEnum.Expired:
-                        _disconnectionHappening = false; // let the hangup try again.
-                        _logger.LogError("Failed to Reset the line. Timeout waiting for GCEV_RESETLINEDEV");
+                        _dropCallHappening = false; // let the hangup try again.
+                        _logger.LogError("(SIP) - Failed to Reset the line. Timeout waiting for GCEV_RESETLINEDEV");
                         break;
                     case EventWaitEnum.Success:
                         _callReferenceNumber = 0;
-                        _disconnectionHappening = false;
+                        _dropCallHappening = false;
                         _waitCallSet = false;
                         break;
                 }
@@ -676,7 +644,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Failed to Reset the line");
+                _logger.LogError(e, "(SIP) - Failed to Reset the line");
             }
         }
 
@@ -763,7 +731,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             {
                 _waitCallSet = false;
                 _inCallProgressAnalysis = false;
-                _disconnectionHappening = false;
+                _dropCallHappening = false;
                 _capDisplayed = false;
                 _callReferenceNumber = 0;
 
@@ -853,6 +821,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             try
             {
                 var waitResult = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_RECORD, 180, new[] { _dxDev, _gcDev }); // 3 minutes
+                HandlePossibleHangupInProgress();
                 switch (waitResult)
                 {
                     case EventWaitEnum.Success:
@@ -870,11 +839,10 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             catch (HangupException)
             {
-                _logger.LogDebug("Hangup exception caught from RecordToFile");
-                ClearEventBuffer(_dxDev, 2000); // Did not get the TDX_RECORD event so clear the buffer so it isn't captured later
+                _logger.LogDebug("(SIP) - Hangup exception caught from RecordToFile");
                 DXXXLIB_H.dx_fileclose(iott.io_fhandle);
                 _logger.LogDebug(
-                    "Hangup Exception : The file handle has been closed because the call has been hung up.");
+                    "(SIP) - Hangup Exception : The file handle has been closed because the call has been hung up.");
                 throw;
             }
             if (DXXXLIB_H.dx_fileclose(iott.io_fhandle) == -1)
@@ -1078,7 +1046,12 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         private void HandleOtherEvents(uint eventHandle, METAEVENT metaEvt)
         {
-            _logger.LogDebug("HandleOtherEvents() - {0}: {1}", metaEvt.evttype, metaEvt.evttype.EventTypeDescription());
+            var reason = DXXXLIB_H.ATDX_TERMMSK(_dxDev);
+
+            _logger.LogDebug("HandleOtherEvents() - {0}: {1}| {2}: {3}", 
+                metaEvt.evttype, 
+                metaEvt.evttype.EventTypeDescription(),
+                reason, GetReasonDescription(reason));
             switch (metaEvt.evttype)
             {
                 case DXXXLIB_H.TDX_CST: // a call status transition event.
@@ -1094,7 +1067,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private void HandleGcEvents(METAEVENT metaEvt)
         {
             var callState = GetCallState();
-            _logger.LogDebug("HandleGcEvents() TraceMe - {0}: {1} - {2}", metaEvt.evttype, metaEvt.evttype.EventTypeDescription(),
+            _logger.LogDebug("(SIP) - HandleGcEvents() - {0}: {1} - {2}", metaEvt.evttype, metaEvt.evttype.EventTypeDescription(),
                 callState.CallStateDescription());
 
             if (metaEvt.evttype != gclib_h.GCEV_EXTENSION && metaEvt.evttype != gclib_h.GCEV_EXTENSIONCMPLT)
@@ -1147,14 +1120,16 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 #region Handle hangup detection
                 case gclib_h.GCEV_DISCONNECTED:
                     _logger.LogDebug("GCEV_DISCONNECTED");
+                    _hangupState = HangupStateEnum.Starting;
                     StopPlayRecordGetDigitsImmediately("GCEV_DISCONNECTED");
                     
                     DisconnectedEvent();
                     break;
                 case gclib_h.GCEV_DROPCALL:
                     _logger.LogDebug("GCEV_DROPCALL");
+                    _hangupState = HangupStateEnum.Starting;
                     StopPlayRecordGetDigitsImmediately("GCEV_DROPCALL");
-                    
+
                     TraceCallStateChange(() =>
                     {
                         var releaseCallResult = gclib_h.gc_ReleaseCallEx(_callReferenceNumber, DXXXLIB_H.EV_ASYNC);
@@ -1166,16 +1141,10 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     _logger.LogDebug("GCEV_RELEASECALL - set crn = 0");
 
                     _callReferenceNumber = 0;
-                    _disconnectionHappening = false;
+                    _dropCallHappening = false;
+                    _hangupState = HangupStateEnum.Completed;
 
                     StopPlayRecordGetDigitsImmediately("GCEV_RELEASECALL");
-                    
-                    // need to let call analysis finish
-                    if (!_inCallProgressAnalysis)
-                    {
-                        _logger.LogDebug("Throwing HangupException");
-                        throw new HangupException();
-                    }
                     break;
                 #endregion
 
@@ -1185,7 +1154,12 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     break;
                 case gclib_h.GCEV_EXTENSION:
                     _logger.LogDebug("GCEV_EXTENSION");
-                    _processExtension.HandleExtension(metaEvt);
+                    var doStop = _processExtension.HandleExtension(metaEvt);
+                    if (doStop)
+                    {
+                        _hangupState = HangupStateEnum.Starting;
+                        StopPlayRecordGetDigitsImmediately("GCEV_EXTENSION");
+                    }
                     break;
                 case gclib_h.GCEV_SETCONFIGDATA:
                     _logger.LogDebug("GCEV_SETCONFIGDATA - handled by call to WaitForEvent");
@@ -1211,7 +1185,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         
         private void StopPlayRecordGetDigitsImmediately(string identifier, bool force = false)
         {
-            _logger.LogDebug("StopPlayRecordGetDigitsImmediately({identifie}, {orce})", identifier, force);
+            _logger.LogDebug("StopPlayRecordGetDigitsImmediately({identifier}, {force})", identifier, force);
             if (_inCallProgressAnalysis && force == false)
             {
                 // we are in call progress analysis and don't want to stop CPA
@@ -1224,7 +1198,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
                 result.ThrowIfStandardRuntimeLibraryError(_dxDev);
             }, $"dx_stopch ({identifier})");
-            ClearEventBuffer(_dxDev, 1000);
+
         }
 
         private void LogWarningMessage(METAEVENT metaEvt)
@@ -1243,12 +1217,12 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     callStatusInfo = Marshal.PtrToStructure<GC_INFO>(ptr);
 
                     var ex = new GlobalCallErrorException(callStatusInfo);
-                    _logger.LogWarning(ex.Message);
+                    _logger.LogWarning($"(SIP) - {ex.Message}");
                 }
                 catch (GlobalCallErrorException e)
                 {
                     // for now we will just log an error if we get one
-                    _logger.LogError(e, "Was not expecting this!");
+                    _logger.LogError(e, "(SIP) - Was not expecting this!");
                 }
 
             }
@@ -1266,12 +1240,12 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             if (_callReferenceNumber == 0) return; // line is idle
 
-            if (_disconnectionHappening)
+            if (_dropCallHappening)
             {
                 _logger.LogDebug("A disconnect is already in progress. Can't hangup twice");
                 return;
             }
-            _disconnectionHappening = true;
+            _dropCallHappening = true;
 
             TraceCallStateChange(() =>
             {
@@ -1613,6 +1587,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             try
             {
                 var waitResult = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_PLAY, 300, new[] { _dxDev, _gcDev }); // 5 minutes
+                HandlePossibleHangupInProgress();
                 switch (waitResult)
                 {
                     case EventWaitEnum.Success:
@@ -1630,11 +1605,10 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
             catch (HangupException)
             {
-                _logger.LogDebug("Hangup exception caught from PlaySipFile");
-                ClearEventBuffer(_dxDev, 2000); // Did not get the TDX_PLAY event so clear the buffer so it isn't captured later
+                _logger.LogDebug("(SIP) - Hangup exception caught from PlaySipFile");
                 DXXXLIB_H.dx_fileclose(iott.io_fhandle);
                 _logger.LogDebug(
-                    "Hangup Exception : The file handle has been closed because the call has been hung up.");
+                    "(SIP) - Hangup Exception : The file handle has been closed because the call has been hung up.");
                 throw;
             }
 
@@ -1657,6 +1631,59 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             if ((reason & DXTABLES_H.TM_LCOFF) == DXTABLES_H.TM_LCOFF)
             {
+                throw new HangupException();
+            }
+        }
+
+        private void HandlePossibleHangupInProgress()
+        {
+            _logger.LogDebug("HandlePossibleHangup()");
+
+            var callState = GetCallState();
+            var channelState = DXXXLIB_H.ATDX_STATE(_dxDev);
+
+            if (_callReferenceNumber == 0 || _hangupState == HangupStateEnum.Completed)
+            {
+                _logger.LogDebug("(SIP) - call completed the hangup. callState[channelState] = {callState}[{channelState}]",
+                    callState.CallStateDescription(),
+                    channelState.ChannelStateDescription());
+                throw new HangupException();
+            }
+            if (_hangupState == HangupStateEnum.Starting)
+            {
+                _logger.LogDebug("(SIP) - Waiting for the hangup to finish. callState[channelState] = {callState}[{channelState}]",
+                    callState.CallStateDescription(),
+                    channelState.ChannelStateDescription());
+
+                var waitResult = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 70, new[] { _dxDev, _gcDev }); // 70 seconds                                                                                                                        
+
+                switch (waitResult)
+                {
+                    case EventWaitEnum.Success:
+                        // this should never happen!
+                        _logger.LogDebug("(SIP) - The hangup method completed as expected.");
+                        break;
+                    case EventWaitEnum.Expired:
+                        _logger.LogWarning("(SIP) - The hangup method did not receive the releaseCall event");
+                        ResetLineDev();
+                        break;
+                    case EventWaitEnum.Error:
+                        _logger.LogError("(SIP) - The hangup method failed waiting for the releaseCall event");
+                        break;
+                }
+                throw new HangupException();
+            }
+
+            if (callState != gclib_h.GCST_CONNECTED)
+            {
+                _logger.LogWarning("(SIP - Line isn't connected. Going to hang up. callState[channelState] = {callState}[{channelState}]",
+                    callState.CallStateDescription(), 
+                    channelState.ChannelStateDescription());
+
+                // its possible that we got here because because of a waitforevent exipiry. In which case we did not get the TDX_* event.
+                StopPlayRecordGetDigitsImmediately("Line isn't connected");
+                ClearStopPlayRecordGetDigitEvents(_dxDev, 1000);
+
                 throw new HangupException();
             }
         }
@@ -1685,22 +1712,16 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             var callState = 0; /* current state of call */
             var result = gclib_h.gc_GetCallState(_callReferenceNumber, ref callState);
-            result.ThrowIfGlobalCallError();
+            result.LogIfGlobalCallError(_logger);
             return callState;
         }
 
         /*
-         * Clear Out the Event Buffer by consuming all the events until the timeout is thrown to indicate that
-         * no events are left in the event buffer.
-         * 
-         * This is the only way I found to reliably clear out the event buffer.  
-         * This consumes events for the device until I receive an event timout.  
-         * This ensures that no events are left in the buffer before I need to consume 
-         * an event in another method (syncronously or asyncronously).
+         * Clears out all events related to stop, play, record and getDigits. Happens right after dx_stopch is called.
          */
-        private void ClearEventBuffer(int devh, int timeoutMilli = 50)
+        private void ClearStopPlayRecordGetDigitEvents(int devh, int timeoutMilli = 50)
         {
-            _logger.LogDebug("ClearEventBuffer({0}, {1})", devh, timeoutMilli);
+            _logger.LogDebug("ClearStopPlayRecordGetDigitEvents({0}, {1})", devh, timeoutMilli);
             var handler = 0;
             do
             {
@@ -1776,7 +1797,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             // Note: async does not work becaues digit is marshalled out immediately after dx_getdig is complete
             // not when event is found. Would have to use DV_DIGIT* and unsafe code. or another way?
-            //var result = dx_getdig(devh, ref tpt[0], out digit, EV_SYNC);
+            // var result = dx_getdig(devh, ref tpt[0], out digit, EV_SYNC);
             var result = DXXXLIB_H.dx_getdig(devh, ref tpt[0], digitPtr, DXXXLIB_H.EV_ASYNC);
             if (result == -1)
             {
@@ -1790,11 +1811,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             try
             {
                 waitResult = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_GETDIG, 60, new[] { _dxDev, _gcDev }); // 1 minute
+                HandlePossibleHangupInProgress();
             }
             catch (HangupException)
             {
-                _logger.LogDebug("Hangup exception caught from GetDigits");
-                ClearEventBuffer(_dxDev, 2000); // Did not get the TDX_GETDIG event so clear the buffer so it isn't captured later
+                _logger.LogDebug("(SIP) - Hangup exception caught from GetDigits");
                 _unmanagedMemoryServicePerCall.Free(digitPtr);
                 throw;
             }

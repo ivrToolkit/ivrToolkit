@@ -361,7 +361,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
                 ClearDigits(_dxDev); // make sure we are starting with an empty digit buffer
 
-                return DialWithCpa(_dxDev, number, answeringMachineLengthInMilliseconds);
+                return DialWithCpa(number, answeringMachineLengthInMilliseconds);
 
             }
             finally
@@ -374,13 +374,12 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         /// <summary>
         /// Dials a phone number using call progress analysis.
         /// </summary>
-        /// <param name="devh">The handle for the Dialogic line.</param>
         /// <param name="number">The phone number to dial.</param>
         /// <param name="answeringMachineLengthInMilliseconds">Answering machine length in milliseconds</param>
         /// <returns>CallAnalysis Enum</returns>
-        private CallAnalysis DialWithCpa(int devh, string number, int answeringMachineLengthInMilliseconds)
+        private CallAnalysis DialWithCpa(string number, int answeringMachineLengthInMilliseconds)
         {
-            _logger.LogDebug("(SIP) - DialWithCpa({0}, {1}, {2})", devh, number, answeringMachineLengthInMilliseconds);
+            _logger.LogDebug("(SIP) - DialWithCpa({0}, {1})", number, answeringMachineLengthInMilliseconds);
 
             var cap = GetCap();
 
@@ -395,8 +394,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             TraceCallStateChange(() =>
             {
-                var result = DXXXLIB_H.dx_dial(devh, "", ref cap, DXCALLP_H.DX_CALLP | DXXXLIB_H.EV_ASYNC);
-                result.ThrowIfStandardRuntimeLibraryError(devh);
+                var result = DXXXLIB_H.dx_dial(_dxDev, "", ref cap, DXCALLP_H.DX_CALLP | DXXXLIB_H.EV_ASYNC);
+                result.ThrowIfStandardRuntimeLibraryError(_dxDev);
             }, "dx_dial");
 
             var eventWaitEnum = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_CALLP, 60, new[] { _dxDev, _gcDev }); // 60 seconds
@@ -423,7 +422,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var callState = GetCallState();
 
             // get the CPA result
-            var callProgressResult = DXXXLIB_H.ATDX_CPTERM(devh);
+            var callProgressResult = DXXXLIB_H.ATDX_CPTERM(_dxDev);
 
             _logger.LogDebug("(SIP) - Call Progress Analysis Result - {0}:{1} - {2}", callProgressResult, 
                 callProgressResult.CallProgressDescription(),
@@ -435,56 +434,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 case DXCALLP_H.CR_CEPT:
                     return CallAnalysis.OperatorIntercept;
                 case DXCALLP_H.CR_CNCT:
-                    var connType = DXXXLIB_H.ATDX_CONNTYPE(devh);
-                    switch (connType)
-                    {
-                        case DXCALLP_H.CON_CAD:
-                            _logger.LogDebug("Connection due to cadence break ");
-                            break;
-                        case DXCALLP_H.CON_DIGITAL:
-                            _logger.LogDebug("con_digital");
-                            break;
-                        case DXCALLP_H.CON_LPC:
-                            _logger.LogDebug("Connection due to loop current");
-                            break;
-                        case DXCALLP_H.CON_PAMD: // ca_intflg = 8 PAMD + OPTEN
-                            _logger.LogDebug("Connection due to Positive Answering Machine Detection");
-                            return CallAnalysis.AnsweringMachine;
-                        case DXCALLP_H.CON_PVD:
-                            _logger.LogDebug("Connection due to Positive Voice Detection");
-                            break;
-                        default:
-                            _logger.LogDebug("Unknown connection type: {connType}", connType);
-                            break;
-                    }
-                    if (callState != gclib_h.GCST_CONNECTED)
-                    {
-                        if (_callReferenceNumber == 0)
-                        {
-                            // this can happen if someone picks up and then immediately hangs up. Treat as a noAnswer
-                            // the software will hang up even before call progress has completed
-                            _logger.LogDebug("(SIP) - CPA result = connected but crn = 0. This happens if a hangup is detected before call progress has completed. Will treat this as a NoAnswer");
-                            return CallAnalysis.NoAnswer;
-                        }
-
-                        if (callState == gclib_h.GCST_ALERTING)
-                        {
-                            _logger.LogDebug("(SIP) - CPA result = connected but state = alerting. This happens if a callee rings then immediately disconnects");
-                            // this can happen if the callee rings and then immediately disconnectes
-                            // it leaves the state in alerting
-                            var response = _voiceProperties.ConnectedAlertHandling;
-                            if (response != CallAnalysis.Connected)
-                            {
-                                // default is NoAnswer
-                                return response;
-                            }
-                        } else
-                        {
-                            _logger.LogWarning("(SIP) - CPA result = connected but state = {0}. Hangup and return CallAnalysis.Error", callState.CallStateDescription());
-                            return CallAnalysis.Error;
-                        }
-                    }
-                    return CallAnalysis.Connected;
+                    return HandleCallProgressConnected(callState);
                 case DXCALLP_H.CR_ERROR:
                     ResetLineDev();
                     return CallAnalysis.Error;
@@ -513,6 +463,67 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
 
             throw new VoiceException($"Unknown dail response: {callProgressResult}");
+        }
+
+        // callProgressResult = connected. Doesn't mean the call state is connected.
+        private CallAnalysis HandleCallProgressConnected(int callState)
+        {
+            var connType = DXXXLIB_H.ATDX_CONNTYPE(_dxDev);
+            // display the reason for the connection from CPA
+            LogHowConnected(connType);
+
+            if (callState == gclib_h.GCST_CONNECTED)
+            {
+                return connType == DXCALLP_H.CON_PAMD ? CallAnalysis.AnsweringMachine : CallAnalysis.Connected;
+            }
+
+            // callProgressResult result is connected but the call state is not connected
+            if (_callReferenceNumber == 0)
+            {
+                // this can happen if someone picks up and then immediately hangs up. Treat as a noAnswer
+                // the software will hang up even before call progress has completed
+                _logger.LogDebug(
+                    "(SIP) - CPA result = connected but crn = 0. This happens if a hangup is detected before call progress has completed. Will treat this as a NoAnswer");
+                return CallAnalysis.NoAnswer;
+            }
+
+            if (callState == gclib_h.GCST_ALERTING)
+            {
+                _logger.LogDebug("(SIP) - CPA result = connected but state = alerting.");
+                // this can happen if the callee rings and then immediately disconnectes
+                // it leaves the state in alerting
+                return CallAnalysis.NoAnswer;
+            }
+
+            _logger.LogWarning(
+                "(SIP) - CPA result = connected but state = {0}. Hangup and return CallAnalysis.Error",
+                callState.CallStateDescription());
+            return CallAnalysis.Error;
+        }
+
+        private void LogHowConnected(int connType)
+        {
+            switch (connType)
+            {
+                case DXCALLP_H.CON_CAD:
+                    _logger.LogDebug("Connection due to cadence break ");
+                    break;
+                case DXCALLP_H.CON_DIGITAL:
+                    _logger.LogDebug("con_digital");
+                    break;
+                case DXCALLP_H.CON_LPC:
+                    _logger.LogDebug("Connection due to loop current");
+                    break;
+                case DXCALLP_H.CON_PAMD: // ca_intflg = 8 PAMD + OPTEN
+                    _logger.LogDebug("Connection due to Positive Answering Machine Detection");
+                    break;
+                case DXCALLP_H.CON_PVD:
+                    _logger.LogDebug("Connection due to Positive Voice Detection");
+                    break;
+                default:
+                    _logger.LogDebug("Unknown connection type: {connType}", connType);
+                    break;
+            }
         }
 
         /**

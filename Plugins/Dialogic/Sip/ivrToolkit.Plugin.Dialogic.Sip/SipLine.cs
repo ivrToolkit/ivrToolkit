@@ -782,6 +782,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private void RecordToFile(string filename, string terminators, DX_XPB xpb, int timeoutMilli)
         {
             _logger.LogDebug("RecordToFile({0}, {1}, {2}, {3})", filename, terminators, xpb, timeoutMilli);
+            HandlePossibleHangupInProgress();
             DisplayCallState();
             FlushDigitBuffer();
 
@@ -1536,6 +1537,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private void PlaySipFile(string filename, string terminators)
         {
             _logger.LogDebug("PlaySipFile({0}, {1})", filename, terminators);
+            HandlePossibleHangupInProgress();
             DisplayCallState();
 
             /* set up DV_TPT */
@@ -1691,7 +1693,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     callState.CallStateDescription(), 
                     channelState.ChannelStateDescription());
 
-                // its possible that we got here because because of a waitforevent exipiry. In which case we did not get the TDX_* event.
+                // it's possible that we got here because of a waitforevent exipiry. In which case we did not get the TDX_ event.
                 StopPlayRecordGetDigitsImmediately("Line isn't connected");
                 ClearStopPlayRecordGetDigitEvents(_dxDev, 1000);
 
@@ -1788,6 +1790,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         {
             _logger.LogDebug("NumberOfDigits: {0} terminators: {1} timeout: {2}",
                 numberOfDigits, terminators, timeout);
+            HandlePossibleHangupInProgress();
             DisplayCallState();
 
             var state = DXXXLIB_H.ATDX_STATE(devh);

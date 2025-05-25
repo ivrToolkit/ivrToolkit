@@ -371,6 +371,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
         }
 
+        public CallStateProgressEnum GetCallStateProgress()
+        {
+            return _stateProgress.GetCallStateProgress();
+        }
+
         /// <summary>
         /// Dials a phone number using call progress analysis.
         /// </summary>

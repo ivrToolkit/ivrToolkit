@@ -115,6 +115,12 @@ namespace ivrToolkit.Core
             return result;
         }
 
+        public CallStateProgressEnum GetCallStateProgress()
+        {
+            _logger.LogDebug("GetCallStateProgress()");
+            return _lineImplementation.GetCallStateProgress();
+        }
+
         #region ILineManagement region
 
         void IIvrLineManagement.TriggerDispose()

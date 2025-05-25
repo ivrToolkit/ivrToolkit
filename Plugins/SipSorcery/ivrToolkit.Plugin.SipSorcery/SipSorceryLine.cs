@@ -110,6 +110,11 @@ namespace ivrToolkit.Plugin.SipSorcery
             return DialAsync(_voiceProperties.SipAlias, _voiceProperties.SipPassword, to).GetAwaiter().GetResult(); // blocking
         }
 
+        public CallStateProgressEnum GetCallStateProgress()
+        {
+            throw new NotImplementedException();
+        }
+
         private async Task<CallAnalysis> DialAsync(string user, string pass, string to)
         {
             _voipMediaSession = new VoIPMediaSession();

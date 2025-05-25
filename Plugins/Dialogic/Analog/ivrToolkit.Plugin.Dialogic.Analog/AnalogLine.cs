@@ -128,6 +128,11 @@ namespace ivrToolkit.Plugin.Dialogic.Analog
 
         }
 
+        public CallStateProgressEnum GetCallStateProgress()
+        {
+            throw new NotImplementedException();
+        }
+
         private void SetDefaultFileType() {
             _currentXpb = new DialogicDef.DX_XPB
                 {

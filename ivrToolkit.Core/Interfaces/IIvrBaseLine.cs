@@ -60,6 +60,13 @@ namespace ivrToolkit.Core.Interfaces
         /// <param name="answeringMachineLengthInMilliseconds">A greeting longer than this time indicates a possible answering machine.</param>
         /// <returns>The Call analysis enumeration</returns>
         CallAnalysis Dial(string number, int answeringMachineLengthInMilliseconds);
+        
+        /// <summary>
+        /// A bitwise collection of call out state progress. You can use this to help decide
+        /// how you want to handle NoRingBack calls. It is currently only for the Dialogic SIP plugin.
+        /// </summary>
+        /// <returns></returns>
+        CallStateProgressEnum GetCallStateProgress();
 
         /// <summary>
         /// Plays a wav file which must be in the format of 8000hz 1 channel unsigned 8 bit PCM.

@@ -422,16 +422,18 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     return CallAnalysis.Error;
             }
             
-            _logger.LogDebug("(SIP) - Last event was: {lastEventStat}, last call state was: {_lastCallState}", 
+            _logger.LogDebug("(SIP) - Last event was: {lastEventState}, last call state was: {lastCallState}", 
                 _stateProgress.LastEventState.EventTypeDescription(), _stateProgress.LastCallState.CallStateDescription());
+
             var callState = GetCallState();
+            var channelState = DXXXLIB_H.ATDX_STATE(_dxDev);
 
             // get the CPA result
             var callProgressResult = DXXXLIB_H.ATDX_CPTERM(_dxDev);
 
-            _logger.LogDebug("(SIP) - Call Progress Analysis Result - {0}:{1} - {2}", callProgressResult, 
+            _logger.LogDebug("(SIP) - Call Progress Analysis Result - {callResult} - {callState}[{channelState}] - ({events})", 
                 callProgressResult.CallProgressDescription(),
-                callState.CallStateDescription());
+                callState.CallStateDescription(), channelState.ChannelStateDescription(), _stateProgress.GetCallStateProgress());
             switch (callProgressResult)
             {
                 case DXCALLP_H.CR_BUSY:

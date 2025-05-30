@@ -21,7 +21,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.Extensions
         }
         public static void ThrowIfGlobalCallError(this int returnCode)
         {
-            if (returnCode != -1) return; // no error
+            if (returnCode >= 0) return; // no error
 
             var gcErrorInfo = new GC_INFO();
 
@@ -33,7 +33,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.Extensions
                 Marshal.StructureToPtr(gcErrorInfo, pUnmanagedMemory, false);
 
                 var result = gclib_h.gc_ErrorInfo(pUnmanagedMemory);
-                if (result == -1) throw new GlobalCallErrorException();
+                if (result < 0) throw new GlobalCallErrorException();
 
                 gcErrorInfo = Marshal.PtrToStructure<GC_INFO>(pUnmanagedMemory);
 
@@ -48,7 +48,7 @@ namespace ivrToolkit.Plugin.Dialogic.Common.Extensions
 
         public static void ThrowIfStandardRuntimeLibraryError(this int returnCode, int devh)
         {
-            if (returnCode == -1)
+            if (returnCode < 0)
             {
                 var errMsgPtr = srllib_h.ATDV_ERRMSGP(devh);
                 throw new StandardRuntimeLibraryException(errMsgPtr.IntPtrToString());

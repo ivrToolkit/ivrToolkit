@@ -40,6 +40,8 @@ public class DialogicSipVoiceProperties : DialogicVoiceProperties, IDisposable
     private const string SIP_CONNECT_ALERT_HANDLING = "sip.connectedAlertHandling";
     private const string SIP_CONNECT_ALERT_HANDLING_DEFAULT = "NoAnswer";
 
+    private const string ATTEMPTED_RECOVERY_THROW_ON_FAILURE = "attemptedRecovery.ThrowOnFailure";
+    private const string ATTEMPTED_RECOVERY_THROW_ON_FAILURE_DEFAULT = "true";
 
     public DialogicSipVoiceProperties(ILoggerFactory loggerFactory, string fileName) : base(loggerFactory, fileName)
     {
@@ -47,6 +49,13 @@ public class DialogicSipVoiceProperties : DialogicVoiceProperties, IDisposable
         _logger.LogDebug("Ctr(ILoggerFactory loggerFactory, {0})", fileName);
     }
 
+    /// <summary>
+    /// true if the dial-out should throw an exception when a recovery attempt fails.
+    /// Just before gc_makeCall() is called, the call state is checked. If not in the correct state, an AttemptRecovery() is made.
+    /// </summary>
+    public bool AttemptedRecoveryThrowOnFailure => bool.Parse(GetProperty(ATTEMPTED_RECOVERY_THROW_ON_FAILURE, ATTEMPTED_RECOVERY_THROW_ON_FAILURE_DEFAULT));
+
+    
     /// <summary>
     /// Number to add the line in order to get the channel.
     /// </summary>

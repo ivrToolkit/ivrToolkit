@@ -621,7 +621,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             if (worked)
             {
-                _logger.LogDebug("(SIP) - AttemptRecovery() - Successfully recovered from call state: {callState}", callSateDescription);
+                _logger.LogDebug("(SIP) - AttemptRecovery() - Successfully recovered.");
                 return;
             }
 
@@ -630,9 +630,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             // dang, at this point everything has failed!!!
             if (throwOnFailure)
                 throw new RecoveryFailedException(
-                    $"AttemptRecovery() - Failed to recover from call state: {callSateDescription}. " +
+                    "AttemptRecovery() - Failed to recover. " +
                     "The line is in an unknown state. Please reset the line or restart the application.");
-            
         }
         
         private bool AttemptRecoveryDropCall()
@@ -691,7 +690,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             var result = 0;
             TraceCallStateChange(() =>
             {
-                result = gclib_h.gc_ResetLineDev(_dxDev, DXXXLIB_H.EV_ASYNC);
+                result = gclib_h.gc_ResetLineDev(_gcDev, DXXXLIB_H.EV_ASYNC);
                 result.LogIfGlobalCallError(_logger);
             }, "gc_ResetLineDev (from AttemptRecovery)");
             
@@ -1271,9 +1270,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     }
                     break;
                 case gclib_h.GCEV_TASKFAIL:
-                    _logger.LogWarning("GCEV_TASKFAIL");
                     LogWarningMessage(metaEvt);
-                    throw new TaskFailException();
+                    break;
                 case gclib_h.GCEV_ALERTING:
                 case gclib_h.GCEV_UNBLOCKED:
                 case gclib_h.GCEV_ANSWERED:

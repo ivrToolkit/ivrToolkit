@@ -97,12 +97,6 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             Open();
             SetDefaultFileType();
-
-            // I don't think anyone uses this with SIP.
-            if (_voiceProperties.PreTestDialTone)
-            {
-                AddCustomTone(_voiceProperties.DialTone); // adds it and then disables it
-            }
         }
 
         private void Open()
@@ -329,7 +323,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     break;
                 case EventWaitEnum.Expired:
                     _logger.LogWarning("(SIP) - The hangup method did not receive the releaseCall event");
-                    AttemptRecovery(false);
+                    AttemptRecovery(false, false);
                     break;
                 case EventWaitEnum.Error:
                     _logger.LogError("(SIP) - The hangup method failed waiting for the releaseCall event");
@@ -413,12 +407,12 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 case EventWaitEnum.Expired:
                     var message = $"(SIP) - Check CPA duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Timed out waiting for TDX_CALLP";
                     _logger.LogError(message);
-                    AttemptRecovery(false);
+                    AttemptRecovery(false, false);
                     return CallAnalysis.Error;
                 case EventWaitEnum.Error:
                     message = $"(SIP) - Check CPA duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Failed waiting for TDX_CALLP";
                     _logger.LogError(message);
-                    AttemptRecovery(false);
+                    AttemptRecovery(false, false);
                     return CallAnalysis.Error;
             }
             
@@ -548,7 +542,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             if (_callReferenceNumber != 0)
             {
-                AttemptRecovery(_voiceProperties.AttemptedRecoveryThrowOnFailure);
+                // This is the one, that I want to try absolutely everything and then throw an error if it doesn't work
+                AttemptRecovery(_voiceProperties.AttemptedRecoveryTryReopen, _voiceProperties.AttemptedRecoveryThrowOnFailure);
             }
 
             var gcParmBlkp = IntPtr.Zero;
@@ -602,7 +597,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         }
 
         // we were about to make a call but the call state is incorrect. Try and recover from it.
-        private void AttemptRecovery(bool throwOnFailure)
+        private void AttemptRecovery(bool tryReopen, bool throwOnFailure)
         {
             var callSateDescription = GetCallState().CallStateDescription();
             _logger.LogDebug("(SIP) - AttemptRecovery() - call State: {callState}", callSateDescription);
@@ -626,7 +621,25 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
 
             if (AttemptRecoveryResetLineDev()) return;
-            
+
+            if (tryReopen)
+            {
+                _logger.LogWarning("Last ditch attempt to recover the line. I am going to dispose and recreate it.");
+                try
+                {
+                    Dispose();
+                    Start();
+                    return; // i think it worked
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Unable to dispose and restart the line!");
+                    throw new RecoveryFailedException(
+                        $"AttemptRecovery() - Failed to dispose and restart. This line is now hooped. {ex.Message}");
+                }
+
+            }
+
             // dang, at this point everything has failed!!!
             if (throwOnFailure)
                 throw new RecoveryFailedException(
@@ -1772,7 +1785,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                         break;
                     case EventWaitEnum.Expired:
                         _logger.LogWarning("(SIP) - The hangup method did not receive the releaseCall event");
-                        AttemptRecovery(false);
+                        AttemptRecovery(false, false);
                         break;
                     case EventWaitEnum.Error:
                         _logger.LogError("(SIP) - The hangup method failed waiting for the releaseCall event");

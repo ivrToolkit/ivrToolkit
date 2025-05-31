@@ -40,6 +40,9 @@ public class DialogicSipVoiceProperties : DialogicVoiceProperties, IDisposable
     private const string SIP_CONNECT_ALERT_HANDLING = "sip.connectedAlertHandling";
     private const string SIP_CONNECT_ALERT_HANDLING_DEFAULT = "NoAnswer";
 
+    private const string ATTEMPTED_RECOVERY_TRY_REOPEN = "attemptedRecovery.TryReopen";
+    private const string ATTEMPTED_RECOVERY_TRY_REOPEN_DEFAULT = "true";
+
     private const string ATTEMPTED_RECOVERY_THROW_ON_FAILURE = "attemptedRecovery.ThrowOnFailure";
     private const string ATTEMPTED_RECOVERY_THROW_ON_FAILURE_DEFAULT = "true";
 
@@ -50,12 +53,18 @@ public class DialogicSipVoiceProperties : DialogicVoiceProperties, IDisposable
     }
 
     /// <summary>
+    /// true if all steps fail, try to dispose and restart the line
+    /// Just before gc_makeCall() is called, the call state is checked. If not in the correct state, an AttemptRecovery() is made.
+    /// </summary>
+    public bool AttemptedRecoveryTryReopen => bool.Parse(GetProperty(ATTEMPTED_RECOVERY_TRY_REOPEN, ATTEMPTED_RECOVERY_TRY_REOPEN_DEFAULT));
+
+    /// <summary>
     /// true if the dial-out should throw an exception when a recovery attempt fails.
     /// Just before gc_makeCall() is called, the call state is checked. If not in the correct state, an AttemptRecovery() is made.
     /// </summary>
     public bool AttemptedRecoveryThrowOnFailure => bool.Parse(GetProperty(ATTEMPTED_RECOVERY_THROW_ON_FAILURE, ATTEMPTED_RECOVERY_THROW_ON_FAILURE_DEFAULT));
 
-    
+
     /// <summary>
     /// Number to add the line in order to get the channel.
     /// </summary>

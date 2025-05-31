@@ -675,7 +675,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             {
                 _logger.LogDebug("(SIP) - AttemptRecovery() - Successfully dropped the call. Now waiting 10 seconds for GCEV_RELEASECALL event");
                 var eventResult = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, new[] { _dxDev, _gcDev }); // wait for the release call event
-                return eventResult == EventWaitEnum.Success;
+                if (eventResult == EventWaitEnum.Success) return true;
             }
 
             // we can't do a drop call without a call reference number
@@ -1261,7 +1261,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     TraceCallStateChange(() =>
                     {
                         var releaseCallResult = gclib_h.gc_ReleaseCallEx(_callReferenceNumber, DXXXLIB_H.EV_ASYNC);
-                        releaseCallResult.ThrowIfGlobalCallError();
+                        releaseCallResult.LogIfGlobalCallError(_logger);
                     }, "gc_ReleaseCallEx");
                     
                     break;

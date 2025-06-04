@@ -272,10 +272,16 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             try
             {
-                _logger.LogDebug("(SIP) - Begin: {operationName} - call state[channel state]: {preCallState}[{preChannelState}]", operationName,
+                _logger.LogDebug(
+                    "(SIP) - Begin: {operationName} - call state[channel state]: {preCallState}[{preChannelState}]",
+                    operationName,
                     preCallState.CallStateDescription(),
                     preChannelState.ChannelStateDescription());
                 operation();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "From TraceCallStateChange");
             }
             finally
             {
@@ -629,7 +635,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 {
                     Dispose();
                     Start();
-                    return; // i think it worked
+                    return; // I think it worked
                 }
                 catch (Exception ex)
                 {
@@ -691,7 +697,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 result = gclib_h.gc_ReleaseCallEx(_callReferenceNumber, DXXXLIB_H.EV_ASYNC);
                 result.LogIfGlobalCallError(_logger);
             }, "gc_ReleaseCallEx (from AttemptRecovery)");
-            if (result < 0) return false;
+
+            // wait for the releasecall event anyway.
+            //if (result < 0) return false;
 
             _logger.LogDebug("(SIP) - AttemptRecovery() - Waiting 10 seconds for GCEV_RELEASECALL event");
             var releaseCallResult = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, new[] { _dxDev, _gcDev });

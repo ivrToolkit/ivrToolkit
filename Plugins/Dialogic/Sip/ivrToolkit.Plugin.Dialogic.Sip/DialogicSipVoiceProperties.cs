@@ -40,11 +40,19 @@ public class DialogicSipVoiceProperties : DialogicVoiceProperties, IDisposable
     private const string SIP_CONNECT_ALERT_HANDLING = "sip.connectedAlertHandling";
     private const string SIP_CONNECT_ALERT_HANDLING_DEFAULT = "NoAnswer";
 
-    private const string ATTEMPTED_RECOVERY_TRY_REOPEN = "attemptedRecovery.TryReopen";
-    private const string ATTEMPTED_RECOVERY_TRY_REOPEN_DEFAULT = "true";
+    //-----------------------------------------------------------------------------
 
-    private const string ATTEMPTED_RECOVERY_THROW_ON_FAILURE = "attemptedRecovery.ThrowOnFailure";
-    private const string ATTEMPTED_RECOVERY_THROW_ON_FAILURE_DEFAULT = "true";
+    private const string ATTEMPT_RECOVERY_START_POSITION = "attemptRecovery.StartPosition";
+    private const string ATTEMPT_RECOVERY_START_POSITION_DEFAULT = "DropCall";
+
+    private const string ATTEMPT_RECOVERY_RESETLINEDEV_SUCCESS = "attemptRecovery.ReturnOnResetLineDevSuccess";
+    private const string ATTEMPT_RECOVERY_RESETLINEDEV_SUCCESS_DEFAULT = "True";
+
+    private const string ATTEMPT_RECOVERY_TRY_REOPEN_ON = "attemptRecovery.TryReopenOn";
+    private const string ATTEMPT_RECOVERY_TRY_REOPEN_ON_DEFAULT = "MakeCall";
+
+    private const string ATTEMPT_RECOVERY_THROW_FAILURE_ON = "attemptRecovery.ThrowFailureOn";
+    private const string ATTEMPT_RECOVERY_THROW_FAILURE_ON_DEFAULT = "MakeCall";
 
     public DialogicSipVoiceProperties(ILoggerFactory loggerFactory, string fileName) : base(loggerFactory, fileName)
     {
@@ -52,18 +60,30 @@ public class DialogicSipVoiceProperties : DialogicVoiceProperties, IDisposable
         _logger.LogDebug("Ctr(ILoggerFactory loggerFactory, {0})", fileName);
     }
 
-    /// <summary>
-    /// true if all steps fail, try to dispose and restart the line
-    /// Just before gc_makeCall() is called, the call state is checked. If not in the correct state, an AttemptRecovery() is made.
-    /// </summary>
-    public bool AttemptedRecoveryTryReopen => bool.Parse(GetProperty(ATTEMPTED_RECOVERY_TRY_REOPEN, ATTEMPTED_RECOVERY_TRY_REOPEN_DEFAULT));
+    private T GetEnum<T>(string key, string @default) where T : struct, Enum
+    {
+        var result = GetProperty(key, @default); // Use the method's default parameter
+        if (string.IsNullOrWhiteSpace(result))
+            result = @default;
 
-    /// <summary>
-    /// true if the dial-out should throw an exception when a recovery attempt fails.
-    /// Just before gc_makeCall() is called, the call state is checked. If not in the correct state, an AttemptRecovery() is made.
-    /// </summary>
-    public bool AttemptedRecoveryThrowOnFailure => bool.Parse(GetProperty(ATTEMPTED_RECOVERY_THROW_ON_FAILURE, ATTEMPTED_RECOVERY_THROW_ON_FAILURE_DEFAULT));
+        if (Enum.TryParse<T>(result, ignoreCase: true, out var parsedEnum))
+        {
+            return parsedEnum;
+        }
 
+        throw new Exception($"Invalid {key}: {result}");
+    }
+
+    public AttemptRecoveryStartPositions AttemptRecoveryStartPosition => 
+        GetEnum<AttemptRecoveryStartPositions>(ATTEMPT_RECOVERY_START_POSITION, ATTEMPT_RECOVERY_START_POSITION_DEFAULT);
+
+    public bool AttemptRecoveryReturnOnResetLineDevSuccess => bool.Parse(GetProperty(ATTEMPT_RECOVERY_RESETLINEDEV_SUCCESS, ATTEMPT_RECOVERY_RESETLINEDEV_SUCCESS_DEFAULT));
+
+    public AttemptRecoveryWhen AttemptRecoveryTryReopenOn =>
+        GetEnum<AttemptRecoveryWhen>(ATTEMPT_RECOVERY_TRY_REOPEN_ON, ATTEMPT_RECOVERY_TRY_REOPEN_ON_DEFAULT);
+
+    public AttemptRecoveryWhen AttemptRecoveryThrowFailureOn =>
+        GetEnum<AttemptRecoveryWhen>(ATTEMPT_RECOVERY_THROW_FAILURE_ON, ATTEMPT_RECOVERY_THROW_FAILURE_ON_DEFAULT);
 
     /// <summary>
     /// Number to add the line in order to get the channel.
@@ -137,4 +157,19 @@ public class DialogicSipVoiceProperties : DialogicVoiceProperties, IDisposable
         _logger.LogDebug("Dispose()");
         base.Dispose();
     }
+
+}
+public enum AttemptRecoveryStartPositions
+{
+    DropCall,
+    ReleaseCall,
+    ResetLineDev,
+    Disabled
+}
+
+public enum AttemptRecoveryWhen
+{
+    None,
+    MakeCall,
+    All
 }

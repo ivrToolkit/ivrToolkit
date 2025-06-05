@@ -66,7 +66,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             Completed
         }
 
-        private HangupStateEnum _hangupState = HangupStateEnum.Completed;
+        private HangupStateEnum _hangupState = HangupStateEnum.NotHungUp;
 
         // ReSharper disable once InconsistentNaming
         private static readonly object _lockObject = new();
@@ -84,6 +84,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _eventWaiter.OnMetaEvent += MetaEvent;
 
             _processExtension = new ProcessExtension(loggerFactory);
+
+            _logger.LogDebug("attemptRecovery.StartPosition               = {startPosition}", voiceProperties.AttemptRecoveryStartPosition);
+            _logger.LogDebug("attemptRecovery.ReturnOnResetLineDevSuccess = {resetLineDevSuccess}", voiceProperties.AttemptRecoveryReturnOnResetLineDevSuccess);
+            _logger.LogDebug("attemptRecovery.TryReopenOn                 = {tryReopenOn}", voiceProperties.AttemptRecoveryTryReopenOn);
+            _logger.LogDebug("attemptRecovery.ThrowOnFailureOn            = {throwOnFailureOn}", voiceProperties.AttemptRecoveryThrowFailureOn);
 
             Start();
         }
@@ -329,7 +334,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     break;
                 case EventWaitEnum.Expired:
                     _logger.LogWarning("(SIP) - The hangup method did not receive the releaseCall event");
-                    AttemptRecovery(false, false);
+                    AttemptRecovery();
                     break;
                 case EventWaitEnum.Error:
                     _logger.LogError("(SIP) - The hangup method failed waiting for the releaseCall event");
@@ -404,6 +409,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }, "dx_dial");
 
             var eventWaitEnum = _eventWaiter.WaitForEvent(DXXXLIB_H.TDX_CALLP, 60, new[] { _dxDev, _gcDev }); // 60 seconds
+            if (eventWaitEnum == EventWaitEnum.Success) _inCallProgressAnalysis = false;
 
             switch (eventWaitEnum)
             {
@@ -413,12 +419,12 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 case EventWaitEnum.Expired:
                     var message = $"(SIP) - Check CPA duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Timed out waiting for TDX_CALLP";
                     _logger.LogError(message);
-                    AttemptRecovery(false, false);
+                    AttemptRecovery();
                     return CallAnalysis.Error;
                 case EventWaitEnum.Error:
                     message = $"(SIP) - Check CPA duration = {(DateTimeOffset.Now - startTime).TotalSeconds} seconds. Failed waiting for TDX_CALLP";
                     _logger.LogError(message);
-                    AttemptRecovery(false, false);
+                    AttemptRecovery();
                     return CallAnalysis.Error;
             }
             
@@ -434,6 +440,30 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _logger.LogDebug("(SIP) - Call Progress Analysis Result - {callResult} - {callState}[{channelState}] - ({events})", 
                 callProgressResult.CallProgressDescription(),
                 callState.CallStateDescription(), channelState.ChannelStateDescription(), _stateProgress.GetCallStateProgress());
+
+
+            if (_hangupState == HangupStateEnum.Starting)
+            {
+                // we should attempt to finish the hangup here
+                try
+                {
+                    // I have seen this scenario:
+                    //  - gc_releaseCallEx executed
+                    //  - CPA finishes before receiving GCEV_RELEASECALL
+                    // 
+                    // Without this next step, call state is probably alerting and I would return NoAnswer.
+                    //    then an hangup would occur which tries to do a gc_dropCall which will fail and probably
+                    //    trigger a AttemptRecovery() when it wasn't needed.
+                    HandlePossibleHangupInProgress(true); // ignore state check like alerting for example
+                }
+                catch (HangupException)
+                {
+                    _logger.LogDebug("Hangup caught during CPA");
+                    return CallAnalysis.NoAnswer;
+                }
+            }
+
+
             switch (callProgressResult)
             {
                 case DXCALLP_H.CR_BUSY:
@@ -549,7 +579,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             if (_callReferenceNumber != 0)
             {
                 // This is the one, that I want to try absolutely everything and then throw an error if it doesn't work
-                AttemptRecovery(_voiceProperties.AttemptedRecoveryTryReopen, _voiceProperties.AttemptedRecoveryThrowOnFailure);
+                AttemptRecovery(true); // signal it is for gc_makeCall
             }
 
             var gcParmBlkp = IntPtr.Zero;
@@ -603,10 +633,16 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         }
 
         // we were about to make a call but the call state is incorrect. Try and recover from it.
-        private void AttemptRecovery(bool tryReopen, bool throwOnFailure)
+        private void AttemptRecovery(bool makeCall = false)
         {
             var callSateDescription = GetCallState().CallStateDescription();
             _logger.LogDebug("(SIP) - AttemptRecovery() - call State: {callState}", callSateDescription);
+
+            if (_voiceProperties.AttemptRecoveryStartPosition == AttemptRecoveryStartPositions.Disabled)
+            {
+                _logger.LogDebug("AttemptRecovery disabled");
+                return;
+            }
 
             int result;
             
@@ -617,18 +653,12 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 result.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
             }, "dx_stopch (from AttemptRecovery)");
             
-            var worked = AttemptRecoveryDropCall();
-            worked = AttemptRecoveryReleaseCall(worked);
-
-            if (worked)
-            {
-                _logger.LogDebug("(SIP) - AttemptRecovery() - Successfully recovered.");
-                return;
-            }
-
+            if (AttemptRecoveryGeneric(AttemptRecoveryStartPositions.DropCall)) return;
+            if (AttemptRecoveryGeneric(AttemptRecoveryStartPositions.ReleaseCall)) return;
             if (AttemptRecoveryResetLineDev()) return;
 
-            if (tryReopen)
+            var doit = DecideWhen(_voiceProperties.AttemptRecoveryTryReopenOn, makeCall);
+            if (doit)
             {
                 _logger.LogWarning("Last ditch attempt to recover the line. I am going to dispose and recreate it.");
                 try
@@ -647,67 +677,86 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
 
             // dang, at this point everything has failed!!!
-            if (throwOnFailure)
+            doit = DecideWhen(_voiceProperties.AttemptRecoveryThrowFailureOn, makeCall);
+            if (doit)
                 throw new RecoveryFailedException(
                     "AttemptRecovery() - Failed to recover. " +
                     "The line is in an unknown state. Please reset the line or restart the application.");
         }
-        
-        private bool AttemptRecoveryDropCall()
+
+        private bool DecideWhen(AttemptRecoveryWhen attemptRecoveryWhen, bool makeCall)
         {
-            // we can't do a drop call without a call reference number
-            if (_callReferenceNumber == 0)
+            var doit = false;
+            switch (_voiceProperties.AttemptRecoveryTryReopenOn)
             {
-                _logger.LogDebug("(SIP) - AttemptRecovery() - No call reference number. Can't drop call.");
-                return false;
+                case AttemptRecoveryWhen.MakeCall:
+                    doit = makeCall; // just for MakeCall
+                    break;
+                case AttemptRecoveryWhen.All:
+                    doit = true; // for everyone
+                    break;
             }
-            
-            var result = 0;
-            TraceCallStateChange(() =>
-            {
-                result = gclib_h.gc_DropCall(_callReferenceNumber, gclib_h.GC_NORMAL_CLEARING, DXXXLIB_H.EV_ASYNC);
-                result.LogIfGlobalCallError(_logger);
-            }, "gc_DropCall (from AttemptRecovery)");
-            if (result < 0) return false;
-            
-            _logger.LogDebug("(SIP) - AttemptRecovery() - Waiting 10 seconds for GCEV_DROPCALL event");
-            var eventResult = _eventWaiter.WaitForEvent(gclib_h.GCEV_DROPCALL, 10, new[] { _dxDev, _gcDev }); // wait for the release call event
-            return eventResult == EventWaitEnum.Success;
+            return doit;
         }
-        
-        private bool AttemptRecoveryReleaseCall(bool worked)
+
+        private bool AttemptRecoveryGeneric(AttemptRecoveryStartPositions startOn)
         {
-            if (worked)
+            _logger.LogDebug("(SIP) - AttemptRecovery() - Waiting 5 seconds for GCEV_RELEASECALL event");
+            var eventResult = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 5, new[] { _dxDev, _gcDev }); // wait for the release call event
+            if (eventResult == EventWaitEnum.Success)
             {
-                _logger.LogDebug("(SIP) - AttemptRecovery() - Successfully dropped the call. Now waiting 10 seconds for GCEV_RELEASECALL event");
-                var eventResult = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, new[] { _dxDev, _gcDev }); // wait for the release call event
-                if (eventResult == EventWaitEnum.Success) return true;
+                _logger.LogDebug("(SIP) - AttemptRecovery() - Finally received the GCEV_RELEASECALL.");
+                return true;
+            }
+
+            if (_voiceProperties.AttemptRecoveryStartPosition > startOn)
+            {
+                _logger.LogDebug("skipping {step}", startOn);
+                return false;
             }
 
             // we can't do a drop call without a call reference number
             if (_callReferenceNumber == 0)
             {
-                _logger.LogDebug("(SIP) - AttemptRecovery() - No call reference number. Can't release call.");
+                _logger.LogDebug("(SIP) - AttemptRecovery() - No call reference number. Can't drop call or release Call.");
                 return false;
             }
-            
+
             var result = 0;
             TraceCallStateChange(() =>
             {
-                result = gclib_h.gc_ReleaseCallEx(_callReferenceNumber, DXXXLIB_H.EV_ASYNC);
+                switch (startOn)
+                {
+                    case AttemptRecoveryStartPositions.DropCall:
+                        result = gclib_h.gc_DropCall(_callReferenceNumber, gclib_h.GC_NORMAL_CLEARING, DXXXLIB_H.EV_ASYNC);
+                        break;
+                    case AttemptRecoveryStartPositions.ReleaseCall:
+                        result = gclib_h.gc_ReleaseCallEx(_callReferenceNumber, DXXXLIB_H.EV_ASYNC);
+                        break;
+                    default:
+                        throw new Exception($"Unsupported StartOn phase: {startOn}");
+                }
                 result.LogIfGlobalCallError(_logger);
-            }, "gc_ReleaseCallEx (from AttemptRecovery)");
-
-            // wait for the releasecall event anyway.
-            //if (result < 0) return false;
+            }, $"{startOn} (from AttemptRecovery)");
 
             _logger.LogDebug("(SIP) - AttemptRecovery() - Waiting 10 seconds for GCEV_RELEASECALL event");
-            var releaseCallResult = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, new[] { _dxDev, _gcDev });
-            return releaseCallResult == EventWaitEnum.Success;
+            eventResult = _eventWaiter.WaitForEvent(gclib_h.GCEV_RELEASECALL, 10, new[] { _dxDev, _gcDev }); // wait for the release call event
+            if (eventResult == EventWaitEnum.Success)
+            {
+                _logger.LogDebug("(SIP) - AttemptRecovery() - Successfully released the call.");
+                return true;
+            }
+            return false;
         }
-        
+
         private bool AttemptRecoveryResetLineDev()
         {
+            if (_voiceProperties.AttemptRecoveryStartPosition > AttemptRecoveryStartPositions.ResetLineDev)
+            {
+                _logger.LogDebug("skipping {step}", AttemptRecoveryStartPositions.ResetLineDev);
+                return false;
+            }
+
             var result = 0;
             TraceCallStateChange(() =>
             {
@@ -720,8 +769,10 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 _logger.LogError("(SIP) - AttemptRecovery() - Failed to reset the line device.");
                 return false;
             }
-            _logger.LogDebug("(SIP) - AttemptRecovery() - Waiting 10 seconds for GCEV_RESETLINEDEV event");
-            var releaseCallResult = _eventWaiter.WaitForEvent(gclib_h.GCEV_RESETLINEDEV, 10, new[] { _dxDev, _gcDev });
+            _logger.LogDebug("(SIP) - AttemptRecovery() - Waiting 20 seconds for GCEV_RESETLINEDEV event");
+            // ignore any other events until after the GCEV_RESETLINEDEV event is received.
+            // Global Call API Library Reference page 270
+            var releaseCallResult = _eventWaiter.WaitForThisEventOnly(gclib_h.GCEV_RESETLINEDEV, 20, new[] { _dxDev, _gcDev });
             switch (releaseCallResult) {
                 case EventWaitEnum.Success:
                     _logger.LogDebug("(SIP) - AttemptRecovery() - Successfully reset the line device.");
@@ -729,7 +780,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     _hangupState = HangupStateEnum.Completed;
                     _callReferenceNumber = 0;
                     _waitCallSet = false;
-                    return true;
+                    break;
                 case EventWaitEnum.Expired:
                     _logger.LogError("(SIP) - AttemptRecovery() - Failed to reset the line device. Timeout waiting for GCEV_RESETLINEDEV");
                     return false;
@@ -738,7 +789,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     return false;
             }
 
-            return false;
+            // since we already received this event, this just provides a timeout before the next call
+            releaseCallResult = _eventWaiter.WaitForEvent(gclib_h.GCEV_RESETLINEDEV, 5, new[] { _dxDev, _gcDev });
+            return _voiceProperties.AttemptRecoveryReturnOnResetLineDevSuccess;
         }
 
         private void SetUserInfo(ref IntPtr gcParmBlkp)
@@ -784,7 +837,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     result.ThrowIfGlobalCallError();
                 }, "gc_ResetLineDev");
 
-                var eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_RESETLINEDEV, 60, new[] { _dxDev, _gcDev }); // 60 seconds
+                // ignore any other events until after the GCEV_RESETLINEDEV event is received.
+                // Global Call API Library Reference page 270
+                var eventWaitEnum = _eventWaiter.WaitForThisEventOnly(gclib_h.GCEV_RESETLINEDEV, 60, new[] { _dxDev, _gcDev }); // 60 seconds
                 switch (eventWaitEnum)
                 {
                     case EventWaitEnum.Error:
@@ -1763,7 +1818,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
         }
 
-        private void HandlePossibleHangupInProgress()
+        private void HandlePossibleHangupInProgress(bool ignoreStateCheck = false)
         {
             _logger.LogDebug("HandlePossibleHangup()");
 
@@ -1793,7 +1848,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                         break;
                     case EventWaitEnum.Expired:
                         _logger.LogWarning("(SIP) - The hangup method did not receive the releaseCall event");
-                        AttemptRecovery(false, false);
+                        AttemptRecovery();
                         break;
                     case EventWaitEnum.Error:
                         _logger.LogError("(SIP) - The hangup method failed waiting for the releaseCall event");
@@ -1802,7 +1857,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 throw new HangupException();
             }
 
-            if (callState != gclib_h.GCST_CONNECTED)
+            if (ignoreStateCheck == false && callState != gclib_h.GCST_CONNECTED)
             {
                 _logger.LogWarning("(SIP - Line isn't connected. Going to hang up. callState[channelState] = {callState}[{channelState}]",
                     callState.CallStateDescription(), 

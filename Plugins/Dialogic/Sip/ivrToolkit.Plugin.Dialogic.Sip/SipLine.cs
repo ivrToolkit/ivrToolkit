@@ -88,7 +88,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             _logger.LogDebug("attemptRecovery.StartPosition               = {startPosition}", voiceProperties.AttemptRecoveryStartPosition);
             _logger.LogDebug("attemptRecovery.ReturnOnResetLineDevSuccess = {resetLineDevSuccess}", voiceProperties.AttemptRecoveryReturnOnResetLineDevSuccess);
             _logger.LogDebug("attemptRecovery.TryReopenOn                 = {tryReopenOn}", voiceProperties.AttemptRecoveryTryReopenOn);
-            _logger.LogDebug("attemptRecovery.ThrowFailureOn            = {throwFailureOn}", voiceProperties.AttemptRecoveryThrowFailureOn);
+            _logger.LogDebug("attemptRecovery.ThrowFailureOn              = {throwFailureOn}", voiceProperties.AttemptRecoveryThrowFailureOn);
 
             Start();
         }

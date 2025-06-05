@@ -253,19 +253,34 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     result.ThrowIfGlobalCallError();
                 }, "gc_WaitCall");
             }
+            var eventWaitEnum = _eventWaiter.WaitForEventIndefinitely(gclib_h.GCEV_OFFERED, new[] { _dxDev, _gcDev });
+            switch (eventWaitEnum)
+            {
+                case EventWaitEnum.Success:
+                    _logger.LogDebug("(SIP) - The WaitRings method received the GCEV_OFFERED event");
+                    break;
+                case EventWaitEnum.Error:
+                    var message = "(SIP) - The WaitRings method failed waiting for the GCEV_OFFERED event";
+                    _logger.LogError(message);
+                    throw new VoiceException(message);
+            }
 
-            // asynchronously start waiting for a call to come in
-            var eventWaitEnum = _eventWaiter.WaitForEventIndefinitely(gclib_h.GCEV_ANSWERED, new[] { _dxDev, _gcDev });
+            // Now that a call is offered, we wait for a finite amount of time to answer
+            eventWaitEnum = _eventWaiter.WaitForEvent(gclib_h.GCEV_ANSWERED, 15, new[] { _dxDev, _gcDev });
             switch (eventWaitEnum)
             {
                 case EventWaitEnum.Success:
                     _logger.LogDebug("(SIP) - The WaitRings method received the GCEV_ANSWERED event");
+                    break;
+                case EventWaitEnum.Expired:
+                    _logger.LogWarning("(SIP) - The WaitRings method did not receive the GCEV_ANSWERED event within 15 seconds.");
                     break;
                 case EventWaitEnum.Error:
                     var message = "(SIP) - The WaitRings method failed waiting for the GCEV_ANSWERED event";
                     _logger.LogError(message);
                     throw new VoiceException(message);
             }
+            HandlePossibleHangupInProgress(forceHangup: true); // check if a hangup is in progress
         }
 
         private void TraceCallStateChange(Action operation, string operationName)
@@ -452,9 +467,9 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     //  - CPA finishes before receiving GCEV_RELEASECALL
                     // 
                     // Without this next step, call state is probably alerting and I would return NoAnswer.
-                    //    then an hangup would occur which tries to do a gc_dropCall which will fail and probably
+                    //    then a hangup would occur which tries to do a gc_dropCall which will fail and probably
                     //    trigger a AttemptRecovery() when it wasn't needed.
-                    HandlePossibleHangupInProgress(true); // ignore state check like alerting for example
+                    HandlePossibleHangupInProgress(ignoreStateCheck: true); // ignore state check like alerting for example
                 }
                 catch (HangupException)
                 {
@@ -1452,7 +1467,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             TraceCallStateChange(() =>
             {
                 var result = gclib_h.gc_CallAck(_callReferenceNumber, ref gcCallackBlk, DXXXLIB_H.EV_ASYNC);
-                result.ThrowIfGlobalCallError();
+                result.LogIfGlobalCallError(_logger);
             }, "gc_CallAck");
         }
 
@@ -1466,7 +1481,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             TraceCallStateChange(() =>
             {
                 var result = gclib_h.gc_AcceptCall(_callReferenceNumber, 2, DXXXLIB_H.EV_ASYNC);
-                result.ThrowIfGlobalCallError();
+                result.LogIfGlobalCallError(_logger);
             }, "gc_AcceptCall");
         }
 
@@ -1481,7 +1496,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             TraceCallStateChange(() =>
             {
                 var result = gclib_h.gc_AnswerCall(_callReferenceNumber, 2, DXXXLIB_H.EV_ASYNC);
-                result.ThrowIfGlobalCallError();
+                result.LogIfGlobalCallError(_logger);
             }, "gc_AnswerCall");
         }
 
@@ -1818,7 +1833,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             }
         }
 
-        private void HandlePossibleHangupInProgress(bool ignoreStateCheck = false)
+        private void HandlePossibleHangupInProgress(bool forceHangup = false, bool ignoreStateCheck = false)
         {
             _logger.LogDebug("HandlePossibleHangup()");
 
@@ -1867,6 +1882,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 StopPlayRecordGetDigitsImmediately("Line isn't connected");
                 ClearStopPlayRecordGetDigitEvents(_dxDev, 1000);
 
+                if (forceHangup) Hangup();
                 throw new HangupException();
             }
         }

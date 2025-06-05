@@ -1882,7 +1882,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 StopPlayRecordGetDigitsImmediately("Line isn't connected");
                 ClearStopPlayRecordGetDigitEvents(_dxDev, 1000);
 
-                if (forceHangup) Hangup();
+                if (forceHangup) Hangup(); // on incoming lines, I want to force a hangup. On outgoing lines, I don't need to because
+                                           // a hangup is always done at the end of the call.
                 throw new HangupException();
             }
         }

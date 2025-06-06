@@ -177,9 +177,8 @@ public class ProcessExtension
                     switch (parmData.parm_ID)
                     {
                         case gcip_defs_h.IPPARM_MIME_PART:
-                            var parmblkp = parmDatap + 5;
                             var pointerValue = GetValueFromPtr(parmDatap + 5, parmData.value_size);
-                            parmblkp = new IntPtr(pointerValue);
+                            var parmblkp = new IntPtr(pointerValue);
                             HandleMime(ref parmblkp);
                             break;
                     }

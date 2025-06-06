@@ -1872,6 +1872,13 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 throw new HangupException();
             }
 
+            if (callState != gclib_h.GCST_CONNECTED)
+            {
+                _logger.LogWarning("(SIP) - Call state should be GCST_CONNECTED but is {callState}[{channelState}]",
+                    callState.CallStateDescription(),
+                    channelState.ChannelStateDescription());
+            }
+            
             // This code that checks to see if the state is connected was recently added, and
             // now I am concerned that the state may not be accurate. It might be better to
             // wait for disconnect events instead of checking the state.

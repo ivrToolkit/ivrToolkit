@@ -73,7 +73,7 @@ public class ProcessExtension
     */
     public bool HandleExtension(METAEVENT metaEvt)
     {
-        var doStop = false;
+        var hangupStarting = false;
         _logger.LogDebug("ProcessExtension(METAEVENT metaEvt) - evtDev = {eventDevice}", metaEvt.evtdev);
 
         var receivedNotify = false;
@@ -127,7 +127,7 @@ public class ProcessExtension
                     _logger.LogDebug("  {description} - (SIP)", parmData.parm_ID.IpSetIpProtoolStateDescription());
                     if (parmData.parm_ID == gcip_defs_h.IPPARM_SIGNALING_DISCONNECTED)
                     {
-                        doStop = true;
+                        hangupStarting = true;
                     }
                     break;
                 case gcip_defs_h.IPSET_RTP_ADDRESS:
@@ -202,7 +202,7 @@ public class ProcessExtension
                 _logger.LogError(e, "Failed to respond to notify");
             }
         }
-        return doStop;
+        return hangupStarting;
     }
 
     private void RespondToNotify(bool accept, string callIdHeader, int eventDev)

@@ -85,11 +85,11 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
 
             _processExtension = new ProcessExtension(loggerFactory);
 
-            _logger.LogDebug("attemptRecovery.StartPosition               = {startPosition}", voiceProperties.AttemptRecoveryStartPosition);
-            _logger.LogDebug("attemptRecovery.ReturnOnResetLineDevSuccess = {resetLineDevSuccess}", voiceProperties.AttemptRecoveryReturnOnResetLineDevSuccess);
-            _logger.LogDebug("attemptRecovery.TryReopenOn                 = {tryReopenOn}", voiceProperties.AttemptRecoveryTryReopenOn);
-            _logger.LogDebug("attemptRecovery.ThrowFailureOn              = {throwFailureOn}", voiceProperties.AttemptRecoveryThrowFailureOn);
-
+            _logger.LogDebug("{key} = {value}", DialogicSipVoiceProperties.SIP_IGNORE_CALL_STATE_CHECK_KEY, voiceProperties.IgnoreCallStateCheck);
+            _logger.LogDebug("{key} = {value}", DialogicSipVoiceProperties.ATTEMPT_RECOVERY_START_POSITION, voiceProperties.AttemptRecoveryStartPosition);
+            _logger.LogDebug("{key} = {value}", DialogicSipVoiceProperties.ATTEMPT_RECOVERY_RESETLINEDEV_SUCCESS, voiceProperties.AttemptRecoveryReturnOnResetLineDevSuccess);
+            _logger.LogDebug("{key} = {value}", DialogicSipVoiceProperties.ATTEMPT_RECOVERY_TRY_REOPEN_ON, voiceProperties.AttemptRecoveryTryReopenOn);
+            _logger.LogDebug("{key} = {value}", DialogicSipVoiceProperties.ATTEMPT_RECOVERY_THROW_FAILURE_ON, voiceProperties.AttemptRecoveryThrowFailureOn);
             Start();
         }
 
@@ -1353,8 +1353,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                     break;
 
                 case gclib_h.GCEV_EXTENSION:
-                    var doStop = _processExtension.HandleExtension(metaEvt);
-                    if (doStop)
+                    var hangupStarting = _processExtension.HandleExtension(metaEvt);
+                    if (hangupStarting)
                     {
                         _hangupState = HangupStateEnum.Starting;
                         StopPlayRecordGetDigitsImmediately("GCEV_EXTENSION");
@@ -1872,6 +1872,13 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 throw new HangupException();
             }
 
+            // This code that checks to see if the state is connected was recently added, and
+            // now I am concerned that the state may not be accurate. It might be better to
+            // wait for disconnect events instead of checking the state.
+            // therefor I am going to turn this off by default for now.
+            if (_voiceProperties.IgnoreCallStateCheck) return;
+            
+            // Depending on how my test goes, I may delete this block of code
             if (ignoreStateCheck == false && callState != gclib_h.GCST_CONNECTED)
             {
                 _logger.LogWarning("(SIP - Line isn't connected. Going to hang up. callState[channelState] = {callState}[{channelState}]",

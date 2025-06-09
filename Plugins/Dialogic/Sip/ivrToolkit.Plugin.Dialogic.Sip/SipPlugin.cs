@@ -356,6 +356,10 @@ public class SipPlugin : IIvrPlugin
                 _logger.LogDebug("GCEV_EXTENSION");
                 _processExtension.HandleExtension(metaEvt); // todo some or all of this may not be for board events.
                 break;
+            default:
+                _logger.LogWarning("Wasn't expecting this event type: {0}:{1}",
+                    metaEvt.evttype, metaEvt.evttype.EventTypeDescription());
+                break;
         }
     }
 
@@ -432,7 +436,6 @@ public class SipPlugin : IIvrPlugin
 
             parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
         }
-        gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
     }
 
     private string GetStringFromPtr(IntPtr ptr, int size)

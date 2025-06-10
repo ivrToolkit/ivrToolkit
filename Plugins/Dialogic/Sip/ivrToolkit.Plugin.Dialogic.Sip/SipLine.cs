@@ -333,7 +333,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             TraceCallStateChange(() =>
             {
                 var result = gclib_h.gc_DropCall(_callReferenceNumber, gclib_h.GC_NORMAL_CLEARING, DXXXLIB_H.EV_ASYNC);
-                result.ThrowIfGlobalCallError();
+                result.LogIfGlobalCallError(_logger);
             }, "gc_DropCall (from hangup method)");
 
             // okay, now lets wait for the release call event
@@ -841,7 +841,8 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
         private void ResetLineDev()
         {
             _logger.LogDebug("(SIP) - ResetLineDev()");
-
+            _dropCallHappening = false;
+            
             try
             {
                 StopPlayRecordGetDigitsImmediately("ResetLineDev");
@@ -859,15 +860,12 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
                 {
                     case EventWaitEnum.Error:
                         _logger.LogError("(SIP) - Failed to Reset the line. Failed");
-                        _dropCallHappening = false; // let the hangup try again.
                         break;
                     case EventWaitEnum.Expired:
-                        _dropCallHappening = false; // let the hangup try again.
                         _logger.LogError("(SIP) - Failed to Reset the line. Timeout waiting for GCEV_RESETLINEDEV");
                         break;
                     case EventWaitEnum.Success:
                         _callReferenceNumber = 0;
-                        _dropCallHappening = false;
                         _waitCallSet = false;
                         break;
                 }
@@ -1393,7 +1391,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             TraceCallStateChange(() =>
             {
                 var result = DXXXLIB_H.dx_stopch(_dxDev, DXXXLIB_H.EV_SYNC);
-                result.ThrowIfStandardRuntimeLibraryError(_dxDev);
+                result.LogIfStandardRuntimeLibraryError(_dxDev, _logger);
             }, $"dx_stopch ({identifier})");
 
         }
@@ -1447,7 +1445,7 @@ namespace ivrToolkit.Plugin.Dialogic.Sip
             TraceCallStateChange(() =>
             {
                 var result = gclib_h.gc_DropCall(_callReferenceNumber, gclib_h.GC_NORMAL_CLEARING, DXXXLIB_H.EV_ASYNC);
-                result.ThrowIfGlobalCallError();
+                result.LogIfGlobalCallError(_logger);
             }, "gc_DropCall (from disconnected event)");
         }
         

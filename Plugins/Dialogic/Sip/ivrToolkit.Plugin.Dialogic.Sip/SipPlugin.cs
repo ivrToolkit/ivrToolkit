@@ -436,6 +436,7 @@ public class SipPlugin : IIvrPlugin
 
             parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
         }
+        gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
     }
 
     private string GetStringFromPtr(IntPtr ptr, int size)

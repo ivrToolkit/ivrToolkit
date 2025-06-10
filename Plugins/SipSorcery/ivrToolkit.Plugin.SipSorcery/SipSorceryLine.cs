@@ -221,6 +221,11 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         return await ConnectedTypeAsync(_voipMediaSession, answeringMachineLengthInMilliseconds, cancellationToken);
     }
 
+    public CallStateProgressEnum GetCallStateProgress()
+    {
+        throw new NotImplementedException();
+    }
+
     private async Task<CallAnalysis> ConnectedTypeAsync(VoIPMediaSession mediaSession, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken)
     {
         // 0 means no answering machine detection

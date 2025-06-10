@@ -83,6 +83,13 @@ public interface IIvrBaseLine : IDisposable
     Task<CallAnalysis> DialAsync(string phoneNumber, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken);
 
     /// <summary>
+    /// A bitwise collection of call out state progress. You can use this to help decide
+    /// how you want to handle NoRingBack calls. It is currently only for the Dialogic SIP plugin.
+    /// </summary>
+    /// <returns></returns>
+    CallStateProgressEnum GetCallStateProgress();
+    
+    /// <summary>
     /// Plays a WAV file (8000Hz, mono, signed 16-bit PCM).
     /// </summary>
     /// <param name="filename">The path to the WAV file.</param>

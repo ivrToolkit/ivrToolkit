@@ -344,16 +344,32 @@ public class SipPlugin : IIvrPlugin
     
     private void HandleEvent(METAEVENT metaEvt)
     {
-        switch (metaEvt.evttype)
+        try
         {
-            case gclib_h.GCEV_SERVICERESP:
-                _logger.LogDebug("GCEV_SERVICERESP");
-                HandleRegisterStuff(metaEvt);
-                break;
-            case gclib_h.GCEV_EXTENSION:
-                _logger.LogDebug("GCEV_EXTENSION");
-                _processExtension.HandleExtension(metaEvt); // todo some or all of this may not be for board events.
-                break;
+            switch (metaEvt.evttype)
+            {
+                case gclib_h.GCEV_SERVICERESP:
+                    _logger.LogDebug("GCEV_SERVICERESP");
+                    HandleRegisterStuff(metaEvt);
+                    break;
+                case gclib_h.GCEV_EXTENSION:
+                    _logger.LogDebug("GCEV_EXTENSION");
+                    _processExtension.HandleExtension(metaEvt); // todo some or all of this may not be for board events.
+                    break;
+                default:
+                    _logger.LogWarning("Wasn't expecting this event type: {0}:{1}",
+                        metaEvt.evttype, metaEvt.evttype.EventTypeDescription());
+                    break;
+            }
+        }
+        finally
+        {
+            if (metaEvt.extevtdatap != IntPtr.Zero)
+            {
+                _logger.LogDebug("Deleting the param block for metaEvt.extevtdatap = {0}",
+                    metaEvt.extevtdatap);
+                gclib_h.gc_util_delete_parm_blk(metaEvt.extevtdatap);
+            }
         }
     }
 
@@ -430,7 +446,6 @@ public class SipPlugin : IIvrPlugin
 
             parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
         }
-        gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
     }
 
     private string GetStringFromPtr(IntPtr ptr, int size)

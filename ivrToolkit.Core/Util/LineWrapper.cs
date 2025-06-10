@@ -184,8 +184,13 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
         return result;
     }
-        
-        
+
+    public CallStateProgressEnum GetCallStateProgress()
+    {
+        return _lineImplementation.GetCallStateProgress();
+    }
+
+
     #region ILineManagement region
 
     void IIvrLineManagement.TriggerDispose()

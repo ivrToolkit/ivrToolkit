@@ -58,6 +58,11 @@ public class FakeLine : IIvrBaseLine, IIvrLineManagement
         throw new NotImplementedException();
     }
 
+    public CallStateProgressEnum GetCallStateProgress()
+    {
+        throw new NotImplementedException();
+    }
+
     public void PlayFile(string filename)
     {
         PlayFileAsync(filename, CancellationToken.None).GetAwaiter().GetResult();

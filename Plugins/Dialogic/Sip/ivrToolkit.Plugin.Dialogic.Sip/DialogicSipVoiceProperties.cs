@@ -40,6 +40,22 @@ public class DialogicSipVoiceProperties : DialogicVoiceProperties, IDisposable
     private const string SIP_CONNECT_ALERT_HANDLING = "sip.connectedAlertHandling";
     private const string SIP_CONNECT_ALERT_HANDLING_DEFAULT = "NoAnswer";
 
+    public const string SIP_IGNORE_CALL_STATE_CHECK_KEY = "sip.ignoreCallStateCheck";
+    private const string SIP_CALL_IGNORE_STATE_CHECK_DEFAULT = "True";
+    
+    //-----------------------------------------------------------------------------
+
+    public const string ATTEMPT_RECOVERY_START_POSITION = "attemptRecovery.StartPosition";
+    private const string ATTEMPT_RECOVERY_START_POSITION_DEFAULT = "DropCall";
+
+    public const string ATTEMPT_RECOVERY_RESETLINEDEV_SUCCESS = "attemptRecovery.ReturnOnResetLineDevSuccess";
+    private const string ATTEMPT_RECOVERY_RESETLINEDEV_SUCCESS_DEFAULT = "True";
+
+    public const string ATTEMPT_RECOVERY_TRY_REOPEN_ON = "attemptRecovery.TryReopenOn";
+    private const string ATTEMPT_RECOVERY_TRY_REOPEN_ON_DEFAULT = "MakeCall";
+
+    public const string ATTEMPT_RECOVERY_THROW_FAILURE_ON = "attemptRecovery.ThrowFailureOn";
+    private const string ATTEMPT_RECOVERY_THROW_FAILURE_ON_DEFAULT = "MakeCall";
 
     public DialogicSipVoiceProperties(ILoggerFactory loggerFactory, string fileName) : base(loggerFactory, fileName)
     {
@@ -47,10 +63,44 @@ public class DialogicSipVoiceProperties : DialogicVoiceProperties, IDisposable
         _logger.LogDebug("Ctr(ILoggerFactory loggerFactory, {0})", fileName);
     }
 
+    private T GetEnum<T>(string key, string @default) where T : struct, Enum
+    {
+        var result = GetProperty(key, @default); // Use the method's default parameter
+        if (string.IsNullOrWhiteSpace(result))
+            result = @default;
+
+        if (Enum.TryParse<T>(result, ignoreCase: true, out var parsedEnum))
+        {
+            return parsedEnum;
+        }
+
+        throw new Exception($"Invalid {key}: {result}");
+    }
+
+    public AttemptRecoveryStartPositions AttemptRecoveryStartPosition => 
+        GetEnum<AttemptRecoveryStartPositions>(ATTEMPT_RECOVERY_START_POSITION, ATTEMPT_RECOVERY_START_POSITION_DEFAULT);
+
+    public bool AttemptRecoveryReturnOnResetLineDevSuccess => bool.Parse(GetProperty(ATTEMPT_RECOVERY_RESETLINEDEV_SUCCESS, ATTEMPT_RECOVERY_RESETLINEDEV_SUCCESS_DEFAULT));
+
+    public AttemptRecoveryWhen AttemptRecoveryTryReopenOn =>
+        GetEnum<AttemptRecoveryWhen>(ATTEMPT_RECOVERY_TRY_REOPEN_ON, ATTEMPT_RECOVERY_TRY_REOPEN_ON_DEFAULT);
+
+    public AttemptRecoveryWhen AttemptRecoveryThrowFailureOn =>
+        GetEnum<AttemptRecoveryWhen>(ATTEMPT_RECOVERY_THROW_FAILURE_ON, ATTEMPT_RECOVERY_THROW_FAILURE_ON_DEFAULT);
+
     /// <summary>
     /// Number to add the line in order to get the channel.
     /// </summary>
     public uint SipChannelOffset => uint.Parse(GetProperty(SIP_CHANNEL_OFFSET_KEY, SIP_CHANNEL_OFFSET_DEFAULT));
+
+    /// <summary>
+    /// Checking the call state was recently added to the SIP line but I am starting to worry
+    /// that it may be unreliable. Therefore, this property allows you to ignore the state check and
+    /// rely on the events to do determine if the line is hung up or not.
+    /// 
+    /// True to rely on the SIP events to determine the state of the line.
+    /// </summary>
+    public bool IgnoreCallStateCheck => bool.Parse(GetProperty(SIP_IGNORE_CALL_STATE_CHECK_KEY, SIP_CALL_IGNORE_STATE_CHECK_DEFAULT));
 
     public ushort MaxCalls => ushort.Parse(GetProperty(MAX_CALLS_KEY, MAX_CALLS_DEFAULT));
 
@@ -113,10 +163,25 @@ public class DialogicSipVoiceProperties : DialogicVoiceProperties, IDisposable
             return CallAnalysis.NoAnswer;
         }
     }
-
+    
     public new void Dispose()
     {
         _logger.LogDebug("Dispose()");
         base.Dispose();
     }
+
+}
+public enum AttemptRecoveryStartPositions
+{
+    DropCall,
+    ReleaseCall,
+    ResetLineDev,
+    Disabled
+}
+
+public enum AttemptRecoveryWhen
+{
+    None,
+    MakeCall,
+    All
 }

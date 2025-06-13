@@ -53,8 +53,6 @@ public class SipPlugin : IIvrPlugin
         StartSip();
         OpenBoard();
 
-        // todo replace this with a factory to choose ThreadedEventListener vs SynchronousEventListener
-        //_boardEventListener = new SynchronousEventListener(_loggerFactory, new[] { _boardDev });
         _boardEventListener = new ThreadedEventListener(_loggerFactory, _voiceProperties, new[] { _boardDev });
 
         _boardEventListener.OnMetaEvent += _boardEventListener_OnMetaEvent;
@@ -72,7 +70,16 @@ public class SipPlugin : IIvrPlugin
             "evt_type = {0}:{1}, evt_dev = {2}, evt_flags = {3},  line_dev = {4} ",
             metaEvt.evttype, metaEvt.evttype.EventTypeDescription(), metaEvt.evtdev, metaEvt.flags,
             metaEvt.linedev);
-        HandleEvent(metaEvt);
+
+        switch (metaEvt.evttype)
+        {
+            case gclib_h.GCEV_SERVICERESP:
+                HandleRegisterStuff(metaEvt);
+                break;
+            case gclib_h.GCEV_EXTENSION:
+                _processExtension.HandleExtension(metaEvt); // todo some or all of this may not be for board events.
+                break;
+        }
     }
 
     IIvrBaseLine IIvrPlugin.GetLine(int lineNumber)
@@ -199,6 +206,7 @@ public class SipPlugin : IIvrPlugin
             gclib_h.GCUPDATE_IMMEDIATE, ref requestId, DXXXLIB_H.EV_ASYNC);
         result.ThrowIfGlobalCallError();
 
+        _logger.LogDebug("Deleting parameter block: 0x{paramBlock:X}", gcParmBlkPtr);
         gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
 
         var eventWait = _boardEventListener.WaitForEvent(10); // wait for 10 seconds
@@ -251,6 +259,7 @@ public class SipPlugin : IIvrPlugin
         result = gclib_h.gc_SetAuthenticationInfo(gclib_h.GCTGT_CCLIB_NETIF, _boardDev, gcParmBlkPtr);
         result.ThrowIfGlobalCallError();
 
+        _logger.LogDebug("Deleting the parameter block 0x{paramBlock:X}", gcParmBlkPtr);
         gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
         _unmanagedMemoryService.Free(pData);
     }
@@ -334,6 +343,7 @@ public class SipPlugin : IIvrPlugin
             DXXXLIB_H.EV_ASYNC);
         result.ThrowIfGlobalCallError();
         _logger.LogDebug("Register() - called gc_ReqService asynchronously");
+        _logger.LogDebug("Deleting the parameter block 0x{paramBlock:X}", gcParmBlkPtr);
         gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
 
         var eventWaitEnum = _boardEventListener.WaitForEvent(10); // wait for 10 seconds 
@@ -342,49 +352,17 @@ public class SipPlugin : IIvrPlugin
         _unmanagedMemoryService.Free(pContact);
     }
     
-    private void HandleEvent(METAEVENT metaEvt)
-    {
-        try
-        {
-            switch (metaEvt.evttype)
-            {
-                case gclib_h.GCEV_SERVICERESP:
-                    _logger.LogDebug("GCEV_SERVICERESP");
-                    HandleRegisterStuff(metaEvt);
-                    break;
-                case gclib_h.GCEV_EXTENSION:
-                    _logger.LogDebug("GCEV_EXTENSION");
-                    _processExtension.HandleExtension(metaEvt); // todo some or all of this may not be for board events.
-                    break;
-                default:
-                    _logger.LogWarning("Wasn't expecting this event type: {0}:{1}",
-                        metaEvt.evttype, metaEvt.evttype.EventTypeDescription());
-                    break;
-            }
-        }
-        finally
-        {
-            if (metaEvt.extevtdatap != IntPtr.Zero)
-            {
-                _logger.LogDebug("Deleting the param block for metaEvt.extevtdatap = {0}",
-                    metaEvt.extevtdatap);
-                gclib_h.gc_util_delete_parm_blk(metaEvt.extevtdatap);
-            }
-        }
-    }
-
     private void HandleRegisterStuff(METAEVENT metaEvt)
     {
         _logger.LogDebug("HandleRegisterStuff(METAEVENT metaEvt)");
         var gcParmBlkp = metaEvt.extevtdatap;
-        var parmDatap = IntPtr.Zero;
 
-        parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
+        var parmData = gcip_h.CreateAndInitGcParmDataExt();
 
-        while (parmDatap != IntPtr.Zero)
+        var result = gclib_h.gc_util_next_parm_ex(gcParmBlkp, ref parmData);
+
+        while (result == GcErr_h.GC_SUCCESS)
         {
-            var parmData = Marshal.PtrToStructure<GC_PARM_DATA>(parmDatap);
-
             switch (parmData.set_ID)
             {
                 case gcip_defs_h.IPSET_REG_INFO:
@@ -392,7 +370,7 @@ public class SipPlugin : IIvrPlugin
                     {
                         case gcip_defs_h.IPPARM_REG_STATUS:
                             {
-                                var value = GetValueFromPtr(parmDatap + 5, parmData.value_size);
+                                var value = GetValueFromPtr(parmData.pData, parmData.data_size);
                                 switch (value)
                                 {
                                     case gcip_defs_h.IP_REG_CONFIRMED:
@@ -410,41 +388,45 @@ public class SipPlugin : IIvrPlugin
                             }
                         case gcip_defs_h.IPPARM_REG_SERVICEID:
                             {
-                                var value = GetValueFromPtr(parmDatap + 5, parmData.value_size);
+                                var value = GetValueFromPtr(parmData.pData, parmData.data_size);
                                 _logger.LogDebug("    IPSET_REG_INFO/IPPARM_REG_SERVICEID: 0x{0:X}", value);
                                 break;
                             }
                         default:
                             _logger.LogDebug(
                                 "    Missed one: set_ID = IPSET_REG_INFO, parm_ID = {1:X}, bytes = {2}",
-                                parmData.parm_ID, parmData.value_size);
+                                parmData.parm_ID, parmData.data_size);
                             break;
                     }
 
                     break;
                 case gcip_defs_h.IPSET_PROTOCOL:
-                    var value2 = GetValueFromPtr(parmDatap + 5, parmData.value_size);
+                    var value2 = GetValueFromPtr(parmData.pData, parmData.data_size);
                     _logger.LogDebug("    IPSET_PROTOCOL value: {0}", value2);
                     break;
                 case gcip_defs_h.IPSET_LOCAL_ALIAS:
                     {
-                        var localAlias = GetStringFromPtr(parmDatap + 5, parmData.value_size);
+                        var localAlias = GetStringFromPtr(parmData.pData, (int)parmData.data_size);
                         _logger.LogDebug("    IPSET_LOCAL_ALIAS value: {0}", localAlias);
                         break;
                     }
                 case gcip_defs_h.IPSET_SIP_MSGINFO:
                     {
-                        var msgInfo = GetStringFromPtr(parmDatap + 5, parmData.value_size);
+                        var msgInfo = GetStringFromPtr(parmData.pData, (int)parmData.data_size);
                         _logger.LogDebug("    IPSET_SIP_MSGINFO value: {0}", msgInfo);
                         break;
                     }
                 default:
                     _logger.LogDebug("    Missed one: set_ID = {0:X}, parm_ID = {1:X}, bytes = {2}",
-                        parmData.set_ID, parmData.parm_ID, parmData.value_size);
+                        parmData.set_ID, parmData.parm_ID, parmData.data_size);
                     break;
             }
 
-            parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
+            result = gclib_h.gc_util_next_parm_ex(gcParmBlkp, ref parmData);
+        }
+        if (result != GcErr_h.EGC_NO_MORE_PARMS)
+        {
+            result.LogIfGlobalCallError(_logger);
         }
     }
 
@@ -453,7 +435,7 @@ public class SipPlugin : IIvrPlugin
         return Marshal.PtrToStringAnsi(ptr, size).TrimEnd('\0');
     }
 
-    private int GetValueFromPtr(IntPtr ptr, byte size)
+    private int GetValueFromPtr(IntPtr ptr, uint size)
     {
         int value;
         switch (size)

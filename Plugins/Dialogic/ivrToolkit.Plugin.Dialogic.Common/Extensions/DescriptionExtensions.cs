@@ -51,42 +51,42 @@ public static class DescriptionExtensions
         switch (channelState)
         {
             case DXXXLIB_H.CS_IDLE:
-                return "Channel is idle";
+                return "Idle";
             case DXXXLIB_H.CS_PLAY:
-                return "Channel is playing back";
+                return "Playing back";
             case DXXXLIB_H.CS_RECD:
-                return "Channel is recording";
+                return "Recording";
             case DXXXLIB_H.CS_DIAL:
-                return "Channel is dialing";
+                return "Dialing";
             case DXXXLIB_H.CS_GTDIG:
-                return "Channel is getting digits";
+                return "Getting digits";
             case DXXXLIB_H.CS_TONE:
-                return "Channel is generating a tone";
+                return "Generating a tone";
             case DXXXLIB_H.CS_STOPD:
                 return "Operation has terminated";
             case DXXXLIB_H.CS_SENDFAX:
-                return "Channel is sending a fax";
+                return "Sending a fax";
             case DXXXLIB_H.CS_RECVFAX:
-                return "Channel is receiving a fax";
+                return "Receiving a fax";
             case DXXXLIB_H.CS_FAXIO:
-                return "Channel is between fax pages";
+                return "Between fax pages";
             case DXXXLIB_H.CS_HOOK:
-                return "A change in hookstate is in progress";
+                return "Hookstate is in progress";
             case DXXXLIB_H.CS_WINK:
                 return "A wink operation is in progress";
             case DXXXLIB_H.CS_CALL:
-                return "Channel is Call Progress Mode";
+                return "Call Progress Mode";
             case DXXXLIB_H.CS_GETR2MF:
-                return "Channel is Getting R2MF";
+                return "Getting R2MF";
             case DXXXLIB_H.CS_RINGS:
-                return "Call status Rings state";
+                return "Rings";
             case DXXXLIB_H.CS_BLOCKED:
-                return "Channel is blocked";
+                return "Blocked";
             case DXXXLIB_H.CS_RECDPREPARE:
-                return "Channel is preparing record and driver has not yet sent record";
+                return "Preparing record and driver has not yet sent record";
         }
 
-        return $"Unknown channel: {channelState}";
+        return $"Unknown channel state: {channelState}";
     }
 
     public static string CallStateDescription(this int callState)
@@ -237,7 +237,7 @@ public static class DescriptionExtensions
         }
     }
 
-    public static string IpSetMediaStateDescription(this ushort parmId)
+    public static string IpSetMediaStateDescription(this uint parmId)
     {
         switch (parmId)
         {
@@ -254,7 +254,7 @@ public static class DescriptionExtensions
         }
     }
 
-    public static string SetIdDescription(this ushort setId)
+    public static string GetIdDescription(this uint setId)
     {
         switch (setId)
         {
@@ -304,7 +304,7 @@ public static class DescriptionExtensions
         }
     }
 
-    public static string IpSetIpProtoolStateDescription (this ushort parmId)
+    public static string IpSetIpProtoolStateDescription (this uint parmId)
     {
         switch (parmId)
         {
@@ -323,7 +323,7 @@ public static class DescriptionExtensions
         }
     }
 
-    public static string IpSetRptAddressDescription(this ushort parmId)
+    public static string IpSetRptAddressDescription(this uint parmId)
     {
         switch (parmId)
         {
@@ -336,7 +336,7 @@ public static class DescriptionExtensions
         }
     }
 
-    public static string IpSetMimeDescription(this ushort parmId)
+    public static string IpSetMimeDescription(this uint parmId)
     {
         switch (parmId)
         {
@@ -356,7 +356,7 @@ public static class DescriptionExtensions
     }
 
 
-    public static string IpSetMsgSipDescription(this ushort parmId)
+    public static string IpSetMsgSipDescription(this uint parmId)
     {
         switch (parmId)
         {
@@ -369,7 +369,7 @@ public static class DescriptionExtensions
         }
     }
 
-    public static string IpSetSwitchCodeDescription(this ushort parmId)
+    public static string IpSetSwitchCodeDescription(this uint parmId)
     {
         switch (parmId)
         {
@@ -435,7 +435,7 @@ public static class DescriptionExtensions
         return $"Unknown IP_MSGTYPE_SIP {messageType}";
     }
 
-    public static string SipMsgInfo(this ushort parmId)
+    public static string SipMsgInfo(this uint parmId)
     {
         switch (parmId)
         {

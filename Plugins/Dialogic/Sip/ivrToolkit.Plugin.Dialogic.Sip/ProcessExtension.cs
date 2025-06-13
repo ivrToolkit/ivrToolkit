@@ -15,59 +15,6 @@ public class ProcessExtension
         _logger = loggerFactory.CreateLogger<ProcessExtension>();
     }
 
-    private void HandleMime(ref IntPtr gcParmBlkp)
-    {
-        var parmDatap = IntPtr.Zero;
-        parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
-
-        var bodySize = 0;
-
-        while (parmDatap != IntPtr.Zero)
-        {
-            var parmData = Marshal.PtrToStructure<GC_PARM_DATA>(parmDatap);
-            _logger.LogDebug("    {description}", parmData.parm_ID.IpSetMimeDescription());
-
-            switch (parmData.parm_ID)
-            {
-                case gcip_defs_h.IPPARM_MIME_PART_TYPE:
-                    var contentType = GetStringFromPtr(parmDatap + 5, parmData.value_size);
-                    _logger.LogDebug("      {contentType}", contentType);
-                    break;
-                case gcip_defs_h.IPPARM_MIME_PART_HEADER:
-                    var header = GetStringFromPtr(parmDatap + 5, parmData.value_size);
-                    _logger.LogDebug("      {header}", header);
-                    break;
-                case gcip_defs_h.IPPARM_MIME_PART_BODY:
-                    var bodyBuff = GetValueFromPtr(parmDatap + 5, parmData.value_size);
-                    var bodyBuffp = new IntPtr(bodyBuff);
-
-                    if (bodySize == 0) break;
-
-                    // Allocate memory for the buffer
-                    byte[] appBuff = new byte[bodySize + 1]; // +1 for null termination
-
-                    // Copy data from unmanaged memory to managed byte array
-                    Marshal.Copy(bodyBuffp, appBuff, 0, bodySize);
-
-                    // Null-terminate the buffer
-                    appBuff[bodySize] = 0;
-
-                    // Convert to a string and print it (assuming content is text)
-                    string bodyContent = System.Text.Encoding.Default.GetString(appBuff).TrimEnd('\0');
-                    _logger.LogDebug($"      {bodyContent}");
-
-                    break;
-                case gcip_defs_h.IPPARM_MIME_PART_BODY_SIZE:
-                    bodySize = GetValueFromPtr(parmDatap + 5, parmData.value_size);
-                    _logger.LogDebug("      Body size = {size}", bodySize);
-                    break;
-            }
-            // do something here
-            parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
-        }
-        gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
-    }
-
     /**
     * Process a metaevent extension block.
     */
@@ -81,26 +28,18 @@ public class ProcessExtension
         var eventDev = metaEvt.evtdev;
 
         var extensionBlockPtr = metaEvt.extevtdatap;
-        if (extensionBlockPtr != IntPtr.Zero)
+        var extensionBlock = Marshal.PtrToStructure<EXTENSIONEVTBLK>(extensionBlockPtr);
+        _logger.LogDebug("Extension ID = {extensionId}: {description}", extensionBlock.ext_id, extensionBlock.ext_id.IpExtIdDescription());
+
+        var extentionParametersBlockPtr = metaEvt.extevtdatap + 1;
+
+        var parmData = gcip_h.CreateAndInitGcParmDataExt();
+
+        var result = gclib_h.gc_util_next_parm_ex(extentionParametersBlockPtr, ref parmData);
+
+        while (result == GcErr_h.GC_SUCCESS)
         {
-            var extensionBlock = Marshal.PtrToStructure<EXTENSIONEVTBLK>(extensionBlockPtr);
-            _logger.LogDebug("Extension ID = {extensionId}: {description}", extensionBlock.ext_id, extensionBlock.ext_id.IpExtIdDescription());
-        } else
-        {
-            // I don't think this ever happens
-            _logger.LogDebug("There is no extension ID");
-        }
-
-        var gcParmBlkp = metaEvt.extevtdatap + 1;
-        var parmDatap = IntPtr.Zero;
-
-        parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
-
-        while (parmDatap != IntPtr.Zero)
-        {
-            var parmData = Marshal.PtrToStructure<GC_PARM_DATA>(parmDatap);
-
-            _logger.LogDebug("{description}:", parmData.set_ID.SetIdDescription());
+            _logger.LogDebug("{description}:", parmData.set_ID.GetIdDescription());
 
             switch (parmData.set_ID)
             {
@@ -111,9 +50,9 @@ public class ProcessExtension
                     _logger.LogDebug("  {description} - (SIP)", parmData.parm_ID.IpSetMediaStateDescription());
 
                     // todo there has got to be a better way than this
-                    if (parmData.value_size == Marshal.SizeOf<IP_CAPABILITY>())
+                    if (parmData.data_size == Marshal.SizeOf<IP_CAPABILITY>())
                     {
-                        var ptr = parmDatap + 5;
+                        var ptr = parmData.pData;
                         var ipCapp = Marshal.PtrToStructure<IP_CAPABILITY>(ptr);
 
                         _logger.LogDebug(
@@ -135,13 +74,13 @@ public class ProcessExtension
                     switch (parmData.parm_ID)
                     {
                         case gcip_defs_h.IPPARM_LOCAL:
-                            var ptr = parmDatap + 5;
+                            var ptr = parmData.pData;
                             var ipAddr = Marshal.PtrToStructure<RTP_ADDR>(ptr);
                             _logger.LogDebug("  IPPARM_LOCAL: address:{0}, port {1} - (SIP)", ipAddr.u_ipaddr.ipv4.ToIp(),
                                 ipAddr.port);
                             break;
                         case gcip_defs_h.IPPARM_REMOTE:
-                            var ptr2 = parmDatap + 5;
+                            var ptr2 = parmData.pData;
                             var ipAddr2 = Marshal.PtrToStructure<RTP_ADDR>(ptr2);
                             _logger.LogDebug("  IPPARM_REMOTE: address:{0}, port {1} - (SIP)", ipAddr2.u_ipaddr.ipv4.ToIp(),
                                 ipAddr2.port);
@@ -154,8 +93,8 @@ public class ProcessExtension
                     switch (parmData.parm_ID)
                     {
                         case gcip_defs_h.IPPARM_MSGTYPE:
-                            var messType = GetValueFromPtr(parmDatap + 5, parmData.value_size);
-                            _logger.LogDebug("  {description} - (SIP)", messType.IpMsgTypeDescription());
+                            var messType = GetValueFromPtr(parmData.pData, parmData.data_size);
+                            _logger.LogDebug("    {description} - (SIP)", messType.IpMsgTypeDescription());
                             if (messType == gcip_defs_h.IP_MSGTYPE_SIP_NOTIFY)
                             {
                                 receivedNotify = true;
@@ -164,7 +103,7 @@ public class ProcessExtension
                     }
                     break;
                 case gcip_defs_h.IPSET_SIP_MSGINFO:
-                    var str = GetStringFromPtr(parmDatap + 5, parmData.value_size);
+                    var str = GetStringFromPtr(parmData.pData, (int)parmData.data_size);
                     _logger.LogDebug("  {0}: {1} - (SIP)", parmData.parm_ID.SipMsgInfo(), str);
                     if (parmData.parm_ID == gcip_defs_h.IPPARM_CALLID_HDR)
                     {
@@ -177,17 +116,19 @@ public class ProcessExtension
                     switch (parmData.parm_ID)
                     {
                         case gcip_defs_h.IPPARM_MIME_PART:
-                            var pointerValue = GetValueFromPtr(parmDatap + 5, parmData.value_size);
-                            var parmblkp = new IntPtr(pointerValue);
-                            HandleMime(ref parmblkp);
+                            var pointerValue = GetValueFromPtr(parmData.pData, parmData.data_size);
+                            HandleMime(pointerValue);
                             break;
                     }
                     break;
             }
-
-            parmDatap = gclib_h.gc_util_next_parm(gcParmBlkp, parmDatap);
+ 
+            result = gclib_h.gc_util_next_parm_ex(extentionParametersBlockPtr, ref parmData);
         }
-        gclib_h.gc_util_delete_parm_blk(gcParmBlkp);
+        if (result != GcErr_h.EGC_NO_MORE_PARMS)
+        {
+            result.LogIfGlobalCallError(_logger);
+        }
 
         if (receivedNotify)
         {
@@ -202,6 +143,63 @@ public class ProcessExtension
             }
         }
         return hangupStarting;
+    }
+
+    private void HandleMime(int pointerValue)
+    {
+        var bodySize = 0;
+
+        var gcParmBlkp = new IntPtr(pointerValue);
+        var parmData = gcip_h.CreateAndInitGcParmDataExt();
+
+        var result = gclib_h.gc_util_next_parm_ex(gcParmBlkp, ref parmData);
+
+        while (result == GcErr_h.GC_SUCCESS)
+        {
+            _logger.LogDebug("    {description}", parmData.parm_ID.IpSetMimeDescription());
+
+            switch (parmData.parm_ID)
+            {
+                case gcip_defs_h.IPPARM_MIME_PART_TYPE:
+                    var contentType = GetStringFromPtr(parmData.pData, (int)parmData.data_size);
+                    _logger.LogDebug("      {contentType}", contentType);
+                    break;
+                case gcip_defs_h.IPPARM_MIME_PART_HEADER:
+                    var header = GetStringFromPtr(parmData.pData, (int)parmData.data_size);
+                    _logger.LogDebug("      {header}", header);
+                    break;
+                case gcip_defs_h.IPPARM_MIME_PART_BODY:
+                    var bodyBuff = GetValueFromPtr(parmData.pData, parmData.data_size);
+                    var bodyBuffp = new IntPtr(bodyBuff);
+
+                    if (bodySize == 0) break;
+
+                    // Allocate memory for the buffer
+                    byte[] appBuff = new byte[bodySize + 1]; // +1 for null termination
+
+                    // Copy data from unmanaged memory to managed byte array
+                    Marshal.Copy(bodyBuffp, appBuff, 0, bodySize);
+
+                    // Null-terminate the buffer
+                    appBuff[bodySize] = 0;
+
+                    // Convert to a string and print it (assuming content is text)
+                    string bodyContent = System.Text.Encoding.Default.GetString(appBuff).TrimEnd('\0');
+                    _logger.LogDebug($"      {bodyContent}");
+
+                    break;
+                case gcip_defs_h.IPPARM_MIME_PART_BODY_SIZE:
+                    bodySize = GetValueFromPtr(parmData.pData, parmData.data_size);
+                    _logger.LogDebug("      Body size = {size}", bodySize);
+                    break;
+            }
+            // do something here
+            result = gclib_h.gc_util_next_parm_ex(gcParmBlkp, ref parmData);
+        }
+        if (result != GcErr_h.EGC_NO_MORE_PARMS)
+        {
+            result.LogIfGlobalCallError(_logger);
+        }
     }
 
     private void RespondToNotify(bool accept, string callIdHeader, int eventDev)
@@ -241,6 +239,7 @@ public class ProcessExtension
         }
         finally
         {
+            _logger.LogDebug("Deleting gc_Extension parameter block: 0x{paramBlock:X}", gcParmBlkPtr);
             gclib_h.gc_util_delete_parm_blk(gcParmBlkPtr);
             Marshal.FreeHGlobal(pCallIdHeader);
         }
@@ -253,7 +252,7 @@ public class ProcessExtension
         return Marshal.PtrToStringAnsi(ptr, size).TrimEnd('\0');
     }
 
-    private int GetValueFromPtr(IntPtr ptr, byte size)
+    private int GetValueFromPtr(IntPtr ptr, uint size)
     {
         int value;
         switch (size)

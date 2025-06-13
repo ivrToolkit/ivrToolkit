@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs;
 
-public class gclib_h
+public static class gclib_h
 {
     [DllImport("libgc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
     //public static extern int gc_Start(ref GC_START_STRUCT startp);
@@ -116,6 +116,9 @@ public class gclib_h
 
     [DllImport("libgc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr gc_util_next_parm(IntPtr parm_blk, IntPtr cur_parm);
+
+    [DllImport("libgc.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int gc_util_next_parm_ex(IntPtr parm_blk, ref GC_PARM_DATA_EXT parm);
 
 
     /* -- bit mask for gc_GetCCLibInfo */
@@ -615,6 +618,17 @@ public struct GC_PARM_DATA
     public byte value_size; // Size of value_buf in bytes
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
     public byte[] value_buf; // Address to the parm value buffer
+}
+
+[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+public struct GC_PARM_DATA_EXT
+{
+    public uint version;
+    public IntPtr pInternal;
+    public uint set_ID;
+    public uint parm_ID;
+    public uint data_size;
+    public IntPtr pData;
 }
 
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]

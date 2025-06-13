@@ -71,7 +71,16 @@ public class SipPlugin : IIvrPlugin
             "evt_type = {0}:{1}, evt_dev = {2}, evt_flags = {3},  line_dev = {4} ",
             metaEvt.evttype, metaEvt.evttype.EventTypeDescription(), metaEvt.evtdev, metaEvt.flags,
             metaEvt.linedev);
-        HandleEvent(metaEvt);
+
+        switch (metaEvt.evttype)
+        {
+            case gclib_h.GCEV_SERVICERESP:
+                HandleRegisterStuff(metaEvt);
+                break;
+            case gclib_h.GCEV_EXTENSION:
+                _processExtension.HandleExtension(metaEvt); // todo some or all of this may not be for board events.
+                break;
+        }
     }
 
     public IIvrLine GetLine(int lineNumber)
@@ -345,25 +354,6 @@ public class SipPlugin : IIvrPlugin
         _unmanagedMemoryService.Free(pContact);
     }
     
-    private void HandleEvent(METAEVENT metaEvt)
-    {
-        switch (metaEvt.evttype)
-        {
-            case gclib_h.GCEV_SERVICERESP:
-                _logger.LogDebug("GCEV_SERVICERESP");
-                HandleRegisterStuff(metaEvt);
-                break;
-            case gclib_h.GCEV_EXTENSION:
-                _logger.LogDebug("GCEV_EXTENSION");
-                _processExtension.HandleExtension(metaEvt); // todo some or all of this may not be for board events.
-                break;
-            default:
-                _logger.LogWarning("Wasn't expecting this event type: {0}:{1}",
-                    metaEvt.evttype, metaEvt.evttype.EventTypeDescription());
-                break;
-        }
-    }
-
     private void HandleRegisterStuff(METAEVENT metaEvt)
     {
         _logger.LogDebug("HandleRegisterStuff(METAEVENT metaEvt)");

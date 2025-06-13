@@ -237,7 +237,7 @@ public static class DescriptionExtensions
         }
     }
 
-    public static string IpSetMediaStateDescription(this ushort parmId)
+    public static string IpSetMediaStateDescription(this uint parmId)
     {
         switch (parmId)
         {
@@ -254,7 +254,7 @@ public static class DescriptionExtensions
         }
     }
 
-    public static string SetIdDescription(this ushort setId)
+    public static string GetIdDescription(this uint setId)
     {
         switch (setId)
         {
@@ -304,7 +304,7 @@ public static class DescriptionExtensions
         }
     }
 
-    public static string IpSetIpProtoolStateDescription (this ushort parmId)
+    public static string IpSetIpProtoolStateDescription (this uint parmId)
     {
         switch (parmId)
         {
@@ -323,7 +323,7 @@ public static class DescriptionExtensions
         }
     }
 
-    public static string IpSetRptAddressDescription(this ushort parmId)
+    public static string IpSetRptAddressDescription(this uint parmId)
     {
         switch (parmId)
         {
@@ -336,7 +336,7 @@ public static class DescriptionExtensions
         }
     }
 
-    public static string IpSetMimeDescription(this ushort parmId)
+    public static string IpSetMimeDescription(this uint parmId)
     {
         switch (parmId)
         {
@@ -356,7 +356,7 @@ public static class DescriptionExtensions
     }
 
 
-    public static string IpSetMsgSipDescription(this ushort parmId)
+    public static string IpSetMsgSipDescription(this uint parmId)
     {
         switch (parmId)
         {
@@ -369,7 +369,7 @@ public static class DescriptionExtensions
         }
     }
 
-    public static string IpSetSwitchCodeDescription(this ushort parmId)
+    public static string IpSetSwitchCodeDescription(this uint parmId)
     {
         switch (parmId)
         {
@@ -435,7 +435,7 @@ public static class DescriptionExtensions
         return $"Unknown IP_MSGTYPE_SIP {messageType}";
     }
 
-    public static string SipMsgInfo(this ushort parmId)
+    public static string SipMsgInfo(this uint parmId)
     {
         switch (parmId)
         {

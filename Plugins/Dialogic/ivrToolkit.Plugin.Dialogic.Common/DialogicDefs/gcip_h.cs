@@ -107,7 +107,25 @@ namespace ivrToolkit.Plugin.Dialogic.Common.DialogicDefs
                 version = IP_VIRTBOARD_VERSION
             };
         }
-        
+
+        //public const int GC_CFG_DEFAULT = -1; // = 4294967295
+        public const uint GC_CFG_DEFAULT = 0xFFFFFFFF; // the uint version
+
+        public const int GC_PARM_DATA_EXT_VERSION = 0x100; /* Current GC_PARM_DATA_EXT version */
+
+        public static GC_PARM_DATA_EXT CreateAndInitGcParmDataExt()
+        {
+            return new GC_PARM_DATA_EXT
+            {
+                version = GC_PARM_DATA_EXT_VERSION,
+                pInternal = IntPtr.Zero,
+                set_ID = GC_CFG_DEFAULT,
+                parm_ID = GC_CFG_DEFAULT,
+                data_size = GC_CFG_DEFAULT,
+                pData = IntPtr.Zero
+            };
+        }
+
         //public const int DEFAULT_MAXUDPMSGLEN(0)
         public const int VIRTBOARD_VERSION_TCP_SUPPORT = 0x106; /*this value subject to change*/
         //public const int VIRTBOARD_SIP_NOUDPMSGSIZECHECK(0)

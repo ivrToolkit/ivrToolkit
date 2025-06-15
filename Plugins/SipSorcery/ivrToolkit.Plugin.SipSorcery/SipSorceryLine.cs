@@ -217,14 +217,24 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         _voipMediaSession.AudioExtrasSource.AudioSamplePeriodMilliseconds = 20;
         await _voipMediaSession.AudioExtrasSource.StartAudio();
 
+
+        _voipMediaSession.OnRtpPacketReceived += MediaSession_OnRtpPacketReceived;
+        return CallAnalysis.Connected;
+
         // either Connected or AnsweringMachine
-        return await ConnectedTypeAsync(_voipMediaSession, answeringMachineLengthInMilliseconds, cancellationToken);
+        //return await ConnectedTypeAsync(_voipMediaSession, answeringMachineLengthInMilliseconds, cancellationToken);
     }
 
     public CallStateProgressEnum GetCallStateProgress()
     {
         throw new NotImplementedException();
     }
+
+    private void MediaSession_OnRtpPacketReceived(IPEndPoint arg1, SDPMediaTypesEnum arg2, RTPPacket arg3)
+    {
+        _logger.LogDebug("OnRtpPacketReceived!");
+    }
+
 
     private async Task<CallAnalysis> ConnectedTypeAsync(VoIPMediaSession mediaSession, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken)
     {
@@ -262,7 +272,8 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         return speechDurationMs >= answeringMachineLengthInMilliseconds ? 
             CallAnalysis.AnsweringMachine : CallAnalysis.Connected;
     }
-    
+
+
     /// <summary>
     /// Uses the media session’s RTP packet event to detect the start and end times of speech.
     /// Speech start is marked when a sample exceeds the silenceThreshold.

@@ -218,11 +218,11 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         await _voipMediaSession.AudioExtrasSource.StartAudio();
 
 
-        _voipMediaSession.OnRtpPacketReceived += MediaSession_OnRtpPacketReceived;
-        return CallAnalysis.Connected;
+        //_voipMediaSession.OnRtpPacketReceived += MediaSession_OnRtpPacketReceived;
+        //return CallAnalysis.Connected;
 
         // either Connected or AnsweringMachine
-        //return await ConnectedTypeAsync(_voipMediaSession, answeringMachineLengthInMilliseconds, cancellationToken);
+        return await ConnectedTypeAsync(_voipMediaSession, answeringMachineLengthInMilliseconds, cancellationToken);
     }
 
     public CallStateProgressEnum GetCallStateProgress()
@@ -303,6 +303,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 
         Action<IPEndPoint, SDPMediaTypesEnum, RTPPacket> rtpHandler = (_, mediaType, rtpPacket) =>
         {
+            _logger.LogDebug("OnRtpPacketReceived!");
             if (cancellationToken.IsCancellationRequested)
             {
                 tcs.TrySetCanceled();

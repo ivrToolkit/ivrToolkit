@@ -297,7 +297,6 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
 
         Action<IPEndPoint, SDPMediaTypesEnum, RTPPacket> rtpHandler = (_, mediaType, rtpPacket) =>
         {
-            _logger.LogDebug("OnRtpPacketReceived!");
             if (cancellationToken.IsCancellationRequested)
             {
                 tcs.TrySetCanceled();

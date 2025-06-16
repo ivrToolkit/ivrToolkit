@@ -217,10 +217,6 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         _voipMediaSession.AudioExtrasSource.AudioSamplePeriodMilliseconds = 20;
         await _voipMediaSession.AudioExtrasSource.StartAudio();
 
-
-        //_voipMediaSession.OnRtpPacketReceived += MediaSession_OnRtpPacketReceived;
-        //return CallAnalysis.Connected;
-
         // either Connected or AnsweringMachine
         return await ConnectedTypeAsync(_voipMediaSession, answeringMachineLengthInMilliseconds, cancellationToken);
     }
@@ -230,16 +226,14 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
         throw new NotImplementedException();
     }
 
-    private void MediaSession_OnRtpPacketReceived(IPEndPoint arg1, SDPMediaTypesEnum arg2, RTPPacket arg3)
-    {
-        _logger.LogDebug("OnRtpPacketReceived!");
-    }
-
-
     private async Task<CallAnalysis> ConnectedTypeAsync(VoIPMediaSession mediaSession, int answeringMachineLengthInMilliseconds, CancellationToken cancellationToken)
     {
         // 0 means no answering machine detection
         if (answeringMachineLengthInMilliseconds <= 0) return CallAnalysis.Connected;
+
+        // this will trigger "sipsorcery[0] Set remote track..."
+        // on some setups, "sipsorcery[0] Set remote track..." isn't triggered right away. There may be a better way to do this but for now it works.
+        await PlayFileAsync(Path.Combine(_root,"Nothing.wav"), cancellationToken);
         
         var speechDurationMs = 0;
         // Parameters:

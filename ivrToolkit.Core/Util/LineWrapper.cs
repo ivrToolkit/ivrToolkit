@@ -127,7 +127,7 @@ internal partial class LineWrapper : IIvrLine, IIvrLineManagement
 
     public CallAnalysis Dial(string number, int answeringMachineLengthInMilliseconds)
     {
-        answeringMachineLengthInMilliseconds.ThrowIfLessThanOrEqualTo(999, nameof(answeringMachineLengthInMilliseconds));
+        answeringMachineLengthInMilliseconds.ThrowIfLessThanOrEqualTo(-1, nameof(answeringMachineLengthInMilliseconds));
         number.ThrowIfNullOrWhiteSpace(nameof(number));
 
         _logger.LogDebug("{method}({number}, {answeringMachineLength})", nameof(Dial), number, answeringMachineLengthInMilliseconds);

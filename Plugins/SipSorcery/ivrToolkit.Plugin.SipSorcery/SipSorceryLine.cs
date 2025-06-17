@@ -185,7 +185,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
             
         _voipMediaSession = new VoIPMediaSession();
         _voipMediaSession.AcceptRtpFromAny = true;
-        _voipMediaSession.TakeOffHold();
+        await _voipMediaSession.TakeOffHold();
         
         // Place the call and wait for the result.
         var startTime = Stopwatch.GetTimestamp();
@@ -834,7 +834,7 @@ internal class SipSorceryLine : IIvrBaseLine, IIvrLineManagement
             
             _voipMediaSession = new VoIPMediaSession();
             _voipMediaSession.AcceptRtpFromAny = true;
-            _voipMediaSession.TakeOffHold();
+            await _voipMediaSession.TakeOffHold();
 
             _voipMediaSession.AudioExtrasSource.AudioSamplePeriodMilliseconds = 20;
             _voipMediaSession.AudioExtrasSource.SetAudioSourceFormat(new AudioFormat(SDPWellKnownMediaFormatsEnum.PCMU));

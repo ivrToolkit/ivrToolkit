@@ -84,4 +84,4 @@ jobs:
       run: dotnet build --configuration Release --no-restore
       
     - name: Test
-      run: dotnet test --no-restore --no-build --configuration Release --verbosity detailed
+      run: dotnet test --no-restore --no-build --configuration Release --verbosity normal

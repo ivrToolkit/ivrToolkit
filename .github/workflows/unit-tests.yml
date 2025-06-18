@@ -65,12 +65,18 @@ jobs:
       with:
         fetch-depth: 0
 
-    # Install the .NET Core workload
-    - name: Install .NET Core
+    # Install .NET 8.0
+    - name: Install .NET 8.0
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 8.0.x
+
+    # Install .NET 9.0
+    - name: Install .NET 9.0
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 9.0.x
-
+        
     - name: Install dependencies
       run: dotnet restore
       

@@ -818,12 +818,12 @@
 		<Content Include="System Recordings\Original\z.wav">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-		<None Update="System Recordings\en-US-JennyNeural\Nothing.wav">
+		<Content Update="System Recordings\en-US-JennyNeural\Nothing.wav">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
-		<None Update="System Recordings\Original\Nothing.wav">
+		</Content>
+		<Content Update="System Recordings\Original\Nothing.wav">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
+		</Content>
 	</ItemGroup>
 
 	<ItemGroup>

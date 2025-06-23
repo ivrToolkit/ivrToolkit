@@ -4,6 +4,8 @@ SIP. You will need two packages
 - ivrToolkit.Core
 - ivrToolkit.Plugin.SipSorcery
 
+See [GitHub Releases](https://github.com/ivrToolkit/ivrToolkit/releases) for detailed version history.
+
 Example:
 ```csharp
 // instantiate the plugin you want to use

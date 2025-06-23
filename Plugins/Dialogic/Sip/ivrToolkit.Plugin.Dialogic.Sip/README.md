@@ -6,6 +6,8 @@ Here are the ivrToolkit nuget packages you need:
 - ivrToolkit.Plugin.Dialogic.Common
 - ivrToolkit.Plugin.Dialogic.Sip
 
+See [GitHub Releases](https://github.com/ivrToolkit/ivrToolkit/releases) for detailed version history.
+
 Example:
 ```csharp
 // instantiate the plugin you want to use
